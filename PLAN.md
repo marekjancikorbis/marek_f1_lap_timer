@@ -28,6 +28,8 @@ own earlier times, and competing with other drivers on routes they publish.
 
 ## 2. Recommended tech stack
 
+> **Superseded**: the app is built as a web app on Firebase instead. See *Platform and backend* in section 10.
+
 | Layer | Choice | Why |
 |---|---|---|
 | Mobile app | **React Native + Expo** (TypeScript) | One codebase for iOS and Android. Expo dev builds still allow native modules for GPS and maps. |
@@ -408,6 +410,15 @@ Two laps can be compared only on the **same route**, so they share the same froz
 - **Lap comparison**: any two laps on the same route, either your own or against other people's posted laps (section 4.6). Any posted lap can be used as a drive reference.
 - **Following and social feed**: one-way follows with no approval. The home tab is a feed of posted laps from people you follow, newest first. The routes map moves to its own tab.
 - **Posting and users**: laps are private until posted. Posting is only possible on public routes. There is user search and there are user pages showing posted laps.
+
+- **Platform and backend (replaces section 2)**: the app ships as an installable **web app (PWA)** built with React + TypeScript (Vite), hosted on **Firebase Hosting**. Firebase **Auth** and **Firestore** replace Supabase, and Firestore security rules replace RLS. The project is on the free **Spark** plan, so there are no Cloud Functions:
+  - `verify-run` cannot run on a server. Posted laps are trusted as sent; the security rules still check that they are self-consistent (positive, increasing splits, total = last split, penalty applied, only your own run on a public route).
+  - Leaderboards, sector records and the feed are computed when read, from posts.
+  - Browsers cannot keep GPS running with the screen locked, so the drive screen holds a screen wake lock instead of using background location.
+- **Maps**: Mapbox GL JS for maps, Mapbox Directions for snapping routes to roads. Route thumbnails are drawn as SVG from the route geometry, so they cost no map loads.
+- **Mapbox usage cap**: the app counts every map load and every Directions request in Firestore (`usage/{period}`) and stops at **45,000 map loads** and **90,000 Directions requests** per period, just under Mapbox's free tier. Once a cap is reached the app shows a "monthly limit reached, back on [date]" screen and is unusable until the period resets.
+  - The period resets on the **1st of each month, 00:00 UTC**. The reset day is one setting (`USAGE_RESET_DAY`), so it can be matched to the Mapbox billing cycle.
+  - The security rules only allow the counters to go up by one at a time and refuse increments past the cap. On Spark the cap is still enforced by the app, so the Mapbox token must also be **URL-restricted** to the app's domain in the Mapbox dashboard.
 
 ## 11. Open questions (need decisions)
 

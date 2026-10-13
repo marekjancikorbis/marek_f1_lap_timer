@@ -1,0 +1,13 @@
+{
+  "name": "marek-f1-lap-timer",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test -w @laptimer/timing",
+    "build": "npm run build -w @laptimer/web",
+    "dev": "npm run dev -w @laptimer/web"
+  }
+}
