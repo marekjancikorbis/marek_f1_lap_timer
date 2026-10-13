@@ -1,0 +1,249 @@
+rules_version = '2';
+
+// Purple Sector security rules. These replace the plan's Postgres RLS:
+// the app UI hides what you can't do, these rules refuse it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------ helpers
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function roleOf(u) {
+      return exists(/databases/$(database)/documents/roles/$(u))
+        ? get(/databases/$(database)/documents/roles/$(u)).data.role
+        : 'driver';
+    }
+
+    function isAdmin() {
+      return signedIn() && roleOf(uid()) == 'admin';
+    }
+
+    // Creators and admins may build routes.
+    function canCreate() {
+      return signedIn() && roleOf(uid()) in ['creator', 'admin'];
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function onlyChanges(keys) {
+      return changedKeys().hasOnly(keys);
+    }
+
+    // ------------------------------------------------------------ profiles
+
+    match /users/{userId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn() && userId == uid()
+        && request.resource.data.keys().hasOnly(['username', 'usernameLower', 'createdAt', 'publicRouteId', 'countdownS', 'acceptedTermsAt', 'avatarHue'])
+        && request.resource.data.username is string
+        && request.resource.data.username.matches('^[A-Za-z0-9_.]{3,20}$')
+        && request.resource.data.usernameLower == request.resource.data.username.lower()
+        && request.resource.data.publicRouteId == null
+        // Username claimed in the same batch.
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid();
+
+      allow update: if signedIn() && userId == uid()
+        && onlyChanges(['countdownS', 'acceptedTermsAt', 'avatarHue', 'publicRouteId'])
+        && publicRouteChangeOk();
+
+      // Pointing publicRouteId at a route requires that route to be yours and
+      // public after this write; the route it replaces must become private.
+      // Together with the route rules this keeps one public route per user.
+      function publicRouteChangeOk() {
+        let before = resource.data.publicRouteId;
+        let after = request.resource.data.publicRouteId;
+        return before == after || (
+          (after == null || (
+            getAfter(/databases/$(database)/documents/routes/$(after)).data.ownerId == uid()
+            && getAfter(/databases/$(database)/documents/routes/$(after)).data.isPublic == true))
+          && (before == null
+            || !existsAfter(/databases/$(database)/documents/routes/$(before))
+            || getAfter(/databases/$(database)/documents/routes/$(before)).data.isPublic == false)
+        );
+      }
+
+      // Runs are private to their owner. Others only ever see posts.
+      match /runs/{runId} {
+        allow read, delete: if signedIn() && userId == uid();
+        allow create: if signedIn() && userId == uid()
+          && request.resource.data.totalMs is int && request.resource.data.totalMs > 0
+          && request.resource.data.splitTimesMs is list
+          && request.resource.data.splitTimesMs.size() > 0
+          && request.resource.data.splitTimesMs[request.resource.data.splitTimesMs.size() - 1] == request.resource.data.totalMs;
+        // Results are immutable; only the posted marker changes.
+        allow update: if signedIn() && userId == uid() && onlyChanges(['posted']);
+      }
+    }
+
+    match /usernames/{name} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == uid()
+        && name == getAfter(/databases/$(database)/documents/users/$(uid())).data.usernameLower;
+    }
+
+    // ------------------------------------------------------------ roles
+
+    // Only admins grant roles, and only 'creator': admins are made in the
+    // database console, never from the app. Users read their own role.
+    match /roles/{userId} {
+      // Readable by everyone signed in, for creator badges.
+      allow read: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.role == 'creator'
+        && request.resource.data.grantedBy == uid()
+        && userId != uid()
+        && existsAfter(/databases/$(database)/documents/roleAudit/$(request.resource.data.auditId));
+      allow delete: if isAdmin() && resource.data.role == 'creator';
+    }
+
+    match /roleAudit/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.actorId == uid()
+        && request.resource.data.action in ['grant_creator', 'revoke_creator', 'approve_request', 'reject_request'];
+    }
+
+    match /creatorRequests/{userId} {
+      allow read: if signedIn() && (userId == uid() || isAdmin());
+      allow create: if signedIn() && userId == uid()
+        && request.resource.data.status == 'pending'
+        && roleOf(uid()) == 'driver'
+        && (!('note' in request.resource.data) || request.resource.data.note.size() <= 500);
+      // A rejected driver can ask again.
+      allow update: if (signedIn() && userId == uid()
+          && resource.data.status == 'rejected'
+          && request.resource.data.status == 'pending'
+          && onlyChanges(['status', 'note', 'createdAt', 'decidedBy', 'decidedAt']))
+        || (isAdmin() && request.resource.data.status in ['approved', 'rejected']
+          && onlyChanges(['status', 'decidedBy', 'decidedAt']));
+    }
+
+    // ------------------------------------------------------------ routes
+
+    match /routes/{routeId} {
+      allow read: if signedIn() && (
+        resource.data.ownerId == uid()
+        || (resource.data.isPublic == true && resource.data.hidden == false)
+        || isAdmin());
+
+      allow create: if canCreate()
+        && request.resource.data.ownerId == uid()
+        && request.resource.data.isPublic == false
+        && request.resource.data.hidden == false
+        && request.resource.data.hasRuns == false
+        && request.resource.data.sectorLengthM is int
+        && request.resource.data.sectorLengthM >= 50 && request.resource.data.sectorLengthM <= 1000
+        && request.resource.data.sectorLengthM % 50 == 0
+        && request.resource.data.startType in ['standing', 'rolling']
+        && request.resource.data.boundaries is list && request.resource.data.boundaries.size() > 0
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60;
+
+      // Owner edits. Geometry and sectors freeze once anyone could have
+      // driven the route (it has runs, or it has ever been published).
+      allow update: if canCreate() && resource.data.ownerId == uid()
+        && request.resource.data.ownerId == uid()
+        && request.resource.data.hidden == resource.data.hidden
+        && (!changedKeys().hasAny(['coords', 'lengthM', 'boundaries', 'sectorLengthM', 'isLoop', 'startType'])
+          || (resource.data.hasRuns == false && resource.data.publishedAt == null))
+        && (request.resource.data.hasRuns == true || resource.data.hasRuns == false)
+        && (request.resource.data.isPublic == false
+          || getAfter(/databases/$(database)/documents/users/$(uid())).data.publicRouteId == routeId);
+
+      // Revoked creators keep their routes; they can still mark runs on them.
+      allow update: if signedIn() && resource.data.ownerId == uid()
+        && onlyChanges(['hasRuns']) && request.resource.data.hasRuns == true;
+
+      // Moderation: admins can unpublish or hide any route.
+      allow update: if isAdmin() && onlyChanges(['isPublic', 'hidden'])
+        && (request.resource.data.isPublic == false || request.resource.data.isPublic == resource.data.isPublic);
+
+      allow delete: if signedIn() && resource.data.ownerId == uid()
+        && resource.data.hasRuns == false && resource.data.isPublic == false;
+    }
+
+    // ------------------------------------------------------------ posts
+
+    // A post is a lap made public. Copied from the owner's run, so the times
+    // must match it exactly; the route must be public.
+    match /posts/{runId} {
+      allow read: if signedIn() && (
+        resource.data.hidden == false || resource.data.userId == uid() || isAdmin());
+
+      allow create: if signedIn() && postMatchesRun();
+
+      function postMatchesRun() {
+        let p = request.resource.data;
+        let run = get(/databases/$(database)/documents/users/$(uid())/runs/$(runId)).data;
+        let route = get(/databases/$(database)/documents/routes/$(p.routeId)).data;
+        return p.userId == uid()
+          && run.valid == true
+          && run.get('replay', false) == false
+          && run.routeId == p.routeId
+          && p.totalMs == run.totalMs
+          && p.splitTimesMs == run.splitTimesMs
+          && p.penaltyMs == run.penaltyMs
+          && p.jumpStart == run.jumpStart
+          && (p.jumpStart == false || p.penaltyMs == 5000)
+          && p.splitTimesMs.size() == route.boundaries.size()
+          && p.splitTimesMs[p.splitTimesMs.size() - 1] == p.totalMs
+          && p.totalMs > 0
+          && route.isPublic == true && route.hidden == false
+          && p.hidden == false
+          && (!('caption' in p) || p.caption == null || p.caption.size() <= 280)
+          && (!('car' in p) || p.car == null || p.car.size() <= 40);
+      }
+
+      allow update: if (signedIn() && resource.data.userId == uid() && onlyChanges(['caption', 'car']))
+        || (isAdmin() && onlyChanges(['hidden']));
+
+      allow delete: if signedIn() && (resource.data.userId == uid() || isAdmin());
+    }
+
+    // ------------------------------------------------------------ follows
+
+    match /follows/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.followerId == uid()
+        && request.resource.data.followeeId != uid()
+        && id == uid() + '_' + request.resource.data.followeeId;
+      allow delete: if signedIn() && resource.data.followerId == uid();
+    }
+
+    // ------------------------------------------------------------ Mapbox usage cap
+
+    // One document per billing period. Counters only ever go up by one, and
+    // never past the cap: 45,000 map loads, 90,000 Directions requests.
+    match /usage/{period} {
+      allow read: if signedIn();
+      function n(data, key) {
+        return data.get(key, 0);
+      }
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['mapLoads', 'directions'])
+        && n(request.resource.data, 'mapLoads') in [0, 1]
+        && n(request.resource.data, 'directions') in [0, 1]
+        && n(request.resource.data, 'mapLoads') + n(request.resource.data, 'directions') == 1;
+      allow update: if signedIn()
+        && request.resource.data.keys().hasOnly(['mapLoads', 'directions'])
+        && (
+          (n(request.resource.data, 'mapLoads') == n(resource.data, 'mapLoads') + 1
+            && n(request.resource.data, 'directions') == n(resource.data, 'directions')
+            && n(request.resource.data, 'mapLoads') <= 45000)
+          || (n(request.resource.data, 'directions') == n(resource.data, 'directions') + 1
+            && n(request.resource.data, 'mapLoads') == n(resource.data, 'mapLoads')
+            && n(request.resource.data, 'directions') <= 90000)
+        );
+    }
+  }
+}
