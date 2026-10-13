@@ -5,3 +5,8 @@ dist/
 .env.local
 .DS_Store
 .idea/
+
+# impeccable session state
+apps/web/.impeccable/questions/
+apps/web/.impeccable/tmp/
+apps/web/.impeccable/review/

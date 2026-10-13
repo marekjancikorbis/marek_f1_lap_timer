@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Marshal Post</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--tar:#16181A;--tar2:#202326;--line:#2E3236;--ink:#F2F1EC;--mute:#9AA0A6;--kerbR:#D9262E;--y:#F5CF19;--g:#1FA64F;--p:#8B3FE0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:390px;height:844px;overflow:hidden;background:var(--tar);color:var(--ink);font:400 15px/1.4 Barlow,system-ui,sans-serif}
+.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line)}
+.brand{font:700 20px/1 "Barlow Condensed";letter-spacing:.02em;text-transform:uppercase}
+.brand b{color:var(--p)}
+.kerb{height:6px;background:repeating-linear-gradient(90deg,var(--kerbR) 0 18px,var(--ink) 18px 36px)}
+.pill{margin:12px auto 0;width:max-content;background:var(--ink);color:var(--tar);font:600 13px Barlow;padding:6px 12px;border-radius:999px}
+.card{margin:12px 16px 0;padding:14px 16px 16px;background:var(--tar2);border-radius:14px}
+.who{display:flex;align-items:center;gap:10px;font-size:14px}
+.av{width:32px;height:32px;border-radius:50%;background:#3A3F44;display:grid;place-items:center;font:600 13px Barlow}
+.who span{color:var(--mute)}
+.route{margin-top:10px;font:600 13px Barlow;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.time{font:600 56px/1 "Barlow Condensed";font-variant-numeric:tabular-nums;letter-spacing:-.01em;margin-top:4px;display:flex;align-items:baseline;gap:10px}
+.badge{font:700 13px Barlow;padding:3px 8px;border-radius:6px;background:var(--p);color:#fff}
+.badge.pb{background:var(--ink);color:var(--tar)}
+.strip{display:flex;gap:3px;margin-top:12px}
+.strip i{flex:1;height:10px;border-radius:2px}
+.cap{margin-top:10px;font-size:14px}
+.cap em{color:var(--mute);font-style:normal}
+.act{display:flex;gap:8px;margin-top:14px}
+.act a{flex:1;text-align:center;font:600 14px Barlow;padding:10px 0;border-radius:10px;background:#2B2F33}
+.act a.go{background:var(--ink);color:var(--tar)}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:78px;background:rgba(22,24,26,.86);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:10px;font:600 11px Barlow;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.tabs .on{color:var(--ink)}
+</style></head><body>
+<div class="top"><div class="brand">Purple <b>Sector</b></div><div class="av">MJ</div></div>
+<div class="kerb"></div>
+<div class="pill">3 new laps ↑</div>
+<div class="card">
+ <div class="who"><div class="av">TK</div><div>tomas_k <span>· 12 min ago</span></div></div>
+ <div class="route">Brno Circuit · Lap 5.4 km</div>
+ <div class="time">2:08.412 <span class="badge">P1</span> <span class="badge pb">New PB</span></div>
+ <div class="strip"><i style="background:var(--p)"></i><i style="background:var(--g)"></i><i style="background:var(--g)"></i><i style="background:var(--y)"></i><i style="background:var(--p)"></i><i style="background:var(--g)"></i></div>
+ <div class="cap">Finally under 2:09. <em>· E46 M3</em></div>
+ <div class="act"><a>Compare with my best</a><a class="go">Race against</a></div>
+</div>
+<div class="card">
+ <div class="who"><div class="av">LS</div><div>lucie.s <span>· 2 h ago</span></div></div>
+ <div class="route">Ecce Homo hill-climb · 3.1 km</div>
+ <div class="time">1:52.907 <span class="badge" style="background:#3A3F44">P4</span></div>
+ <div class="strip"><i style="background:var(--y)"></i><i style="background:var(--g)"></i><i style="background:var(--y)"></i><i style="background:var(--g)"></i></div>
+</div>
+<div class="tabs"><span class="on">Feed</span><span>Map</span><span>Search</span><span>Routes</span><span>Profile</span></div>
+</body></html>
