@@ -20,45 +20,54 @@ interface Props {
   label?: string;
 }
 
+type XYPoint = readonly [number, number];
+
+/** Project a route's sectors into a W-wide box (height follows the shape), for SVG or canvas drawing. */
+export function shapeGeometry(route: Props['route'], W = 1000, maxH = W * 0.6, pad = 70) {
+  const lines = sectorLines(route, 12);
+  const all = lines.flat();
+  if (!all.length) return null;
+  const lat0 = (all[0].lat * Math.PI) / 180;
+  const k = Math.cos(lat0);
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of all) {
+    const x = p.lng * k;
+    const y = -p.lat;
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+  const w = maxX - minX || 1e-9;
+  const h = maxY - minY || 1e-9;
+  const scale = Math.min((W - pad * 2) / w, (maxH - pad * 2) / h);
+  const H = Math.max(240, h * scale + pad * 2);
+  const ox = (W - w * scale) / 2;
+  const oy = (H - h * scale) / 2;
+  const P = (p: { lng: number; lat: number }): XYPoint => [ox + (p.lng * k - minX) * scale, oy + (-p.lat - minY) * scale];
+  return {
+    lines: lines.map((line) => line.map(P)),
+    start: P(all[0]),
+    finish: P(all[all.length - 1]),
+    tickPts: lines.slice(0, -1).map((l) => P(l[l.length - 1])),
+    W,
+    H,
+  };
+}
+
 /**
  * The route drawn from its own geometry, each sector stroked in its flag
  * colour. No map tiles: thumbnails cost nothing against the Mapbox cap.
  */
 export function RouteShape({ route, colours, height = 150, ticks = true, className, label }: Props) {
   const geom = useMemo(() => {
-    const lines = sectorLines(route, 12);
-    const all = lines.flat();
-    if (!all.length) return null;
-    const lat0 = (all[0].lat * Math.PI) / 180;
-    const k = Math.cos(lat0);
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const p of all) {
-      const x = p.lng * k;
-      const y = -p.lat;
-      minX = Math.min(minX, x);
-      maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y);
-    }
-    const w = maxX - minX || 1e-9;
-    const h = maxY - minY || 1e-9;
-    const W = 1000;
-    const pad = 70;
-    const scale = Math.min((W - pad * 2) / w, (W * 0.6 - pad * 2) / h);
-    const H = Math.max(240, h * scale + pad * 2);
-    const ox = (W - w * scale) / 2;
-    const oy = (H - h * scale) / 2;
-    const P = (p: { lng: number; lat: number }) => [ox + (p.lng * k - minX) * scale, oy + (-p.lat - minY) * scale] as const;
-    const paths = lines.map((line) =>
-      line.map((p, i) => `${i ? 'L' : 'M'}${P(p)[0].toFixed(1)} ${P(p)[1].toFixed(1)}`).join(''),
-    );
-    const start = P(all[0]);
-    const finish = P(all[all.length - 1]);
-    const tickPts = lines.slice(0, -1).map((l) => P(l[l.length - 1]));
-    return { paths, start, finish, tickPts, W, H };
+    const g = shapeGeometry(route);
+    if (!g) return null;
+    const paths = g.lines.map((line) => line.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''));
+    return { ...g, paths };
   }, [route]);
 
   if (!geom) return null;

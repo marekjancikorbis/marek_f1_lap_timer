@@ -8,6 +8,7 @@ import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from
 import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
 import { coloursFor, recordsExcluding, resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
+import { shareLap } from '../lib/shareImage';
 import type { Post, Route, Run } from '../lib/types';
 import { bestSectors, sectorTimes } from '@laptimer/timing';
 
@@ -70,6 +71,23 @@ export default function RunSummary() {
       await deleteRun(profile.id, run);
       toast('Lap discarded');
       nav(`/r/${run.routeId}`, { replace: true });
+    } catch (e) {
+      toast(errorMessage(e), 'error');
+    }
+  }
+
+  async function share() {
+    if (!run || !route) return;
+    try {
+      await shareLap({
+        route,
+        username: profile.username,
+        date: formatDate(run.startedAt),
+        totalMs: run.totalMs,
+        penaltyMs: run.penaltyMs,
+        colours,
+        delta: ref ? { ms: run.totalMs - ref.totalMs, label: ref.label } : null,
+      });
     } catch (e) {
       toast(errorMessage(e), 'error');
     }
@@ -168,6 +186,11 @@ export default function RunSummary() {
           <Link className="btn grow" to={`/drive/${run.routeId}?ref=run:${run.id}`}>
             Race this lap
           </Link>
+          {route && (
+            <button className="btn grow" onClick={share}>
+              Share image
+            </button>
+          )}
         </div>
         <div className="row">
           <Link className="btn primary grow" to={`/r/${run.routeId}`}>
