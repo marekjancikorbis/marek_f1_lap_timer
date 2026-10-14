@@ -31,7 +31,7 @@ export function LapCard({ post, route, canCompare, showAuthor = true }: Props) {
       </Link>
       <Link to={`/lap/${post.id}`} className="lap-card-map" aria-label={`Lap detail, ${post.routeName}`}>
         {route ? (
-          <RouteShape route={route} colours={post.sectorColours} height={168} label={`${post.routeName}, sectors coloured by this lap`} />
+          <RouteShape map route={route} colours={post.sectorColours} height={168} label={`${post.routeName}, sectors coloured by this lap`} />
         ) : (
           <div className="skeleton" style={{ height: 168 }} />
         )}

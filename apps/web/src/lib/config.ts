@@ -22,6 +22,8 @@ export const MAPBOX_STYLE = 'mapbox://styles/mapbox/dark-v11';
 export const USAGE_CAP = {
   mapLoads: 45_000,
   directions: 90_000,
+  /** Map pictures under route cards (Static Images API, 50k free a month). */
+  staticMaps: 45_000,
 };
 
 /** Day of the month (UTC) on which the usage period resets. */

@@ -137,7 +137,7 @@
 .lap-card-map {
   display: block;
   margin: 0 -16px;
-  padding: 6px 12px;
+  padding: 0;
   background: var(--tarmac-2);
   border-top: 1px solid var(--hairline);
   border-bottom: 1px solid var(--hairline);
@@ -1307,4 +1307,38 @@
     padding-left: 24px;
     padding-right: 24px;
   }
+}
+
+/* Route line over a static map picture (RouteShape map mode). */
+.route-map-pic {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: var(--tarmac-2);
+}
+
+.route-map-pic img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: route-map-in 200ms ease-out;
+}
+
+@keyframes route-map-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-map-pic img {
+    animation: none;
+  }
+}
+
+/* Full-bleed in the feed card, between its hairlines. */
+.lap-card-map .route-map-pic {
+  border-radius: 0;
 }

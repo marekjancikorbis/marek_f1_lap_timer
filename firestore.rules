@@ -227,28 +227,30 @@ service cloud.firestore {
 
     // ------------------------------------------------------------ Mapbox usage cap
 
-    // One document per billing period. Counters only ever go up by one, and
-    // never past the cap: 45,000 map loads, 90,000 Directions requests.
+    // One document per billing period. Each write bumps exactly one counter by
+    // one and never past its cap: 45,000 map loads, 90,000 Directions requests,
+    // 45,000 static card maps.
     match /usage/{period} {
       allow read: if signedIn();
       function n(data, key) {
         return data.get(key, 0);
       }
+      function bumped(key, cap) {
+        let others = ['mapLoads', 'directions', 'staticMaps'].removeAll([key]);
+        return n(request.resource.data, key) == n(resource.data, key) + 1
+          && n(request.resource.data, key) <= cap
+          && n(request.resource.data, others[0]) == n(resource.data, others[0])
+          && n(request.resource.data, others[1]) == n(resource.data, others[1]);
+      }
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['mapLoads', 'directions'])
+        && request.resource.data.keys().hasOnly(['mapLoads', 'directions', 'staticMaps'])
         && n(request.resource.data, 'mapLoads') in [0, 1]
         && n(request.resource.data, 'directions') in [0, 1]
-        && n(request.resource.data, 'mapLoads') + n(request.resource.data, 'directions') == 1;
+        && n(request.resource.data, 'staticMaps') in [0, 1]
+        && n(request.resource.data, 'mapLoads') + n(request.resource.data, 'directions') + n(request.resource.data, 'staticMaps') == 1;
       allow update: if signedIn()
-        && request.resource.data.keys().hasOnly(['mapLoads', 'directions'])
-        && (
-          (n(request.resource.data, 'mapLoads') == n(resource.data, 'mapLoads') + 1
-            && n(request.resource.data, 'directions') == n(resource.data, 'directions')
-            && n(request.resource.data, 'mapLoads') <= 45000)
-          || (n(request.resource.data, 'directions') == n(resource.data, 'directions') + 1
-            && n(request.resource.data, 'mapLoads') == n(resource.data, 'mapLoads')
-            && n(request.resource.data, 'directions') <= 90000)
-        );
+        && request.resource.data.keys().hasOnly(['mapLoads', 'directions', 'staticMaps'])
+        && (bumped('mapLoads', 45000) || bumped('directions', 90000) || bumped('staticMaps', 45000));
     }
   }
 }

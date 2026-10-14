@@ -2,14 +2,14 @@ import { doc, getDoc, increment, runTransaction, setDoc } from 'firebase/firesto
 import { USAGE_CAP, USAGE_RESET_DAY } from './config';
 import { db } from './firebase';
 
-export type UsageKind = 'mapLoads' | 'directions';
+export type UsageKind = 'mapLoads' | 'directions' | 'staticMaps';
 
 export class UsageLimitError extends Error {
   constructor(
     readonly kind: UsageKind,
     readonly resetsAt: Date,
   ) {
-    super(`Monthly ${kind === 'mapLoads' ? 'map' : 'routing'} limit reached`);
+    super(`Monthly ${kind === 'directions' ? 'routing' : 'map'} limit reached`);
   }
 }
 
@@ -36,7 +36,9 @@ export function periodKey(now = new Date()): string {
 export interface UsageState {
   mapLoads: number;
   directions: number;
-  exhausted: UsageKind | null;
+  staticMaps: number;
+  /** Only the live map and routing lock the app; out of card pictures, cards just go plain. */
+  exhausted: Exclude<UsageKind, 'staticMaps'> | null;
   resetsAt: Date;
 }
 
@@ -51,17 +53,22 @@ export function onUsage(fn: (u: UsageState) => void): () => void {
   };
 }
 
-function publish(mapLoads: number, directions: number) {
-  const exhausted: UsageKind | null =
+type Counts = Record<UsageKind, number>;
+
+function counts(raw: Partial<Counts> | undefined): Counts {
+  return { mapLoads: raw?.mapLoads ?? 0, directions: raw?.directions ?? 0, staticMaps: raw?.staticMaps ?? 0 };
+}
+
+function publish({ mapLoads, directions, staticMaps }: Counts) {
+  const exhausted =
     mapLoads >= USAGE_CAP.mapLoads ? 'mapLoads' : directions >= USAGE_CAP.directions ? 'directions' : null;
-  last = { mapLoads, directions, exhausted, resetsAt: nextReset() };
+  last = { mapLoads, directions, staticMaps, exhausted, resetsAt: nextReset() };
   listeners.forEach((l) => l(last!));
 }
 
 export async function readUsage(): Promise<UsageState> {
   const snap = await getDoc(doc(db, 'usage', periodKey()));
-  const d = snap.data() ?? { mapLoads: 0, directions: 0 };
-  publish(d.mapLoads ?? 0, d.directions ?? 0);
+  publish(counts(snap.data()));
   return last!;
 }
 
@@ -76,17 +83,16 @@ export async function consume(kind: UsageKind): Promise<void> {
     const next = await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists()) {
-        const fresh = { mapLoads: kind === 'mapLoads' ? 1 : 0, directions: kind === 'directions' ? 1 : 0 };
+        const fresh = { ...counts(undefined), [kind]: 1 };
         tx.set(ref, fresh);
         return fresh;
       }
-      const raw = snap.data();
-      const d = { mapLoads: (raw.mapLoads as number) ?? 0, directions: (raw.directions as number) ?? 0 };
+      const d = counts(snap.data());
       if (d[kind] >= USAGE_CAP[kind]) throw new UsageLimitError(kind, nextReset());
       tx.update(ref, { [kind]: increment(1) });
       return { ...d, [kind]: d[kind] + 1 };
     });
-    publish(next.mapLoads, next.directions);
+    publish(next);
   } catch (e) {
     if (e instanceof UsageLimitError) {
       await readUsage().catch(() => undefined);

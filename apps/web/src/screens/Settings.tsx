@@ -162,6 +162,7 @@ export default function Settings() {
           <div className="panel stack">
             <UsageBar label="Map loads" value={usage.mapLoads} cap={USAGE_CAP.mapLoads} />
             <UsageBar label="Road snapping" value={usage.directions} cap={USAGE_CAP.directions} />
+            <UsageBar label="Route card maps" value={usage.staticMaps} cap={USAGE_CAP.staticMaps} />
             <small className="mute">
               Resets {usage.resetsAt.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}. The app pauses at the limit to stay free.
             </small>

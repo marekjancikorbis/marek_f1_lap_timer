@@ -87,7 +87,7 @@ export default function MyRoutes() {
               {own.map((r) => (
                 <article key={r.id} className="panel route-tile">
                   <Link to={`/r/${r.id}`} style={{ textDecoration: 'none' }}>
-                    <RouteShape route={r} height={120} />
+                    <RouteShape map route={r} height={120} />
                     <div className="row between" style={{ marginTop: 10 }}>
                       <h3>{r.name}</h3>
                       <span className="num" style={{ fontSize: 20 }}>

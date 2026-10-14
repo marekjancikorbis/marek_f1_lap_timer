@@ -209,4 +209,13 @@ describe('follows and the Mapbox usage cap', () => {
     await assertSucceeds(updateDoc(u, { mapLoads: 45_000 }));
     await assertFails(updateDoc(u, { mapLoads: 45_001 }));
   });
+
+  it('card map pictures have their own counter and cap', async () => {
+    await seed({ 'usage/2026-10': { mapLoads: 3, directions: 5, staticMaps: 44_999 } });
+    const u = doc(db('a'), 'usage/2026-10');
+    await assertFails(updateDoc(u, { staticMaps: 45_000, mapLoads: 4 }));
+    await assertSucceeds(updateDoc(u, { staticMaps: 45_000 }));
+    await assertFails(updateDoc(u, { staticMaps: 45_001 }));
+    await assertSucceeds(setDoc(doc(db('a'), 'usage/2026-11'), { mapLoads: 0, directions: 0, staticMaps: 1 }));
+  });
 });

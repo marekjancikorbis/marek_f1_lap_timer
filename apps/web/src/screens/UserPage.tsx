@@ -154,7 +154,7 @@ export default function UserPage() {
         <>
           <h2 className="section-title">Public route</h2>
           <Link to={`/r/${publicRoute.id}`} className="panel route-tile">
-            <RouteShape route={publicRoute} height={120} />
+            <RouteShape map route={publicRoute} height={120} />
             <div className="row between" style={{ marginTop: 8 }}>
               <strong>{publicRoute.name}</strong>
               <span className="mute">Leaderboard →</span>
