@@ -305,6 +305,16 @@ describe('public route limits and the Official label', () => {
     await assertSucceeds(setDoc(doc(db('owner'), 'routes/o1'), route('owner', { official: true })));
   });
 
+  it('admins can make a published creator route Official, and the creator can still edit it', async () => {
+    await seed({ 'users/creator': { username: 'creator', publicRouteIds: ['c1'] }, 'routes/c1': route('creator', { isPublic: true }), 'routes/c2': route('creator') });
+    await assertFails(updateDoc(doc(db('creator'), 'routes/c1'), { official: true }));
+    await assertFails(updateDoc(doc(db('admin'), 'routes/c2'), { official: true })); // not published
+    await assertSucceeds(updateDoc(doc(db('admin'), 'routes/c1'), { official: true }));
+    await assertSucceeds(updateDoc(doc(db('creator'), 'routes/c1'), { name: 'Renamed' }));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/c1'), { official: false }));
+    await assertSucceeds(updateDoc(doc(db('admin'), 'routes/c1'), { official: false }));
+  });
+
   it('admins cannot moderate admin or owner routes; the owner can', async () => {
     await seed({ 'routes/o1': route('owner', { isPublic: true, official: true }), 'routes/a1': route('admin', { isPublic: true, official: true }) });
     await assertFails(updateDoc(doc(db('admin'), 'routes/o1'), { hidden: true }));

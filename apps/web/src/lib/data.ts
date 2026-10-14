@@ -335,7 +335,7 @@ export async function setRoutePublic(profile: Profile, role: Role, own: Route[],
     }
     batch.update(doc(db, 'routes', route.id), {
       isPublic: true,
-      official: role === 'admin' || role === 'owner',
+      official: !!route.official || role === 'admin' || role === 'owner', // keeps a label an admin gave
       publishedAt: route.publishedAt ?? serverTimestamp(),
     });
     batch.update(userRef, { publicRouteIds: [...ids.filter((id) => id !== route.id), route.id] });
@@ -352,7 +352,7 @@ export async function markRouteHasRuns(route: Route) {
 }
 
 /** Admin moderation. Hiding a route also hides its posts from feeds and boards. */
-export async function moderateRoute(routeId: string, change: { isPublic?: boolean; hidden?: boolean }) {
+export async function moderateRoute(routeId: string, change: { isPublic?: boolean; hidden?: boolean; official?: boolean }) {
   await updateDoc(doc(db, 'routes', routeId), change);
   if (change.hidden !== undefined) {
     const posts = await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)));

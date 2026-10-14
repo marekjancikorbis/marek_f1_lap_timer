@@ -15,7 +15,7 @@ import {
   setCreator,
   type RequestKind,
 } from '../lib/data';
-import { formatLap, routeAuthor, timeAgo } from '../lib/format';
+import { formatLap, timeAgo } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { AuditEntry, CreatorRequest, Post, Profile, Role, Route } from '../lib/types';
 
@@ -216,7 +216,7 @@ function Routes() {
     adminAllPublicRoutes().then(setRoutes).catch((e) => toast(errorMessage(e), 'error'));
   }, [toast]);
 
-  async function act(r: Route, change: { isPublic?: boolean; hidden?: boolean }, msg: string) {
+  async function act(r: Route, change: { isPublic?: boolean; hidden?: boolean; official?: boolean }, msg: string) {
     try {
       await moderateRoute(r.id, change);
       setRoutes((rs) => rs?.map((x) => (x.id === r.id ? { ...x, ...change } : x)) ?? null);
@@ -242,12 +242,21 @@ function Routes() {
             </span>
           </div>
           <span className="mute" style={{ fontSize: 14 }}>
-            by {routeAuthor(r)}
+            by {r.ownerName}
+            {r.official && ' · Official'}
           </span>
           <div className="row" style={{ marginTop: 4 }}>
             {r.isPublic && (
               <button className="btn sm" onClick={() => act(r, { isPublic: false }, 'Route unpublished')}>
                 Unpublish
+              </button>
+            )}
+            {r.isPublic && (
+              <button
+                className="btn sm"
+                onClick={() => act(r, { official: !r.official }, r.official ? 'Official label removed' : 'Route is now Official')}
+              >
+                {r.official ? 'Remove Official' : 'Make Official'}
               </button>
             )}
             <button className="btn sm" onClick={() => act(r, { hidden: !r.hidden }, r.hidden ? 'Route visible again' : 'Route hidden')}>

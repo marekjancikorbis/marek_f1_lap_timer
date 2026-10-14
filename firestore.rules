@@ -216,7 +216,8 @@ service cloud.firestore {
         && (!changedKeys().hasAny(['coords', 'lengthM', 'boundaries', 'sectorLengthM', 'isLoop', 'startType'])
           || (resource.data.hasRuns == false && resource.data.publishedAt == null))
         && (request.resource.data.hasRuns == true || resource.data.hasRuns == false)
-        && officialOk(request.resource.data)
+        // Only admins set the label; a creator route an admin made Official stays editable by its creator.
+        && (!changedKeys().hasAny(['official']) || roleOf(uid()) in ['admin', 'owner'])
         && (request.resource.data.isPublic == false
           || (routeId in getAfter(/databases/$(database)/documents/users/$(uid())).data.get('publicRouteIds', [])
             // Going public also needs the list within the current limit: a removed
@@ -230,12 +231,14 @@ service cloud.firestore {
 
       // Moderation: admins unpublish or hide other people's routes, but not
       // another admin's or the owner's; the owner moderates any. Taking away
-      // the Official label is part of removing an admin.
+      // the Official label is part of removing an admin. Admins may also make a
+      // published creator route Official; its runs and posts stay as they are.
       allow update: if isAdmin() && onlyChanges(['isPublic', 'hidden', 'official'])
         && (isOwner() || !(roleOf(resource.data.ownerId) in ['admin', 'owner']))
         && (request.resource.data.isPublic == false || request.resource.data.isPublic == resource.data.isPublic)
         && (request.resource.data.get('official', false) == false
-          || request.resource.data.get('official', false) == resource.data.get('official', false));
+          || request.resource.data.get('official', false) == resource.data.get('official', false)
+          || (resource.data.isPublic == true && request.resource.data.isPublic == true));
 
       allow delete: if signedIn() && resource.data.ownerId == uid()
         && resource.data.hasRuns == false && resource.data.isPublic == false;
