@@ -83,7 +83,9 @@ function Gate() {
 function Shell() {
   const { isAdmin } = useSession();
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [pathname]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return (
     <div className="app">
       <Suspense fallback={<Loading />}>
