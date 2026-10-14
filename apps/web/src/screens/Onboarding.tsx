@@ -5,7 +5,7 @@ import { errorMessage } from '../components/ui';
 
 export function Onboarding() {
   const { user, signOut } = useSession();
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(() => suggestUsername(user?.displayName));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const valid = USERNAME_RE.test(username);
@@ -64,4 +64,16 @@ export function Onboarding() {
       </form>
     </main>
   );
+}
+
+/** "Jana Nováková" → "Jana_Novakova": a starting point from the Google name, if it makes a valid username. */
+export function suggestUsername(name: string | null | undefined): string {
+  const s = (name ?? '')
+    // NFD splits "á" into "a" + accent; the accent goes with the other non-username characters below.
+    .normalize('NFD')
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/[^A-Za-z0-9_.]/g, '')
+    .slice(0, 20);
+  return USERNAME_RE.test(s) ? s : '';
 }

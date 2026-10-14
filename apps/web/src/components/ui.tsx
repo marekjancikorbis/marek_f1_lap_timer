@@ -227,6 +227,9 @@ export function errorMessage(e: unknown): string {
   if (code === 'auth/invalid-email') return 'That email address looks wrong.';
   if (code === 'auth/too-many-requests') return 'Too many attempts. Wait a minute and try again.';
   if (code === 'auth/popup-closed-by-user') return 'Sign-in window was closed.';
+  if (code === 'auth/account-exists-with-different-credential')
+    return 'This email already has an account with a password. Sign in with email and password.';
+  if (code === 'auth/unauthorized-domain') return "Sign-in isn't allowed from this web address.";
   if (code === 'auth/operation-not-allowed' || code === 'auth/configuration-not-found')
     return 'This sign-in method is not enabled yet.';
   if (code.includes('failed-precondition')) return 'The database is still building an index. Try again in a minute.';

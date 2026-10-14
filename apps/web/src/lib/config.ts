@@ -1,6 +1,8 @@
 export const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyBbPa-6GkJKEDadreaNRpT6iTSvprPmIFk',
-  authDomain: 'marek-f1-lap-timer.firebaseapp.com',
+  // The app's own domain, so Google sign-in by redirect works in Safari and installed
+  // apps (third-party storage is blocked across domains). Hosting serves /__/auth/.
+  authDomain: 'marek-f1-lap-timer.web.app',
   projectId: 'marek-f1-lap-timer',
   storageBucket: 'marek-f1-lap-timer.firebasestorage.app',
   messagingSenderId: '261253288488',
