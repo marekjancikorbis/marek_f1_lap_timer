@@ -173,7 +173,9 @@ function useElapsed(s: DriveState, ctl: DriveController) {
     let id = 0;
     const loop = () => {
       const e = ctl.timer.elapsedAt(Date.now());
-      if (ref.current) ref.current.textContent = formatLap(e ?? 0).replace(/(\.\d)\d\d$/, '$1');
+      const text = formatLap(e ?? 0).replace(/(\.\d)\d\d$/, '$1');
+      // Tenths change 10×/s; skipping identical writes saves layout work (and battery) at 60 fps.
+      if (ref.current && ref.current.textContent !== text) ref.current.textContent = text;
       id = requestAnimationFrame(loop);
     };
     id = requestAnimationFrame(loop);
