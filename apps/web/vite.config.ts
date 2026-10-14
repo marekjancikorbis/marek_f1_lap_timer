@@ -26,6 +26,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: '/index.html',
+        // Firebase's own pages (Google sign-in handler and iframe) must reach Hosting, not the app shell.
+        navigateFallbackDenylist: [/^\/__\//],
       },
     }),
   ],
