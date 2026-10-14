@@ -246,6 +246,19 @@ describe('standing start', () => {
     expect(result.countdownS).toBe(5);
   });
 
+  it('never reports a reaction before GO from the Doppler estimate alone (no accelerometer)', () => {
+    const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'standing', countdownS: 5 });
+    run(timer, wander(T0, T0 + 3000));
+    const goT = timer.startCountdown(T0 + 4000)!;
+    const ev: TimerEvent[] = [];
+    ev.push(...run(timer, wander(T0 + 5000, goT)));
+    // A hard 6 m/s² launch 0.2 s after GO: the 3 m/s² back-dating would land before GO.
+    ev.push(...run(timer, launch(goT + 200, goT + 60_000, 6)));
+    const reaction = of(ev, 'reaction')[0];
+    expect(reaction.reactionMs).toBeGreaterThanOrEqual(0);
+    expect(of(ev, 'jumpStart')).toHaveLength(0);
+  });
+
   it('ignores 6 m of position wander with zero Doppler speed (no false penalty)', () => {
     const { timer, goT } = setup();
     const ev = run(timer, wander(T0 + 5000, goT + 3000, 9));

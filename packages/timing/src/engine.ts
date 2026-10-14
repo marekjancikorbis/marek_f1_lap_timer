@@ -449,8 +449,10 @@ export class LapTimer {
     if (this.accelMotionT != null) return this.accelMotionT;
     const f = this.dopplerMotionFix();
     if (!f) return null;
-    // Back-date from the first moving fix assuming ~3 m/s² launch.
-    return f.t - ((f.speed as number) / 3) * 1000;
+    // Back-date from the first moving fix assuming ~3 m/s² launch. Only an estimate,
+    // so it never claims a start before GO: that needs accelerometer evidence.
+    const est = f.t - ((f.speed as number) / 3) * 1000;
+    return this.goT != null ? Math.max(est, this.goT) : est;
   }
 
   private maybeReaction(out: TimerEvent[]): void {

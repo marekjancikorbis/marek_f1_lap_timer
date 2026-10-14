@@ -291,13 +291,18 @@ export class DriveController {
       if (!launched) {
         if (this.state.goT == null || Date.now() < this.state.goT + 300) {
           this.onFix({ ...f, t: Date.now(), speed: 0 });
+          // Gravity only: the at-rest baseline the jump-start detector needs.
+          this.handle(this.timer.motion({ t: Date.now(), x: 0, y: 0, z: 9.81 }));
           this.replayTimer = window.setTimeout(step, 1000);
           return;
         }
         launched = true;
         while (i < fixes.length && (fixes[i].speed ?? 0) === 0) i++;
-        offset = Date.now() - fixes[i].t + 0;
+        // The launch happens now, at the last stationary fix; the first moving fix follows one interval later.
+        offset = Date.now() - fixes[i - 1].t;
         this.simulateLaunchMotion();
+        this.replayTimer = window.setTimeout(step, Math.max(0, fixes[i].t + offset - Date.now()));
+        return;
       }
       const fix = { ...fixes[i], t: fixes[i].t + offset };
       i++;
