@@ -14,7 +14,11 @@ beforeAll(async () => {
   });
 });
 afterAll(() => env.cleanup());
-beforeEach(() => env.clearFirestore());
+// Every test user has a profile whose username is their uid, as route and post fixtures assume.
+beforeEach(async () => {
+  await env.clearFirestore();
+  await seed(Object.fromEntries(['driver', 'creator', 'admin', 'owner'].map((u) => [`users/${u}`, { username: u, publicRouteIds: [] }])));
+});
 
 const db = (uid: string) => env.authenticatedContext(uid).firestore();
 const anon = () => env.unauthenticatedContext().firestore();
@@ -57,6 +61,8 @@ const run = (extra: object = {}) => ({
 
 const post = (extra: object = {}) => ({
   userId: 'driver',
+  username: 'driver',
+  routeName: 'Stage 1',
   routeId: 'pub',
   totalMs: 60_000,
   splitTimesMs: [20_000, 40_000, 60_000],
@@ -84,12 +90,14 @@ describe('route creation needs creator access (plan phase 2 exit criterion)', ()
     const c = db('creator');
     await assertFails(setDoc(doc(c, 'routes/r1'), route('creator', { isPublic: true })));
     await assertFails(setDoc(doc(c, 'routes/r2'), route('someone-else')));
+    await assertFails(setDoc(doc(c, 'routes/r5'), route('creator', { ownerName: 'admin' })));
     await assertFails(setDoc(doc(c, 'routes/r3'), route('creator', { sectorLengthM: 30 })));
     await assertFails(setDoc(doc(c, 'routes/r4'), route('creator', { name: 'x'.repeat(61) })));
   });
 
   it('caps the name length on rename too', async () => {
     await seed({ 'routes/r1': route('creator') });
+    await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { ownerName: 'admin' }));
     await assertSucceeds(updateDoc(doc(db('creator'), 'routes/r1'), { name: 'Stage 2' }));
     await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { name: 'x'.repeat(61) }));
   });
@@ -180,6 +188,11 @@ describe('posting laps', () => {
     await assertFails(setDoc(doc(db('stranger'), 'posts/run1'), post({ userId: 'stranger' })));
   });
 
+  it("rejects a post under someone else's name or a made-up route name", async () => {
+    await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post({ username: 'admin' })));
+    await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post({ routeName: 'Fake stage' })));
+  });
+
   it('caps caption and car length on edit as well as on create', async () => {
     await seed({ 'posts/run1': post() });
     await assertSucceeds(updateDoc(doc(db('driver'), 'posts/run1'), { caption: 'new caption' }));
@@ -261,7 +274,7 @@ describe('owner, admins and admin requests', () => {
   });
 
   it('only creators can ask to be admin, and only the owner decides', async () => {
-    const req = { username: 'x', note: '', status: 'pending', createdAt: null, decidedBy: null, decidedAt: null };
+    const req = { username: 'creator', note: '', status: 'pending', createdAt: null, decidedBy: null, decidedAt: null };
     await assertFails(setDoc(doc(db('driver'), 'adminRequests/driver'), req));
     await assertSucceeds(setDoc(doc(db('creator'), 'adminRequests/creator'), req));
     await assertFails(getDoc(doc(db('admin'), 'adminRequests/creator')));

@@ -46,6 +46,12 @@ service cloud.firestore {
       return data.get('official', false) == false || roleOf(uid()) in ['admin', 'owner'];
     }
 
+    // Names copied onto routes, posts and requests must be the writer's own
+    // username (usernames never change), or anyone could post as anyone.
+    function myName() {
+      return get(/databases/$(database)/documents/users/$(uid())).data.username;
+    }
+
     function changedKeys() {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
@@ -159,6 +165,7 @@ service cloud.firestore {
       allow read: if signedIn() && (userId == uid() || isAdmin());
       allow create: if signedIn() && userId == uid()
         && request.resource.data.status == 'pending'
+        && request.resource.data.username == myName()
         && roleOf(uid()) == 'driver'
         && (!('note' in request.resource.data) || request.resource.data.note.size() <= 500);
       // A rejected driver can ask again.
@@ -175,6 +182,7 @@ service cloud.firestore {
       allow read: if signedIn() && (userId == uid() || isOwner());
       allow create: if signedIn() && userId == uid()
         && request.resource.data.status == 'pending'
+        && request.resource.data.username == myName()
         && roleOf(uid()) == 'creator'
         && (!('note' in request.resource.data) || request.resource.data.note.size() <= 500);
       allow update: if (signedIn() && userId == uid()
@@ -196,6 +204,7 @@ service cloud.firestore {
 
       allow create: if canCreate()
         && request.resource.data.ownerId == uid()
+        && request.resource.data.ownerName == myName()
         && officialOk(request.resource.data)
         && request.resource.data.isPublic == false
         && request.resource.data.hidden == false
@@ -211,6 +220,7 @@ service cloud.firestore {
       // driven the route (it has runs, or it has ever been published).
       allow update: if canCreate() && resource.data.ownerId == uid()
         && request.resource.data.ownerId == uid()
+        && request.resource.data.ownerName == resource.data.ownerName
         && request.resource.data.hidden == resource.data.hidden
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
         && (!changedKeys().hasAny(['coords', 'lengthM', 'boundaries', 'sectorLengthM', 'isLoop', 'startType'])
@@ -259,6 +269,8 @@ service cloud.firestore {
         let run = get(/databases/$(database)/documents/users/$(uid())/runs/$(runId)).data;
         let route = get(/databases/$(database)/documents/routes/$(p.routeId)).data;
         return p.userId == uid()
+          && p.username == myName()
+          && p.routeName == route.name
           && run.valid == true
           && run.get('replay', false) == false
           && run.routeId == p.routeId
