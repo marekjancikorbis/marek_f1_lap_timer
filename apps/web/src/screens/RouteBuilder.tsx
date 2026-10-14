@@ -37,6 +37,9 @@ export default function RouteBuilder() {
       () => setCenter([16.6, 49.2]),
       { timeout: 4000, maximumAge: 600000 },
     );
+    // The timeout only starts once permission is answered; an ignored prompt would leave no map.
+    const fallback = window.setTimeout(() => setCenter((c) => c ?? [16.6, 49.2]), 5000);
+    return () => window.clearTimeout(fallback);
   }, []);
 
   const lengthM = useMemo(() => (snapped.length > 1 ? polylineLengthM(snapped) : 0), [snapped]);

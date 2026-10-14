@@ -33,6 +33,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
     let map: mapboxgl.Map | null = null;
     let cleanup: void | (() => void);
     let cancelled = false;
+    let giveUp = 0;
     (async () => {
       try {
         await consume('mapLoads');
@@ -41,21 +42,25 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
         return;
       }
       if (cancelled || !el.current) return;
+      // Start from a centre and fit the bounds once loaded: passing bounds to the constructor
+      // throws "failed to invert matrix" in Mapbox GL 3, so 'load' never fired.
       map = new mapboxgl.Map({
         container: el.current,
         style: MAPBOX_STYLE,
-        bounds: bounds ?? undefined,
-        fitBoundsOptions: { padding: 40 },
-        center: bounds ? undefined : center,
-        zoom: bounds ? undefined : zoom,
+        center: bounds ? [(bounds[0] + bounds[2]) / 2, (bounds[1] + bounds[3]) / 2] : center,
+        zoom,
         interactive,
         attributionControl: false,
         cooperativeGestures: false,
         pitchWithRotate: false,
       });
       map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
+      // Never spin forever: no signal, blocked token or a Mapbox failure ends here.
+      giveUp = window.setTimeout(() => !cancelled && setState((s) => (s === 'loading' ? 'error' : s)), 20_000);
       map.on('load', () => {
         if (cancelled || !map) return;
+        window.clearTimeout(giveUp);
+        if (bounds) map.fitBounds(bounds, { padding: 40, duration: 0 });
         setState('ready');
         cleanup = readyRef.current(map);
       });
@@ -65,6 +70,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(giveUp);
       if (typeof cleanup === 'function') cleanup();
       map?.remove();
     };
