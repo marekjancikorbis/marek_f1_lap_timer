@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Loading, TabBar, ToastProvider } from './components/ui';
 import { SessionProvider, useSession } from './lib/session';
@@ -27,14 +27,43 @@ const Admin = lazy(() => import('./screens/Admin'));
 
 export function App() {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <SessionProvider>
-          <Gate />
-        </SessionProvider>
-      </ToastProvider>
-    </BrowserRouter>
+    <Crashed>
+      <BrowserRouter>
+        <ToastProvider>
+          <SessionProvider>
+            <Gate />
+          </SessionProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </Crashed>
   );
+}
+
+/**
+ * Last resort instead of a blank screen. Also catches a stale tab after a deploy,
+ * whose old lazy chunks are gone: reloading fetches the new build.
+ */
+class Crashed extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <main className="screen" role="alert">
+        <div className="empty">
+          <h2>Something went wrong</h2>
+          <p>Your saved laps are safe. Reload to carry on.</p>
+          <button className="btn primary" onClick={() => location.reload()}>
+            Reload
+          </button>
+        </div>
+      </main>
+    );
+  }
 }
 
 function Gate() {
