@@ -1,12 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PostSheet } from '../components/PostSheet';
-import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
+import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
 import { deleteRun, getRoute, routePosts, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
 import { coloursFor, pbsBefore, racedSplits, recordsExcluding } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
+
+type SortBy = 'date' | 'time';
+const SORT_KEY = 'my-laps-sort';
+
+function loadSort(): SortBy {
+  try {
+    return localStorage.getItem(SORT_KEY) === 'time' ? 'time' : 'date';
+  } catch {
+    return 'date';
+  }
+}
 
 export default function RunHistory() {
   const { routeId = '' } = useParams();
@@ -18,6 +29,7 @@ export default function RunHistory() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [posting, setPosting] = useState<Run | null>(null);
+  const [sort, setSort] = useState<SortBy>(loadSort);
 
   useEffect(() => {
     (async () => {
@@ -30,6 +42,25 @@ export default function RunHistory() {
       setRuns([]);
     });
   }, [routeId, profile.id, toast]);
+
+  // Newest first, or fastest first with invalid laps (no comparable time) at the end.
+  const sorted = useMemo(
+    () =>
+      runs &&
+      [...runs].sort((a, b) =>
+        sort === 'date' ? b.startedAt - a.startedAt : Number(b.valid) - Number(a.valid) || a.totalMs - b.totalMs || b.startedAt - a.startedAt,
+      ),
+    [runs, sort],
+  );
+
+  function changeSort(v: SortBy) {
+    setSort(v);
+    try {
+      localStorage.setItem(SORT_KEY, v);
+    } catch {
+      /* private mode: just not remembered */
+    }
+  }
 
   const pbId = useMemo(() => runs?.filter((r) => r.valid).sort((a, b) => a.totalMs - b.totalMs)[0]?.id, [runs]);
 
@@ -76,7 +107,16 @@ export default function RunHistory() {
         <Empty title="No laps yet" action={<Link className="btn primary" to={`/drive/${routeId}`}>Drive it</Link>} />
       ) : (
         <div className="stack" style={{ marginTop: 16, gap: 8 }}>
-          {runs.map((run) => (
+          <Segmented
+            label="Sort laps"
+            value={sort}
+            onChange={changeSort}
+            options={[
+              { value: 'date', label: 'Newest' },
+              { value: 'time', label: 'Fastest' },
+            ]}
+          />
+          {(sorted ?? []).map((run) => (
             <article key={run.id} className={`run-row ${selected.includes(run.id) ? 'selected' : ''}`}>
               <button className="run-select" onClick={() => toggle(run.id)} aria-pressed={selected.includes(run.id)} aria-label={`Select lap ${formatLap(run.totalMs)}`}>
                 <span className="check" />
@@ -91,6 +131,7 @@ export default function RunHistory() {
                     {run.posted && <span className="badge purple">Posted</span>}
                     {run.replay && <span className="badge yellow">Sim</span>}
                     {run.penaltyMs > 0 && <span className="badge red">+5 s</span>}
+                    {!run.valid && <span className="badge outline">Invalid</span>}
                   </span>
                 </div>
                 <SectorStrip colours={colours(run)} height={5} />
