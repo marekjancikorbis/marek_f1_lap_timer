@@ -21,13 +21,29 @@ service cloud.firestore {
         : 'driver';
     }
 
-    function isAdmin() {
-      return signedIn() && roleOf(uid()) == 'admin';
+    // The owner is an admin who also decides admin requests. Set in the console only.
+    function isOwner() {
+      return signedIn() && roleOf(uid()) == 'owner';
     }
 
-    // Creators and admins may build routes.
+    function isAdmin() {
+      return signedIn() && roleOf(uid()) in ['admin', 'owner'];
+    }
+
+    // Creators, admins and the owner may build routes.
     function canCreate() {
-      return signedIn() && roleOf(uid()) in ['creator', 'admin'];
+      return signedIn() && roleOf(uid()) in ['creator', 'admin', 'owner'];
+    }
+
+    // Public routes allowed at once: creator 1, admin 5, owner unlimited.
+    function publicLimit() {
+      let r = roleOf(uid());
+      return r == 'owner' ? 1000 : r == 'admin' ? 5 : r == 'creator' ? 1 : 0;
+    }
+
+    // Admin and owner routes are shown as Official instead of a username.
+    function officialOk(data) {
+      return data.get('official', false) == false || roleOf(uid()) in ['admin', 'owner'];
     }
 
     function changedKeys() {
@@ -44,32 +60,36 @@ service cloud.firestore {
       allow read: if signedIn();
 
       allow create: if signedIn() && userId == uid()
-        && request.resource.data.keys().hasOnly(['username', 'usernameLower', 'createdAt', 'publicRouteId', 'countdownS', 'acceptedTermsAt', 'avatarHue'])
+        && request.resource.data.keys().hasOnly(['username', 'usernameLower', 'createdAt', 'publicRouteIds', 'countdownS', 'acceptedTermsAt', 'avatarHue'])
         && request.resource.data.username is string
         && request.resource.data.username.matches('^[A-Za-z0-9_.]{3,20}$')
         && request.resource.data.usernameLower == request.resource.data.username.lower()
-        && request.resource.data.publicRouteId == null
+        && request.resource.data.publicRouteIds == []
         // Username claimed in the same batch.
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid();
 
       allow update: if signedIn() && userId == uid()
-        && onlyChanges(['countdownS', 'acceptedTermsAt', 'avatarHue', 'publicRouteId'])
-        && publicRouteChangeOk();
+        && onlyChanges(['countdownS', 'acceptedTermsAt', 'avatarHue', 'publicRouteIds'])
+        && publicRoutesOk();
 
-      // Pointing publicRouteId at a route requires that route to be yours and
-      // public after this write; the route it replaces must become private.
-      // Together with the route rules this keeps one public route per user.
-      function publicRouteChangeOk() {
-        let before = resource.data.publicRouteId;
-        let after = request.resource.data.publicRouteId;
-        return before == after || (
-          (after == null || (
-            getAfter(/databases/$(database)/documents/routes/$(after)).data.ownerId == uid()
-            && getAfter(/databases/$(database)/documents/routes/$(after)).data.isPublic == true))
-          && (before == null
-            || !existsAfter(/databases/$(database)/documents/routes/$(before))
-            || getAfter(/databases/$(database)/documents/routes/$(before)).data.isPublic == false)
-        );
+      // publicRouteIds lists the user's public routes. One route in and/or one
+      // out per write: an added route must be yours and public after the write,
+      // a removed one private, and the list stays within the role's limit
+      // (shrinking is always allowed, e.g. after losing a role).
+      function publicRoutesOk() {
+        let before = resource.data.get('publicRouteIds', []);
+        let after = request.resource.data.get('publicRouteIds', []);
+        let added = after.removeAll(before);
+        let removed = before.removeAll(after);
+        return after is list
+          && added.size() <= 1 && removed.size() <= 1
+          && (after.size() <= publicLimit() || after.size() < before.size())
+          && (added.size() == 0 || (
+            getAfter(/databases/$(database)/documents/routes/$(added[0])).data.ownerId == uid()
+            && getAfter(/databases/$(database)/documents/routes/$(added[0])).data.isPublic == true))
+          && (removed.size() == 0
+            || !existsAfter(/databases/$(database)/documents/routes/$(removed[0]))
+            || getAfter(/databases/$(database)/documents/routes/$(removed[0])).data.isPublic == false);
       }
 
       // Runs are private to their owner. Others only ever see posts.
@@ -93,24 +113,34 @@ service cloud.firestore {
 
     // ------------------------------------------------------------ roles
 
-    // Only admins grant roles, and only 'creator': admins are made in the
-    // database console, never from the app. Users read their own role.
+    // Admins hand out creator to users without a role and take it back. Only
+    // the owner makes or removes admins. Nobody changes their own role, and the
+    // owner role itself is set in the database console, never from the app.
     match /roles/{userId} {
-      // Readable by everyone signed in, for creator badges.
+      // Readable by everyone signed in, for badges.
       allow read: if signedIn();
-      allow create, update: if isAdmin()
-        && request.resource.data.role == 'creator'
-        && request.resource.data.grantedBy == uid()
-        && userId != uid()
-        && existsAfter(/databases/$(database)/documents/roleAudit/$(request.resource.data.auditId));
-      allow delete: if isAdmin() && resource.data.role == 'creator';
+      allow create: if userId != uid() && grantLogged() && (
+        (isAdmin() && request.resource.data.role == 'creator')
+        || (isOwner() && request.resource.data.role in ['creator', 'admin']));
+      allow update: if userId != uid() && grantLogged() && isOwner()
+        && resource.data.role in ['creator', 'admin']
+        && request.resource.data.role in ['creator', 'admin'];
+      allow delete: if userId != uid() && (
+        (isAdmin() && resource.data.role == 'creator')
+        || (isOwner() && resource.data.role in ['creator', 'admin']));
+
+      function grantLogged() {
+        return request.resource.data.grantedBy == uid()
+          && existsAfter(/databases/$(database)/documents/roleAudit/$(request.resource.data.auditId));
+      }
     }
 
     match /roleAudit/{id} {
       allow read: if isAdmin();
       allow create: if isAdmin()
         && request.resource.data.actorId == uid()
-        && request.resource.data.action in ['grant_creator', 'revoke_creator', 'approve_request', 'reject_request'];
+        && request.resource.data.action in ['grant_creator', 'revoke_creator', 'approve_request', 'reject_request',
+          'grant_admin', 'revoke_admin', 'approve_admin_request', 'reject_admin_request'];
     }
 
     match /creatorRequests/{userId} {
@@ -128,6 +158,22 @@ service cloud.firestore {
           && onlyChanges(['status', 'decidedBy', 'decidedAt']));
     }
 
+    // Creators ask to become admins; only the owner decides.
+    match /adminRequests/{userId} {
+      allow read: if signedIn() && (userId == uid() || isOwner());
+      allow create: if signedIn() && userId == uid()
+        && request.resource.data.status == 'pending'
+        && roleOf(uid()) == 'creator'
+        && (!('note' in request.resource.data) || request.resource.data.note.size() <= 500);
+      allow update: if (signedIn() && userId == uid()
+          && roleOf(uid()) == 'creator'
+          && resource.data.status == 'rejected'
+          && request.resource.data.status == 'pending'
+          && onlyChanges(['status', 'note', 'createdAt', 'decidedBy', 'decidedAt']))
+        || (isOwner() && request.resource.data.status in ['approved', 'rejected']
+          && onlyChanges(['status', 'decidedBy', 'decidedAt']));
+    }
+
     // ------------------------------------------------------------ routes
 
     match /routes/{routeId} {
@@ -138,6 +184,7 @@ service cloud.firestore {
 
       allow create: if canCreate()
         && request.resource.data.ownerId == uid()
+        && officialOk(request.resource.data)
         && request.resource.data.isPublic == false
         && request.resource.data.hidden == false
         && request.resource.data.hasRuns == false
@@ -157,16 +204,22 @@ service cloud.firestore {
         && (!changedKeys().hasAny(['coords', 'lengthM', 'boundaries', 'sectorLengthM', 'isLoop', 'startType'])
           || (resource.data.hasRuns == false && resource.data.publishedAt == null))
         && (request.resource.data.hasRuns == true || resource.data.hasRuns == false)
+        && officialOk(request.resource.data)
         && (request.resource.data.isPublic == false
-          || getAfter(/databases/$(database)/documents/users/$(uid())).data.publicRouteId == routeId);
+          || routeId in getAfter(/databases/$(database)/documents/users/$(uid())).data.get('publicRouteIds', []));
 
       // Revoked creators keep their routes; they can still mark runs on them.
       allow update: if signedIn() && resource.data.ownerId == uid()
         && onlyChanges(['hasRuns']) && request.resource.data.hasRuns == true;
 
-      // Moderation: admins can unpublish or hide any route.
-      allow update: if isAdmin() && onlyChanges(['isPublic', 'hidden'])
-        && (request.resource.data.isPublic == false || request.resource.data.isPublic == resource.data.isPublic);
+      // Moderation: admins unpublish or hide other people's routes, but not
+      // another admin's or the owner's; the owner moderates any. Taking away
+      // the Official label is part of removing an admin.
+      allow update: if isAdmin() && onlyChanges(['isPublic', 'hidden', 'official'])
+        && (isOwner() || !(roleOf(resource.data.ownerId) in ['admin', 'owner']))
+        && (request.resource.data.isPublic == false || request.resource.data.isPublic == resource.data.isPublic)
+        && (request.resource.data.get('official', false) == false
+          || request.resource.data.get('official', false) == resource.data.get('official', false));
 
       allow delete: if signedIn() && resource.data.ownerId == uid()
         && resource.data.hasRuns == false && resource.data.isPublic == false;

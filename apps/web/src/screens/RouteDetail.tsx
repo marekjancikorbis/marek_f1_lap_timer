@@ -86,7 +86,7 @@ export default function RouteDetail() {
         <Fact label="Type" value={route.isLoop ? 'Lap' : 'A to B'} />
       </div>
       <p className="mute" style={{ fontSize: 14, marginTop: 8 }}>
-        By <Link to={`/u/${route.ownerName}`}>{route.ownerName}</Link>
+        {route.official ? <span className="badge purple">Official</span> : <>By <Link to={`/u/${route.ownerName}`}>{route.ownerName}</Link></>}
         {!route.isPublic && ' · Private'}
       </p>
 

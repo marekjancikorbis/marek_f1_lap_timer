@@ -1,14 +1,16 @@
 import type { Timestamp } from 'firebase/firestore';
 import type { LapProfile, StartType } from '@laptimer/timing';
 
-export type Role = 'driver' | 'creator' | 'admin';
+/** owner: an admin who also decides admin requests (set in the database only). */
+export type Role = 'driver' | 'creator' | 'admin' | 'owner';
 
 export interface Profile {
   id: string;
   username: string;
   usernameLower: string;
   createdAt: Timestamp | null;
-  publicRouteId: string | null;
+  /** The user's public routes; how many is limited by role (see publicLimit). */
+  publicRouteIds?: string[];
   countdownS?: number;
   acceptedTermsAt?: Timestamp | null;
   avatarHue?: number;
@@ -38,6 +40,8 @@ export interface Route {
   createdAt: Timestamp | null;
   start: LngLat;
   bbox: [number, number, number, number];
+  /** Published by an admin or the owner: shown as Official instead of the username. */
+  official?: boolean;
   /** Waypoints the creator tapped, flat [lng, lat, ...]. */
   waypoints?: number[];
 }

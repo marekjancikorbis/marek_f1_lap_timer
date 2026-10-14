@@ -6,7 +6,7 @@ import { MapView } from '../components/MapView';
 import { errorMessage, useToast } from '../components/ui';
 import { publicRoutes } from '../lib/data';
 import { db } from '../lib/firebase';
-import { formatDistance } from '../lib/format';
+import { formatDistance, routeAuthor } from '../lib/format';
 import { lngLatPairs } from '../lib/geo';
 import type { Route } from '../lib/types';
 
@@ -190,7 +190,7 @@ export default function MapScreen() {
             <button key={r.id} className="panel map-list-item" onClick={() => nav(`/r/${r.id}`)}>
               <strong>{r.name}</strong>
               <span className="mute">
-                {formatDistance(r.lengthM)} · by {r.ownerName}
+                {formatDistance(r.lengthM)} · {routeAuthor(r)}
               </span>
             </button>
           ))}

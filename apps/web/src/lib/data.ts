@@ -48,7 +48,7 @@ export async function createProfile(uid: string, username: string): Promise<void
     username,
     usernameLower: lower,
     createdAt: serverTimestamp(),
-    publicRouteId: null,
+    publicRouteIds: [],
     avatarHue: Math.floor(Math.random() * 360),
   });
   await batch.commit();
@@ -106,8 +106,12 @@ export async function getRole(uid: string): Promise<Role> {
 
 // ================================================================ roles & admin
 
-export async function requestCreatorAccess(uid: string, username: string, note: string): Promise<void> {
-  await setDoc(doc(db, 'creatorRequests', uid), {
+/** Creator requests go to admins; admin requests (from creators) go to the owner only. */
+export type RequestKind = 'creator' | 'admin';
+const REQUESTS: Record<RequestKind, string> = { creator: 'creatorRequests', admin: 'adminRequests' };
+
+export async function requestCreatorAccess(uid: string, username: string, note: string, kind: RequestKind = 'creator'): Promise<void> {
+  await setDoc(doc(db, REQUESTS[kind], uid), {
     username,
     note: note.trim().slice(0, 500),
     status: 'pending',
@@ -117,13 +121,13 @@ export async function requestCreatorAccess(uid: string, username: string, note: 
   });
 }
 
-export async function getMyRequest(uid: string): Promise<CreatorRequest | null> {
-  const snap = await getDoc(doc(db, 'creatorRequests', uid));
+export async function getMyRequest(uid: string, kind: RequestKind = 'creator'): Promise<CreatorRequest | null> {
+  const snap = await getDoc(doc(db, REQUESTS[kind], uid));
   return snap.exists() ? withId<CreatorRequest>(snap) : null;
 }
 
-export async function listRequests(status: 'pending' | 'all' = 'pending'): Promise<CreatorRequest[]> {
-  const base = collection(db, 'creatorRequests');
+export async function listRequests(status: 'pending' | 'all' = 'pending', kind: RequestKind = 'creator'): Promise<CreatorRequest[]> {
+  const base = collection(db, REQUESTS[kind]);
   const q = status === 'pending' ? query(base, where('status', '==', 'pending'), orderBy('createdAt', 'asc')) : query(base, limit(100));
   const snap = await getDocs(q);
   return snap.docs.map((d) => withId<CreatorRequest>(d));
@@ -169,6 +173,55 @@ export async function setCreator(
   }
   if (fromRequest) {
     batch.update(doc(db, 'creatorRequests', target.id), {
+      status: fromRequest === 'approve' ? 'approved' : 'rejected',
+      decidedBy: actor.id,
+      decidedAt: serverTimestamp(),
+    });
+  }
+  await batch.commit();
+}
+
+/**
+ * Owner only: make a creator an admin (optionally deciding their request), or
+ * take admin away again. A removed admin goes back to creator: their routes
+ * lose the Official label and all but one public route become private.
+ */
+export async function setAdmin(
+  actor: Profile,
+  target: { id: string; username: string },
+  grant: boolean,
+  fromRequest?: 'approve' | 'reject',
+): Promise<void> {
+  const batch = writeBatch(db);
+  const audit = doc(collection(db, 'roleAudit'));
+  const action = fromRequest ? `${fromRequest}_admin_request` : grant ? 'grant_admin' : 'revoke_admin';
+  batch.set(audit, {
+    actorId: actor.id,
+    actorName: actor.username,
+    targetUserId: target.id,
+    targetName: target.username,
+    action,
+    createdAt: serverTimestamp(),
+  });
+  if (fromRequest !== 'reject') {
+    batch.set(doc(db, 'roles', target.id), {
+      role: grant ? 'admin' : 'creator',
+      grantedBy: actor.id,
+      grantedAt: serverTimestamp(),
+      auditId: audit.id,
+    });
+  }
+  if (!grant && !fromRequest) {
+    const theirs = await myRoutes(target.id);
+    let keep = 1;
+    for (const r of theirs) {
+      const change: { official: boolean; isPublic?: boolean } = { official: false };
+      if (r.isPublic && keep-- <= 0) change.isPublic = false;
+      batch.update(doc(db, 'routes', r.id), change);
+    }
+  }
+  if (fromRequest) {
+    batch.update(doc(db, 'adminRequests', target.id), {
       status: fromRequest === 'approve' ? 'approved' : 'rejected',
       decidedBy: actor.id,
       decidedAt: serverTimestamp(),
@@ -229,11 +282,16 @@ export async function publicRoutes(): Promise<Route[]> {
   return snap.docs.map((d) => withId<Route>(d));
 }
 
-export async function publicRouteOf(uid: string): Promise<Route | null> {
+export async function publicRoutesOf(uid: string): Promise<Route[]> {
   const snap = await getDocs(
-    query(collection(db, 'routes'), where('ownerId', '==', uid), where('isPublic', '==', true), where('hidden', '==', false), limit(1)),
+    query(collection(db, 'routes'), where('ownerId', '==', uid), where('isPublic', '==', true), where('hidden', '==', false), limit(50)),
   );
-  return snap.empty ? null : withId<Route>(snap.docs[0]);
+  return snap.docs.map((d) => withId<Route>(d));
+}
+
+/** How many routes a role may have public at once. */
+export function publicLimit(role: Role): number {
+  return role === 'owner' ? Infinity : role === 'admin' ? 5 : role === 'creator' ? 1 : 0;
 }
 
 export async function renameRoute(id: string, name: string) {
@@ -245,23 +303,35 @@ export async function deleteRoute(id: string) {
 }
 
 /**
- * Make a route public (replacing the user's current public route) or
- * private. One batch: the rules check the user's publicRouteId against it.
+ * Make a route public or private, keeping the profile's publicRouteIds in step
+ * (the rules check one against the other). A creator's single public route is
+ * replaced; with more allowed, publishing past the limit is refused.
  */
-export async function setRoutePublic(profile: Profile, route: Route, makePublic: boolean): Promise<void> {
+export async function setRoutePublic(profile: Profile, role: Role, own: Route[], route: Route, makePublic: boolean): Promise<void> {
+  const userRef = doc(db, 'users', profile.id);
+  let ids = profile.publicRouteIds ?? [];
+  // Drop ids of routes that are no longer public (e.g. unpublished by a moderator); the rules allow one per write.
+  for (const stale of ids.filter((id) => id !== route.id && !own.some((r) => r.id === id && r.isPublic))) {
+    ids = ids.filter((id) => id !== stale);
+    await updateDoc(userRef, { publicRouteIds: ids });
+  }
   const batch = writeBatch(db);
   if (makePublic) {
-    if (profile.publicRouteId && profile.publicRouteId !== route.id) {
-      batch.update(doc(db, 'routes', profile.publicRouteId), { isPublic: false });
+    const limitN = publicLimit(role);
+    if (ids.length >= limitN) {
+      if (limitN !== 1) throw new Error(`You can have ${limitN} public routes. Make one private first.`);
+      batch.update(doc(db, 'routes', ids[0]), { isPublic: false });
+      ids = [];
     }
     batch.update(doc(db, 'routes', route.id), {
       isPublic: true,
+      official: role === 'admin' || role === 'owner',
       publishedAt: route.publishedAt ?? serverTimestamp(),
     });
-    batch.update(doc(db, 'users', profile.id), { publicRouteId: route.id });
+    batch.update(userRef, { publicRouteIds: [...ids.filter((id) => id !== route.id), route.id] });
   } else {
     batch.update(doc(db, 'routes', route.id), { isPublic: false });
-    if (profile.publicRouteId === route.id) batch.update(doc(db, 'users', profile.id), { publicRouteId: null });
+    if (ids.includes(route.id)) batch.update(userRef, { publicRouteIds: ids.filter((id) => id !== route.id) });
   }
   await batch.commit();
 }

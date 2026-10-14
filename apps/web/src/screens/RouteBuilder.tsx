@@ -13,7 +13,7 @@ import { useMe } from '../lib/session';
 import { UsageLimitError } from '../lib/usage';
 
 export default function RouteBuilder() {
-  const { profile, isCreator } = useMe();
+  const { profile, isCreator, isAdmin } = useMe();
   const nav = useNavigate();
   const toast = useToast();
   const [waypoints, setWaypoints] = useState<LatLon[]>([]);
@@ -144,6 +144,7 @@ export default function RouteBuilder() {
       const id = await createRoute({
         ownerId: profile.id,
         ownerName: profile.username,
+        official: isAdmin,
         name: name.trim(),
         coords: latLonToFlat(coords),
         lengthM: Math.round(length * 10) / 10,

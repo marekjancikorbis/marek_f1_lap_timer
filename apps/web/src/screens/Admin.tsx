@@ -11,9 +11,11 @@ import {
   recentPostsForAdmin,
   removePost,
   searchUsers,
+  setAdmin,
   setCreator,
+  type RequestKind,
 } from '../lib/data';
-import { formatLap, timeAgo } from '../lib/format';
+import { formatLap, routeAuthor, timeAgo } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { AuditEntry, CreatorRequest, Post, Profile, Role, Route } from '../lib/types';
 
@@ -50,26 +52,46 @@ export default function Admin() {
 }
 
 function Requests() {
+  const { isOwner } = useMe();
+  return (
+    <div className="stack-lg">
+      {isOwner && <RequestList kind="admin" />}
+      <RequestList kind="creator" />
+    </div>
+  );
+}
+
+/** Creator requests (admins and the owner decide) or admin requests (only the owner). */
+function RequestList({ kind }: { kind: RequestKind }) {
   const { profile } = useMe();
   const toast = useToast();
   const [items, setItems] = useState<CreatorRequest[] | null>(null);
-  const load = useCallback(() => listRequests('pending').then(setItems).catch((e) => toast(errorMessage(e), 'error')), [toast]);
+  const load = useCallback(() => listRequests('pending', kind).then(setItems).catch((e) => toast(errorMessage(e), 'error')), [toast, kind]);
   useEffect(() => void load(), [load]);
 
   async function decide(r: CreatorRequest, approve: boolean) {
     try {
-      await setCreator(profile, { id: r.id, username: r.username }, approve, approve ? 'approve' : 'reject');
-      toast(approve ? `${r.username} can now create routes` : `Request from ${r.username} declined`);
+      const target = { id: r.id, username: r.username };
+      if (kind === 'admin') await setAdmin(profile, target, approve, approve ? 'approve' : 'reject');
+      else await setCreator(profile, target, approve, approve ? 'approve' : 'reject');
+      toast(approve ? (kind === 'admin' ? `${r.username} is now an admin` : `${r.username} can now create routes`) : `Request from ${r.username} declined`);
       setItems((xs) => xs?.filter((x) => x.id !== r.id) ?? null);
     } catch (e) {
       toast(errorMessage(e), 'error');
     }
   }
 
+  const title = kind === 'admin' ? 'Admin requests' : 'Creator requests';
   if (!items) return <Loading />;
-  if (!items.length) return <Empty title="No pending requests">Drivers who ask for creator access show up here.</Empty>;
+  if (!items.length)
+    return (
+      <Empty title={`No pending ${title.toLowerCase()}`}>
+        {kind === 'admin' ? 'Creators who ask to become admins show up here. Only you can decide them.' : 'Drivers who ask for creator access show up here.'}
+      </Empty>
+    );
   return (
     <div className="stack">
+      <h2 className="section-title">{title}</h2>
       {items.map((r) => (
         <div key={r.id} className="panel stack">
           <div className="row between">
@@ -96,7 +118,7 @@ function Requests() {
 }
 
 function Users() {
-  const { profile } = useMe();
+  const { profile, isOwner } = useMe();
   const toast = useToast();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Profile[]>([]);
@@ -139,6 +161,16 @@ function Users() {
     }
   }
 
+  async function toggleAdmin(p: Profile, grant: boolean) {
+    try {
+      await setAdmin(profile, { id: p.id, username: p.username }, grant);
+      setRoles((m) => new Map(m).set(p.id, grant ? 'admin' : 'creator'));
+      toast(grant ? `${p.username} is now an admin` : `${p.username} is a creator again`);
+    } catch (e) {
+      toast(errorMessage(e), 'error');
+    }
+  }
+
   return (
     <div className="stack">
       <input className="input" type="search" placeholder="Search users" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -156,7 +188,15 @@ function Users() {
                   {role}
                 </span>
               </span>
-              {role === 'admin' ? (
+              {role === 'owner' ? (
+                <span className="badge purple">Owner</span>
+              ) : isOwner && (role === 'creator' || role === 'admin') ? (
+                // Only the owner makes or removes admins; a creator must exist first.
+                <span className="row" style={{ gap: 8 }}>
+                  <span className="mute" style={{ fontSize: 13 }}>Admin</span>
+                  <Switch label={`Admin access for ${p.username}`} checked={role === 'admin'} onChange={(v) => toggleAdmin(p, v)} />
+                </span>
+              ) : role === 'admin' ? (
                 <span className="badge purple">Admin</span>
               ) : (
                 <Switch label={`Creator access for ${p.username}`} checked={role === 'creator'} onChange={(v) => toggle(p, v)} />
@@ -202,7 +242,7 @@ function Routes() {
             </span>
           </div>
           <span className="mute" style={{ fontSize: 14 }}>
-            by {r.ownerName}
+            by {routeAuthor(r)}
           </span>
           <div className="row" style={{ marginTop: 4 }}>
             {r.isPublic && (

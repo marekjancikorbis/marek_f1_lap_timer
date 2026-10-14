@@ -5,6 +5,7 @@ import { FollowButton } from '../components/FollowButton';
 import { Avatar, Empty, errorMessage, Spinner } from '../components/ui';
 import { getRole, postCount, searchUsers } from '../lib/data';
 import type { Profile, Role } from '../lib/types';
+import { ROLE_LABEL } from '../lib/format';
 
 export default function Search() {
   const [q, setQ] = useState(() => sessionStorage.getItem('search-q') ?? '');
@@ -80,7 +81,7 @@ export default function Search() {
                   <strong>{p.username}</strong>
                   {roles[p.id] && roles[p.id] !== 'driver' && (
                     <span className="badge outline" style={{ marginLeft: 8 }}>
-                      Creator
+                      {ROLE_LABEL[roles[p.id] as keyof typeof ROLE_LABEL]}
                     </span>
                   )}
                   <br />

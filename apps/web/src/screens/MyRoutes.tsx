@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RouteShape } from '../components/RouteShape';
 import { Empty, errorMessage, Loading, ScreenHead, Sheet, Switch, useToast } from '../components/ui';
-import { allMyRuns, getMyRequest, getRoutes, myRoutes, requestCreatorAccess, setRoutePublic } from '../lib/data';
-import { formatDistance, formatLap } from '../lib/format';
+import { allMyRuns, getMyRequest, getRoutes, myRoutes, publicLimit, requestCreatorAccess, setRoutePublic } from '../lib/data';
+import { formatDistance, formatLap, routeAuthor } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { CreatorRequest, Route, Run } from '../lib/types';
 
 export default function MyRoutes() {
-  const { profile, isCreator } = useMe();
+  const { profile, role, isCreator } = useMe();
   const toast = useToast();
   const [own, setOwn] = useState<Route[] | null>(null);
   const [driven, setDriven] = useState<Route[]>([]);
@@ -46,9 +46,12 @@ export default function MyRoutes() {
   async function setPublic(route: Route, makePublic: boolean) {
     setBusy(true);
     try {
-      await setRoutePublic(profile, route, makePublic);
+      await setRoutePublic(profile, role, own ?? [], route, makePublic);
+      // A creator's one public route is swapped; with more allowed, the others stay.
       setOwn((rs) =>
-        rs?.map((r) => (r.id === route.id ? { ...r, isPublic: makePublic } : makePublic && r.isPublic ? { ...r, isPublic: false } : r)) ?? null,
+        rs?.map((r) =>
+          r.id === route.id ? { ...r, isPublic: makePublic } : makePublic && limit === 1 && r.isPublic ? { ...r, isPublic: false } : r,
+        ) ?? null,
       );
       toast(makePublic ? `${route.name} is public` : `${route.name} is private`);
       setConfirm(null);
@@ -59,7 +62,10 @@ export default function MyRoutes() {
     }
   }
 
-  const currentPublic = own?.find((r) => r.isPublic);
+  const limit = publicLimit(role);
+  const publicCount = own?.filter((r) => r.isPublic).length ?? 0;
+  // Only a creator (one public route) gets the replace prompt; admins see their count instead.
+  const currentPublic = limit === 1 ? own?.find((r) => r.isPublic) : undefined;
 
   if (own === null) return <Loading />;
 
@@ -84,6 +90,11 @@ export default function MyRoutes() {
             </Empty>
           ) : (
             <div className="stack">
+              {limit > 1 && (
+                <p className="mute" style={{ fontSize: 14 }}>
+                  {limit === Infinity ? `${publicCount} public · no limit` : `${publicCount} of ${limit} public routes`}
+                </p>
+              )}
               {own.map((r) => (
                 <article key={r.id} className="panel route-tile">
                   <Link to={`/r/${r.id}`} style={{ textDecoration: 'none' }}>
@@ -110,7 +121,7 @@ export default function MyRoutes() {
                     <Switch
                       label={`Make ${r.name} public`}
                       checked={r.isPublic}
-                      disabled={busy || r.hidden}
+                      disabled={busy || r.hidden || (!r.isPublic && limit > 1 && publicCount >= limit)}
                       onChange={(v) => (v ? setConfirm(r) : void setPublic(r, false))}
                     />
                   </div>
@@ -140,7 +151,7 @@ export default function MyRoutes() {
                 <strong>{r.name}</strong>
                 <br />
                 <span className="mute" style={{ fontSize: 14 }}>
-                  by {r.ownerName}
+                  by {routeAuthor(r)}
                 </span>
               </span>
               <span className="num" style={{ fontSize: 18 }}>

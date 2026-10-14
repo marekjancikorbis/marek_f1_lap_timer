@@ -11,6 +11,7 @@ interface Session {
   role: Role;
   isCreator: boolean;
   isAdmin: boolean;
+  isOwner: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -50,8 +51,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     user,
     profile,
     role,
-    isCreator: role === 'creator' || role === 'admin',
-    isAdmin: role === 'admin',
+    isCreator: role === 'creator' || role === 'admin' || role === 'owner',
+    isAdmin: role === 'admin' || role === 'owner',
+    isOwner: role === 'owner',
     signOut: () => signOut(auth),
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -64,8 +66,8 @@ export function useSession(): Session {
 }
 
 /** Profile is guaranteed inside the signed-in app shell. */
-export function useMe(): { user: User; profile: Profile; role: Role; isCreator: boolean; isAdmin: boolean } {
+export function useMe(): { user: User; profile: Profile; role: Role; isCreator: boolean; isAdmin: boolean; isOwner: boolean } {
   const s = useSession();
   if (!s.user || !s.profile) throw new Error('useMe outside the signed-in app');
-  return { user: s.user, profile: s.profile, role: s.role, isCreator: s.isCreator, isAdmin: s.isAdmin };
+  return { user: s.user, profile: s.profile, role: s.role, isCreator: s.isCreator, isAdmin: s.isAdmin, isOwner: s.isOwner };
 }

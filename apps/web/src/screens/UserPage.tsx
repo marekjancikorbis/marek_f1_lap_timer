@@ -10,12 +10,12 @@ import {
   getRole,
   getRoutes,
   leaderboardFrom,
-  publicRouteOf,
+  publicRoutesOf,
   routePosts,
   unpostLap,
   userPosts,
 } from '../lib/data';
-import { formatDate, formatLap } from '../lib/format';
+import { formatDate, formatLap, ROLE_LABEL } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { Post, Profile, Role, Route } from '../lib/types';
 
@@ -27,7 +27,7 @@ export default function UserPage() {
   const [role, setRole] = useState<Role>('driver');
   const [posts, setPosts] = useState<Post[]>([]);
   const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null);
-  const [publicRoute, setPublicRoute] = useState<Route | null>(null);
+  const [publicRoutes, setPublicRoutes] = useState<Route[]>([]);
   const [routes, setRoutes] = useState<Map<string, Route>>(new Map());
   const [ranks, setRanks] = useState<Map<string, number>>(new Map());
   const [wins, setWins] = useState(0);
@@ -42,11 +42,11 @@ export default function UserPage() {
         if (!alive) return;
         setUser(p);
         if (!p) return;
-        const [ps, c, pr, r] = await Promise.all([userPosts(p.id), followCounts(p.id), publicRouteOf(p.id), getRole(p.id)]);
+        const [ps, c, pr, r] = await Promise.all([userPosts(p.id), followCounts(p.id), publicRoutesOf(p.id), getRole(p.id)]);
         if (!alive) return;
         setPosts(ps);
         setCounts(c);
-        setPublicRoute(pr);
+        setPublicRoutes(pr);
         setRole(r);
         const routeIds = [...new Set(ps.map((x) => x.routeId))];
         setRoutes(await getRoutes(routeIds));
@@ -122,7 +122,7 @@ export default function UserPage() {
         <div className="grow">
           <h1 style={{ fontSize: '2rem' }}>{user.username}</h1>
           <div className="row wrap" style={{ marginTop: 6, gap: 6 }}>
-            {role !== 'driver' && <span className="badge purple">{role === 'admin' ? 'Admin' : 'Creator'}</span>}
+            {role !== 'driver' && <span className="badge purple">{ROLE_LABEL[role]}</span>}
             <span className="mute" style={{ fontSize: 14 }}>
               Member since {formatDate(user.createdAt?.toDate())}
             </span>
@@ -150,16 +150,20 @@ export default function UserPage() {
         </div>
       )}
 
-      {publicRoute && (
+      {publicRoutes.length > 0 && (
         <>
-          <h2 className="section-title">Public route</h2>
-          <Link to={`/r/${publicRoute.id}`} className="panel route-tile">
-            <RouteShape map route={publicRoute} height={120} />
-            <div className="row between" style={{ marginTop: 8 }}>
-              <strong>{publicRoute.name}</strong>
-              <span className="mute">Leaderboard →</span>
-            </div>
-          </Link>
+          <h2 className="section-title">{publicRoutes.length === 1 ? 'Public route' : 'Public routes'}</h2>
+          <div className="stack">
+            {publicRoutes.map((r) => (
+              <Link key={r.id} to={`/r/${r.id}`} className="panel route-tile">
+                <RouteShape map route={r} height={120} />
+                <div className="row between" style={{ marginTop: 8 }}>
+                  <strong>{r.name}</strong>
+                  <span className="mute">Leaderboard →</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </>
       )}
 

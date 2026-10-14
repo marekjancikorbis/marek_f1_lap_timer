@@ -12,6 +12,7 @@ const HUES = [210, 265, 145, 30, 0, 330, 185, 55];
 
 export default function Settings() {
   const { profile, role, user } = useMe();
+  const [adminRequest, setAdminRequest] = useState<CreatorRequest | null | undefined>(undefined);
   const { signOut } = useSession();
   const toast = useToast();
   const [request, setRequest] = useState<CreatorRequest | null | undefined>(undefined);
@@ -22,14 +23,18 @@ export default function Settings() {
 
   useEffect(() => {
     getMyRequest(profile.id).then(setRequest).catch(() => setRequest(null));
+    if (role === 'creator') getMyRequest(profile.id, 'admin').then(setAdminRequest).catch(() => setAdminRequest(null));
     readUsage().then(setUsage).catch(() => undefined);
-  }, [profile.id]);
+  }, [profile.id, role]);
 
   async function sendRequest() {
     setBusy(true);
     try {
-      await requestCreatorAccess(profile.id, profile.username, note);
-      setRequest({ id: profile.id, username: profile.username, note, status: 'pending', createdAt: null });
+      const kind = role === 'creator' ? 'admin' : 'creator';
+      await requestCreatorAccess(profile.id, profile.username, note, kind);
+      const sent = { id: profile.id, username: profile.username, note, status: 'pending' as const, createdAt: null };
+      if (kind === 'admin') setAdminRequest(sent);
+      else setRequest(sent);
       toast('Request sent');
     } catch (e) {
       toast(errorMessage(e), 'error');
@@ -130,10 +135,35 @@ export default function Settings() {
 
       <h2 className="section-title">Route creation</h2>
       <div className="panel stack">
-        {role !== 'driver' ? (
+        {role === 'owner' ? (
           <p>
-            You're a <strong>{role}</strong>. You can build routes and publish one of them.
+            You're the <strong>owner</strong>. Unlimited public routes, shown as Official. Only you decide admin requests.
           </p>
+        ) : role === 'admin' ? (
+          <p>
+            You're an <strong>admin</strong>. Up to 5 public routes, shown as Official, and you handle creator requests.
+          </p>
+        ) : role === 'creator' ? (
+          adminRequest === undefined ? null : adminRequest?.status === 'pending' ? (
+            <p>
+              You're a <strong>creator</strong> with one public route. <span className="badge yellow">Admin request pending</span>
+            </p>
+          ) : (
+            <>
+              <p>
+                You're a <strong>creator</strong>. You can build routes and publish one of them.
+              </p>
+              {adminRequest?.status === 'rejected' && <p className="notice warn">Your last admin request was declined. You can ask again.</p>}
+              <p className="mute">Admins publish up to 5 routes as Official and approve new creators. The owner decides.</p>
+              <label className="field">
+                <span>Note for the owner (optional)</span>
+                <textarea className="input" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Which events do you organise?" />
+              </label>
+              <button className="btn" disabled={busy} onClick={sendRequest}>
+                Request admin access
+              </button>
+            </>
+          )
         ) : request === undefined ? null : request?.status === 'pending' ? (
           <p>
             <span className="badge yellow">Request pending</span>

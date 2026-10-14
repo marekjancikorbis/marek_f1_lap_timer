@@ -52,3 +52,10 @@ export function formatDate(date: Date | number | null | undefined): string {
   const d = typeof date === 'number' ? new Date(date) : date;
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+/** Who a route is credited to: Official for admin and owner routes, else the creator's username. */
+export function routeAuthor(route: { official?: boolean; ownerName: string }): string {
+  return route.official ? 'Official' : route.ownerName;
+}
+
+export const ROLE_LABEL: Record<'creator' | 'admin' | 'owner', string> = { creator: 'Creator', admin: 'Admin', owner: 'Owner' };

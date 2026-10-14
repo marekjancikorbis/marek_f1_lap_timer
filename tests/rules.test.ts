@@ -107,6 +107,7 @@ describe('roles', () => {
   it('nobody grants themselves a role', async () => {
     await assertFails(setDoc(doc(db('driver'), 'roles/driver'), { role: 'creator', grantedBy: 'driver', auditId: 'a' }));
     await assertFails(updateDoc(doc(db('creator'), 'roles/creator'), { role: 'admin' }));
+    await assertFails(setDoc(doc(db('admin'), 'roles/admin'), { role: 'owner', grantedBy: 'admin', auditId: 'a' }));
   });
 
   it('an admin grants creator, with an audit entry, and never admin', async () => {
@@ -217,5 +218,96 @@ describe('follows and the Mapbox usage cap', () => {
     await assertSucceeds(updateDoc(u, { staticMaps: 45_000 }));
     await assertFails(updateDoc(u, { staticMaps: 45_001 }));
     await assertSucceeds(setDoc(doc(db('a'), 'usage/2026-11'), { mapLoads: 0, directions: 0, staticMaps: 1 }));
+  });
+});
+
+describe('owner, admins and admin requests', () => {
+  beforeEach(() =>
+    seed({
+      'roles/owner': { role: 'owner' },
+      'roles/admin': { role: 'admin' },
+      'roles/admin2': { role: 'admin' },
+      'roles/creator': { role: 'creator' },
+    }),
+  );
+
+  /** Role change with its audit entry, as the app writes it. */
+  function grant(actor: string, target: string, role: string, auditId = `a-${actor}-${target}`) {
+    const d = db(actor);
+    const b = writeBatch(d);
+    b.set(doc(d, `roleAudit/${auditId}`), { actorId: actor, action: role === 'admin' ? 'grant_admin' : 'grant_creator' });
+    b.set(doc(d, `roles/${target}`), { role, grantedBy: actor, auditId });
+    return b.commit();
+  }
+
+  it('only the owner makes admins', async () => {
+    await assertFails(grant('admin', 'creator', 'admin'));
+    await assertFails(grant('admin', 'driver', 'admin'));
+    await assertSucceeds(grant('owner', 'creator', 'admin'));
+  });
+
+  it('admins cannot demote or remove other admins or the owner; the owner can remove admins', async () => {
+    await assertFails(grant('admin', 'admin2', 'creator'));
+    await assertFails(deleteDoc(doc(db('admin'), 'roles/admin2')));
+    await assertFails(deleteDoc(doc(db('admin'), 'roles/owner')));
+    await assertFails(grant('owner', 'owner', 'creator'));
+    await assertSucceeds(grant('owner', 'admin2', 'creator'));
+    await assertSucceeds(deleteDoc(doc(db('owner'), 'roles/admin')));
+  });
+
+  it('admins still handle creators', async () => {
+    await assertSucceeds(grant('admin', 'driver', 'creator'));
+    await assertSucceeds(deleteDoc(doc(db('admin'), 'roles/creator')));
+  });
+
+  it('only creators can ask to be admin, and only the owner decides', async () => {
+    const req = { username: 'x', note: '', status: 'pending', createdAt: null, decidedBy: null, decidedAt: null };
+    await assertFails(setDoc(doc(db('driver'), 'adminRequests/driver'), req));
+    await assertSucceeds(setDoc(doc(db('creator'), 'adminRequests/creator'), req));
+    await assertFails(getDoc(doc(db('admin'), 'adminRequests/creator')));
+    await assertFails(updateDoc(doc(db('admin'), 'adminRequests/creator'), { status: 'approved', decidedBy: 'admin', decidedAt: null }));
+    await assertSucceeds(updateDoc(doc(db('owner'), 'adminRequests/creator'), { status: 'approved', decidedBy: 'owner', decidedAt: null }));
+  });
+});
+
+describe('public route limits and the Official label', () => {
+  beforeEach(() => seed({ 'roles/owner': { role: 'owner' }, 'roles/admin': { role: 'admin' }, 'roles/creator': { role: 'creator' } }));
+
+  /** Publish one more route the way the app does: route public + id added to the profile, in one batch. */
+  async function publish(uid: string, n: number) {
+    const ids = Array.from({ length: n }, (_, i) => `${uid}-r${i}`);
+    const docs: Record<string, object> = { [`users/${uid}`]: { username: uid, publicRouteIds: ids.slice(0, -1) } };
+    for (const id of ids) docs[`routes/${id}`] = route(uid, { isPublic: ids.indexOf(id) < n - 1 });
+    await seed(docs);
+    const d = db(uid);
+    const b = writeBatch(d);
+    b.update(doc(d, `routes/${ids[n - 1]}`), { isPublic: true });
+    b.update(doc(d, `users/${uid}`), { publicRouteIds: ids });
+    return b.commit();
+  }
+
+  it('creator 1, admin 5, owner unlimited', async () => {
+    await assertSucceeds(publish('creator', 1));
+    await assertFails(publish('creator', 2));
+    await assertSucceeds(publish('admin', 5));
+    await assertFails(publish('admin', 6));
+    await assertSucceeds(publish('owner', 20));
+  });
+
+  it('a route is public only if it is listed on its owner profile', async () => {
+    await seed({ 'users/creator': { username: 'creator', publicRouteIds: [] }, 'routes/c1': route('creator') });
+    await assertFails(updateDoc(doc(db('creator'), 'routes/c1'), { isPublic: true }));
+  });
+
+  it('only admins and the owner can label a route Official', async () => {
+    await assertFails(setDoc(doc(db('creator'), 'routes/c1'), route('creator', { official: true })));
+    await assertSucceeds(setDoc(doc(db('admin'), 'routes/a1'), route('admin', { official: true })));
+    await assertSucceeds(setDoc(doc(db('owner'), 'routes/o1'), route('owner', { official: true })));
+  });
+
+  it('admins cannot moderate admin or owner routes; the owner can', async () => {
+    await seed({ 'routes/o1': route('owner', { isPublic: true, official: true }), 'routes/a1': route('admin', { isPublic: true, official: true }) });
+    await assertFails(updateDoc(doc(db('admin'), 'routes/o1'), { hidden: true }));
+    await assertSucceeds(updateDoc(doc(db('owner'), 'routes/a1'), { official: false, isPublic: false }));
   });
 });
