@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
-import { deleteRun, getRoute, routePosts, runsForRoute, unpostLap } from '../lib/data';
+import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
-import { coloursFor, pbsBefore, racedSplits, recordsExcluding } from '../lib/laps';
+import { pbsBefore } from '../lib/laps';
+import { bestSectors, sectorTimes, theoreticalBest } from '@laptimer/timing';
 import { useMe } from '../lib/session';
-import type { Post, Route, Run } from '../lib/types';
+import type { Route, Run, SectorColourName } from '../lib/types';
 
 type SortBy = 'date' | 'time';
 const SORT_KEY = 'my-laps-sort';
@@ -26,7 +27,6 @@ export default function RunHistory() {
   const nav = useNavigate();
   const [route, setRoute] = useState<Route | null | undefined>(undefined);
   const [runs, setRuns] = useState<Run[] | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [posting, setPosting] = useState<Run | null>(null);
   const [sort, setSort] = useState<SortBy>(loadSort);
@@ -36,7 +36,6 @@ export default function RunHistory() {
       const r = await getRoute(routeId);
       setRoute(r);
       setRuns(await runsForRoute(profile.id, routeId));
-      if (r?.isPublic) setPosts(await routePosts(r.id).catch(() => []));
     })().catch((e) => {
       toast(errorMessage(e), 'error');
       setRuns([]);
@@ -64,10 +63,18 @@ export default function RunHistory() {
 
   const pbId = useMemo(() => runs?.filter((r) => r.valid).sort((a, b) => a.totalMs - b.totalMs)[0]?.id, [runs]);
 
-  function colours(run: Run) {
-    if (!route || !runs) return [];
-    const records = route.isPublic ? recordsExcluding(posts, route.boundaries.length, run.id) : null;
-    return coloursFor(run.splitTimesMs, pbsBefore(runs, run), records, racedSplits(run, runs));
+  // Your history, coloured against your bests as they stand today.
+  const counted = useMemo(() => (runs && route ? runs.filter((r) => r.valid && r.splitTimesMs.length === route.boundaries.length) : []), [runs, route]);
+  const allTimeBest = useMemo(() => bestSectors(counted), [counted]);
+  const theoretical = useMemo(() => theoreticalBest(counted), [counted]);
+
+  /** Purple: your all-time best sector. Green: it was your best when driven, since beaten. Yellow: never your best. Invalid laps don't count: grey. */
+  function colours(run: Run): (SectorColourName | null)[] {
+    if (!counted.includes(run)) return run.splitTimesMs.map(() => null);
+    const before = pbsBefore(runs ?? [], run);
+    return sectorTimes(run.splitTimesMs).map((s, i) =>
+      s <= (allTimeBest[i] ?? Infinity) ? 'purple' : before[i] == null || s < before[i]! ? 'green' : 'yellow',
+    );
   }
 
   function toggle(id: string) {
@@ -107,6 +114,19 @@ export default function RunHistory() {
         <Empty title="No laps yet" action={<Link className="btn primary" to={`/drive/${routeId}`}>Drive it</Link>} />
       ) : (
         <div className="stack" style={{ marginTop: 16, gap: 8 }}>
+          {theoretical && counted.length > 1 && (
+            <div className="panel row between">
+              <span>
+                <strong>Theoretical best</strong>
+                <span className="mute" style={{ display: 'block', fontSize: 13 }}>
+                  Your best time in every sector, added up
+                </span>
+              </span>
+              <strong className="num" style={{ fontSize: 24 }}>
+                {formatLap(theoretical[theoretical.length - 1])}
+              </strong>
+            </div>
+          )}
           <Segmented
             label="Sort laps"
             value={sort}
