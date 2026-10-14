@@ -5,9 +5,10 @@ import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Sec
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getPost, getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom, updateMyProfile } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
-import { coloursFor, resolveLap, type ResolvedLap } from '../lib/laps';
+import { coloursFor, pbsBefore, resolveLap, type ResolvedLap } from '../lib/laps';
+import { bestSectors } from '@laptimer/timing';
 import { useMe } from '../lib/session';
-import type { Post, Route, Run } from '../lib/types';
+import type { Post, Route, Run, SectorColourName } from '../lib/types';
 import { listLogs } from '../drive/gpslogs';
 import { loadPrefs, savePrefs, setPendingDrive } from '../drive/store';
 
@@ -17,6 +18,8 @@ interface Option {
   sub: string;
   totalMs: number | null;
   splits: number[] | null;
+  /** Sector colours for the strip: as they were when the lap was driven. */
+  colours?: SectorColourName[];
   who?: { name: string; hue?: number };
 }
 
@@ -63,7 +66,9 @@ export default function PreDrive() {
     void import('./Drive');
   }, [routeId, profile.id, params, toast]);
 
-  const records = useMemo(() => (route ? sectorRecordsFrom(posts, route.boundaries.length) : []), [posts, route]);
+  // No purple on private routes; green is against your own best sectors.
+  const records = useMemo(() => (route?.isPublic ? sectorRecordsFrom(posts, route.boundaries.length) : null), [posts, route]);
+  const pbs = useMemo(() => bestSectors(runs.filter((r) => route && r.splitTimesMs.length === route.boundaries.length)), [runs, route]);
 
   const options = useMemo(() => {
     const mine: Option[] = [...runs]
@@ -74,6 +79,7 @@ export default function PreDrive() {
         sub: `${formatDate(r.startedAt)}${r.replay ? ' · simulated' : ''}`,
         totalMs: r.totalMs,
         splits: r.splitTimesMs,
+        colours: coloursFor(r.splitTimesMs, pbsBefore(runs, r), records),
       }));
     const theirs: Option[] = leaderboardFrom(posts)
       .filter((row) => row.post.userId !== profile.id)
@@ -84,6 +90,7 @@ export default function PreDrive() {
         sub: post.car ?? formatDate(post.startedAt),
         totalMs: post.totalMs,
         splits: post.splitTimesMs,
+        colours: post.sectorColours,
         who: { name: post.username, hue: post.avatarHue },
       }));
     if (extraPost && !theirs.some((t) => t.ref === `post:${extraPost.id}`)) {
@@ -93,11 +100,12 @@ export default function PreDrive() {
         sub: extraPost.caption ?? formatDate(extraPost.startedAt),
         totalMs: extraPost.totalMs,
         splits: extraPost.splitTimesMs,
+        colours: extraPost.sectorColours,
         who: { name: extraPost.username, hue: extraPost.avatarHue },
       });
     }
     return { mine, theirs };
-  }, [runs, posts, extraPost, profile.id]);
+  }, [runs, posts, extraPost, profile.id, records]);
 
   async function go() {
     if (!route) return;
@@ -126,7 +134,7 @@ export default function PreDrive() {
       }
       savePrefs({ mode, voice });
       if (route.startType === 'standing' && countdown !== profile.countdownS) void updateMyProfile(profile.id, { countdownS: countdown });
-      setPendingDrive({ route, uid: profile.id, reference, records, countdownS: countdown, mode, voice, replay, replayLog: replay ? routeLogs.find((l) => l.recordedAt === logAt) : null });
+      setPendingDrive({ route, uid: profile.id, reference, records, personalBests: pbs, countdownS: countdown, mode, voice, replay, replayLog: replay ? routeLogs.find((l) => l.recordedAt === logAt) : null });
       nav(`/drive/${route.id}/go`);
     } catch (e) {
       toast(errorMessage(e), 'error');
@@ -162,7 +170,7 @@ export default function PreDrive() {
         <span className="mute ellipsis" style={{ display: 'block', fontSize: 13 }}>
           {o.sub}
         </span>
-        {o.splits && <SectorStrip colours={coloursFor(o.splits, null, records)} height={4} />}
+        {o.colours && <SectorStrip colours={o.colours} height={4} />}
       </span>
       <span className="num" style={{ fontSize: 20 }}>
         {formatLap(o.totalMs)}

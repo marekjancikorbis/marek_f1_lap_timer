@@ -6,11 +6,11 @@ import { RouteMap } from '../components/RouteMap';
 import { COLOUR_VAR, Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
 import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
-import { coloursFor, recordsExcluding, resolveLap, type ResolvedLap } from '../lib/laps';
+import { coloursFor, pbsBefore, recordsExcluding, resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import { shareLap } from '../lib/shareImage';
 import type { Post, Route, Run } from '../lib/types';
-import { bestSectors, sectorTimes } from '@laptimer/timing';
+import { sectorTimes } from '@laptimer/timing';
 
 export default function RunSummary() {
   const { runId = '' } = useParams();
@@ -42,15 +42,12 @@ export default function RunSummary() {
     });
   }, [load, toast]);
 
-  // Purple: fastest posted sector on public routes, your own all-time best on private ones.
+  // Purple: beat the fastest posted sector (public routes only). Green: beat your previous best sector.
   const colours = useMemo(() => {
     if (!run || !route) return [];
-    const n = route.boundaries.length;
-    const records = route.isPublic
-      ? recordsExcluding(posts, n, run.id)
-      : bestSectors(runs.filter((x) => x.valid && x.id !== run.id && x.splitTimesMs.length === n));
-    return coloursFor(run.splitTimesMs, ref?.splitTimesMs ?? null, records);
-  }, [run, route, posts, runs, ref]);
+    const records = route.isPublic ? recordsExcluding(posts, route.boundaries.length, run.id) : null;
+    return coloursFor(run.splitTimesMs, pbsBefore(runs, run), records);
+  }, [run, route, posts, runs]);
 
   const session = useMemo(() => (run ? runs.filter((r) => r.sessionId === run.sessionId).sort((a, b) => a.lap - b.lap) : []), [run, runs]);
 

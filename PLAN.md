@@ -425,17 +425,16 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 - **GPS dropouts**: a run survives up to **30 s** without a fix (tunnels and forest on rally stages); gates crossed during a dropout are interpolated across it. Longer gaps end the run.
 
+- **Sector colours (F1 style)**: **green** = faster than your own personal best for that sector; **purple** = faster than the route record (fastest posted sector), on **public routes only**. Private routes have no purple. Yellow otherwise. The delta still compares with the lap you race against. PBs and records improve during a session, and saved laps show the colours they had when driven.
+
 ## 11. Open questions (need decisions)
 
 1. **Platforms**: iOS and Android both (assumed), or one first?
-2. **Green means faster than what?** Faster than the *selected reference* (assumed, per the brief), or faster than *your personal best* for that sector (the F1 convention)?
-3. **Purple on private routes**: is "your own all-time best sector" right, given that nobody else drives them?
 4. **Laps**: on a loop route, should laps run back to back in one session (assumed), with a fixed lap count or until you stop?
 5. **Changing your public route**: when you swap to a different route, should the old leaderboard be archived (still viewable) or hidden?
 6. **Can others save a public route** to their own list, or only drive it from the feed?
 8. **Map provider**: is Mapbox OK, or do you prefer Google Maps?
 9. **Scope of the permission**: should approval be needed to create **any** route (assumed), or only to **publish** one? With the second option, everyone could build private routes and only approved users could make one public.
-10. **Access requests**: should drivers be able to request creator access in the app (assumed), or should you only grant it yourself, e.g. to people you know?
 11. **Leaderboard and posting**: should the leaderboard show only **posted** laps (assumed, so nothing appears publicly without your choice), or automatically include every verified lap on a public route?
 12. **Posts per route**: can a user post many laps on one route (assumed: yes, with the leaderboard taking their best), or only one, so a new post replaces the old one?
 13. **Your own posts in the feed**: should your own posted laps also appear in your feed, or only followed users' (assumed, per the brief)?

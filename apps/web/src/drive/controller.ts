@@ -26,7 +26,10 @@ export interface DriveConfig {
   route: Route;
   uid: string;
   reference: { splits: number[]; label: string; ref: string } | null;
-  records: (number | null)[];
+  /** Fastest posted sectors (purple); null on private routes, which have no purple. */
+  records: (number | null)[] | null;
+  /** Your best sector times on this route so far (green). */
+  personalBests: (number | null)[];
   countdownS: number;
   mode: DisplayMode;
   voice: boolean;
@@ -108,6 +111,7 @@ export class DriveController {
       startType: cfg.route.startType,
       reference: cfg.reference?.splits ?? null,
       sectorRecords: cfg.records,
+      personalBests: cfg.personalBests,
       countdownS: cfg.countdownS,
     });
     if (!cfg.replay) {

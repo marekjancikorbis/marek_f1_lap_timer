@@ -27,7 +27,7 @@ export function Avatar({ name, hue = 210, size = 36 }: { name: string; hue?: num
 // ---------------------------------------------------------------- sector strip
 
 const STRIP: Record<SectorColourName, string> = { purple: 'var(--purple)', green: 'var(--green)', yellow: 'var(--yellow)' };
-const STRIP_LABEL: Record<SectorColourName, string> = { purple: 'fastest', green: 'faster', yellow: 'slower' };
+const STRIP_LABEL: Record<SectorColourName, string> = { purple: 'route record', green: 'personal best', yellow: 'slower than your best' };
 
 export function SectorStrip({ colours, height = 8 }: { colours: (SectorColourName | null)[]; height?: number }) {
   return (

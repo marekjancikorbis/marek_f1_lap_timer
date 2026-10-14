@@ -98,7 +98,7 @@ describe('delta and colours', () => {
   const route = new PreparedRoute(straight(2000));
   const boundaries = computeSectorBoundaries(route.lengthM, 500);
 
-  it('reports negative delta and green sectors when faster than the reference', () => {
+  it('reports negative delta vs the reference and green sectors vs personal bests', () => {
     const slow = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
     const ref = of(run(slow, simulateDrive(route, { speedKmh: 80, leadInM: 100 })), 'finished')[0].result;
 
@@ -108,6 +108,7 @@ describe('delta and colours', () => {
       isLoop: false,
       startType: 'rolling',
       reference: ref.splitTimesMs,
+      personalBests: ref.splitTimesMs.map((s, i, a) => s - (i ? a[i - 1] : 0)),
       sectorRecords: [1, 1, 1, 1], // unbeatable: no purple
     });
     const sectors = of(run(timer, simulateDrive(route, { speedKmh: 100, leadInM: 100 })), 'sector');
@@ -117,11 +118,29 @@ describe('delta and colours', () => {
     }
   });
 
-  it('purple beats the record, and overrides green', () => {
+  it('purple beats the record and overrides green; green beats your PB', () => {
     expect(sectorColour(9000, 10000, 9500)).toBe('purple');
     expect(sectorColour(9600, 10000, 9500)).toBe('green');
     expect(sectorColour(10100, 10000, 9500)).toBe('yellow');
     expect(sectorColour(10100, 10000, null)).toBe('purple');
+    expect(sectorColour(10100, null, 9500)).toBe('green'); // first time on the sector: a PB
+  });
+
+  it('private routes have no purple at all', () => {
+    expect(sectorColour(1, 10000, null, false)).toBe('green');
+    expect(sectorColour(1, 10000, 5000, false)).toBe('green');
+    expect(sectorColour(10100, 10000, null, false)).toBe('yellow');
+  });
+
+  it('improves PBs and records during a session, so lap 2 races lap 1', () => {
+    const loop = new PreparedRoute(circle(300));
+    const bounds = computeSectorBoundaries(loop.lengthM, 400);
+    const timer = new LapTimer({ route: loop, boundaries: bounds, isLoop: true, startType: 'rolling', sectorRecords: [] });
+    // Same pace both laps: lap 1 sets everything (purple), lap 2 only matches it (yellow).
+    const ev = run(timer, simulateDrive(loop, { speedKmh: 80, leadInM: 100, laps: 2, loop: true }));
+    const byLap = (n: number) => of(ev, 'sector').filter((s) => s.lap === n).map((s) => s.colour);
+    expect(byLap(0).every((c) => c === 'purple')).toBe(true);
+    expect(byLap(1).every((c) => c === 'yellow')).toBe(true);
   });
 });
 

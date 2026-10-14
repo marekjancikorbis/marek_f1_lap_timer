@@ -52,9 +52,11 @@ export interface TimerConfig {
   boundaries: number[];
   isLoop: boolean;
   startType: StartType;
-  /** Reference lap splits (same boundaries) for deltas and green sectors. */
+  /** Reference lap splits (same boundaries), for the delta. */
   reference?: number[] | null;
-  /** Fastest time ever per sector, for purple. */
+  /** The driver's best time per sector so far, for green. Improved during the session. */
+  personalBests?: (number | null)[] | null;
+  /** Fastest posted time per sector, for purple. null = private route: no purple. Improved during the session. */
   sectorRecords?: (number | null)[] | null;
   countdownS?: number;
   thresholds?: Partial<Thresholds>;
@@ -177,7 +179,9 @@ export class LapTimer {
       isLoop: config.isLoop,
       startType: config.startType,
       reference: config.reference ?? null,
-      sectorRecords: config.sectorRecords ?? null,
+      // Copies: the session improves them as it goes, so lap 2 races lap 1's sectors.
+      personalBests: config.personalBests ? [...config.personalBests] : [],
+      sectorRecords: config.sectorRecords ? [...config.sectorRecords] : null,
       countdownS: Math.min(10, Math.max(3, Math.round(config.countdownS ?? 5))),
       th: { ...DEFAULTS, ...config.thresholds },
     };
@@ -602,11 +606,13 @@ export class LapTimer {
     lap.k += 1;
 
     const ref = this.cfg.reference;
-    const refSector = ref && ref[k] != null ? (k === 0 ? ref[0] : ref[k] - ref[k - 1]) : null;
-    let colour = sectorColour(sectorMs, refSector, this.cfg.sectorRecords?.[k]);
-    if (k === 0 && lap.lap === 0 && this.jumpStart && colour === 'purple') {
-      colour = refSector != null && sectorMs < refSector ? 'green' : 'yellow';
-    }
+    const pbs = this.cfg.personalBests as (number | null)[]; // always an array, see the constructor
+    const records = this.cfg.sectorRecords;
+    let colour = sectorColour(sectorMs, pbs[k], records?.[k], records != null);
+    // A jump start can't set a record; its penalty is already in the first sector.
+    if (k === 0 && lap.lap === 0 && this.jumpStart && colour === 'purple') colour = pbs[k] == null || sectorMs < pbs[k]! ? 'green' : 'yellow';
+    if (pbs[k] == null || sectorMs < pbs[k]!) pbs[k] = sectorMs;
+    if (records && colour === 'purple') records[k] = sectorMs;
     out.push({
       type: 'sector',
       lap: lap.lap,

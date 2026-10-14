@@ -1,4 +1,4 @@
-import { sectorColour, sectorTimes, theoreticalBest, type LapProfile } from '@laptimer/timing';
+import { bestSectors, sectorColour, sectorTimes, theoreticalBest, type LapProfile } from '@laptimer/timing';
 import { getPost, getRun, routePosts, runsForRoute, sectorRecordsFrom } from './data';
 import type { Post, Run, SectorColourName } from './types';
 
@@ -103,15 +103,22 @@ export async function resolveLap(ref: LapRef, uid: string, routeId: string): Pro
   return null;
 }
 
-/** Colour each sector of a lap: purple vs records, green vs the reference. */
-export function coloursFor(
-  splits: number[],
-  refSplits: number[] | null,
-  records: (number | null)[],
-): SectorColourName[] {
-  const secs = sectorTimes(splits);
-  const refSecs = refSplits ? sectorTimes(refSplits) : null;
-  return secs.map((s, i) => sectorColour(s, refSecs?.[i] ?? null, records[i] ?? null));
+/**
+ * Colour each sector of a lap: purple vs the route records (null on private
+ * routes: no purple), green vs the driver's personal bests.
+ */
+export function coloursFor(splits: number[], pbs: (number | null)[], records: (number | null)[] | null): SectorColourName[] {
+  return sectorTimes(splits).map((s, i) => sectorColour(s, pbs[i] ?? null, records?.[i] ?? null, records != null));
+}
+
+/**
+ * The driver's best sectors from the laps before this one, so a saved lap
+ * shows green where it was a personal best when it was driven.
+ */
+export function pbsBefore(runs: Run[], lap: Pick<Run, 'id' | 'startedAt' | 'splitTimesMs'>): (number | null)[] {
+  return bestSectors(
+    runs.filter((r) => r.valid && r.id !== lap.id && r.startedAt < lap.startedAt && r.splitTimesMs.length === lap.splitTimesMs.length),
+  );
 }
 
 /**
