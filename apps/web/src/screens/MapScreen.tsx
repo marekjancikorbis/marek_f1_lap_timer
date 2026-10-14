@@ -4,25 +4,39 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapView } from '../components/MapView';
 import { errorMessage, useToast } from '../components/ui';
-import { publicRoutes } from '../lib/data';
+import { myRoutes, publicRoutes } from '../lib/data';
 import { db } from '../lib/firebase';
-import { formatDistance, routeAuthor } from '../lib/format';
 import { lngLatPairs } from '../lib/geo';
+import { useMe } from '../lib/session';
 import type { Route } from '../lib/types';
+
+/** What a route on the map is, which sets its colour. */
+type Kind = 'official' | 'creator' | 'private';
+
+const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#2f7de1', private: '#1fa64f' };
+const KIND_LABEL: Record<Kind, string> = { official: 'Official', creator: 'By creators', private: 'Your private routes' };
+
+const kindOf = (r: Route): Kind => (!r.isPublic ? 'private' : r.official ? 'official' : 'creator');
+
+/** Mapbox expression: the colour for a feature's `kind`. */
+const KIND_PAINT = ['match', ['get', 'kind'], 'official', KIND_COLOUR.official, 'creator', KIND_COLOUR.creator, KIND_COLOUR.private] as unknown as string;
 
 export default function MapScreen() {
   const nav = useNavigate();
   const toast = useToast();
+  const { profile, isCreator } = useMe();
   const [routes, setRoutes] = useState<Route[] | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
   useEffect(() => {
-    publicRoutes()
-      .then(async (rs) => {
+    // Public routes for everyone, plus your own private ones (only you can read those).
+    Promise.all([publicRoutes(), isCreator ? myRoutes(profile.id).catch(() => []) : []])
+      .then(async ([pub, mine]) => {
+        const rs = [...pub, ...mine.filter((r) => !r.isPublic && !r.hidden)];
         setRoutes(rs);
         const entries = await Promise.all(
-          rs.slice(0, 150).map(async (r) => {
+          pub.slice(0, 150).map(async (r) => {
             const c = await getCountFromServer(query(collection(db, 'posts'), where('routeId', '==', r.id), where('hidden', '==', false))).catch(() => null);
             return [r.id, c?.data().count ?? 0] as const;
           }),
@@ -33,7 +47,7 @@ export default function MapScreen() {
         toast(errorMessage(e), 'error');
         setRoutes([]);
       });
-  }, [toast]);
+  }, [toast, isCreator, profile.id]);
 
   const draw = useCallback(() => {
     const map = mapRef.current;
@@ -42,7 +56,7 @@ export default function MapScreen() {
       type: 'FeatureCollection',
       features: routes.map((r) => ({
         type: 'Feature',
-        properties: { id: r.id, name: r.name, laps: counts[r.id] ?? 0 },
+        properties: { id: r.id, name: r.name, laps: counts[r.id] ?? 0, kind: kindOf(r) },
         geometry: { type: 'Point', coordinates: [r.start.lng, r.start.lat] },
       })),
     };
@@ -50,7 +64,7 @@ export default function MapScreen() {
       type: 'FeatureCollection',
       features: routes.map((r) => ({
         type: 'Feature',
-        properties: { id: r.id, name: r.name },
+        properties: { id: r.id, name: r.name, kind: kindOf(r) },
         geometry: { type: 'LineString', coordinates: lngLatPairs(r.coords) },
       })),
     };
@@ -75,7 +89,7 @@ export default function MapScreen() {
       type: 'line',
       source: 'lines',
       minzoom: 10,
-      paint: { 'line-color': '#8b3fe0', 'line-width': 4.5 },
+      paint: { 'line-color': KIND_PAINT, 'line-width': 4.5 },
       layout: { 'line-cap': 'round', 'line-join': 'round' },
     });
     map.addLayer({
@@ -84,8 +98,9 @@ export default function MapScreen() {
       source: 'starts',
       filter: ['has', 'point_count'],
       paint: {
+        // Clusters mix kinds, so they stay neutral; zoom in to see colours.
         'circle-color': '#23272a',
-        'circle-stroke-color': '#8b3fe0',
+        'circle-stroke-color': '#c9ccc8',
         'circle-stroke-width': 3,
         'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
       },
@@ -105,7 +120,7 @@ export default function MapScreen() {
       source: 'starts',
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': '#8b3fe0',
+        'circle-color': KIND_PAINT,
         'circle-stroke-color': '#f2f1ec',
         'circle-stroke-width': 2.5,
         'circle-radius': ['interpolate', ['linear'], ['sqrt', ['get', 'laps']], 0, 7, 3, 11, 10, 18],
@@ -169,33 +184,35 @@ export default function MapScreen() {
     [draw],
   );
 
+  const kinds = (['official', 'creator', 'private'] as const).filter((k) => k !== 'private' || isCreator);
+  const publicCount = routes?.filter((r) => r.isPublic).length ?? 0;
+
   return (
     <main className="map-screen">
       <MapView onReady={onReady} center={[15.5, 49.8]} zoom={6} height="100%" label="Public routes" />
       <div className="map-screen-head">
         <h1>Map</h1>
         <span className="mute">
-          {routes === null ? 'Loading routes…' : `${routes.length} public ${routes.length === 1 ? 'route' : 'routes'}`}
+          {routes === null ? 'Loading routes…' : `${publicCount} public ${publicCount === 1 ? 'route' : 'routes'}`}
         </span>
       </div>
-      {routes && routes.length === 0 && (
-        <div className="map-empty panel">
-          <strong>No public routes yet</strong>
-          <p className="mute">When a creator publishes a route, it appears here with its leaderboard.</p>
-        </div>
-      )}
-      {routes && routes.length > 0 && routes.length <= 3 && (
-        <div className="map-list">
-          {routes.map((r) => (
-            <button key={r.id} className="panel map-list-item" onClick={() => nav(`/r/${r.id}`)}>
-              <strong>{r.name}</strong>
-              <span className="mute">
-                {formatDistance(r.lengthM)} · {routeAuthor(r)}
-              </span>
-            </button>
+      <div className="map-bottom">
+        {routes && routes.length === 0 && (
+          <div className="panel">
+            <strong>No public routes yet</strong>
+            <p className="mute">When a creator publishes a route, it appears here with its leaderboard.</p>
+          </div>
+        )}
+        <ul className="map-legend" aria-label="Route colours">
+          {kinds.map((k) => (
+            <li key={k}>
+              <span className="map-legend-swatch" style={{ background: KIND_COLOUR[k] }} aria-hidden="true" />
+              {KIND_LABEL[k]}
+            </li>
           ))}
-        </div>
-      )}
+          <li className="mute">Tap a route for details</li>
+        </ul>
+      </div>
     </main>
   );
 }
