@@ -14,7 +14,8 @@ export function splitsFromSectors(sectorMs: number[]): number[] {
 /**
  * Sector colours. Purple overrides green; a missing baseline means nobody has
  * set one yet, so this time does.
- *   Public routes:  purple beats the route record (fastest posted sector),
+ *   Public routes:  purple beats the route record (fastest posted sector) and your
+ *                   own best too, so with nothing posted yet it means a new PB;
  *                   green beats your personal best for the sector.
  *   Private routes: purple beats your personal best (your theoretical-best sector),
  *                   green beats the same sector of the lap you're racing.
@@ -27,8 +28,9 @@ export function sectorColour(
   refMs?: number | null,
 ): SectorColour {
   if (isPublic) {
-    if (recordMs == null || sectorMs < recordMs) return 'purple';
-    return pbMs == null || sectorMs < pbMs ? 'green' : 'yellow';
+    const beatsPb = pbMs == null || sectorMs < pbMs;
+    if (beatsPb && (recordMs == null || sectorMs < recordMs)) return 'purple';
+    return beatsPb ? 'green' : 'yellow';
   }
   if (pbMs == null || sectorMs < pbMs) return 'purple';
   return refMs != null && sectorMs < refMs ? 'green' : 'yellow';

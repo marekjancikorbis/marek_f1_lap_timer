@@ -122,8 +122,10 @@ describe('delta and colours', () => {
     expect(sectorColour(9000, 10000, 9500)).toBe('purple');
     expect(sectorColour(9600, 10000, 9500)).toBe('green');
     expect(sectorColour(10100, 10000, 9500)).toBe('yellow');
-    expect(sectorColour(10100, 10000, null)).toBe('purple');
     expect(sectorColour(10100, null, 9500)).toBe('green'); // first time on the sector: a PB
+    // Nothing posted yet: purple only for a new PB, never for a sector slower than your own best.
+    expect(sectorColour(9000, 10000, null)).toBe('purple');
+    expect(sectorColour(10500, 10000, null)).toBe('yellow');
   });
 
   it('private routes: purple beats your best sector, green beats the raced lap', () => {
