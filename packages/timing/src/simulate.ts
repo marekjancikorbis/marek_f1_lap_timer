@@ -164,6 +164,7 @@ export function simulateTrackDrive(route: PreparedRoute, opts: TrackSimOptions =
   const n = Math.ceil((sEnd - sStart) / GRID_M) + 1;
   const sAt = (i: number) => sStart + i * GRID_M;
   const lapS = (s: number) => (loop ? ((s % L) + L) % L : s);
+  const xyAt = (s: number) => route.proj.toXY(route.pointAt(lapS(s)));
   const v = new Float64Array(n);
   for (let i = 0; i < n; i++) {
     const s = sAt(i);
@@ -171,8 +172,12 @@ export function simulateTrackDrive(route: PreparedRoute, opts: TrackSimOptions =
       v[i] = vMax;
       continue;
     }
-    const d = Math.abs(((route.headingAt(lapS(s + 10)) - route.headingAt(lapS(s - 10)) + 540) % 360) - 180);
-    const kappa = (d * Math.PI) / 180 / 20;
+    // Turn between the chords over ±10 m: robust to sliver segments, unlike segment headings.
+    const p0 = xyAt(s - 10);
+    const p1 = xyAt(s);
+    const p2 = xyAt(s + 10);
+    const turn = Math.abs(Math.atan2((p1.x - p0.x) * (p2.y - p1.y) - (p1.y - p0.y) * (p2.x - p1.x), (p1.x - p0.x) * (p2.x - p1.x) + (p1.y - p0.y) * (p2.y - p1.y)));
+    const kappa = turn / 20;
     v[i] = Math.min(vMax, kappa > 1e-6 ? Math.sqrt(aLat / kappa) : vMax);
   }
   // Rolling start: arrive at the run-up at the speed the start allows.

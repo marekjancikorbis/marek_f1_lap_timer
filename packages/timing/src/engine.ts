@@ -334,10 +334,7 @@ export class LapTimer {
     const r = this.cfg.route;
     const q = r.proj.toXY(fix);
     const p0 = r.startXY;
-    const p1 = r.pts[1];
-    const len = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-    const ux = (p1.x - p0.x) / len;
-    const uy = (p1.y - p0.y) / len;
+    const { x: ux, y: uy } = r.startDir;
     const dx = q.x - p0.x;
     const dy = q.y - p0.y;
     return { a: dx * ux + dy * uy, c: Math.abs(dx * -uy + dy * ux) };
@@ -541,7 +538,15 @@ export class LapTimer {
 
     const dt = prev ? (fix.t - prev.t) / 1000 : 1;
     const v = fix.speed ?? 30;
-    const pr = this.cfg.route.project(fix, this.sLast - 30, this.sLast + Math.max(150, v * dt * 2 + 100));
+    const L = this.cfg.route.lengthM;
+    const sMax = this.sLast + Math.max(150, v * dt * 2 + 100);
+    let pr = this.cfg.route.project(fix, this.sLast - 30, sMax);
+    // Loop: past the finish the car is on the route's first metres again, which
+    // fits far better than a straight extension past the end.
+    if (this.cfg.isLoop && sMax > L) {
+      const wrap = this.cfg.route.project(fix, 0, sMax - L);
+      if (wrap.e < pr.e) pr = { ...wrap, s: wrap.s + L };
+    }
 
     if (pr.e > th.OFF_ROUTE_M) {
       this.offRouteSince ??= fix.t;

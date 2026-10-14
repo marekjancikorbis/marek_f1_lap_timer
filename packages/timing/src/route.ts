@@ -4,6 +4,12 @@ export const MIN_SECTOR_M = 50;
 export const MAX_SECTOR_M = 1000;
 export const SECTOR_STEP_M = 50;
 const RESAMPLE_STEP_M = 2;
+const DIR_SPAN_M = 10;
+
+function unit(a: XY, b: XY): XY {
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  return { x: (b.x - a.x) / len, y: (b.y - a.y) / len };
+}
 
 /**
  * Distances along the route at which each sector ends. The last boundary is
@@ -85,6 +91,19 @@ export class PreparedRoute {
     this.pts = pts;
     this.cum = cum;
     this.lengthM = cum[cum.length - 1];
+    // Direction over the first/last 10 m, not the first/last segment: a route can
+    // start or end with a sliver segment whose heading is noise.
+    const d = Math.min(DIR_SPAN_M, this.lengthM);
+    this.startDir = unit(this.xyAt(0), this.xyAt(d));
+    this.endDir = unit(this.xyAt(this.lengthM - d), this.xyAt(this.lengthM));
+  }
+
+  /** Unit direction of travel at the start and at the finish. */
+  readonly startDir: XY;
+  readonly endDir: XY;
+
+  private xyAt(s: number): XY {
+    return this.proj.toXY(this.pointAt(s));
   }
 
   get startXY(): XY {
@@ -93,7 +112,7 @@ export class PreparedRoute {
 
   /** Route heading at the start, degrees. */
   get startHeading(): number {
-    return this.segHeading(0);
+    return headingOf(this.startDir.x, this.startDir.y);
   }
 
   pointAt(s: number): LatLon {
@@ -148,20 +167,22 @@ export class PreparedRoute {
       const len2 = dx * dx + dy * dy;
       const segLen = Math.sqrt(len2);
       let t = ((q.x - a.x) * dx + (q.y - a.y) * dy) / len2;
-      const isFirst = i === 0;
-      const isLast = i === this.pts.length - 2;
-      // Extend beyond the ends of the route, clamp everywhere else.
-      if (t < 0 && !isFirst) t = 0;
-      if (t > 1 && !isLast) t = 1;
-      const cx = a.x + dx * t;
-      const cy = a.y + dy * t;
-      // Lateral offset is measured perpendicular to the line, so extended
-      // points before the start / past the finish keep a small e.
-      const e = Math.hypot(q.x - cx, q.y - cy);
+      t = Math.max(0, Math.min(1, t));
+      const e = Math.hypot(q.x - (a.x + dx * t), q.y - (a.y + dy * t));
       if (e < best.e) {
         best = { s: this.cum[i] + t * segLen, e, heading: headingOf(dx, dy) };
       }
     }
+    // Before the start / past the finish: extend straight along the end directions,
+    // with e measured perpendicular to that line.
+    const ext = (o: XY, u: XY, sign: 1 | -1, base: number) => {
+      const along = (q.x - o.x) * u.x + (q.y - o.y) * u.y;
+      if (along * sign <= 0) return;
+      const e = Math.abs((q.x - o.x) * -u.y + (q.y - o.y) * u.x);
+      if (e < best.e) best = { s: base + along, e, heading: headingOf(u.x, u.y) };
+    };
+    if (lo === 0) ext(this.pts[0], this.startDir, -1, 0);
+    if (hi === this.pts.length - 2) ext(this.pts[this.pts.length - 1], this.endDir, 1, this.lengthM);
     return best;
   }
 }

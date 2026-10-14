@@ -85,3 +85,46 @@ describe('gate accuracy with phone-grade GPS (2.5 m drifting error)', () => {
     }
   }
 });
+
+// Snapped routes can end in a sliver segment whose heading is noise (here: the loop
+// is closed by appending the start point 0.4 m away, then rounded to 1e-6°).
+describe('routes ending in a sliver segment', () => {
+  const round = (pts: LatLon[]) => pts.map((p) => ({ lat: Math.round(p.lat * 1e6) / 1e6, lon: Math.round(p.lon * 1e6) / 1e6 }));
+  const coarse = (spec: [number, number][]) => {
+    let p = ORIGIN;
+    let h = 90;
+    const pts = [p];
+    for (const [len, turn] of spec) {
+      const steps = Math.max(1, Math.round(len / 8));
+      for (let i = 0; i < steps; i++) {
+        h += turn / steps;
+        p = offsetLatLon(p, len / steps, h);
+        pts.push(p);
+      }
+    }
+    return pts;
+  };
+
+  it('completes every lap of a loop (finish found on the route start, not the extension)', () => {
+    const route = new PreparedRoute(round([...coarse([[500, 0], [126, 180], [200, 0], [30, 45], [30, -90], [30, 45], [219.11, 0], [126, 180]]), ORIGIN]));
+    const boundaries = computeSectorBoundaries(route.lengthM, 200);
+    for (let seed = 1; seed <= 50; seed++) {
+      const { fixes } = simulateTrackDrive(route, { vMaxKmh: 140 + seed, latAccel: 7 + (seed % 3), leadInM: 120, laps: 2, loop: true, noiseM: 2.5, speedNoise: 0.3, jitterMs: 30, seed });
+      const timer = new LapTimer({ route, boundaries, isLoop: true, startType: 'rolling' });
+      fixes.forEach((f) => timer.push(f));
+      expect(timer.laps.length, `seed ${seed}`).toBe(2);
+    }
+  });
+
+  it('finishes a point-to-point route whose last segment is a sliver', () => {
+    const pts = coarse([[300, 0], [60, 90], [400, 0]]);
+    const end = pts[pts.length - 1];
+    const route = new PreparedRoute(round([...pts, offsetLatLon(end, 0.3, 200)]));
+    const boundaries = computeSectorBoundaries(route.lengthM, 250);
+    for (let seed = 1; seed <= 20; seed++) {
+      const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
+      simulateTrackDrive(route, { noiseM: 2.5, seed }).fixes.forEach((f) => timer.push(f));
+      expect(timer.phase, `seed ${seed}`).toBe('finished');
+    }
+  });
+});

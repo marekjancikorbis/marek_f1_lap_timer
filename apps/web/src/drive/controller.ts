@@ -17,6 +17,9 @@ import type { Route, Run, SectorColourName } from '../lib/types';
 import { saveLog } from './gpslogs';
 import { Sounds } from './sounds';
 
+/** No fix for this long and the HUD says the signal is lost (fixes normally come every ≤1 s). */
+const GPS_LOST_MS = 3000;
+
 export type DisplayMode = 'hud' | 'delta';
 
 export interface DriveConfig {
@@ -92,6 +95,8 @@ export class DriveController {
   private visibilityHandler = () => this.onVisibility();
   /** Raw session record for real drives (null in replay), kept for desk replays and test fixtures. */
   private log: GpsLog | null = null;
+  /** Wall-clock time the last fix arrived, to notice a lost signal between fixes. */
+  private lastFixAt = 0;
 
   constructor(readonly cfg: DriveConfig) {
     this.prepared = preparedFor(cfg.route);
@@ -171,7 +176,11 @@ export class DriveController {
     else if (this.cfg.replay) this.startReplay();
     else this.startGps();
     const loop = () => {
-      this.handle(this.timer.tick(Date.now()));
+      const now = Date.now();
+      this.handle(this.timer.tick(now));
+      if (this.state.gpsOk && now - this.lastFixAt > GPS_LOST_MS) {
+        this.emit({ gpsOk: false, speed: null, gpsError: 'GPS signal lost. Timing carries on when it returns; after 8 s the run ends.' });
+      }
       this.rafId = requestAnimationFrame(loop);
     };
     this.rafId = requestAnimationFrame(loop);
@@ -295,6 +304,7 @@ export class DriveController {
       this.onFix(fix);
       const next = fixes[i];
       if (next) this.replayTimer = window.setTimeout(step, Math.max(0, next.t + offset - Date.now()));
+      else this.replayTimer = window.setTimeout(() => this.endReplay(), 1000);
     };
     step();
   }
@@ -313,8 +323,15 @@ export class DriveController {
       // Run everything due now; motion comes at ~60 Hz, faster than timers fire.
       while (i < items.length && items[i].t + offset <= Date.now()) items[i++].run();
       if (i < items.length) this.replayTimer = window.setTimeout(step, Math.max(0, items[i].t + offset - Date.now()));
+      else this.replayTimer = window.setTimeout(() => this.endReplay(), 1000);
     };
     step();
+  }
+
+  /** The recorded/generated data ran out: end the session like a Stop, keeping completed laps. */
+  private endReplay() {
+    this.handle(this.timer.stop());
+    this.emit({ finished: true });
   }
 
   private simulateLaunchMotion() {
@@ -343,6 +360,7 @@ export class DriveController {
   }
 
   private onFix(fix: Fix) {
+    this.lastFixAt = Date.now();
     this.log?.fixes.push(fix);
     const events = this.timer.push(fix);
     this.emit({

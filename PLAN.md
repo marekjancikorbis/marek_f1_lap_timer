@@ -421,7 +421,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
   - The security rules only allow the counters to go up by one at a time and refuse increments past the cap. On Spark the cap is still enforced by the app, so the Mapbox token must also be **URL-restricted** to the app's domain in the Mapbox dashboard.
 
 - **Positioning**: the app is for **track days and rally events only** (closed courses). The app store listing, terms and copy say so; public-road timing is not a use case.
-- **Gate accuracy (measured on simulated driving)**: `simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error. Gate error is about 90 ms RMS and under 200 ms p95 on a rally stage and a circuit, and **5 Hz is no better than 1 Hz**. GPS position error dominates, not interpolation (with perfect GPS the error is under 60 ms), so Hermite interpolation is not worth building. Only better fixes help (external 10–25 Hz GNSS). `test/accuracy.test.ts` guards both numbers; real-drive logs dropped into `test/fixtures/` will confirm them.
+- **Gate accuracy (measured on simulated driving)**: `simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error. Gate error is about 70 ms RMS and under 150 ms p95 on a rally stage and a circuit, and **5 Hz is no better than 1 Hz**. GPS position error dominates, not interpolation (with perfect GPS the error is under 60 ms), so Hermite interpolation is not worth building. Only better fixes help (external 10–25 Hz GNSS). `test/accuracy.test.ts` guards both numbers; real-drive logs dropped into `test/fixtures/` will confirm them.
 
 ## 11. Open questions (need decisions)
 

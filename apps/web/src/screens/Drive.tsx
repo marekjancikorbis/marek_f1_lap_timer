@@ -114,6 +114,15 @@ export default function Drive() {
         </section>
       )}
 
+      {s.phase === 'finished' && !s.invalidReason && s.laps.length > 0 && (
+        <section className="drive-center">
+          <h1 className="drive-big-label armed">Finished</h1>
+          <p className="drive-sub num">
+            {s.laps.length} {s.laps.length === 1 ? 'lap' : 'laps'} · best {formatLap(Math.min(...s.laps.map((l) => l.totalMs)))}
+          </p>
+        </section>
+      )}
+
       {cfg.route.isLoop && s.laps.length > 0 && running && (
         <div className="drive-laps num">
           Lap {s.lap + 1} · last {formatLap(s.laps[s.laps.length - 1].totalMs)}
