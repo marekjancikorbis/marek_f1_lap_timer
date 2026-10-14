@@ -606,11 +606,15 @@ export class LapTimer {
     lap.k += 1;
 
     const ref = this.cfg.reference;
+    const refSector = ref && ref[k] != null ? (k === 0 ? ref[0] : ref[k] - ref[k - 1]) : null;
     const pbs = this.cfg.personalBests as (number | null)[]; // always an array, see the constructor
     const records = this.cfg.sectorRecords;
-    let colour = sectorColour(sectorMs, pbs[k], records?.[k], records != null);
-    // A jump start can't set a record; its penalty is already in the first sector.
-    if (k === 0 && lap.lap === 0 && this.jumpStart && colour === 'purple') colour = pbs[k] == null || sectorMs < pbs[k]! ? 'green' : 'yellow';
+    const isPublic = records != null;
+    let colour = sectorColour(sectorMs, pbs[k], records?.[k], isPublic, refSector);
+    // A jump-start first sector can't be purple (no record or best from a jumped start).
+    if (k === 0 && lap.lap === 0 && this.jumpStart && colour === 'purple') {
+      colour = isPublic ? (pbs[k] == null || sectorMs < pbs[k]! ? 'green' : 'yellow') : refSector != null && sectorMs < refSector ? 'green' : 'yellow';
+    }
     if (pbs[k] == null || sectorMs < pbs[k]!) pbs[k] = sectorMs;
     if (records && colour === 'purple') records[k] = sectorMs;
     out.push({

@@ -5,7 +5,7 @@ import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Sec
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getPost, getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom, updateMyProfile } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
-import { coloursFor, pbsBefore, resolveLap, type ResolvedLap } from '../lib/laps';
+import { coloursFor, pbsBefore, racedSplits, resolveLap, type ResolvedLap } from '../lib/laps';
 import { bestSectors } from '@laptimer/timing';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run, SectorColourName } from '../lib/types';
@@ -79,7 +79,7 @@ export default function PreDrive() {
         sub: `${formatDate(r.startedAt)}${r.replay ? ' · simulated' : ''}`,
         totalMs: r.totalMs,
         splits: r.splitTimesMs,
-        colours: coloursFor(r.splitTimesMs, pbsBefore(runs, r), records),
+        colours: coloursFor(r.splitTimesMs, pbsBefore(runs, r), records, racedSplits(r, runs)),
       }));
     const theirs: Option[] = leaderboardFrom(posts)
       .filter((row) => row.post.userId !== profile.id)

@@ -104,11 +104,24 @@ export async function resolveLap(ref: LapRef, uid: string, routeId: string): Pro
 }
 
 /**
- * Colour each sector of a lap: purple vs the route records (null on private
- * routes: no purple), green vs the driver's personal bests.
+ * Colour each sector of a lap (see sectorColour). records is null on private
+ * routes; there purple is against your best sectors and green against the
+ * lap you raced (refSplits).
  */
-export function coloursFor(splits: number[], pbs: (number | null)[], records: (number | null)[] | null): SectorColourName[] {
-  return sectorTimes(splits).map((s, i) => sectorColour(s, pbs[i] ?? null, records?.[i] ?? null, records != null));
+export function coloursFor(
+  splits: number[],
+  pbs: (number | null)[],
+  records: (number | null)[] | null,
+  refSplits: number[] | null = null,
+): SectorColourName[] {
+  const refSecs = refSplits ? sectorTimes(refSplits) : null;
+  return sectorTimes(splits).map((s, i) => sectorColour(s, pbs[i] ?? null, records?.[i] ?? null, records != null, refSecs?.[i] ?? null));
+}
+
+/** Splits of the lap this run raced, when that was one of your own laps (others' posts need a fetch). */
+export function racedSplits(run: Pick<Run, 'referenceRef'>, runs: Run[]): number[] | null {
+  const id = run.referenceRef?.startsWith('run:') ? run.referenceRef.slice(4) : null;
+  return (id && runs.find((r) => r.id === id)?.splitTimesMs) || null;
 }
 
 /**

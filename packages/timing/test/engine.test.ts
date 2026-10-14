@@ -126,10 +126,13 @@ describe('delta and colours', () => {
     expect(sectorColour(10100, null, 9500)).toBe('green'); // first time on the sector: a PB
   });
 
-  it('private routes have no purple at all', () => {
-    expect(sectorColour(1, 10000, null, false)).toBe('green');
-    expect(sectorColour(1, 10000, 5000, false)).toBe('green');
-    expect(sectorColour(10100, 10000, null, false)).toBe('yellow');
+  it('private routes: purple beats your best sector, green beats the raced lap', () => {
+    expect(sectorColour(9000, 10000, null, false, 11000)).toBe('purple');
+    expect(sectorColour(9000, null, null, false, null)).toBe('purple'); // first time ever: your best
+    expect(sectorColour(10500, 10000, null, false, 11000)).toBe('green');
+    expect(sectorColour(10500, 10000, 5000, false, 11000)).toBe('green'); // posted records don't apply
+    expect(sectorColour(11500, 10000, null, false, 11000)).toBe('yellow');
+    expect(sectorColour(10500, 10000, null, false, null)).toBe('yellow'); // no lap to race
   });
 
   it('improves PBs and records during a session, so lap 2 races lap 1', () => {

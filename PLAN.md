@@ -425,7 +425,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 - **GPS dropouts**: a run survives up to **30 s** without a fix (tunnels and forest on rally stages); gates crossed during a dropout are interpolated across it. Longer gaps end the run.
 
-- **Sector colours (F1 style)**: **green** = faster than your own personal best for that sector; **purple** = faster than the route record (fastest posted sector), on **public routes only**. Private routes have no purple. Yellow otherwise. The delta still compares with the lap you race against. PBs and records improve during a session, and saved laps show the colours they had when driven.
+- **Sector colours**: on **public routes** purple = faster than the route record (fastest posted sector), green = faster than your own personal best for that sector. On **private routes** purple = faster than your personal best (your theoretical-best sector), green = faster than the same sector of the lap you're racing. Yellow otherwise. The delta always compares with the lap you race. PBs and records improve during a session, and saved laps show the colours they had when driven.
 
 ## 11. Open questions (need decisions)
 

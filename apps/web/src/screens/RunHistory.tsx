@@ -4,7 +4,7 @@ import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
 import { deleteRun, getRoute, routePosts, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
-import { coloursFor, pbsBefore, recordsExcluding } from '../lib/laps';
+import { coloursFor, pbsBefore, racedSplits, recordsExcluding } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
 
@@ -36,7 +36,7 @@ export default function RunHistory() {
   function colours(run: Run) {
     if (!route || !runs) return [];
     const records = route.isPublic ? recordsExcluding(posts, route.boundaries.length, run.id) : null;
-    return coloursFor(run.splitTimesMs, pbsBefore(runs, run), records);
+    return coloursFor(run.splitTimesMs, pbsBefore(runs, run), records, racedSplits(run, runs));
   }
 
   function toggle(id: string) {

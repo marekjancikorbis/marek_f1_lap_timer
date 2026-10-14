@@ -12,20 +12,26 @@ export function splitsFromSectors(sectorMs: number[]): number[] {
 }
 
 /**
- * F1 colours. Purple: beats the route record, on public routes only (a missing
- * record means nobody has set one, so this time does). Green: beats your own
- * personal best for the sector (none yet means this is your first, so it is
- * one). Yellow otherwise. Purple overrides green. Private routes have no purple.
+ * Sector colours. Purple overrides green; a missing baseline means nobody has
+ * set one yet, so this time does.
+ *   Public routes:  purple beats the route record (fastest posted sector),
+ *                   green beats your personal best for the sector.
+ *   Private routes: purple beats your personal best (your theoretical-best sector),
+ *                   green beats the same sector of the lap you're racing.
  */
 export function sectorColour(
   sectorMs: number,
   pbMs: number | null | undefined,
   recordMs: number | null | undefined,
   isPublic = true,
+  refMs?: number | null,
 ): SectorColour {
-  if (isPublic && (recordMs == null || sectorMs < recordMs)) return 'purple';
-  if (pbMs == null || sectorMs < pbMs) return 'green';
-  return 'yellow';
+  if (isPublic) {
+    if (recordMs == null || sectorMs < recordMs) return 'purple';
+    return pbMs == null || sectorMs < pbMs ? 'green' : 'yellow';
+  }
+  if (pbMs == null || sectorMs < pbMs) return 'purple';
+  return refMs != null && sectorMs < refMs ? 'green' : 'yellow';
 }
 
 /** Best time per sector across laps (all laps must share the route's boundaries). */

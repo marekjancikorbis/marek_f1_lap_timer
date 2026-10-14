@@ -42,12 +42,12 @@ export default function RunSummary() {
     });
   }, [load, toast]);
 
-  // Purple: beat the fastest posted sector (public routes only). Green: beat your previous best sector.
+  // Public: purple beat the fastest posted sector, green beat your best. Private: purple beat your best, green beat the raced lap.
   const colours = useMemo(() => {
     if (!run || !route) return [];
     const records = route.isPublic ? recordsExcluding(posts, route.boundaries.length, run.id) : null;
-    return coloursFor(run.splitTimesMs, pbsBefore(runs, run), records);
-  }, [run, route, posts, runs]);
+    return coloursFor(run.splitTimesMs, pbsBefore(runs, run), records, ref?.splitTimesMs ?? null);
+  }, [run, route, posts, runs, ref]);
 
   const session = useMemo(() => (run ? runs.filter((r) => r.sessionId === run.sessionId).sort((a, b) => a.lap - b.lap) : []), [run, runs]);
 
