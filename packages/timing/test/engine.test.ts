@@ -177,9 +177,19 @@ describe('invalidation', () => {
     expect(inv[0]?.reason).toBe('off_route');
   });
 
-  it('invalidates on a long GPS gap', () => {
+  it('rides out a 25 s GPS dropout (tunnel, forest) and still times every gate', () => {
     const fixes = simulateDrive(route, { speedKmh: 80, leadInM: 100 });
-    const gapped = [...fixes.slice(0, 15), ...fixes.slice(30)];
+    const gapped = [...fixes.slice(0, 15), ...fixes.slice(40)];
+    const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
+    const ev = run(timer, gapped);
+    expect(of(ev, 'invalidated')).toHaveLength(0);
+    // Constant speed, so the gate inside the gap interpolates almost exactly: 500 m at 80 km/h.
+    expect(of(ev, 'finished')[0].result.splitTimesMs[0] / 1000).toBeCloseTo(500 / (80 / 3.6), 0);
+  });
+
+  it('invalidates on a GPS gap over 30 s', () => {
+    const fixes = simulateDrive(route, { speedKmh: 80, leadInM: 100 });
+    const gapped = [...fixes.slice(0, 15), ...fixes.slice(47)];
     const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
     expect(of(run(timer, gapped), 'invalidated')[0]?.reason).toBe('gps_gap');
   });

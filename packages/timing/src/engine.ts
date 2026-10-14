@@ -32,7 +32,8 @@ export const DEFAULTS = {
   OFF_ROUTE_M: 30,
   OFF_ROUTE_HOLD_MS: 4000,
   POOR_ACCURACY_M: 20,
-  GPS_GAP_MS: 8000,
+  /** Rally stages run through forests and tunnels: ride out dropouts this long. */
+  GPS_GAP_MS: 30_000,
   JUMP_START_THRESHOLD_M: 10,
   JUMP_START_PENALTY_MS: 5000,
   MOTION_ACCEL_G: 0.1,

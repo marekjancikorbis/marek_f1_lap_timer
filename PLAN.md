@@ -423,6 +423,8 @@ Two laps can be compared only on the **same route**, so they share the same froz
 - **Positioning**: the app is for **track days and rally events only** (closed courses). The app store listing, terms and copy say so; public-road timing is not a use case.
 - **Gate accuracy (measured on simulated driving)**: `simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error. Gate error is about 70 ms RMS and under 150 ms p95 on a rally stage and a circuit, and **5 Hz is no better than 1 Hz**. GPS position error dominates, not interpolation (with perfect GPS the error is under 60 ms), so Hermite interpolation is not worth building. Only better fixes help (external 10–25 Hz GNSS). `test/accuracy.test.ts` guards both numbers; real-drive logs dropped into `test/fixtures/` will confirm them.
 
+- **GPS dropouts**: a run survives up to **30 s** without a fix (tunnels and forest on rally stages); gates crossed during a dropout are interpolated across it. Longer gaps end the run.
+
 ## 11. Open questions (need decisions)
 
 1. **Platforms**: iOS and Android both (assumed), or one first?

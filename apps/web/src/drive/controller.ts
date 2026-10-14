@@ -179,7 +179,7 @@ export class DriveController {
       const now = Date.now();
       this.handle(this.timer.tick(now));
       if (this.state.gpsOk && now - this.lastFixAt > GPS_LOST_MS) {
-        this.emit({ gpsOk: false, speed: null, gpsError: 'GPS signal lost. Timing carries on when it returns; after 8 s the run ends.' });
+        this.emit({ gpsOk: false, speed: null, gpsError: 'GPS signal lost. Timing carries on when it returns; after 30 s the run ends.' });
       }
       this.rafId = requestAnimationFrame(loop);
     };
