@@ -8,6 +8,7 @@ import { formatDate, formatLap } from '../lib/format';
 import { coloursFor, resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
+import { listLogs } from '../drive/gpslogs';
 import { loadPrefs, savePrefs, setPendingDrive } from '../drive/store';
 
 interface Option {
@@ -34,6 +35,9 @@ export default function PreDrive() {
   const [mode, setMode] = useState(prefs.mode);
   const [voice, setVoice] = useState(prefs.voice);
   const [replay, setReplay] = useState(false);
+  /** recordedAt of the GPS log to replay; 0 = a generated drive. */
+  const [logAt, setLogAt] = useState(0);
+  const [routeLogs] = useState(() => listLogs().filter((l) => l.route.id === routeId));
   const [countdown, setCountdown] = useState(profile.countdownS ?? DEFAULT_COUNTDOWN_S);
   const [terms, setTerms] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -122,7 +126,7 @@ export default function PreDrive() {
       }
       savePrefs({ mode, voice });
       if (route.startType === 'standing' && countdown !== profile.countdownS) void updateMyProfile(profile.id, { countdownS: countdown });
-      setPendingDrive({ route, uid: profile.id, reference, records, countdownS: countdown, mode, voice, replay });
+      setPendingDrive({ route, uid: profile.id, reference, records, countdownS: countdown, mode, voice, replay, replayLog: replay ? routeLogs.find((l) => l.recordedAt === logAt) : null });
       nav(`/drive/${route.id}/go`);
     } catch (e) {
       toast(errorMessage(e), 'error');
@@ -254,6 +258,21 @@ export default function PreDrive() {
           <Switch label="Simulate the drive" checked={replay} onChange={setReplay} />
         </div>
       </div>
+      {replay && routeLogs.length > 0 && (
+        <div className="stack" style={{ gap: 8, marginTop: 12 }}>
+          {[{ recordedAt: 0, fixes: [] }, ...routeLogs].map((l) => (
+            <button key={l.recordedAt} className={`ref-option ${logAt === l.recordedAt ? 'on' : ''}`} onClick={() => setLogAt(l.recordedAt)} aria-pressed={logAt === l.recordedAt}>
+              <span className="ref-dot" />
+              <span className="grow">
+                <strong>{l.recordedAt ? `Recorded ${new Date(l.recordedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}` : 'Generated drive'}</strong>
+                <span className="mute" style={{ display: 'block', fontSize: 13 }}>
+                  {l.recordedAt ? `Replays your real GPS log · ${l.fixes.length} fixes` : 'A synthetic trace along the route'}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <button className="btn purple lg block" style={{ marginTop: 24 }} disabled={starting} onClick={go}>
         {starting ? 'Getting GPS…' : 'Start'}

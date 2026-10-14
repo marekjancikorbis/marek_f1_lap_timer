@@ -6,6 +6,7 @@ import { useMe, useSession } from '../lib/session';
 import type { CreatorRequest } from '../lib/types';
 import { readUsage, type UsageState } from '../lib/usage';
 import { USAGE_CAP } from '../lib/config';
+import { deleteLog, downloadLog, listLogs } from '../drive/gpslogs';
 
 const HUES = [210, 265, 145, 30, 0, 330, 185, 55];
 
@@ -17,6 +18,7 @@ export default function Settings() {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [usage, setUsage] = useState<UsageState | null>(null);
+  const [logs, setLogs] = useState(listLogs);
 
   useEffect(() => {
     getMyRequest(profile.id).then(setRequest).catch(() => setRequest(null));
@@ -96,6 +98,34 @@ export default function Settings() {
           <input type="range" min={3} max={10} step={1} value={countdown} onChange={(e) => setCountdown(Number(e.target.value))} />
           <small>Lights go out exactly this long after you tap Start. The timer starts at GO.</small>
         </label>
+      </div>
+
+      <h2 className="section-title">GPS logs</h2>
+      <div className="panel stack">
+        <small className="mute">The raw GPS of your last 5 real drives, kept on this phone. Replay them from Drive → Simulate, or send them to the developer to test timing.</small>
+        {logs.length === 0 && <p className="mute">No drives recorded yet.</p>}
+        {logs.map((l) => (
+          <div key={l.recordedAt} className="row" style={{ gap: 8 }}>
+            <span className="grow" style={{ minWidth: 0 }}>
+              <strong className="ellipsis" style={{ display: 'block' }}>{l.route.name}</strong>
+              <span className="mute" style={{ fontSize: 13 }}>
+                {new Date(l.recordedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} · {l.fixes.length} fixes
+              </span>
+            </span>
+            <button className="btn" onClick={() => downloadLog(l)}>
+              Download
+            </button>
+            <button
+              className="btn danger"
+              onClick={() => {
+                deleteLog(l.recordedAt);
+                setLogs(listLogs());
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        ))}
       </div>
 
       <h2 className="section-title">Route creation</h2>

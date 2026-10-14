@@ -4,13 +4,16 @@ import {
   lapProfileFromTrace,
   simulateDrive,
   type Fix,
+  type GpsLog,
+  type MotionSample,
   type LapResult,
   type PreparedRoute,
   type TimerEvent,
 } from '@laptimer/timing';
 import { markRouteHasRuns, newRunId, saveRun } from '../lib/data';
-import { preparedFor } from '../lib/geo';
+import { flatToLatLon, preparedFor } from '../lib/geo';
 import type { Route, Run, SectorColourName } from '../lib/types';
+import { saveLog } from './gpslogs';
 import { Sounds } from './sounds';
 
 export type DisplayMode = 'hud' | 'delta';
@@ -24,6 +27,8 @@ export interface DriveConfig {
   mode: DisplayMode;
   voice: boolean;
   replay: boolean;
+  /** Replay this recorded session instead of a generated one. */
+  replayLog?: GpsLog | null;
 }
 
 export interface SectorInfo {
@@ -84,6 +89,8 @@ export class DriveController {
   private rafId: number | null = null;
   private motionHandler = (e: DeviceMotionEvent) => this.onMotion(e);
   private visibilityHandler = () => this.onVisibility();
+  /** Raw session record for real drives (null in replay), kept for desk replays and test fixtures. */
+  private log: GpsLog | null = null;
 
   constructor(readonly cfg: DriveConfig) {
     this.prepared = preparedFor(cfg.route);
@@ -97,6 +104,25 @@ export class DriveController {
       sectorRecords: cfg.records,
       countdownS: cfg.countdownS,
     });
+    if (!cfg.replay) {
+      this.log = {
+        version: 1,
+        recordedAt: Date.now(),
+        userAgent: navigator.userAgent,
+        route: {
+          id: cfg.route.id,
+          name: cfg.route.name,
+          coords: flatToLatLon(cfg.route.coords),
+          isLoop: cfg.route.isLoop,
+          startType: cfg.route.startType,
+          boundaries,
+        },
+        countdownS: cfg.countdownS,
+        fixes: [],
+        motion: [],
+        controls: [],
+      };
+    }
     this.state = {
       phase: this.timer.phase,
       lap: 0,
@@ -140,7 +166,8 @@ export class DriveController {
     void this.requestWakeLock();
     document.addEventListener('visibilitychange', this.visibilityHandler);
     window.addEventListener('devicemotion', this.motionHandler);
-    if (this.cfg.replay) this.startReplay();
+    if (this.cfg.replayLog) this.startLogReplay(this.cfg.replayLog);
+    else if (this.cfg.replay) this.startReplay();
     else this.startGps();
     const loop = () => {
       this.handle(this.timer.tick(Date.now()));
@@ -158,6 +185,11 @@ export class DriveController {
     void this.wakeLock?.release().catch(() => undefined);
     this.sounds.close();
     window.speechSynthesis?.cancel();
+    this.saveLog();
+  }
+
+  private saveLog() {
+    if (this.log?.fixes.length) saveLog(this.log);
   }
 
   private async requestWakeLock() {
@@ -170,6 +202,8 @@ export class DriveController {
 
   private onVisibility() {
     if (document.visibilityState === 'visible') void this.requestWakeLock();
+    // The browser may kill a hidden tab: keep what was recorded so far.
+    else this.saveLog();
   }
 
   // -------------------------------------------------------------- inputs
@@ -249,6 +283,24 @@ export class DriveController {
     step();
   }
 
+  /** Desk-test a real recorded session, shifted to start now, including its countdown taps. */
+  private startLogReplay(log: GpsLog) {
+    const items: { t: number; run: () => void }[] = [
+      ...log.fixes.map((f) => ({ t: f.t, run: () => this.onFix({ ...f, t: f.t + offset }) })),
+      ...log.motion.map((m) => ({ t: m.t, run: () => this.handle(this.timer.motion({ ...m, t: m.t + offset })) })),
+      ...log.controls.map((c) => ({ t: c.t, run: () => (c.type === 'countdown' ? this.startCountdown(c.t + offset) : this.cancelCountdown()) })),
+    ].sort((a, b) => a.t - b.t);
+    if (!items.length) return;
+    const offset = Date.now() - items[0].t;
+    let i = 0;
+    const step = () => {
+      // Run everything due now; motion comes at ~60 Hz, faster than timers fire.
+      while (i < items.length && items[i].t + offset <= Date.now()) items[i++].run();
+      if (i < items.length) this.replayTimer = window.setTimeout(step, Math.max(0, items[i].t + offset - Date.now()));
+    };
+    step();
+  }
+
   private simulateLaunchMotion() {
     const start = Date.now();
     const id = window.setInterval(() => {
@@ -262,10 +314,20 @@ export class DriveController {
     if (this.cfg.replay) return;
     const a = e.accelerationIncludingGravity;
     if (!a || a.x == null || a.y == null || a.z == null) return;
-    this.handle(this.timer.motion({ t: Date.now(), x: a.x, y: a.y, z: a.z }));
+    const sample: MotionSample = { t: Date.now(), x: a.x, y: a.y, z: a.z };
+    if (this.log && this.motionMatters(sample.t)) this.log.motion.push(sample);
+    this.handle(this.timer.motion(sample));
+  }
+
+  /** The engine only uses motion around a standing start; recording more would fill storage. */
+  private motionMatters(t: number): boolean {
+    const p = this.timer.phase;
+    if (this.cfg.route.startType !== 'standing') return false;
+    return p === 'ready' || p === 'countdown' || (p === 'running' && this.state.lap === 0 && this.state.goT != null && t < this.state.goT + 10_000);
   }
 
   private onFix(fix: Fix) {
+    this.log?.fixes.push(fix);
     const events = this.timer.push(fix);
     this.emit({
       gpsOk: true,
@@ -281,15 +343,16 @@ export class DriveController {
   // -------------------------------------------------------------- controls
 
   /** The only tap during a run: start the countdown while stopped at the line. */
-  startCountdown() {
-    const tap = Date.now();
+  startCountdown(tap = Date.now()) {
     const goT = this.timer.startCountdown(tap);
     if (goT == null) return;
+    this.log?.controls.push({ t: tap, type: 'countdown' });
     this.sounds.countdown(this.cfg.countdownS);
     this.emit({ goT });
   }
 
   cancelCountdown() {
+    this.log?.controls.push({ t: Date.now(), type: 'cancel' });
     this.sounds.stop();
     this.handle(this.timer.cancelCountdown());
     this.emit({ goT: null });
