@@ -153,6 +153,7 @@ service cloud.firestore {
       allow update: if canCreate() && resource.data.ownerId == uid()
         && request.resource.data.ownerId == uid()
         && request.resource.data.hidden == resource.data.hidden
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
         && (!changedKeys().hasAny(['coords', 'lengthM', 'boundaries', 'sectorLengthM', 'isLoop', 'startType'])
           || (resource.data.hasRuns == false && resource.data.publishedAt == null))
         && (request.resource.data.hasRuns == true || resource.data.hasRuns == false)
@@ -199,11 +200,15 @@ service cloud.firestore {
           && p.totalMs > 0
           && route.isPublic == true && route.hidden == false
           && p.hidden == false
-          && (!('caption' in p) || p.caption == null || p.caption.size() <= 280)
-          && (!('car' in p) || p.car == null || p.car.size() <= 40);
+          && extrasOk(p);
       }
 
-      allow update: if (signedIn() && resource.data.userId == uid() && onlyChanges(['caption', 'car']))
+      function extrasOk(p) {
+        return (!('caption' in p) || p.caption == null || (p.caption is string && p.caption.size() <= 280))
+          && (!('car' in p) || p.car == null || (p.car is string && p.car.size() <= 40));
+      }
+
+      allow update: if (signedIn() && resource.data.userId == uid() && onlyChanges(['caption', 'car']) && extrasOk(request.resource.data))
         || (isAdmin() && onlyChanges(['hidden']));
 
       allow delete: if signedIn() && (resource.data.userId == uid() || isAdmin());
