@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteMap } from '../components/RouteMap';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
-import { deleteRoute, getRoute, leaderboardFrom, renameRoute, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
+import { deleteRoute, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, sectorRecordsFrom, setHomeRoute } from '../lib/data';
 import { formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
-import type { Post, Route, Run } from '../lib/types';
+import type { Post, Profile, Route, Run } from '../lib/types';
 
 export default function RouteDetail() {
   const { routeId = '' } = useParams();
@@ -15,6 +15,8 @@ export default function RouteDetail() {
   const [route, setRoute] = useState<Route | null | undefined>(undefined);
   const [posts, setPosts] = useState<Post[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
+  const [locals, setLocals] = useState<Profile[]>([]);
+  const [homeBusy, setHomeBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -23,13 +25,15 @@ export default function RouteDetail() {
       if (!alive) return;
       setRoute(r);
       if (!r) return;
-      const [p, mine] = await Promise.all([
+      const [p, mine, loc] = await Promise.all([
         r.isPublic ? routePosts(r.id).catch(() => []) : Promise.resolve([] as Post[]),
         runsForRoute(profile.id, r.id).catch(() => []),
+        r.isPublic ? localsOf(r.id).catch(() => []) : Promise.resolve([] as Profile[]),
       ]);
       if (!alive) return;
       setPosts(p);
       setRuns(mine);
+      setLocals(loc);
     })();
     return () => {
       alive = false;
@@ -40,6 +44,27 @@ export default function RouteDetail() {
   const records = useMemo(() => (route ? sectorRecordsFrom(posts, route.boundaries.length) : []), [posts, route]);
   const myBest = useMemo(() => runs.filter((r) => r.valid).sort((a, b) => a.totalMs - b.totalMs)[0], [runs]);
   const isOwner = route?.ownerId === profile.id;
+
+  const isHome = profile.homeRouteId === route?.id;
+
+  async function toggleHome() {
+    if (!route) return;
+    setHomeBusy(true);
+    try {
+      await setHomeRoute(profile.id, isHome ? null : route.id);
+      // The profile updates live; keep the locals list in step without refetching.
+      // Replace rather than append: the initial load may already include this change.
+      setLocals((ls) => {
+        const others = ls.filter((l) => l.id !== profile.id);
+        return isHome ? others : [...others, { ...profile, homeRouteId: route.id }].sort((a, b) => a.username.localeCompare(b.username));
+      });
+      toast(isHome ? 'Home course removed' : `${route.name} is your home course`);
+    } catch (e) {
+      toast(errorMessage(e), 'error');
+    } finally {
+      setHomeBusy(false);
+    }
+  }
 
   async function rename() {
     if (!route) return;
@@ -100,6 +125,11 @@ export default function RouteDetail() {
           </Link>
         )}
       </div>
+      {route.isPublic && (
+        <button className={`btn block ${isHome ? '' : 'ghost'}`} style={{ marginTop: 8 }} disabled={homeBusy} onClick={toggleHome} aria-pressed={isHome}>
+          {isHome ? '★ Your home course · remove' : '☆ Set as my home course'}
+        </button>
+      )}
       {myBest && (
         <p className="mute" style={{ marginTop: 10, fontSize: 14 }}>
           Your best: <span className="num" style={{ color: 'var(--ink)', fontSize: 17 }}>{formatLap(myBest.totalMs)}</span>
@@ -152,6 +182,25 @@ export default function RouteDetail() {
                 ))}
               </ol>
             </>
+          )}
+        </>
+      )}
+
+      {route.isPublic && (
+        <>
+          <h2 className="section-title">Locals{locals.length > 0 && ` · ${locals.length}`}</h2>
+          {locals.length === 0 ? (
+            <p className="mute">Nobody calls this their home course yet.</p>
+          ) : (
+            <div className="list">
+              {locals.map((l) => (
+                <Link key={l.id} to={`/u/${l.username}`} className="list-item">
+                  <Avatar name={l.username} hue={l.avatarHue} size={32} />
+                  <strong className="grow ellipsis">{l.username}</strong>
+                  {l.id === profile.id && <span className="badge outline">You</span>}
+                </Link>
+              ))}
+            </div>
           )}
         </>
       )}

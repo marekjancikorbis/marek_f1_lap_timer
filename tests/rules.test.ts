@@ -323,3 +323,33 @@ describe('limits after losing admin', () => {
     await assertSucceeds(updateDoc(doc(db('ex'), 'routes/x0'), { name: 'Renamed' }));
   });
 });
+
+describe('home course', () => {
+  beforeEach(() =>
+    seed({
+      'users/me': { username: 'me', publicRouteIds: [] },
+      'users/other': { username: 'other', publicRouteIds: [] },
+      'routes/pub': route('creator', { isPublic: true }),
+      'routes/priv': route('creator'),
+      'routes/hid': route('creator', { isPublic: true, hidden: true }),
+    }),
+  );
+
+  it('can be a public route, or cleared', async () => {
+    await assertSucceeds(updateDoc(doc(db('me'), 'users/me'), { homeRouteId: 'pub' }));
+    await assertSucceeds(updateDoc(doc(db('me'), 'users/me'), { homeRouteId: null }));
+  });
+
+  it('cannot be a private, hidden or missing route, or set on someone else', async () => {
+    await assertFails(updateDoc(doc(db('me'), 'users/me'), { homeRouteId: 'priv' }));
+    await assertFails(updateDoc(doc(db('me'), 'users/me'), { homeRouteId: 'hid' }));
+    await assertFails(updateDoc(doc(db('me'), 'users/me'), { homeRouteId: 'nope' }));
+    await assertFails(updateDoc(doc(db('me'), 'users/other'), { homeRouteId: 'pub' }));
+  });
+
+  it('a removed admin over the limit can still edit the rest of their profile', async () => {
+    await seed({ 'roles/ex': { role: 'creator' }, 'users/ex': { username: 'ex', publicRouteIds: ['a', 'b', 'c'] } });
+    await assertSucceeds(updateDoc(doc(db('ex'), 'users/ex'), { countdownS: 7 }));
+    await assertSucceeds(updateDoc(doc(db('ex'), 'users/ex'), { homeRouteId: 'pub' }));
+  });
+});

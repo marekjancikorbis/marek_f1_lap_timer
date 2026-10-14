@@ -8,6 +8,7 @@ import {
   followCounts,
   getProfileByUsername,
   getRole,
+  getRoute,
   getRoutes,
   leaderboardFrom,
   publicRoutesOf,
@@ -28,6 +29,7 @@ export default function UserPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null);
   const [publicRoutes, setPublicRoutes] = useState<Route[]>([]);
+  const [home, setHome] = useState<Route | null>(null);
   const [routes, setRoutes] = useState<Map<string, Route>>(new Map());
   const [ranks, setRanks] = useState<Map<string, number>>(new Map());
   const [wins, setWins] = useState(0);
@@ -47,6 +49,8 @@ export default function UserPage() {
         setPosts(ps);
         setCounts(c);
         setPublicRoutes(pr);
+        // Unpublished or hidden since? Then getRoute returns null and nothing shows.
+        setHome(p.homeRouteId ? await getRoute(p.homeRouteId) : null);
         setRole(r);
         const routeIds = [...new Set(ps.map((x) => x.routeId))];
         setRoutes(await getRoutes(routeIds));
@@ -129,6 +133,17 @@ export default function UserPage() {
           </div>
         </div>
       </section>
+
+      <p className="mute" style={{ fontSize: 14, marginTop: 12 }}>
+        Home course:{' '}
+        {home?.isPublic ? (
+          <Link to={`/r/${home.id}`}>{home.name}</Link>
+        ) : isMe ? (
+          <>none yet. Pick one on a route's page from the <Link to="/map">map</Link>.</>
+        ) : (
+          'none'
+        )}
+      </p>
 
       <div className="stats-row">
         <Stat value={posts.length} label="Posted laps" />

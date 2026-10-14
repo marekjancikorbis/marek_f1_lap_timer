@@ -54,6 +54,16 @@ export async function createProfile(uid: string, username: string): Promise<void
   await batch.commit();
 }
 
+export async function setHomeRoute(uid: string, routeId: string | null): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), { homeRouteId: routeId });
+}
+
+/** Users who picked this route as their home course. */
+export async function localsOf(routeId: string): Promise<Profile[]> {
+  const snap = await getDocs(query(collection(db, 'users'), where('homeRouteId', '==', routeId), limit(100)));
+  return snap.docs.map((d) => withId<Profile>(d)).sort((a, b) => a.username.localeCompare(b.username));
+}
+
 export async function updateMyProfile(uid: string, data: Partial<Pick<Profile, 'countdownS' | 'avatarHue'>> & { acceptedTermsAt?: unknown }) {
   await updateDoc(doc(db, 'users', uid), data);
 }

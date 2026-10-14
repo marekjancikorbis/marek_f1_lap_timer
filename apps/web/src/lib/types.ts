@@ -11,6 +11,8 @@ export interface Profile {
   createdAt: Timestamp | null;
   /** The user's public routes; how many is limited by role (see publicLimit). */
   publicRouteIds?: string[];
+  /** The public route this user calls home; they're listed as a local there. */
+  homeRouteId?: string | null;
   countdownS?: number;
   acceptedTermsAt?: Timestamp | null;
   avatarHue?: number;
