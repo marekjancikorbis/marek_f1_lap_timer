@@ -311,3 +311,15 @@ describe('public route limits and the Official label', () => {
     await assertSucceeds(updateDoc(doc(db('owner'), 'routes/a1'), { official: false, isPublic: false }));
   });
 });
+
+describe('limits after losing admin', () => {
+  it('a removed admin cannot republish routes still listed on their profile', async () => {
+    const ids = ['x0', 'x1', 'x2', 'x3', 'x4'];
+    const docs: Record<string, object> = { 'roles/ex': { role: 'creator' }, 'users/ex': { username: 'ex', publicRouteIds: ids } };
+    ids.forEach((id, i) => (docs[`routes/${id}`] = route('ex', { isPublic: i === 0 })));
+    await seed(docs);
+    await assertFails(updateDoc(doc(db('ex'), 'routes/x1'), { isPublic: true }));
+    // Their remaining public route still works normally.
+    await assertSucceeds(updateDoc(doc(db('ex'), 'routes/x0'), { name: 'Renamed' }));
+  });
+});

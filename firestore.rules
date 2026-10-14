@@ -206,7 +206,11 @@ service cloud.firestore {
         && (request.resource.data.hasRuns == true || resource.data.hasRuns == false)
         && officialOk(request.resource.data)
         && (request.resource.data.isPublic == false
-          || routeId in getAfter(/databases/$(database)/documents/users/$(uid())).data.get('publicRouteIds', []));
+          || (routeId in getAfter(/databases/$(database)/documents/users/$(uid())).data.get('publicRouteIds', [])
+            // Going public also needs the list within the current limit: a removed
+            // admin's profile can still list 5 routes, and those stay private.
+            && (resource.data.isPublic == true
+              || getAfter(/databases/$(database)/documents/users/$(uid())).data.get('publicRouteIds', []).size() <= publicLimit())));
 
       // Revoked creators keep their routes; they can still mark runs on them.
       allow update: if signedIn() && resource.data.ownerId == uid()
