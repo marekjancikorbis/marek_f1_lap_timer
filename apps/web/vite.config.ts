@@ -11,7 +11,7 @@ export default defineConfig({
       manifest: {
         name: 'Purple Sector',
         short_name: 'Purple Sector',
-        description: 'Lap timing with a live sector delta, for tracks and closed roads.',
+        description: 'Lap timing with a live sector delta, for track days and rally events.',
         theme_color: '#16181A',
         background_color: '#16181A',
         display: 'standalone',

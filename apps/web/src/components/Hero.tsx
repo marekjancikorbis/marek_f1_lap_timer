@@ -21,7 +21,7 @@ export function Hero() {
       <h1 className="wordmark">
         Purple <span>Sector</span>
       </h1>
-      <p className="hero-sub">Lap timing with a live sector delta, for track days, hill-climbs and closed roads.</p>
+      <p className="hero-sub">Lap timing with a live sector delta, for track days and rally events.</p>
     </div>
   );
 }

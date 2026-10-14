@@ -3,6 +3,7 @@ import {
   LapTimer,
   lapProfileFromTrace,
   simulateDrive,
+  simulateTrackDrive,
   type Fix,
   type GpsLog,
   type MotionSample,
@@ -243,7 +244,22 @@ export class DriveController {
   private startReplay() {
     const standing = this.cfg.route.startType === 'standing';
     const t0 = Date.now();
-    const fixes = simulateDrive(this.prepared, {
+    // Rolling: corner-limited speeds, braking zones and drifting GPS error, with grip
+    // and top speed varied per run so laps and sector colours differ.
+    const fixes = !standing
+      ? simulateTrackDrive(this.prepared, {
+          vMaxKmh: 140 + Math.random() * 50,
+          latAccel: 7 + Math.random() * 3,
+          leadInM: 120,
+          laps: this.cfg.route.isLoop ? 2 : 1,
+          loop: this.cfg.route.isLoop,
+          startT: t0,
+          noiseM: 2.5,
+          speedNoise: 0.3,
+          jitterMs: 30,
+          seed: Math.floor(Math.random() * 1e6),
+        }).fixes
+      : simulateDrive(this.prepared, {
       speedKmh: 70 + Math.random() * 30,
       leadInM: standing ? 0 : 120,
       holdS: standing ? 3 : 0,

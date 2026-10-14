@@ -112,3 +112,105 @@ function mulberry32(seed: number): () => number {
     return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+export interface TrackSimOptions {
+  /** Top speed on straights, km/h. */
+  vMaxKmh?: number;
+  /** Cornering grip, m/s² (≈ 1 g on a track car, less on gravel). */
+  latAccel?: number;
+  /** Braking, m/s². */
+  brake?: number;
+  /** Acceleration, m/s². */
+  accel?: number;
+  /** Fix interval, ms. */
+  intervalMs?: number;
+  /** ± random jitter on each fix timestamp spacing, ms. */
+  jitterMs?: number;
+  /** Std-dev of the slowly drifting position error, metres. */
+  noiseM?: number;
+  /** Std-dev of Doppler speed error, m/s. */
+  speedNoise?: number;
+  startT?: number;
+  laps?: number;
+  loop?: boolean;
+  /** Rolling run-up before the start gate, metres. */
+  leadInM?: number;
+  seed?: number;
+}
+
+const GRID_M = 2;
+
+/**
+ * Physically plausible drive for accuracy tests: corner speed limited by grip,
+ * braking into and accelerating out of corners, correlated GPS position error
+ * and noisy Doppler. Returns the true time at any distance so gate errors can
+ * be measured exactly. Distance is absolute: lap n's gate b is at n·L + b.
+ */
+export function simulateTrackDrive(route: PreparedRoute, opts: TrackSimOptions = {}): { fixes: Fix[]; timeAt: (s: number) => number } {
+  const vMax = (opts.vMaxKmh ?? 160) / 3.6;
+  const aLat = opts.latAccel ?? 9;
+  const brake = opts.brake ?? 8;
+  const accel = opts.accel ?? 4;
+  const L = route.lengthM;
+  const laps = opts.laps ?? 1;
+  const loop = opts.loop ?? laps > 1;
+  const leadIn = opts.leadInM ?? 150;
+  const rand = mulberry32(opts.seed ?? 1);
+  const gauss = () => Math.sqrt(-2 * Math.log(rand() || 1e-12)) * Math.cos(2 * Math.PI * rand());
+
+  // Speed limit from curvature, measured over ±10 m of heading change.
+  const sStart = -leadIn;
+  const sEnd = L * laps + 60;
+  const n = Math.ceil((sEnd - sStart) / GRID_M) + 1;
+  const sAt = (i: number) => sStart + i * GRID_M;
+  const lapS = (s: number) => (loop ? ((s % L) + L) % L : s);
+  const v = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const s = sAt(i);
+    if (s < 0 || (!loop && s > L)) {
+      v[i] = vMax;
+      continue;
+    }
+    const d = Math.abs(((route.headingAt(lapS(s + 10)) - route.headingAt(lapS(s - 10)) + 540) % 360) - 180);
+    const kappa = (d * Math.PI) / 180 / 20;
+    v[i] = Math.min(vMax, kappa > 1e-6 ? Math.sqrt(aLat / kappa) : vMax);
+  }
+  // Rolling start: arrive at the run-up at the speed the start allows.
+  for (let i = 1; i < n; i++) v[i] = Math.min(v[i], Math.sqrt(v[i - 1] ** 2 + 2 * accel * GRID_M));
+  for (let i = n - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] ** 2 + 2 * brake * GRID_M));
+
+  const t0 = opts.startT ?? 1_700_000_000_000;
+  const T = new Float64Array(n);
+  T[0] = t0;
+  for (let i = 1; i < n; i++) T[i] = T[i - 1] + (2 * GRID_M * 1000) / (v[i - 1] + v[i]);
+
+  const timeAt = (s: number) => {
+    const x = Math.max(0, Math.min(n - 1.000001, (s - sStart) / GRID_M));
+    const i = Math.floor(x);
+    return T[i] + (T[i + 1] - T[i]) * (x - i);
+  };
+
+  const dt = opts.intervalMs ?? 1000;
+  const jitter = opts.jitterMs ?? 0;
+  const sigma = opts.noiseM ?? 0;
+  const speedNoise = opts.speedNoise ?? 0;
+  // AR(1) per axis with ~10 s correlation: GPS error drifts rather than jumps.
+  const phi = Math.exp(-dt / 10_000);
+  let ex = gauss() * sigma;
+  let ey = gauss() * sigma;
+  const fixes: Fix[] = [];
+  let i = 0;
+  for (let t = t0; t <= T[n - 1]; t += dt + (rand() - 0.5) * 2 * jitter) {
+    while (i < n - 2 && T[i + 1] < t) i++;
+    const f = (t - T[i]) / (T[i + 1] - T[i]);
+    const s = sAt(i) + f * GRID_M;
+    const speed = v[i] + (v[i + 1] - v[i]) * f;
+    ex = phi * ex + Math.sqrt(1 - phi * phi) * sigma * gauss();
+    ey = phi * ey + Math.sqrt(1 - phi * phi) * sigma * gauss();
+    const fix = makeFix(route, s, speed, Math.round(t), 0, rand, loop);
+    const xy = route.proj.toXY(fix);
+    const p = route.proj.toLatLon({ x: xy.x + ex, y: xy.y + ey });
+    fixes.push({ ...fix, lat: p.lat, lon: p.lon, accuracy: Math.max(3, sigma * 2), speed: Math.max(0, speed + gauss() * speedNoise) });
+  }
+  return { fixes, timeAt };
+}

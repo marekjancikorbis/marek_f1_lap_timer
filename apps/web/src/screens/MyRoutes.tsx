@@ -217,7 +217,7 @@ function DriverPanel({ request, onRequested }: { request: CreatorRequest | null 
           <h2>Request creator access</h2>
           <label className="field">
             <span>Note for the admin (optional)</span>
-            <textarea className="input" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. I run the Saturday hill-climb at Ecce Homo" />
+            <textarea className="input" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. I run our club's rally sprint stages" />
           </label>
           <button className="btn primary lg block" disabled={busy} onClick={send}>
             Send request

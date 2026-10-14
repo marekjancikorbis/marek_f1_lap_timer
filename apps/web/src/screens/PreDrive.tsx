@@ -284,7 +284,7 @@ export default function PreDrive() {
       <Sheet open={terms} onClose={() => setTerms(false)} label="Before your first drive">
         <div className="stack">
           <h2>Before your first drive</h2>
-          <p>Purple Sector is for track days, hill-climbs, karting and closed-road events.</p>
+          <p>Purple Sector is for track days and rally events.</p>
           <ul className="terms">
             <li>Only time yourself where timed driving is allowed and the road is closed to traffic.</li>
             <li>Mount the phone. Don't touch it while moving; the app needs no taps.</li>

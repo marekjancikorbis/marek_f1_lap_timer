@@ -374,7 +374,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 | **2: Accounts, roles and routes** | Auth, **roles** (`user_roles`, RLS helpers, bootstrap admin), **admin panel** (grant/revoke, requests, audit log), the route builder with road snapping, sector preview, loop/start options, and My routes. | Only users the admin has approved can create routes; a direct API insert from a driver is rejected (covered by a test). Creators' routes are private. |
 | **3: Drive (MVP)** | Pre-drive reference picker, both drive screens, cues, run summary, offline save and later sync, and **comparing your own laps** (sector table, delta and speed graphs from on-device lap profiles). A **GPS replay mode** plays a recorded trace into the app so drives can be tested at a desk. | A full drive works end to end on a real road, with deltas at each sector. **← First usable version** |
 | **4: Social** | Publish one route (creators), admin moderation of public routes and posts, verify-run function, **posting laps**, leaderboard, sector records (purple), routes map with clustering, route detail, **user search**, **user pages**, **following**, **social feed** (cursor pagination, new-posts pill), **lap detail**, **comparing with and racing against other people's laps**. | Two users can compete on a public route. A user can find another by search, open their page, compare with their posted lap and race against it. After following someone, their new posts appear at the top of the feed. |
-| **5: Polish** | Voice callouts, profiles and avatars, sharing a run as an image, external BLE GPS support, Hermite interpolation, battery tuning. | Ready for app store submission. |
+| **5: Polish** | Voice callouts, profiles and avatars, sharing a run as an image, external BLE GPS support, battery tuning. (Hermite interpolation dropped: see *Gate accuracy* in section 10.) | Ready for app store submission. |
 
 ---
 
@@ -382,7 +382,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 | Risk | Mitigation |
 |---|---|
-| **Safety, legal and app store policy.** Timed leaderboards on *public roads* can be read as encouraging street racing. Apple's guideline 1.4.5 rejects apps that urge risky activities, and there is liability exposure. | Position the app for **track days, closed roads, hill-climbs and karting**. Require accepting the terms before the first drive. Do not reward anything just for being fast on unclosed roads (or label public roads clearly). Keep the drive screen free of controls to tap, and use a mount and voice cues. **Decide this early, because it affects the app store listing.** |
+| **Safety, legal and app store policy.** Timed leaderboards on *public roads* can be read as encouraging street racing. Apple's guideline 1.4.5 rejects apps that urge risky activities, and there is liability exposure. | **Decided: track days and rally events only.** Require accepting the terms before the first drive. Do not reward anything just for being fast on unclosed roads (or label public roads clearly). Keep the drive screen free of controls to tap, and use a mount and voice cues. |
 | GPS accuracy (1 Hz, urban canyons, tunnels) | Interpolation, quality scoring, invalidating runs with gaps, and BLE GPS later. |
 | Battery and heat during long sessions | High-accuracy GPS runs only while a run is armed. A dark UI saves power on OLED screens. |
 | No signal on mountain roads | Offline-first: everything needed for a drive is cached, and uploads are queued. |
@@ -420,6 +420,9 @@ Two laps can be compared only on the **same route**, so they share the same froz
   - The period resets on the **1st of each month, 00:00 UTC**. The reset day is one setting (`USAGE_RESET_DAY`), so it can be matched to the Mapbox billing cycle.
   - The security rules only allow the counters to go up by one at a time and refuse increments past the cap. On Spark the cap is still enforced by the app, so the Mapbox token must also be **URL-restricted** to the app's domain in the Mapbox dashboard.
 
+- **Positioning**: the app is for **track days and rally events only** (closed courses). The app store listing, terms and copy say so; public-road timing is not a use case.
+- **Gate accuracy (measured on simulated driving)**: `simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error. Gate error is about 90 ms RMS and under 200 ms p95 on a rally stage and a circuit, and **5 Hz is no better than 1 Hz**. GPS position error dominates, not interpolation (with perfect GPS the error is under 60 ms), so Hermite interpolation is not worth building. Only better fixes help (external 10–25 Hz GNSS). `test/accuracy.test.ts` guards both numbers; real-drive logs dropped into `test/fixtures/` will confirm them.
+
 ## 11. Open questions (need decisions)
 
 1. **Platforms**: iOS and Android both (assumed), or one first?
@@ -428,7 +431,6 @@ Two laps can be compared only on the **same route**, so they share the same froz
 4. **Laps**: on a loop route, should laps run back to back in one session (assumed), with a fixed lap count or until you stop?
 5. **Changing your public route**: when you swap to a different route, should the old leaderboard be archived (still viewable) or hidden?
 6. **Can others save a public route** to their own list, or only drive it from the feed?
-7. **Positioning**: public roads or tracks/closed roads (see the safety risk above)?
 8. **Map provider**: is Mapbox OK, or do you prefer Google Maps?
 9. **Scope of the permission**: should approval be needed to create **any** route (assumed), or only to **publish** one? With the second option, everyone could build private routes and only approved users could make one public.
 10. **Access requests**: should drivers be able to request creator access in the app (assumed), or should you only grant it yourself, e.g. to people you know?
