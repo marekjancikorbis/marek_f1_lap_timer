@@ -1497,9 +1497,10 @@
 
 .lap-sector {
   display: grid;
-  grid-template-columns: 8px 3.25rem 1fr auto;
+  /* Fixed number columns so the separate header row lines up with the rows. */
+  grid-template-columns: 8px 2.75rem minmax(0, 1fr) 3.75rem 4.5rem;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2) 10px;
   padding: 0 var(--s-4);
   min-height: 44px;
 }
@@ -1520,10 +1521,29 @@
 }
 
 .lap-sector-lost {
-  font-size: 1.0625rem;
-  color: var(--ink-2);
+  font-size: 1rem;
+  color: var(--mute);
   text-align: right;
-  min-width: 4.5rem;
+}
+
+.lap-sector-gap {
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.lap-sector-cols {
+  min-height: 0;
+  padding-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.lap-sector-cols span:nth-child(n + 4) {
+  text-align: right;
 }
 
 .lap-sector-lost.rec {

@@ -99,6 +99,9 @@ export default function LapDetail() {
   const lost = records ? secs.map((ms, i) => Math.max(0, ms - records[i])) : null;
   const theoretical = records ? records.reduce((a, b) => a + b, 0) : null;
   const counts = COLOURS.map((c) => [c, post.sectorColours.filter((x) => x === c).length] as const).filter(([, n]) => n > 0);
+  // Running gap to the best possible lap as the lap crossed each sector's end line.
+  let acc = 0;
+  const gapAt = lost ? lost.map((l) => (acc += l)) : null;
   const rows = secs.map((ms, i) => ({ i, ms, lost: lost ? lost[i] : null }));
   if (sort === 'lost' && lost) rows.sort((a, b) => (b.lost ?? 0) - (a.lost ?? 0));
   // Folding away only two or three rows would just add a tap.
@@ -187,6 +190,15 @@ export default function LapDetail() {
           />
         </div>
       )}
+      {lost && (
+        <div className="lap-sector lap-sector-cols" aria-hidden="true">
+          <span />
+          <span>Sector</span>
+          <span>Time</span>
+          <span>Lost</span>
+          <span>Gap</span>
+        </div>
+      )}
       <ol className="list lap-sector-list" style={lost ? undefined : { marginTop: 12 }}>
         {visible.map(({ i, ms, lost: l }) => {
           const c = post.sectorColours[i];
@@ -196,7 +208,18 @@ export default function LapDetail() {
               <span className="lap-sector-n num">S{i + 1}</span>
               {c && <span className="visually-hidden">{STRIP_LABEL[c]}</span>}
               <strong className="lap-sector-time num">{formatLap(ms)}</strong>
-              {l != null && <span className={`lap-sector-lost num ${l === 0 ? 'rec' : ''}`}>{l === 0 ? 'Record' : formatDelta(l, 3)}</span>}
+              {l != null && (
+                <span className={`lap-sector-lost num ${l === 0 ? 'rec' : ''}`}>
+                  <span className="visually-hidden">lost </span>
+                  {l === 0 ? 'Record' : formatDelta(l, 3)}
+                </span>
+              )}
+              {gapAt && (
+                <span className="lap-sector-gap num">
+                  <span className="visually-hidden">gap at end </span>
+                  {formatDelta(gapAt[i], 3)}
+                </span>
+              )}
             </li>
           );
         })}
