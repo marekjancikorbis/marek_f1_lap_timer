@@ -250,8 +250,9 @@ service cloud.firestore {
           || request.resource.data.get('official', false) == resource.data.get('official', false)
           || (resource.data.isPublic == true && request.resource.data.isPublic == true));
 
-      allow delete: if signedIn() && resource.data.ownerId == uid()
-        && resource.data.hasRuns == false && resource.data.isPublic == false;
+      // A never-published route can only have the owner's own runs, so nobody else's laps point at it.
+      allow delete: if signedIn() && resource.data.ownerId == uid() && resource.data.isPublic == false
+        && (resource.data.hasRuns == false || resource.data.get('publishedAt', null) == null);
 
       // Moderation delete, same reach as moderation updates above.
       allow delete: if isAdmin() && (isOwner() || !(roleOf(resource.data.ownerId) in ['admin', 'owner']));

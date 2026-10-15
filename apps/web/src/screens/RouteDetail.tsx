@@ -45,6 +45,8 @@ export default function RouteDetail() {
   const records = useMemo(() => (route ? sectorRecordsFrom(posts, route.boundaries.length) : []), [posts, route]);
   const myBest = useMemo(() => runs.filter((r) => r.valid).sort((a, b) => a.totalMs - b.totalMs)[0], [runs]);
   const isOwner = route?.ownerId === profile.id;
+  // Mirrors the owner delete rule: private, and either undriven or never published.
+  const canOwnDelete = isOwner && !!route && !route.isPublic && (!route.hasRuns || !route.publishedAt);
   // Mirrors the moderation rule: admins reach driver and creator routes, the site owner reaches all.
   const canModDelete = isAdmin && (amSiteOwner || (ownerRole !== null && ownerRole !== 'admin' && ownerRole !== 'owner'));
 
@@ -87,10 +89,9 @@ export default function RouteDetail() {
 
   async function remove() {
     if (!route) return;
-    const ownDelete = isOwner && !route.hasRuns && !route.isPublic;
-    if (!confirm(`Delete “${route.name}”${ownDelete ? '' : ' and all its posted laps'}? This can't be undone.`)) return;
+    if (!confirm(`Delete “${route.name}”${canOwnDelete ? (runs.length ? ' and your laps on it' : '') : ' and all its posted laps'}? This can't be undone.`)) return;
     try {
-      await (ownDelete ? deleteRoute(route.id) : adminDeleteRoute(route.id));
+      await (canOwnDelete ? deleteRoute(profile.id, route.id) : adminDeleteRoute(route.id));
       toast('Route deleted');
       nav(isOwner ? '/routes' : '/', { replace: true });
     } catch (e) {
@@ -223,7 +224,7 @@ export default function RouteDetail() {
                 Rename
               </button>
             )}
-            {((isOwner && !route.hasRuns && !route.isPublic) || canModDelete) && (
+            {(canOwnDelete || canModDelete) && (
               <button className="btn danger" onClick={remove}>
                 Delete route
               </button>

@@ -308,8 +308,15 @@ export async function renameRoute(id: string, name: string) {
   await updateDoc(doc(db, 'routes', id), { name: name.trim().slice(0, 60) });
 }
 
-export async function deleteRoute(id: string) {
+/** Owner delete of a private route; the owner's own runs on it go too, as they'd have no route to show against. */
+export async function deleteRoute(uid: string, id: string) {
   await deleteDoc(doc(db, 'routes', id));
+  const runs = await getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', id)));
+  for (const part of chunks(runs.docs, 400)) {
+    const batch = writeBatch(db);
+    part.forEach((r) => batch.delete(r.ref));
+    await batch.commit();
+  }
 }
 
 /**

@@ -334,6 +334,17 @@ describe('public route limits and the Official label', () => {
     await assertSucceeds(updateDoc(doc(db('owner'), 'routes/a1'), { official: false, isPublic: false }));
   });
 
+  it('creators delete their private routes unless others may have laps on them', async () => {
+    await seed({
+      'routes/driven': route('creator', { hasRuns: true }),
+      'routes/wasPublic': route('creator', { hasRuns: true, publishedAt: new Date() }),
+      'routes/live': route('creator', { isPublic: true }),
+    });
+    await assertSucceeds(deleteDoc(doc(db('creator'), 'routes/driven')));
+    await assertFails(deleteDoc(doc(db('creator'), 'routes/wasPublic')));
+    await assertFails(deleteDoc(doc(db('creator'), 'routes/live')));
+  });
+
   it('admins delete public routes they can moderate; the owner deletes any', async () => {
     await seed({
       'routes/c1': route('creator', { isPublic: true, hasRuns: true }),
