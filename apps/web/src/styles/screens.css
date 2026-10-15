@@ -1359,3 +1359,176 @@
 .lap-card-map .route-map-pic {
   border-radius: 0;
 }
+
+/* ================================================================ lap detail */
+
+.lap-hero {
+  margin-top: var(--s-4);
+  padding: var(--s-4) var(--s-4) var(--s-5);
+  background: var(--raised);
+  border-radius: var(--r-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  text-align: center;
+}
+
+.lap-hero-route {
+  margin-top: var(--s-2);
+  color: var(--ink-2);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.lap-hero-route:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lap-hero-time {
+  font-size: clamp(3.5rem, 18vw, 5.5rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+}
+
+.lap-hero-caption {
+  margin: var(--s-2) 0 0;
+  max-width: 40ch;
+  text-wrap: balance;
+}
+
+.lap-sectors-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.lap-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+
+.lap-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lap-count i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.lap-count strong {
+  font-size: 1.25rem;
+  color: var(--ink);
+}
+
+.lap-ideal {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2px var(--s-3);
+  font-size: 0.875rem;
+}
+
+.lap-ideal strong {
+  font-size: 1.375rem;
+}
+
+.loss-chart {
+  margin: 0;
+}
+
+.loss-chart svg {
+  display: block;
+  width: 100%;
+  height: 96px;
+}
+
+.loss-axis {
+  stroke: var(--hairline-2);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.loss-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  color: var(--mute);
+}
+
+.loss-worst {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px var(--s-3);
+  margin-top: var(--s-3);
+  font-size: 0.875rem;
+}
+
+.loss-worst-item {
+  font-size: 1rem;
+  color: var(--ink-2);
+}
+
+.loss-worst-item strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.lap-sector-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lap-sector {
+  display: grid;
+  grid-template-columns: 8px 3.25rem 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0 var(--s-4);
+  min-height: 44px;
+}
+
+.lap-sector .sector-chip {
+  width: 8px;
+  height: 22px;
+}
+
+.lap-sector-n {
+  color: var(--mute);
+  font-size: 1.0625rem;
+}
+
+.lap-sector-time {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.lap-sector-lost {
+  font-size: 1.0625rem;
+  color: var(--ink-2);
+  text-align: right;
+  min-width: 4.5rem;
+}
+
+.lap-sector-lost.rec {
+  color: var(--purple-ink);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+}

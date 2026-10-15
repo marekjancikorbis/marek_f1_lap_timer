@@ -30,6 +30,8 @@ function niceTicks(min: number, max: number, count = 4): number[] {
 /** Distance axis + sector gridlines: both graphs register on the same frame. */
 function Frame({ axis, yTicks, y, yFmt }: { axis: Axis; yTicks: number[]; y: (v: number) => number; yFmt: (v: number) => string }) {
   const x = xScale(axis);
+  // About ten labels fit across a phone; past that, label every k-th sector.
+  const every = Math.ceil(axis.boundaries.length / 10);
   return (
     <g>
       {yTicks.map((t) => (
@@ -43,7 +45,7 @@ function Frame({ axis, yTicks, y, yFmt }: { axis: Axis; yTicks: number[]; y: (v:
       {[0, ...axis.boundaries].map((b, i) => (
         <g key={`s${i}`}>
           <line x1={x(b)} x2={x(b)} y1={PAD.t} y2={H - PAD.b} stroke="var(--hairline-2)" strokeWidth={1} strokeDasharray={i === 0 ? undefined : '2 4'} />
-          {i < axis.boundaries.length && (
+          {i < axis.boundaries.length && i % every === 0 && (
             <text x={(x(b) + x(axis.boundaries[i])) / 2} y={H - 8} textAnchor="middle" className="chart-tick">
               S{i + 1}
             </text>
