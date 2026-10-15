@@ -59,6 +59,8 @@ export interface DriveState {
   speed: number | null;
   accuracy: number | null;
   distanceToGateM: number | null;
+  /** Where the driver is relative to the start line, until timing starts. */
+  startRel: { a: number; c: number } | null;
   nextSector: number;
   jumpBannerUntil: number;
   reactionMs: number | null;
@@ -144,6 +146,7 @@ export class DriveController {
       speed: null,
       accuracy: null,
       distanceToGateM: null,
+      startRel: null,
       nextSector: 0,
       jumpBannerUntil: 0,
       reactionMs: null,
@@ -378,6 +381,7 @@ export class DriveController {
       speed: fix.speed,
       accuracy: fix.accuracy,
       distanceToGateM: this.timer.distanceToNextGateM,
+      startRel: ['waiting', 'armed', 'ready'].includes(this.timer.phase) ? this.timer.relToStart(fix) : null,
       nextSector: this.timer.nextSector,
     });
     this.handle(events);

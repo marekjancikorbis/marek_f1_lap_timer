@@ -65,6 +65,7 @@ export default function Drive() {
           {standing ? (
             <>
               <h1 className="drive-big-label">Stop at the start line</h1>
+              <ToStart rel={s.startRel} zoneM={ctl.timer.cfg.th.STANDING_ZONE_M} />
               <p className="drive-sub">The countdown button appears once you've been still at the line for 2 seconds.</p>
             </>
           ) : s.phase === 'armed' ? (
@@ -75,6 +76,7 @@ export default function Drive() {
           ) : (
             <>
               <h1 className="drive-big-label">Drive to the start</h1>
+              <ToStart rel={s.startRel} zoneM={ctl.timer.cfg.th.STANDING_ZONE_M} />
               <p className="drive-sub">Approach the start line in the route's direction. Timing arms within 50 m.</p>
             </>
           )}
@@ -142,6 +144,25 @@ export default function Drive() {
           </button>
         )}
       </footer>
+    </div>
+  );
+}
+
+/** Straight-line distance to the start line and which way it is, so the driver can find it before timing. */
+function ToStart({ rel, zoneM }: { rel: { a: number; c: number } | null; zoneM: number }) {
+  if (!rel) return null;
+  const atLine = Math.abs(rel.a) <= zoneM && rel.c <= zoneM;
+  const hint = atLine
+    ? 'at the start line'
+    : rel.a > 0
+      ? 'past the start line, turn back'
+      : rel.c > -rel.a
+        ? 'to the start line, off to the side'
+        : 'to the start line';
+  return (
+    <div className={`drive-to-start ${atLine ? 'at-line' : ''}`}>
+      <strong className="num">{atLine ? 'At the line' : formatDistance(Math.hypot(rel.a, rel.c))}</strong>
+      {!atLine && <span>{hint}</span>}
     </div>
   );
 }

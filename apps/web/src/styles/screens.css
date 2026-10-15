@@ -740,6 +740,30 @@
   color: var(--green-ink);
 }
 
+.drive-to-start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.drive-to-start strong {
+  font-size: clamp(3rem, 16vw, 5rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.drive-to-start span {
+  color: var(--ink-2);
+  font-size: 1.125rem;
+}
+
+.drive-to-start.at-line strong {
+  color: var(--green-ink);
+  font-size: clamp(2.25rem, 11vw, 3.5rem);
+  text-transform: uppercase;
+}
+
 .drive-sub {
   color: var(--ink-2);
   max-width: 30ch;

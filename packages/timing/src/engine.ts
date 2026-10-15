@@ -334,8 +334,8 @@ export class LapTimer {
 
   // ------------------------------------------------------------- approach
 
-  /** Along-track (a) and cross-track (c) position relative to the start gate. */
-  private relToStart(fix: LatLon): { a: number; c: number } {
+  /** Along-track (a, negative before the line) and cross-track (c) position relative to the start gate, metres. */
+  relToStart(fix: LatLon): { a: number; c: number } {
     const r = this.cfg.route;
     const q = r.proj.toXY(fix);
     const p0 = r.startXY;
