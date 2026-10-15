@@ -26,6 +26,7 @@ export default function LapDetail() {
   const [driven, setDriven] = useState(false);
   const [sort, setSort] = useState<'order' | 'lost'>('order');
   const [showAll, setShowAll] = useState(false);
+  const [carAtM, setCarAtM] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -107,6 +108,8 @@ export default function LapDetail() {
   // Folding away only two or three rows would just add a tap.
   const folded = !showAll && rows.length > FOLD + 3;
   const visible = folded ? rows.slice(0, FOLD) : rows;
+  const hasSpeed = !!post.profile && post.profile.speedDms.length > 1;
+  const hasGraphs = !!route && (!!vsRecord || hasSpeed);
 
   return (
     <main className="screen">
@@ -230,16 +233,26 @@ export default function LapDetail() {
         </button>
       )}
 
+      {route && (
+        <>
+          <h2 className="section-title">Map</h2>
+          <div className="map-card">
+            <RouteMap route={route} colours={post.sectorColours} height={240} carAtM={carAtM} />
+          </div>
+          {hasGraphs && <p className="mute" style={{ fontSize: 13, marginTop: 6 }}>Tap or drag across a graph below to place the car on the map.</p>}
+        </>
+      )}
+
       {route && vsRecord && (
         <>
           <h2 className="section-title">Against the best possible lap</h2>
           <div className="panel chart-panel">
-            <DeltaGraph data={vsRecord.delta} boundaries={route.boundaries} aLabel={post.username} bLabel="Sector records" />
+            <DeltaGraph data={vsRecord.delta} boundaries={route.boundaries} aLabel={post.username} bLabel="Sector records" onScrub={setCarAtM} />
           </div>
         </>
       )}
 
-      {route && post.profile && post.profile.speedDms.length > 1 && (
+      {route && post.profile && hasSpeed && (
         <>
           <h2 className="section-title">Speed</h2>
           <div className="panel chart-panel">
@@ -248,16 +261,8 @@ export default function LapDetail() {
               boundaries={route.boundaries}
               aLabel={post.username}
               bLabel={null}
+              onScrub={setCarAtM}
             />
-          </div>
-        </>
-      )}
-
-      {route && (
-        <>
-          <h2 className="section-title">Map</h2>
-          <div className="map-card">
-            <RouteMap route={route} colours={post.sectorColours} height={240} />
           </div>
         </>
       )}

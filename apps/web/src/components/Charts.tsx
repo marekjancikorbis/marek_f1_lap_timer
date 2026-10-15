@@ -57,7 +57,7 @@ function Frame({ axis, yTicks, y, yFmt }: { axis: Axis; yTicks: number[]; y: (v:
 }
 
 /** Hover / touch scrubbing that snaps to the nearest sample. */
-function useScrub(xs: number[], axis: Axis) {
+function useScrub(xs: number[], axis: Axis, onScrub?: (d: number) => void) {
   const [i, setI] = useState<number | null>(null);
   const svg = useRef<SVGSVGElement>(null);
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
@@ -67,6 +67,7 @@ function useScrub(xs: number[], axis: Axis) {
     let best = 0;
     for (let k = 1; k < xs.length; k++) if (Math.abs(xs[k] - d) < Math.abs(xs[best] - d)) best = k;
     setI(best);
+    onScrub?.(xs[best]);
   };
   return { svg, i, onMove, clear: () => setI(null) };
 }
@@ -80,7 +81,20 @@ export interface DeltaPoint {
  * Cumulative gap A − B against route distance. Below zero A is ahead; the
  * area takes the colour of whoever is ahead at that point.
  */
-export function DeltaGraph({ data, boundaries, aLabel, bLabel }: { data: DeltaPoint[]; boundaries: number[]; aLabel: string; bLabel: string }) {
+export function DeltaGraph({
+  data,
+  boundaries,
+  aLabel,
+  bLabel,
+  onScrub,
+}: {
+  data: DeltaPoint[];
+  boundaries: number[];
+  aLabel: string;
+  bLabel: string;
+  /** Distance (m) under the pointer; not cleared on leave, so a tap keeps its spot. */
+  onScrub?: (d: number) => void;
+}) {
   const axis = { maxD: boundaries[boundaries.length - 1], boundaries };
   const { minV, maxV, yTicks } = useMemo(() => {
     const vs = data.map((p) => p.ms / 1000);
@@ -94,6 +108,7 @@ export function DeltaGraph({ data, boundaries, aLabel, bLabel }: { data: DeltaPo
   const scrub = useScrub(
     data.map((p) => p.d),
     axis,
+    onScrub,
   );
   const line = data.map((p, k) => `${k ? 'L' : 'M'}${x(p.d).toFixed(1)} ${y(p.ms / 1000).toFixed(1)}`).join('');
   const area = `${line}L${x(data[data.length - 1].d)} ${y(0)}L${x(data[0].d)} ${y(0)}Z`;
@@ -163,7 +178,19 @@ export interface SpeedPoint {
 }
 
 /** Both laps' speed (km/h) against route distance. */
-export function SpeedGraph({ data, boundaries, aLabel, bLabel }: { data: SpeedPoint[]; boundaries: number[]; aLabel: string; bLabel: string | null }) {
+export function SpeedGraph({
+  data,
+  boundaries,
+  aLabel,
+  bLabel,
+  onScrub,
+}: {
+  data: SpeedPoint[];
+  boundaries: number[];
+  aLabel: string;
+  bLabel: string | null;
+  onScrub?: (d: number) => void;
+}) {
   const axis = { maxD: boundaries[boundaries.length - 1], boundaries };
   const maxV = useMemo(() => Math.max(20, ...data.map((p) => Math.max(p.a, bLabel ? p.b : 0))) * 1.08, [data, bLabel]);
   const yTicks = niceTicks(0, maxV);
@@ -172,6 +199,7 @@ export function SpeedGraph({ data, boundaries, aLabel, bLabel }: { data: SpeedPo
   const scrub = useScrub(
     data.map((p) => p.d),
     axis,
+    onScrub,
   );
   const path = (key: 'a' | 'b') => data.map((p, k) => `${k ? 'L' : 'M'}${x(p.d).toFixed(1)} ${y(p[key]).toFixed(1)}`).join('');
   const hover = scrub.i != null ? data[scrub.i] : null;
