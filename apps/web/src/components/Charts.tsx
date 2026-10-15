@@ -69,7 +69,8 @@ function useScrub(xs: number[], axis: Axis, onScrub?: (d: number) => void) {
     setI(best);
     onScrub?.(xs[best]);
   };
-  return { svg, i, onMove, clear: () => setI(null) };
+  // No clear on leave: the last spot stays highlighted after a finger lifts, so its readout can be read.
+  return { svg, i, onMove };
 }
 
 export interface DeltaPoint {
@@ -133,7 +134,6 @@ export function DeltaGraph({
         aria-label={`Gap between ${aLabel} and ${bLabel} along the route`}
         onPointerMove={scrub.onMove}
         onPointerDown={scrub.onMove}
-        onPointerLeave={scrub.clear}
       >
         <defs>
           <clipPath id="above">
@@ -223,7 +223,6 @@ export function SpeedGraph({
         aria-label={`Speed of ${aLabel} and ${bLabel} along the route`}
         onPointerMove={scrub.onMove}
         onPointerDown={scrub.onMove}
-        onPointerLeave={scrub.clear}
       >
         <Frame axis={axis} yTicks={yTicks} y={y} yFmt={(v) => String(Math.round(v))} />
         {bLabel && <path d={path('b')} fill="none" stroke={SERIES.b} strokeWidth={2} strokeLinejoin="round" />}
