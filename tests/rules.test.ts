@@ -342,6 +342,7 @@ describe('public route limits and the Official label', () => {
     });
     await assertSucceeds(deleteDoc(doc(db('creator'), 'routes/driven')));
     await assertFails(deleteDoc(doc(db('creator'), 'routes/wasPublic')));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/wasPublic'), { publishedAt: null }));
     await assertFails(deleteDoc(doc(db('creator'), 'routes/live')));
   });
 
