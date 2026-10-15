@@ -237,9 +237,9 @@ export default function LapDetail() {
         <>
           <h2 className="section-title">Map</h2>
           <div className="map-card">
-            <RouteMap route={route} colours={post.sectorColours} height={240} carAtM={carAtM} />
+            <RouteMap route={route} colours={post.sectorColours} height={240} carAtM={carAtM} onPick={hasGraphs ? setCarAtM : undefined} />
           </div>
-          {hasGraphs && <p className="mute" style={{ fontSize: 13, marginTop: 6 }}>Tap or drag across a graph below to place the car on the map.</p>}
+          {hasGraphs && <p className="mute" style={{ fontSize: 13, marginTop: 6 }}>Tap a graph below or the route on the map to line the two up.</p>}
         </>
       )}
 
@@ -247,7 +247,7 @@ export default function LapDetail() {
         <>
           <h2 className="section-title">Against the best possible lap</h2>
           <div className="panel chart-panel">
-            <DeltaGraph data={vsRecord.delta} boundaries={route.boundaries} aLabel={post.username} bLabel="Sector records" onScrub={setCarAtM} />
+            <DeltaGraph data={vsRecord.delta} boundaries={route.boundaries} aLabel={post.username} bLabel="Sector records" onScrub={setCarAtM} at={carAtM} />
           </div>
         </>
       )}
@@ -262,6 +262,7 @@ export default function LapDetail() {
               aLabel={post.username}
               bLabel={null}
               onScrub={setCarAtM}
+              at={carAtM}
             />
           </div>
         </>

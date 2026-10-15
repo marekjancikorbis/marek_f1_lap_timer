@@ -13,6 +13,7 @@ export function RouteMap({
   height = 260,
   extra,
   carAtM,
+  onPick,
 }: {
   route: Route;
   colours?: (SectorColourName | null)[];
@@ -20,8 +21,12 @@ export function RouteMap({
   extra?: (map: mapboxgl.Map) => void | (() => void);
   /** Metres from the start to place the car marker; null hides it. */
   carAtM?: number | null;
+  /** Called with the distance along the route when the route line is tapped. */
+  onPick?: (d: number) => void;
 }) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const pickRef = useRef(onPick);
+  pickRef.current = onPick;
   const carRef = useRef(carAtM);
   carRef.current = carAtM;
 
@@ -78,6 +83,16 @@ export function RouteMap({
         paint: { 'circle-radius': 9, 'circle-color': '#2f7de1', 'circle-stroke-color': '#f2f1ec', 'circle-stroke-width': 3 },
       });
       placeCar(map, carRef.current);
+      // Taps within a finger's width of the line count; elsewhere the map just pans.
+      map.on('click', (e) => {
+        if (!pickRef.current) return;
+        const { x, y } = e.point;
+        if (!map.queryRenderedFeatures([[x - 16, y - 16], [x + 16, y + 16]], { layers: ['sec'] }).length) return;
+        const pr = preparedFor(route);
+        pickRef.current(Math.max(0, Math.min(pr.lengthM, pr.project({ lat: e.lngLat.lat, lon: e.lngLat.lng }).s)));
+      });
+      map.on('mouseenter', 'sec', () => pickRef.current && (map.getCanvas().style.cursor = 'pointer'));
+      map.on('mouseleave', 'sec', () => (map.getCanvas().style.cursor = ''));
       const cleanup = extra?.(map);
       return () => {
         mapRef.current = null;

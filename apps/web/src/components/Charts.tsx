@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { formatDelta, formatDistance } from '../lib/format';
 
 /** Series colours, validated for CVD separation and contrast on the dark surface. */
@@ -56,16 +56,24 @@ function Frame({ axis, yTicks, y, yFmt }: { axis: Axis; yTicks: number[]; y: (v:
   );
 }
 
-/** Hover / touch scrubbing that snaps to the nearest sample. */
-function useScrub(xs: number[], axis: Axis, onScrub?: (d: number) => void) {
+function nearest(xs: number[], d: number): number {
+  let best = 0;
+  for (let k = 1; k < xs.length; k++) if (Math.abs(xs[k] - d) < Math.abs(xs[best] - d)) best = k;
+  return best;
+}
+
+/** Hover / touch scrubbing that snaps to the nearest sample; `at` moves it from outside (e.g. a map tap). */
+function useScrub(xs: number[], axis: Axis, onScrub?: (d: number) => void, at?: number | null) {
   const [i, setI] = useState<number | null>(null);
   const svg = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    if (at != null) setI(nearest(xs, at));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [at]);
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
     const rect = svg.current!.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * W;
-    const d = ((px - PAD.l) / (W - PAD.l - PAD.r)) * axis.maxD;
-    let best = 0;
-    for (let k = 1; k < xs.length; k++) if (Math.abs(xs[k] - d) < Math.abs(xs[best] - d)) best = k;
+    const best = nearest(xs, ((px - PAD.l) / (W - PAD.l - PAD.r)) * axis.maxD);
     setI(best);
     onScrub?.(xs[best]);
   };
@@ -88,6 +96,7 @@ export function DeltaGraph({
   aLabel,
   bLabel,
   onScrub,
+  at,
 }: {
   data: DeltaPoint[];
   boundaries: number[];
@@ -95,6 +104,8 @@ export function DeltaGraph({
   bLabel: string;
   /** Distance (m) under the pointer; not cleared on leave, so a tap keeps its spot. */
   onScrub?: (d: number) => void;
+  /** Distance (m) to highlight, set from outside the graph. */
+  at?: number | null;
 }) {
   const axis = { maxD: boundaries[boundaries.length - 1], boundaries };
   const { minV, maxV, yTicks } = useMemo(() => {
@@ -110,6 +121,7 @@ export function DeltaGraph({
     data.map((p) => p.d),
     axis,
     onScrub,
+    at,
   );
   const line = data.map((p, k) => `${k ? 'L' : 'M'}${x(p.d).toFixed(1)} ${y(p.ms / 1000).toFixed(1)}`).join('');
   const area = `${line}L${x(data[data.length - 1].d)} ${y(0)}L${x(data[0].d)} ${y(0)}Z`;
@@ -184,12 +196,14 @@ export function SpeedGraph({
   aLabel,
   bLabel,
   onScrub,
+  at,
 }: {
   data: SpeedPoint[];
   boundaries: number[];
   aLabel: string;
   bLabel: string | null;
   onScrub?: (d: number) => void;
+  at?: number | null;
 }) {
   const axis = { maxD: boundaries[boundaries.length - 1], boundaries };
   const maxV = useMemo(() => Math.max(20, ...data.map((p) => Math.max(p.a, bLabel ? p.b : 0))) * 1.08, [data, bLabel]);
@@ -200,6 +214,7 @@ export function SpeedGraph({
     data.map((p) => p.d),
     axis,
     onScrub,
+    at,
   );
   const path = (key: 'a' | 'b') => data.map((p, k) => `${k ? 'L' : 'M'}${x(p.d).toFixed(1)} ${y(p[key]).toFixed(1)}`).join('');
   const hover = scrub.i != null ? data[scrub.i] : null;
