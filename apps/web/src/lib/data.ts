@@ -308,15 +308,34 @@ export async function renameRoute(id: string, name: string) {
   await updateDoc(doc(db, 'routes', id), { name: name.trim().slice(0, 60) });
 }
 
+async function deleteAll(docs: QueryDocumentSnapshot[]) {
+  for (const part of chunks(docs, 400)) {
+    const batch = writeBatch(db);
+    part.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+}
+
+function myRunsOn(uid: string, routeId: string) {
+  return getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', routeId)));
+}
+
 /** Owner delete of a private route; the owner's own runs on it go too, as they'd have no route to show against. */
 export async function deleteRoute(uid: string, id: string) {
   await deleteDoc(doc(db, 'routes', id));
-  const runs = await getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', id)));
-  for (const part of chunks(runs.docs, 400)) {
-    const batch = writeBatch(db);
-    part.forEach((r) => batch.delete(r.ref));
-    await batch.commit();
-  }
+  await deleteAll((await myRunsOn(uid, id)).docs);
+}
+
+/**
+ * Edit a route. A new shape, sectors or start makes laps timed on the old one
+ * wrong, so the route's posted laps and the editor's own runs on it go.
+ * Only a published route can have posts (and only admins edit those).
+ */
+export async function updateRoute(uid: string, route: Route, change: Partial<Route>, shapeChanged: boolean) {
+  await updateDoc(doc(db, 'routes', route.id), change);
+  if (!shapeChanged) return;
+  if (route.publishedAt) await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', route.id)))).docs);
+  await deleteAll((await myRunsOn(uid, route.id)).docs);
 }
 
 /**
@@ -374,12 +393,7 @@ export async function moderateRoute(routeId: string, change: { isPublic?: boolea
 /** Admin delete. The route goes first so a refused delete leaves its posts alone; then its posts, which would point nowhere. */
 export async function adminDeleteRoute(routeId: string) {
   await deleteDoc(doc(db, 'routes', routeId));
-  const posts = await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)));
-  for (const part of chunks(posts.docs, 400)) {
-    const batch = writeBatch(db);
-    part.forEach((p) => batch.delete(p.ref));
-    await batch.commit();
-  }
+  await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)))).docs);
 }
 
 export async function adminAllPublicRoutes(): Promise<Route[]> {

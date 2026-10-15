@@ -45,10 +45,10 @@ export default function RouteDetail() {
   const records = useMemo(() => (route ? sectorRecordsFrom(posts, route.boundaries.length) : []), [posts, route]);
   const myBest = useMemo(() => runs.filter((r) => r.valid).sort((a, b) => a.totalMs - b.totalMs)[0], [runs]);
   const isOwner = route?.ownerId === profile.id;
-  // Mirrors the owner delete rule: private, and either undriven or never published.
-  const canOwnDelete = isOwner && !!route && !route.isPublic && (!route.hasRuns || !route.publishedAt);
-  // Mirrors the moderation rule: admins reach driver and creator routes, the site owner reaches all.
-  const canModDelete = isAdmin && (amSiteOwner || (ownerRole !== null && ownerRole !== 'admin' && ownerRole !== 'owner'));
+  // Mirrors the rules: owners edit and delete routes that were never published.
+  const canOwnChange = isOwner && !!route && !route.isPublic && !route.publishedAt;
+  // Mirrors the moderation rules: admins reach driver and creator routes, the site owner reaches all.
+  const canModChange = isAdmin && (amSiteOwner || (ownerRole !== null && ownerRole !== 'admin' && ownerRole !== 'owner'));
 
   useEffect(() => {
     if (isAdmin && !amSiteOwner && route) getRole(route.ownerId).then(setOwnerRole);
@@ -89,9 +89,9 @@ export default function RouteDetail() {
 
   async function remove() {
     if (!route) return;
-    if (!confirm(`Delete “${route.name}”${canOwnDelete ? (runs.length ? ' and your laps on it' : '') : ' and all its posted laps'}? This can't be undone.`)) return;
+    if (!confirm(`Delete “${route.name}”${canOwnChange ? (runs.length ? ' and your laps on it' : '') : ' and all its posted laps'}? This can't be undone.`)) return;
     try {
-      await (canOwnDelete ? deleteRoute(profile.id, route.id) : adminDeleteRoute(route.id));
+      await (canOwnChange ? deleteRoute(profile.id, route.id) : adminDeleteRoute(route.id));
       toast('Route deleted');
       nav(isOwner ? '/routes' : '/', { replace: true });
     } catch (e) {
@@ -215,7 +215,7 @@ export default function RouteDetail() {
         </>
       )}
 
-      {(isOwner || canModDelete) && (
+      {(isOwner || canModChange) && (
         <>
           <h2 className="section-title">Manage</h2>
           <div className="row wrap">
@@ -224,15 +224,20 @@ export default function RouteDetail() {
                 Rename
               </button>
             )}
-            {(canOwnDelete || canModDelete) && (
+            {(canOwnChange || canModChange) && (
+              <Link className="btn" to={`/r/${route.id}/edit`}>
+                Edit route
+              </Link>
+            )}
+            {(canOwnChange || canModChange) && (
               <button className="btn danger" onClick={remove}>
                 Delete route
               </button>
             )}
           </div>
-          {isOwner && (route.hasRuns || route.publishedAt) && (
+          {isOwner && !canOwnChange && !canModChange && (
             <p className="mute" style={{ fontSize: 14, marginTop: 8 }}>
-              The shape and sectors are locked because this route has been driven{route.publishedAt ? ' or published' : ''}.
+              The shape and sectors are locked because this route has been published, so other drivers may have laps on it.
             </p>
           )}
         </>

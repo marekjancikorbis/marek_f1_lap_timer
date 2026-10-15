@@ -102,10 +102,13 @@ describe('route creation needs creator access (plan phase 2 exit criterion)', ()
     await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { name: 'x'.repeat(61) }));
   });
 
-  it('freezes geometry once a route has runs', async () => {
-    await seed({ 'routes/r1': route('creator', { hasRuns: true }) });
-    await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { boundaries: [100, 730] }));
+  it('freezes geometry once a route has been published, not when only its owner drove it', async () => {
+    await seed({ 'routes/r1': route('creator', { hasRuns: true }), 'routes/r2': route('creator', { publishedAt: new Date() }) });
+    await assertSucceeds(updateDoc(doc(db('creator'), 'routes/r1'), { boundaries: [100, 730], sectorLengthM: 100 }));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { sectorLengthM: 30 }));
     await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { hasRuns: false }));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/r2'), { boundaries: [100, 730] }));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/r2'), { start: { lng: 0, lat: 0 } }));
   });
 });
 
@@ -344,6 +347,20 @@ describe('public route limits and the Official label', () => {
     await assertFails(deleteDoc(doc(db('creator'), 'routes/wasPublic')));
     await assertFails(updateDoc(doc(db('creator'), 'routes/wasPublic'), { publishedAt: null }));
     await assertFails(deleteDoc(doc(db('creator'), 'routes/live')));
+  });
+
+  it('admins edit the shape of routes they can moderate; the owner edits any', async () => {
+    await seed({
+      'routes/c1': route('creator', { isPublic: true, publishedAt: new Date() }),
+      'routes/a1': route('admin', { isPublic: true, publishedAt: new Date() }),
+    });
+    const shape = { coords: [16.6, 49.2, 16.62, 49.2], lengthM: 1460, boundaries: [500, 1000, 1460], sectorLengthM: 500, name: 'Stage 1b' };
+    await assertSucceeds(updateDoc(doc(db('admin'), 'routes/c1'), shape));
+    await assertFails(updateDoc(doc(db('admin'), 'routes/c1'), { sectorLengthM: 30 }));
+    await assertFails(updateDoc(doc(db('admin'), 'routes/c1'), { ownerId: 'admin' }));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/c1'), shape));
+    await assertFails(updateDoc(doc(db('admin'), 'routes/a1'), shape));
+    await assertSucceeds(updateDoc(doc(db('owner'), 'routes/a1'), shape));
   });
 
   it('admins delete public routes they can moderate; the owner deletes any', async () => {

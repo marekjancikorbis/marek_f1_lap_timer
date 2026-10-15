@@ -92,6 +92,7 @@ function Gate() {
           <Route path="routes" element={<MyRoutes />} />
           <Route path="routes/new" element={<RouteBuilder />} />
           <Route path="r/:routeId" element={<RouteDetail />} />
+          <Route path="r/:routeId/edit" element={<RouteBuilder />} />
           <Route path="r/:routeId/history" element={<RunHistory />} />
           <Route path="drive/:routeId" element={<PreDrive />} />
           <Route path="run/:runId" element={<RunSummary />} />

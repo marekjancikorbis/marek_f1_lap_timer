@@ -2,17 +2,20 @@ import { computeSectorBoundaries, polylineLengthM, PreparedRoute, type LatLon } 
 import mapboxgl from 'mapbox-gl';
 import { Crosshair, Trash2, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { MapView, setSource } from '../components/MapView';
-import { errorMessage, ScreenHead, Segmented, Switch, useToast } from '../components/ui';
-import { createRoute } from '../lib/data';
+import { errorMessage, Loading, ScreenHead, Segmented, Switch, useToast } from '../components/ui';
+import { createRoute, getRoute, updateRoute } from '../lib/data';
 import { formatDistance } from '../lib/format';
-import { bboxOf, latLonToFlat, simplify } from '../lib/geo';
+import { bboxOf, flatToLatLon, latLonToFlat, simplify } from '../lib/geo';
 import { snapToRoads } from '../lib/mapbox';
 import { useMe } from '../lib/session';
+import type { Route } from '../lib/types';
 import { UsageLimitError } from '../lib/usage';
 
+/** Builds a new route, or edits one at /r/:routeId/edit (the rules decide who may save). */
 export default function RouteBuilder() {
+  const { routeId } = useParams();
   const { profile, isCreator, isAdmin } = useMe();
   const nav = useNavigate();
   const toast = useToast();
@@ -28,9 +31,36 @@ export default function RouteBuilder() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [center, setCenter] = useState<[number, number] | null>(null);
+  const [ready, setReady] = useState(false);
+  const [orig, setOrig] = useState<Route | null>(null);
+  // The loaded shape is already snapped; only re-snap (and so change the shape) once the user edits it.
+  const skipSnap = useRef(false);
+  const [shapeEdited, setShapeEdited] = useState(false);
+
+  useEffect(() => {
+    if (!routeId) return;
+    getRoute(routeId).then((r) => {
+      if (!r) {
+        toast('Route not available', 'error');
+        return nav(-1);
+      }
+      const pts = flatToLatLon(r.coords);
+      skipSnap.current = true;
+      setOrig(r);
+      // shortcut: routes saved without waypoints get up to 25 sampled from the line, so editing re-snaps a close copy.
+      setWaypoints(r.waypoints?.length ? flatToLatLon(r.waypoints) : pts.filter((_, i) => i % Math.ceil(pts.length / 24) === 0 || i === pts.length - 1));
+      setSnapped(pts);
+      setLoop(r.isLoop);
+      setSectorM(r.sectorLengthM);
+      setStartType(r.startType);
+      setName(r.name);
+      setCenter([r.start.lng, r.start.lat]);
+    });
+  }, [routeId, toast, nav]);
 
   // Start the map near the user if we can, else central Europe.
   useEffect(() => {
+    if (routeId) return;
     if (!navigator.geolocation) return setCenter([16.6, 49.2]);
     navigator.geolocation.getCurrentPosition(
       (p) => setCenter([p.coords.longitude, p.coords.latitude]),
@@ -40,17 +70,22 @@ export default function RouteBuilder() {
     // The timeout only starts once permission is answered; an ignored prompt would leave no map.
     const fallback = window.setTimeout(() => setCenter((c) => c ?? [16.6, 49.2]), 5000);
     return () => window.clearTimeout(fallback);
-  }, []);
+  }, [routeId]);
 
   const lengthM = useMemo(() => (snapped.length > 1 ? polylineLengthM(snapped) : 0), [snapped]);
   const boundaries = useMemo(() => (lengthM > 0 ? computeSectorBoundaries(lengthM, sectorM) : []), [lengthM, sectorM]);
 
   // Snap to roads shortly after the last edit; each request counts against the cap.
   useEffect(() => {
+    if (skipSnap.current) {
+      skipSnap.current = false;
+      return;
+    }
     if (waypoints.length < 2) {
       setSnapped(waypoints);
       return;
     }
+    setShapeEdited(true);
     const ctrl = new AbortController();
     const t = window.setTimeout(async () => {
       setSnapping(true);
@@ -89,7 +124,7 @@ export default function RouteBuilder() {
       });
     }
     setSource(map, 'ticks', { type: 'FeatureCollection', features: ticks });
-  }, [snapped, boundaries]);
+  }, [snapped, boundaries, ready]);
 
   // Draggable numbered waypoint markers.
   useEffect(() => {
@@ -107,7 +142,11 @@ export default function RouteBuilder() {
       });
       return m;
     });
-  }, [waypoints]);
+  }, [waypoints, ready]);
+
+  useEffect(() => {
+    if (ready && orig) mapRef.current?.fitBounds(orig.bbox, { padding: 40, animate: false });
+  }, [ready, orig]);
 
   const onReady = useCallback((map: mapboxgl.Map) => {
     mapRef.current = map;
@@ -123,8 +162,10 @@ export default function RouteBuilder() {
     });
     map.on('click', (e) => setWaypoints((ws) => [...ws, { lat: e.lngLat.lat, lon: e.lngLat.lng }]));
     map.getCanvas().style.cursor = 'crosshair';
+    setReady(true);
     return () => {
       mapRef.current = null;
+      setReady(false);
     };
   }, []);
 
@@ -135,16 +176,17 @@ export default function RouteBuilder() {
     );
   }
 
+  const shapeChanged = !orig || shapeEdited || loop !== orig.isLoop || sectorM !== orig.sectorLengthM || startType !== orig.startType;
+
   async function save() {
     if (snapped.length < 2 || !name.trim()) return;
+    if (orig && shapeChanged && (orig.hasRuns || orig.publishedAt)
+      && !confirm('Laps timed on the old shape will no longer match. Saving deletes the laps posted on this route and your own laps on it. Continue?')) return;
     setSaving(true);
     try {
-      const coords = simplify(snapped, 1.5);
+      const coords = shapeEdited || !orig ? simplify(snapped, 1.5) : snapped;
       const length = polylineLengthM(coords);
-      const id = await createRoute({
-        ownerId: profile.id,
-        ownerName: profile.username,
-        official: isAdmin,
+      const shape = {
         name: name.trim(),
         coords: latLonToFlat(coords),
         lengthM: Math.round(length * 10) / 10,
@@ -155,8 +197,11 @@ export default function RouteBuilder() {
         start: { lng: coords[0].lon, lat: coords[0].lat },
         bbox: bboxOf(coords),
         waypoints: latLonToFlat(waypoints),
-      });
-      toast('Route saved');
+      };
+      let id = orig?.id;
+      if (orig) await updateRoute(profile.id, orig, shapeChanged ? shape : { name: shape.name }, shapeChanged);
+      else id = await createRoute({ ...shape, ownerId: profile.id, ownerName: profile.username, official: isAdmin });
+      toast(orig ? 'Route updated' : 'Route saved');
       nav(`/r/${id}`, { replace: true });
     } catch (e) {
       toast(errorMessage(e), 'error');
@@ -166,10 +211,11 @@ export default function RouteBuilder() {
   }
 
   if (!isCreator) return <Navigate to="/routes" replace />;
+  if (routeId && !orig) return <Loading />;
 
   return (
     <main className="screen builder">
-      <ScreenHead back title="New route" />
+      <ScreenHead back title={orig ? 'Edit route' : 'New route'} />
       <div className="builder-map">
         {center && <MapView onReady={onReady} center={center} zoom={14} height="100%" label="Route builder map. Tap to add waypoints." />}
         <div className="builder-tools">
@@ -240,10 +286,12 @@ export default function RouteBuilder() {
         </label>
 
         <button className="btn primary lg block" disabled={saving || snapping || snapped.length < 2 || !name.trim()} onClick={save}>
-          {saving ? 'Saving…' : 'Save route'}
+          {saving ? 'Saving…' : orig ? 'Save changes' : 'Save route'}
         </button>
         <p className="mute" style={{ fontSize: 13, textAlign: 'center' }}>
-          New routes are private. Once a route has been driven, its shape and sectors are locked.
+          {orig
+            ? 'Changing the shape, sectors or start resets the laps timed on this route.'
+            : 'New routes are private. Once a route has been published, its shape and sectors are locked.'}
         </p>
       </div>
     </main>

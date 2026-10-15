@@ -197,6 +197,31 @@ service cloud.firestore {
     // ------------------------------------------------------------ routes
 
     match /routes/{routeId} {
+      // Fields that change where and how a route is timed.
+      function shapeKeys() {
+        return ['coords', 'lengthM', 'boundaries', 'sectorLengthM', 'isLoop', 'startType', 'start', 'bbox', 'waypoints'];
+      }
+
+      function shapeOk(d) {
+        return d.sectorLengthM is int
+          && d.sectorLengthM >= 50 && d.sectorLengthM <= 1000
+          && d.sectorLengthM % 50 == 0
+          && d.startType in ['standing', 'rolling']
+          && d.boundaries is list && d.boundaries.size() > 0
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 60;
+      }
+
+      // Admins reach driver and creator routes; the owner reaches all.
+      function canModerate() {
+        return isAdmin() && (isOwner() || !(roleOf(resource.data.ownerId) in ['admin', 'owner']));
+      }
+
+      // Never published: only the route's owner can have laps on it. hasRuns
+      // is no help here, as only the owner's own drives set it.
+      function neverPublished() {
+        return resource.data.isPublic == false && resource.data.get('publishedAt', null) == null;
+      }
+
       allow read: if signedIn() && (
         resource.data.ownerId == uid()
         || (resource.data.isPublic == true && resource.data.hidden == false)
@@ -209,22 +234,17 @@ service cloud.firestore {
         && request.resource.data.isPublic == false
         && request.resource.data.hidden == false
         && request.resource.data.hasRuns == false
-        && request.resource.data.sectorLengthM is int
-        && request.resource.data.sectorLengthM >= 50 && request.resource.data.sectorLengthM <= 1000
-        && request.resource.data.sectorLengthM % 50 == 0
-        && request.resource.data.startType in ['standing', 'rolling']
-        && request.resource.data.boundaries is list && request.resource.data.boundaries.size() > 0
-        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60;
+        && shapeOk(request.resource.data);
 
-      // Owner edits. Geometry and sectors freeze once anyone could have
-      // driven the route (it has runs, or it has ever been published).
+      // Owner edits. Geometry and sectors freeze once anyone else could have
+      // driven the route (it has ever been published).
       allow update: if canCreate() && resource.data.ownerId == uid()
         && request.resource.data.ownerId == uid()
         && request.resource.data.ownerName == resource.data.ownerName
         && request.resource.data.hidden == resource.data.hidden
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
-        && (!changedKeys().hasAny(['coords', 'lengthM', 'boundaries', 'sectorLengthM', 'isLoop', 'startType'])
-          || (resource.data.hasRuns == false && resource.data.publishedAt == null))
+        && (!changedKeys().hasAny(shapeKeys())
+          || (neverPublished() && request.resource.data.isPublic == false && shapeOk(request.resource.data)))
         && (request.resource.data.hasRuns == true || resource.data.hasRuns == false)
         // Once published, always marked so: the delete and geometry locks depend on it.
         && (resource.data.get('publishedAt', null) == null
@@ -246,19 +266,20 @@ service cloud.firestore {
       // another admin's or the owner's; the owner moderates any. Taking away
       // the Official label is part of removing an admin. Admins may also make a
       // published creator route Official; its runs and posts stay as they are.
-      allow update: if isAdmin() && onlyChanges(['isPublic', 'hidden', 'official'])
-        && (isOwner() || !(roleOf(resource.data.ownerId) in ['admin', 'owner']))
+      allow update: if canModerate() && onlyChanges(['isPublic', 'hidden', 'official'])
         && (request.resource.data.isPublic == false || request.resource.data.isPublic == resource.data.isPublic)
         && (request.resource.data.get('official', false) == false
           || request.resource.data.get('official', false) == resource.data.get('official', false)
           || (resource.data.isPublic == true && request.resource.data.isPublic == true));
 
-      // A never-published route can only have the owner's own runs, so nobody else's laps point at it.
-      allow delete: if signedIn() && resource.data.ownerId == uid() && resource.data.isPublic == false
-        && (resource.data.hasRuns == false || resource.data.get('publishedAt', null) == null);
+      // Moderation edit: name, shape and sectors. The app deletes the route's
+      // posted laps when the shape changes.
+      allow update: if canModerate() && onlyChanges(shapeKeys().concat(['name'])) && shapeOk(request.resource.data);
+
+      allow delete: if signedIn() && resource.data.ownerId == uid() && neverPublished();
 
       // Moderation delete, same reach as moderation updates above.
-      allow delete: if isAdmin() && (isOwner() || !(roleOf(resource.data.ownerId) in ['admin', 'owner']));
+      allow delete: if canModerate();
     }
 
     // ------------------------------------------------------------ posts
