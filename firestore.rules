@@ -252,6 +252,9 @@ service cloud.firestore {
 
       allow delete: if signedIn() && resource.data.ownerId == uid()
         && resource.data.hasRuns == false && resource.data.isPublic == false;
+
+      // Moderation delete, same reach as moderation updates above.
+      allow delete: if isAdmin() && (isOwner() || !(roleOf(resource.data.ownerId) in ['admin', 'owner']));
     }
 
     // ------------------------------------------------------------ posts

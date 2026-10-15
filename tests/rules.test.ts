@@ -333,6 +333,18 @@ describe('public route limits and the Official label', () => {
     await assertFails(updateDoc(doc(db('admin'), 'routes/o1'), { hidden: true }));
     await assertSucceeds(updateDoc(doc(db('owner'), 'routes/a1'), { official: false, isPublic: false }));
   });
+
+  it('admins delete public routes they can moderate; the owner deletes any', async () => {
+    await seed({
+      'routes/c1': route('creator', { isPublic: true, hasRuns: true }),
+      'routes/a1': route('admin', { isPublic: true }),
+      'routes/o1': route('owner', { isPublic: true }),
+    });
+    await assertFails(deleteDoc(doc(db('creator'), 'routes/c1')));
+    await assertFails(deleteDoc(doc(db('admin'), 'routes/o1')));
+    await assertSucceeds(deleteDoc(doc(db('admin'), 'routes/c1')));
+    await assertSucceeds(deleteDoc(doc(db('owner'), 'routes/a1')));
+  });
 });
 
 describe('limits after losing admin', () => {

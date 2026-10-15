@@ -364,6 +364,17 @@ export async function moderateRoute(routeId: string, change: { isPublic?: boolea
   }
 }
 
+/** Admin delete. The route goes first so a refused delete leaves its posts alone; then its posts, which would point nowhere. */
+export async function adminDeleteRoute(routeId: string) {
+  await deleteDoc(doc(db, 'routes', routeId));
+  const posts = await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)));
+  for (const part of chunks(posts.docs, 400)) {
+    const batch = writeBatch(db);
+    part.forEach((p) => batch.delete(p.ref));
+    await batch.commit();
+  }
+}
+
 export async function adminAllPublicRoutes(): Promise<Route[]> {
   const [pub, hidden] = await Promise.all([
     getDocs(query(collection(db, 'routes'), where('isPublic', '==', true), limit(500))),

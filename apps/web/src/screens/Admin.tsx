@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, Switch, useToast } from '../components/ui';
 import {
   adminAllPublicRoutes,
+  adminDeleteRoute,
   getProfiles,
   listAudit,
   listRequests,
@@ -226,6 +227,17 @@ function Routes() {
     }
   }
 
+  async function remove(r: Route) {
+    if (!confirm(`Delete ${r.name} by ${r.ownerName} and all its posted laps? This cannot be undone.`)) return;
+    try {
+      await adminDeleteRoute(r.id);
+      setRoutes((rs) => rs?.filter((x) => x.id !== r.id) ?? null);
+      toast('Route deleted');
+    } catch (e) {
+      toast(errorMessage(e), 'error');
+    }
+  }
+
   if (!routes) return <Loading />;
   if (!routes.length) return <Empty title="No published routes" />;
   return (
@@ -261,6 +273,9 @@ function Routes() {
             )}
             <button className="btn sm" onClick={() => act(r, { hidden: !r.hidden }, r.hidden ? 'Route visible again' : 'Route hidden')}>
               {r.hidden ? 'Unhide' : 'Hide'}
+            </button>
+            <button className="btn danger sm" onClick={() => remove(r)}>
+              Delete
             </button>
           </div>
         </div>
