@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteMap } from '../components/RouteMap';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
-import { deleteRoute, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, sectorRecordsFrom, setHomeRoute } from '../lib/data';
+import { adminDeleteRoute, deleteRoute, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, sectorRecordsFrom, setHomeRoute } from '../lib/data';
 import { formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
-import type { Post, Profile, Route, Run } from '../lib/types';
+import type { Post, Profile, Role, Route, Run } from '../lib/types';
 
 export default function RouteDetail() {
   const { routeId = '' } = useParams();
-  const { profile } = useMe();
+  const { profile, isAdmin, isOwner: amSiteOwner } = useMe();
   const toast = useToast();
   const nav = useNavigate();
   const [route, setRoute] = useState<Route | null | undefined>(undefined);
@@ -17,6 +17,7 @@ export default function RouteDetail() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [locals, setLocals] = useState<Profile[]>([]);
   const [homeBusy, setHomeBusy] = useState(false);
+  const [ownerRole, setOwnerRole] = useState<Role | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -44,6 +45,12 @@ export default function RouteDetail() {
   const records = useMemo(() => (route ? sectorRecordsFrom(posts, route.boundaries.length) : []), [posts, route]);
   const myBest = useMemo(() => runs.filter((r) => r.valid).sort((a, b) => a.totalMs - b.totalMs)[0], [runs]);
   const isOwner = route?.ownerId === profile.id;
+  // Mirrors the moderation rule: admins reach driver and creator routes, the site owner reaches all.
+  const canModDelete = isAdmin && (amSiteOwner || (ownerRole !== null && ownerRole !== 'admin' && ownerRole !== 'owner'));
+
+  useEffect(() => {
+    if (isAdmin && !amSiteOwner && route) getRole(route.ownerId).then(setOwnerRole);
+  }, [isAdmin, amSiteOwner, route?.ownerId]);
 
   const isHome = profile.homeRouteId === route?.id;
 
@@ -79,11 +86,13 @@ export default function RouteDetail() {
   }
 
   async function remove() {
-    if (!route || !confirm(`Delete “${route.name}”? This can't be undone.`)) return;
+    if (!route) return;
+    const ownDelete = isOwner && !route.hasRuns && !route.isPublic;
+    if (!confirm(`Delete “${route.name}”${ownDelete ? '' : ' and all its posted laps'}? This can't be undone.`)) return;
     try {
-      await deleteRoute(route.id);
+      await (ownDelete ? deleteRoute(route.id) : adminDeleteRoute(route.id));
       toast('Route deleted');
-      nav('/routes', { replace: true });
+      nav(isOwner ? '/routes' : '/', { replace: true });
     } catch (e) {
       toast(errorMessage(e), 'error');
     }
@@ -205,20 +214,22 @@ export default function RouteDetail() {
         </>
       )}
 
-      {isOwner && (
+      {(isOwner || canModDelete) && (
         <>
           <h2 className="section-title">Manage</h2>
           <div className="row wrap">
-            <button className="btn" onClick={rename}>
-              Rename
-            </button>
-            {!route.hasRuns && !route.isPublic && (
+            {isOwner && (
+              <button className="btn" onClick={rename}>
+                Rename
+              </button>
+            )}
+            {((isOwner && !route.hasRuns && !route.isPublic) || canModDelete) && (
               <button className="btn danger" onClick={remove}>
                 Delete route
               </button>
             )}
           </div>
-          {(route.hasRuns || route.publishedAt) && (
+          {isOwner && (route.hasRuns || route.publishedAt) && (
             <p className="mute" style={{ fontSize: 14, marginTop: 8 }}>
               The shape and sectors are locked because this route has been driven{route.publishedAt ? ' or published' : ''}.
             </p>
