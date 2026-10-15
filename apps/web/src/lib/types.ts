@@ -46,11 +46,15 @@ export interface Route {
   official?: boolean;
   /** Waypoints the creator tapped, flat [lng, lat, ...]. */
   waypoints?: number[];
+  /** Bumped on every shape change; only runs on the current shape can be posted. */
+  shapeVersion?: number;
 }
 
 export interface Run {
   id: string;
   routeId: string;
+  /** The route's shapeVersion when this run was driven. */
+  shapeVersion?: number;
   routeName: string;
   sessionId: string;
   lap: number;

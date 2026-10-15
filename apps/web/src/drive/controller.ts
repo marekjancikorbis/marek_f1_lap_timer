@@ -473,6 +473,7 @@ export class DriveController {
     const run: Omit<Run, 'createdAt'> = {
       id,
       routeId: this.cfg.route.id,
+      shapeVersion: this.cfg.route.shapeVersion ?? 0,
       routeName: this.cfg.route.name,
       sessionId: this.sessionId,
       lap: lap.lap,

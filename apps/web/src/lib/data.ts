@@ -332,7 +332,7 @@ export async function deleteRoute(uid: string, id: string) {
  * Only a published route can have posts (and only admins edit those).
  */
 export async function updateRoute(uid: string, route: Route, change: Partial<Route>, shapeChanged: boolean) {
-  await updateDoc(doc(db, 'routes', route.id), change);
+  await updateDoc(doc(db, 'routes', route.id), shapeChanged ? { ...change, shapeVersion: (route.shapeVersion ?? 0) + 1 } : change);
   if (!shapeChanged) return;
   if (route.publishedAt) await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', route.id)))).docs);
   await deleteAll((await myRunsOn(uid, route.id)).docs);

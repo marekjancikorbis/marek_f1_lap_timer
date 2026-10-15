@@ -104,7 +104,8 @@ describe('route creation needs creator access (plan phase 2 exit criterion)', ()
 
   it('freezes geometry once a route has been published, not when only its owner drove it', async () => {
     await seed({ 'routes/r1': route('creator', { hasRuns: true }), 'routes/r2': route('creator', { publishedAt: new Date() }) });
-    await assertSucceeds(updateDoc(doc(db('creator'), 'routes/r1'), { boundaries: [100, 730], sectorLengthM: 100 }));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { boundaries: [100, 730], sectorLengthM: 100 }));
+    await assertSucceeds(updateDoc(doc(db('creator'), 'routes/r1'), { boundaries: [100, 730], sectorLengthM: 100, shapeVersion: 1 }));
     await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { sectorLengthM: 30 }));
     await assertFails(updateDoc(doc(db('creator'), 'routes/r1'), { hasRuns: false }));
     await assertFails(updateDoc(doc(db('creator'), 'routes/r2'), { boundaries: [100, 730] }));
@@ -189,6 +190,13 @@ describe('posting laps', () => {
     await assertFails(setDoc(doc(d, 'posts/sim'), post()));
     await assertFails(setDoc(doc(d, 'posts/privrun'), post({ routeId: 'priv' })));
     await assertFails(setDoc(doc(db('stranger'), 'posts/run1'), post({ userId: 'stranger' })));
+  });
+
+  it('rejects a lap timed before the route was reshaped', async () => {
+    await seed({ 'routes/pub': route('creator', { isPublic: true, shapeVersion: 1 }) });
+    await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post()));
+    await seed({ 'users/driver/runs/run1': run({ shapeVersion: 1 }) });
+    await assertSucceeds(setDoc(doc(db('driver'), 'posts/run1'), post()));
   });
 
   it("rejects a post under someone else's name or a made-up route name", async () => {
@@ -354,7 +362,8 @@ describe('public route limits and the Official label', () => {
       'routes/c1': route('creator', { isPublic: true, publishedAt: new Date() }),
       'routes/a1': route('admin', { isPublic: true, publishedAt: new Date() }),
     });
-    const shape = { coords: [16.6, 49.2, 16.62, 49.2], lengthM: 1460, boundaries: [500, 1000, 1460], sectorLengthM: 500, name: 'Stage 1b' };
+    const shape = { coords: [16.6, 49.2, 16.62, 49.2], lengthM: 1460, boundaries: [500, 1000, 1460], sectorLengthM: 500, name: 'Stage 1b', shapeVersion: 1 };
+    await assertFails(updateDoc(doc(db('admin'), 'routes/c1'), { ...shape, shapeVersion: 5 }));
     await assertSucceeds(updateDoc(doc(db('admin'), 'routes/c1'), shape));
     await assertFails(updateDoc(doc(db('admin'), 'routes/c1'), { sectorLengthM: 30 }));
     await assertFails(updateDoc(doc(db('admin'), 'routes/c1'), { ownerId: 'admin' }));
