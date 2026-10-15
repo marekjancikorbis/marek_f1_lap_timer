@@ -65,7 +65,7 @@ export default function LapDetail() {
 
   async function editCaption() {
     if (!post) return;
-    const caption = prompt('Caption', post.caption ?? '');
+    const caption = prompt('About this lap', post.caption ?? '');
     if (caption === null) return;
     try {
       await updatePostText(post.id, caption, post.car);
@@ -271,7 +271,7 @@ export default function LapDetail() {
       {mine && (
         <div className="row" style={{ marginTop: 24 }}>
           <button className="btn grow" onClick={editCaption}>
-            Edit caption
+            Edit text
           </button>
           <button className="btn danger grow" onClick={remove}>
             Remove post

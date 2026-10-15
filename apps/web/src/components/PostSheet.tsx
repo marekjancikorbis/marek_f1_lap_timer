@@ -50,8 +50,8 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
         <h2>Post {formatLap(run.totalMs)}</h2>
         <p className="mute">It goes on the {route.name} leaderboard, your profile and your followers' feeds. You can remove it any time.</p>
         <label className="field">
-          <span>Caption (optional)</span>
-          <input className="input" maxLength={280} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Finally under 2:09" />
+          <span>About this lap (optional)</span>
+          <textarea className="input" rows={2} maxLength={280} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="e.g. chill lap, bad weather" />
         </label>
         <label className="field">
           <span>Car (optional)</span>
