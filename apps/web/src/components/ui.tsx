@@ -1,4 +1,4 @@
-import { ChevronLeft, Map, Rss, Search, Shield, User, Waypoints } from 'lucide-react';
+import { ChevronLeft, Map, Rss, Search, User, Waypoints } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import type { SectorColourName } from '../lib/types';
@@ -70,14 +70,13 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
 
 // ---------------------------------------------------------------- tab bar
 
-export function TabBar({ admin }: { admin: boolean }) {
+export function TabBar() {
   const tabs = [
     { to: '/', label: 'Feed', icon: Rss, end: true },
     { to: '/map', label: 'Map', icon: Map },
     { to: '/search', label: 'Search', icon: Search },
     { to: '/routes', label: 'Routes', icon: Waypoints },
     { to: '/me', label: 'Profile', icon: User },
-    ...(admin ? [{ to: '/admin', label: 'Admin', icon: Shield }] : []),
   ];
   return (
     <div className="tabbar">

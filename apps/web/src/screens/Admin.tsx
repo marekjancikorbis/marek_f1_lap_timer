@@ -28,7 +28,7 @@ export default function Admin() {
   if (!isAdmin) return <Navigate to="/" replace />;
   return (
     <main className="screen">
-      <ScreenHead title="Admin" />
+      <ScreenHead back title="Admin" />
       <div style={{ overflowX: 'auto', marginBottom: 16 }}>
         <Segmented
           label="Admin section"

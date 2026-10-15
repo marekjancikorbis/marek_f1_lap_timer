@@ -1,4 +1,4 @@
-import { Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Shield } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
@@ -22,7 +22,7 @@ import type { Post, Profile, Role, Route } from '../lib/types';
 
 export default function UserPage() {
   const { username = '' } = useParams();
-  const { profile: me } = useMe();
+  const { profile: me, isAdmin } = useMe();
   const toast = useToast();
   const [user, setUser] = useState<Profile | null | undefined>(undefined);
   const [role, setRole] = useState<Role>('driver');
@@ -133,6 +133,12 @@ export default function UserPage() {
           </div>
         </div>
       </section>
+
+      {isMe && isAdmin && (
+        <Link to="/admin" className="btn block" style={{ marginTop: 12 }}>
+          <Shield size={18} aria-hidden="true" /> Admin
+        </Link>
+      )}
 
       <p className="mute" style={{ fontSize: 14, marginTop: 12 }}>
         Home course:{' '}
