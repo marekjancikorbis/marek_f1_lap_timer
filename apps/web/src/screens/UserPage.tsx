@@ -126,7 +126,7 @@ export default function UserPage() {
         <div className="grow">
           <h1 style={{ fontSize: '2rem' }}>{user.username}</h1>
           <div className="row wrap" style={{ marginTop: 6, gap: 6 }}>
-            {role !== 'driver' && <span className="badge purple">{ROLE_LABEL[role]}</span>}
+            {role !== 'driver' && <span className="badge blue">{ROLE_LABEL[role]}</span>}
             <span className="mute" style={{ fontSize: 14 }}>
               Member since {formatDate(user.createdAt?.toDate())}
             </span>

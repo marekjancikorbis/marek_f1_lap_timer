@@ -190,7 +190,7 @@ function Users() {
                 </span>
               </span>
               {role === 'owner' ? (
-                <span className="badge purple">Owner</span>
+                <span className="badge blue">Owner</span>
               ) : isOwner && (role === 'creator' || role === 'admin') ? (
                 // Only the owner makes or removes admins; a creator must exist first.
                 <span className="row" style={{ gap: 8 }}>
@@ -198,7 +198,7 @@ function Users() {
                   <Switch label={`Admin access for ${p.username}`} checked={role === 'admin'} onChange={(v) => toggleAdmin(p, v)} />
                 </span>
               ) : role === 'admin' ? (
-                <span className="badge purple">Admin</span>
+                <span className="badge blue">Admin</span>
               ) : (
                 <Switch label={`Creator access for ${p.username}`} checked={role === 'creator'} onChange={(v) => toggle(p, v)} />
               )}

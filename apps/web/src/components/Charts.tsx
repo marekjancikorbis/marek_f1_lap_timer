@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { formatDelta, formatDistance } from '../lib/format';
 
 /** Series colours, validated for CVD separation and contrast on the dark surface. */
-export const SERIES = { a: '#A86CF0', b: '#2FA3B3' };
+// a = the lap you're looking at (blue), b = what it's compared with (chalk).
+export const SERIES = { a: '#2F86FF', b: '#C3C9D2' };
 
 const W = 640;
 const H = 220;

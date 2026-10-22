@@ -153,12 +153,12 @@ export default function RouteBuilder() {
     map.addSource('route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     map.addSource('ticks', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     map.addLayer({ id: 'route-casing', type: 'line', source: 'route', paint: { 'line-color': '#0c0d0e', 'line-width': 9 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
-    map.addLayer({ id: 'route-line', type: 'line', source: 'route', paint: { 'line-color': '#8b3fe0', 'line-width': 5 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    map.addLayer({ id: 'route-line', type: 'line', source: 'route', paint: { 'line-color': '#2f86ff', 'line-width': 5 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
     map.addLayer({
       id: 'ticks',
       type: 'circle',
       source: 'ticks',
-      paint: { 'circle-radius': 6, 'circle-color': '#0c0d0e', 'circle-stroke-color': '#f2f1ec', 'circle-stroke-width': 2.5 },
+      paint: { 'circle-radius': 6, 'circle-color': '#0c0d0e', 'circle-stroke-color': '#eef1f5', 'circle-stroke-width': 2.5 },
     });
     map.on('click', (e) => setWaypoints((ws) => [...ws, { lat: e.lngLat.lat, lon: e.lngLat.lng }]));
     map.getCanvas().style.cursor = 'crosshair';

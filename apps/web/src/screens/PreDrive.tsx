@@ -282,7 +282,7 @@ export default function PreDrive() {
         </div>
       )}
 
-      <button className="btn purple lg block" style={{ marginTop: 24 }} disabled={starting} onClick={go}>
+      <button className="btn primary lg block" style={{ marginTop: 24 }} disabled={starting} onClick={go}>
         {starting ? 'Getting GPS…' : 'Start'}
       </button>
       <p className="mute" style={{ fontSize: 13, textAlign: 'center', marginTop: 10 }}>

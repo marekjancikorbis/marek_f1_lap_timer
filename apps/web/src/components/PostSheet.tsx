@@ -57,7 +57,7 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
           <span>Car (optional)</span>
           <input className="input" maxLength={40} value={car} onChange={(e) => setCar(e.target.value)} placeholder="e.g. E46 M3" />
         </label>
-        <button className="btn purple lg block" disabled={busy} onClick={post}>
+        <button className="btn primary lg block" disabled={busy} onClick={post}>
           {busy ? 'Posting…' : 'Post lap'}
         </button>
       </div>

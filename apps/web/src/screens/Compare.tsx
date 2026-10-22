@@ -232,7 +232,7 @@ function GhostMap({ route, a, b, cmp }: { route: Route; a: ResolvedLap; b: Resol
         id: 'ghosts',
         type: 'circle',
         source: 'ghosts',
-        paint: { 'circle-radius': 8, 'circle-color': ['get', 'c'], 'circle-stroke-color': '#16181a', 'circle-stroke-width': 2 },
+        paint: { 'circle-radius': 8, 'circle-color': ['get', 'c'], 'circle-stroke-color': '#0c0e12', 'circle-stroke-width': 2 },
       });
       return () => {
         mapRef.current = null;

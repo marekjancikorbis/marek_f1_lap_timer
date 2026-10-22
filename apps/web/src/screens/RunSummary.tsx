@@ -56,7 +56,7 @@ export default function RunSummary() {
       const coords: [number, number][] = [];
       for (let i = 0; i + 4 < run.trace.length; i += 5) coords.push([run.trace[i + 4], run.trace[i + 3]]);
       map.addSource('trace', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } } });
-      map.addLayer({ id: 'trace', type: 'line', source: 'trace', paint: { 'line-color': '#f2f1ec', 'line-width': 1.5, 'line-dasharray': [1, 2] } });
+      map.addLayer({ id: 'trace', type: 'line', source: 'trace', paint: { 'line-color': '#eef1f5', 'line-width': 1.5, 'line-dasharray': [1, 2] } });
     },
     [run],
   );
@@ -129,7 +129,7 @@ export default function RunSummary() {
               </span>
             )}
             {run.replay && <span className="badge yellow">Simulated</span>}
-            {run.posted && <span className="badge purple">Posted</span>}
+            {run.posted && <span className="badge blue">Posted</span>}
           </>
         }
         caption={
@@ -141,7 +141,7 @@ export default function RunSummary() {
         actions={
           <div className="stack" style={{ marginTop: 16 }}>
             {canPost && !run.posted && (
-              <button className="btn purple lg block" onClick={() => setPosting(true)}>
+              <button className="btn primary lg block" onClick={() => setPosting(true)}>
                 Post to leaderboard
               </button>
             )}

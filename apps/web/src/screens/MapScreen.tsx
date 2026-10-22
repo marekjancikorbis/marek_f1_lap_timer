@@ -13,7 +13,7 @@ import type { Route } from '../lib/types';
 /** What a route on the map is, which sets its colour. */
 type Kind = 'official' | 'creator' | 'private';
 
-const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#2f7de1', private: '#1fa64f' };
+const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#2f86ff', private: '#1fa64f' };
 const KIND_LABEL: Record<Kind, string> = { official: 'Official', creator: 'By creators', private: 'Your private routes' };
 
 const kindOf = (r: Route): Kind => (!r.isPublic ? 'private' : r.official ? 'official' : 'creator');
@@ -99,7 +99,7 @@ export default function MapScreen() {
       filter: ['has', 'point_count'],
       paint: {
         // Clusters mix kinds, so they stay neutral; zoom in to see colours.
-        'circle-color': '#23272a',
+        'circle-color': '#161a20',
         'circle-stroke-color': '#c9ccc8',
         'circle-stroke-width': 3,
         'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
@@ -111,7 +111,7 @@ export default function MapScreen() {
       source: 'starts',
       filter: ['has', 'point_count'],
       layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 14, 'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'] },
-      paint: { 'text-color': '#f2f1ec' },
+      paint: { 'text-color': '#eef1f5' },
     });
     // Pin size grows with the number of posted laps: busy routes read first.
     map.addLayer({
@@ -121,7 +121,7 @@ export default function MapScreen() {
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': KIND_PAINT,
-        'circle-stroke-color': '#f2f1ec',
+        'circle-stroke-color': '#eef1f5',
         'circle-stroke-width': 2.5,
         'circle-radius': ['interpolate', ['linear'], ['sqrt', ['get', 'laps']], 0, 7, 3, 11, 10, 18],
       },
@@ -139,7 +139,7 @@ export default function MapScreen() {
         'text-anchor': 'top',
         'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
       },
-      paint: { 'text-color': '#f2f1ec', 'text-halo-color': '#16181a', 'text-halo-width': 1.5 },
+      paint: { 'text-color': '#eef1f5', 'text-halo-color': '#0c0e12', 'text-halo-width': 1.5 },
     });
     const open = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
       const id = e.features?.[0]?.properties?.id;

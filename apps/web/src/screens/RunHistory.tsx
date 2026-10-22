@@ -148,7 +148,7 @@ export default function RunHistory() {
                   </strong>
                   <span className="row" style={{ gap: 6 }}>
                     {run.id === pbId && <span className="badge ink">PB</span>}
-                    {run.posted && <span className="badge purple">Posted</span>}
+                    {run.posted && <span className="badge blue">Posted</span>}
                     {run.replay && <span className="badge yellow">Sim</span>}
                     {run.penaltyMs > 0 && <span className="badge red">+5 s</span>}
                     {!run.valid && <span className="badge outline">Invalid</span>}
