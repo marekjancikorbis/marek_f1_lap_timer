@@ -199,6 +199,14 @@ describe('posting laps', () => {
     await assertSucceeds(setDoc(doc(db('driver'), 'posts/run1'), post()));
   });
 
+  it('accepts 3 big-sector colours and rejects anything else', async () => {
+    const d = db('driver');
+    await assertFails(setDoc(doc(d, 'posts/run1'), post({ bigColours: ['purple', 'purple', 'purple', 'purple'] })));
+    await assertFails(setDoc(doc(d, 'posts/run1'), post({ bigColours: ['gold', 'green', 'green'] })));
+    await assertFails(setDoc(doc(d, 'posts/run1'), post({ bigColours: 'purple' })));
+    await assertSucceeds(setDoc(doc(d, 'posts/run1'), post({ bigColours: ['purple', 'green', 'yellow'] })));
+  });
+
   it("rejects a post under someone else's name or a made-up route name", async () => {
     await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post({ username: 'admin' })));
     await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post({ routeName: 'Fake stage' })));

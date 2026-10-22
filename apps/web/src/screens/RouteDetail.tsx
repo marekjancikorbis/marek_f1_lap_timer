@@ -1,9 +1,11 @@
+import { Play, Star } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteMap } from '../components/RouteMap';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
-import { adminDeleteRoute, deleteRoute, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, sectorRecordsFrom, setHomeRoute } from '../lib/data';
-import { formatDistance, formatLap } from '../lib/format';
+import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, useToast } from '../components/ui';
+import { adminDeleteRoute, deleteRoute, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, setHomeRoute } from '../lib/data';
+import { formatDate, formatDistance, formatLap } from '../lib/format';
+import { bigRecords, bigRoute } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Profile, Role, Route, Run } from '../lib/types';
 
@@ -18,6 +20,7 @@ export default function RouteDetail() {
   const [locals, setLocals] = useState<Profile[]>([]);
   const [homeBusy, setHomeBusy] = useState(false);
   const [ownerRole, setOwnerRole] = useState<Role | null>(null);
+  const [tab, setTab] = useState<'board' | 'mine' | 'locals'>('board');
 
   useEffect(() => {
     let alive = true;
@@ -42,7 +45,7 @@ export default function RouteDetail() {
   }, [routeId, profile.id]);
 
   const board = useMemo(() => leaderboardFrom(posts), [posts]);
-  const records = useMemo(() => (route ? sectorRecordsFrom(posts, route.boundaries.length) : []), [posts, route]);
+  const records = useMemo(() => (route ? bigRecords(posts, route) : []), [posts, route]);
   const myBest = useMemo(() => runs.filter((r) => r.valid).sort((a, b) => a.totalMs - b.totalMs)[0], [runs]);
   const isOwner = route?.ownerId === profile.id;
   // Mirrors the rules: owners edit and delete routes that were never published.
@@ -108,112 +111,141 @@ export default function RouteDetail() {
       </main>
     );
 
-  return (
-    <main className="screen">
-      <ScreenHead back title={route.name} />
-      <div className="map-card">
-        <RouteMap route={route} height={240} />
-      </div>
-      <div className="facts">
-        <Fact label="Length" value={formatDistance(route.lengthM)} />
-        <Fact label="Sectors" value={String(route.boundaries.length)} />
-        <Fact label="Start" value={route.startType === 'standing' ? 'Standing' : 'Rolling'} />
-        <Fact label="Type" value={route.isLoop ? 'Lap' : 'A to B'} />
-      </div>
-      <p className="mute" style={{ fontSize: 14, marginTop: 8 }}>
-        {route.official ? <span className="badge purple">Official</span> : <>By <Link to={`/u/${route.ownerName}`}>{route.ownerName}</Link></>}
-        {!route.isPublic && ' · Private'}
-      </p>
+  const tabs = [
+    ...(route.isPublic ? [{ value: 'board' as const, label: 'Leaderboard' }] : []),
+    { value: 'mine' as const, label: `My laps${runs.length ? ` · ${runs.length}` : ''}` },
+    ...(route.isPublic ? [{ value: 'locals' as const, label: 'Locals' }] : []),
+  ];
+  const shownTab = tabs.some((t) => t.value === tab) ? tab : tabs[0].value;
+  const recent = [...runs].sort((a, b) => b.startedAt - a.startedAt).slice(0, 8);
 
-      <div className="row" style={{ marginTop: 16, gap: 8 }}>
-        <Link className="btn primary lg grow" to={`/drive/${route.id}`}>
-          Drive this route
-        </Link>
-        {runs.length > 0 && (
-          <Link className="btn lg" to={`/r/${route.id}/history`}>
-            My laps ({runs.length})
-          </Link>
-        )}
-      </div>
+  return (
+    <main className="screen with-cta">
+      <section className="route-hero">
+        <RouteMap route={bigRoute(route)} height={270} />
+        <div className="route-hero-top">
+          <ScreenHead back />
+        </div>
+        <div className="route-hero-over">
+          <h1>{route.name}</h1>
+          <p className="row wrap" style={{ gap: 6 }}>
+            {route.official ? (
+              <span className="badge purple">Official</span>
+            ) : (
+              <Link to={`/u/${route.ownerName}`} className="badge outline route-hero-by">
+                by {route.ownerName}
+              </Link>
+            )}
+            <span className="badge outline">{formatDistance(route.lengthM)}</span>
+            <span className="badge outline">{route.startType === 'standing' ? 'Standing start' : 'Rolling start'}</span>
+            <span className="badge outline">{route.isLoop ? 'Lap' : 'A to B'}</span>
+            {!route.isPublic && <span className="badge outline">Private</span>}
+          </p>
+        </div>
+      </section>
+
       {route.isPublic && (
-        <button className={`btn block ${isHome ? '' : 'ghost'}`} style={{ marginTop: 8 }} disabled={homeBusy} onClick={toggleHome} aria-pressed={isHome}>
-          {isHome ? '★ Your home course · remove' : '☆ Set as my home course'}
+        <button className={`btn block ${isHome ? '' : 'ghost'} home-toggle`} disabled={homeBusy} onClick={toggleHome} aria-pressed={isHome}>
+          <Star size={17} fill={isHome ? 'currentColor' : 'none'} aria-hidden="true" />
+          {isHome ? 'Your home course · remove' : 'Set as my home course'}
         </button>
       )}
-      {myBest && (
-        <p className="mute" style={{ marginTop: 10, fontSize: 14 }}>
-          Your best: <span className="num" style={{ color: 'var(--ink)', fontSize: 17 }}>{formatLap(myBest.totalMs)}</span>
-        </p>
-      )}
 
-      {route.isPublic && (
-        <>
-          <h2 className="section-title">Leaderboard</h2>
-          {board.length === 0 ? (
-            <p className="mute">No posted laps yet. Drive it and post yours to take P1.</p>
-          ) : (
-            <>
-              <div className="records" aria-label="Sector records">
-                {records.map((r, i) => (
-                  <div key={i} className="record">
-                    <span>S{i + 1}</span>
-                    <strong className="num">{r == null ? '–' : (r / 1000).toFixed(2)}</strong>
-                  </div>
-                ))}
-              </div>
-              <ol className="list board">
-                {board.map(({ rank, post }) => (
-                  <li key={post.id} className={`board-row ${post.userId === profile.id ? 'me' : ''}`}>
-                    <span className={`board-pos num ${rank === 1 ? 'p1' : ''}`}>{rank}</span>
-                    <Link to={`/u/${post.username}`} className="row grow" style={{ gap: 10, textDecoration: 'none', minWidth: 0 }}>
-                      <Avatar name={post.username} hue={post.avatarHue} size={32} />
-                      <span className="grow" style={{ minWidth: 0 }}>
-                        <strong className="ellipsis">{post.username}</strong>
-                        {post.car && <span className="mute ellipsis" style={{ display: 'block', fontSize: 13 }}>{post.car}</span>}
-                      </span>
-                    </Link>
-                    <Link to={`/lap/${post.id}`} className="board-time num">
-                      {formatLap(post.totalMs)}
-                      {rank > 1 && <small>+{((post.totalMs - board[0].post.totalMs) / 1000).toFixed(3)}</small>}
-                    </Link>
-                    {post.userId !== profile.id && (
-                      <div className="board-actions">
-                        {runs.length > 0 && (
-                          <Link className="btn sm" to={`/compare/${route.id}?a=best&b=post:${post.id}`}>
-                            Compare
-                          </Link>
-                        )}
-                        <Link className="btn sm primary" to={`/drive/${route.id}?ref=post:${post.id}`}>
-                          Race
+      {tabs.length > 1 && <Segmented label="Show" value={shownTab} onChange={setTab} options={tabs} />}
+
+      {shownTab === 'board' &&
+        (board.length === 0 ? (
+          <p className="mute route-empty">No posted laps yet. Drive it and post yours to take P1.</p>
+        ) : (
+          <>
+            <div className="records" aria-label="Sector records">
+              {records.map((r, i) => (
+                <div key={i} className="record">
+                  <span>S{i + 1} record</span>
+                  <strong className="num">{r == null ? '–' : formatLap(r)}</strong>
+                </div>
+              ))}
+            </div>
+            <ol className="list board">
+              {board.map(({ rank, post }) => (
+                <li key={post.id} className={`board-row ${post.userId === profile.id ? 'me' : ''}`}>
+                  <span className={`board-pos num ${rank === 1 ? 'p1' : ''}`}>{rank}</span>
+                  <Link to={`/u/${post.username}`} className="row grow" style={{ gap: 10, textDecoration: 'none', minWidth: 0 }}>
+                    <Avatar name={post.username} hue={post.avatarHue} size={32} />
+                    <span className="grow" style={{ minWidth: 0 }}>
+                      <strong className="ellipsis">{post.userId === profile.id ? 'You' : post.username}</strong>
+                      {post.car && <span className="mute ellipsis small-text">{post.car}</span>}
+                    </span>
+                  </Link>
+                  <Link to={`/lap/${post.id}`} className={`board-time num ${rank === 1 ? 'fastest' : ''}`}>
+                    {formatLap(post.totalMs)}
+                    {rank > 1 && <small>+{((post.totalMs - board[0].post.totalMs) / 1000).toFixed(3)}</small>}
+                  </Link>
+                  {post.userId !== profile.id && (
+                    <div className="board-actions">
+                      {runs.length > 0 && (
+                        <Link className="btn sm" to={`/compare/${route.id}?a=best&b=post:${post.id}`}>
+                          Compare
                         </Link>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
-        </>
-      )}
+                      )}
+                      <Link className="btn sm primary" to={`/drive/${route.id}?ref=post:${post.id}`}>
+                        Race
+                      </Link>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </>
+        ))}
 
-      {route.isPublic && (
-        <>
-          <h2 className="section-title">Locals{locals.length > 0 && ` · ${locals.length}`}</h2>
-          {locals.length === 0 ? (
-            <p className="mute">Nobody calls this their home course yet.</p>
-          ) : (
+      {shownTab === 'mine' &&
+        (runs.length === 0 ? (
+          <p className="mute route-empty">You haven't driven this route yet.</p>
+        ) : (
+          <>
+            {myBest && (
+              <p className="statline">
+                <span>
+                  Your best <strong className="num">{formatLap(myBest.totalMs)}</strong>
+                </span>
+              </p>
+            )}
             <div className="list">
-              {locals.map((l) => (
-                <Link key={l.id} to={`/u/${l.username}`} className="list-item">
-                  <Avatar name={l.username} hue={l.avatarHue} size={32} />
-                  <strong className="grow ellipsis">{l.username}</strong>
-                  {l.id === profile.id && <span className="badge outline">You</span>}
+              {recent.map((r) => (
+                <Link key={r.id} to={`/run/${r.id}`} className="list-item">
+                  <span className="grow">
+                    <strong>{formatDate(r.startedAt)}</strong>
+                    <span className="mute small-text">
+                      {r.valid ? (r.id === myBest?.id ? 'Your best' : `Lap ${r.lap + 1}`) : 'Not valid'}
+                      {r.posted && ' · posted'}
+                      {r.replay && ' · simulated'}
+                    </span>
+                  </span>
+                  <strong className="num logbook-time">{r.valid ? formatLap(r.totalMs) : '—'}</strong>
                 </Link>
               ))}
             </div>
-          )}
-        </>
-      )}
+            <Link className="btn block" style={{ marginTop: 12 }} to={`/r/${route.id}/history`}>
+              All my laps here
+            </Link>
+          </>
+        ))}
+
+      {shownTab === 'locals' &&
+        (locals.length === 0 ? (
+          <p className="mute route-empty">Nobody calls this their home course yet.</p>
+        ) : (
+          <div className="list">
+            {locals.map((l) => (
+              <Link key={l.id} to={`/u/${l.username}`} className="list-item">
+                <Avatar name={l.username} hue={l.avatarHue} size={32} />
+                <strong className="grow ellipsis">{l.username}</strong>
+                {l.id === profile.id && <span className="badge outline">You</span>}
+              </Link>
+            ))}
+          </div>
+        ))}
 
       {(isOwner || canModChange) && (
         <>
@@ -242,15 +274,12 @@ export default function RouteDetail() {
           )}
         </>
       )}
-    </main>
-  );
-}
 
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="fact">
-      <span>{label}</span>
-      <strong className="num">{value}</strong>
-    </div>
+      <div className="sticky-cta">
+        <Link className="btn primary lg block" to={`/drive/${route.id}`}>
+          <Play size={18} fill="currentColor" aria-hidden="true" /> Drive this route
+        </Link>
+      </div>
+    </main>
   );
 }

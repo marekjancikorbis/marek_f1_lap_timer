@@ -324,7 +324,10 @@ service cloud.firestore {
 
       function extrasOk(p) {
         return (!('caption' in p) || p.caption == null || (p.caption is string && p.caption.size() <= 280))
-          && (!('car' in p) || p.car == null || (p.car is string && p.car.size() <= 40));
+          && (!('car' in p) || p.car == null || (p.car is string && p.car.size() <= 40))
+          // Colours are computed by the app (no server on Spark); at least keep their shape honest.
+          && (!('bigColours' in p) || (p.bigColours is list && p.bigColours.size() <= 3
+              && p.bigColours.hasOnly(['purple', 'green', 'yellow'])));
       }
 
       allow update: if (signedIn() && resource.data.userId == uid() && onlyChanges(['caption', 'car']) && extrasOk(request.resource.data))
