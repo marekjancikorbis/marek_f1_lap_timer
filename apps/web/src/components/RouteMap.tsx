@@ -13,6 +13,7 @@ export function RouteMap({
   height = 260,
   extra,
   carAtM,
+  ghostAtM,
   onPick,
 }: {
   route: Route;
@@ -21,6 +22,8 @@ export function RouteMap({
   extra?: (map: mapboxgl.Map) => void | (() => void);
   /** Metres from the start to place the car marker; null hides it. */
   carAtM?: number | null;
+  /** Metres from the start for a hollow second car (the lap compared with); null hides it. */
+  ghostAtM?: number | null;
   /** Called with the distance along the route when the route line is tapped. */
   onPick?: (d: number) => void;
 }) {
@@ -29,16 +32,18 @@ export function RouteMap({
   pickRef.current = onPick;
   const carRef = useRef(carAtM);
   carRef.current = carAtM;
+  const ghostRef = useRef(ghostAtM);
+  ghostRef.current = ghostAtM;
 
   const placeCar = useCallback(
-    (map: mapboxgl.Map, d: number | null | undefined) => {
-      const src = map.getSource('car') as mapboxgl.GeoJSONSource | undefined;
+    (map: mapboxgl.Map, d: number | null | undefined, source = 'car') => {
+      const src = map.getSource(source) as mapboxgl.GeoJSONSource | undefined;
       if (!src) return;
       if (d == null) return src.setData({ type: 'FeatureCollection', features: [] });
       const p = preparedFor(route).pointAt(d);
       src.setData({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } });
       // Keep the car in view when the route runs off the visible map.
-      if (!map.getBounds()?.contains([p.lon, p.lat])) map.easeTo({ center: [p.lon, p.lat], duration: 300 });
+      if (source === 'car' && !map.getBounds()?.contains([p.lon, p.lat])) map.easeTo({ center: [p.lon, p.lat], duration: 300 });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route.id],
@@ -47,6 +52,10 @@ export function RouteMap({
   useEffect(() => {
     if (mapRef.current) placeCar(mapRef.current, carAtM);
   }, [carAtM, placeCar]);
+
+  useEffect(() => {
+    if (mapRef.current) placeCar(mapRef.current, ghostAtM, 'ghost');
+  }, [ghostAtM, placeCar]);
 
   const onReady = useCallback(
     (map: mapboxgl.Map) => {
@@ -75,6 +84,13 @@ export function RouteMap({
         source: 'start',
         paint: { 'circle-radius': 8, 'circle-color': '#eef1f5', 'circle-stroke-color': '#0c0d0e', 'circle-stroke-width': 3 },
       });
+      map.addSource('ghost', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({
+        id: 'ghost',
+        type: 'circle',
+        source: 'ghost',
+        paint: { 'circle-radius': 8, 'circle-color': '#0c0e12', 'circle-opacity': 0.6, 'circle-stroke-color': '#eef1f5', 'circle-stroke-width': 3 },
+      });
       map.addSource('car', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({
         id: 'car',
@@ -83,6 +99,7 @@ export function RouteMap({
         paint: { 'circle-radius': 9, 'circle-color': '#2f86ff', 'circle-stroke-color': '#eef1f5', 'circle-stroke-width': 3 },
       });
       placeCar(map, carRef.current);
+      placeCar(map, ghostRef.current, 'ghost');
       // Taps within a finger's width of the line count; elsewhere the map just pans.
       map.on('click', (e) => {
         if (!pickRef.current) return;

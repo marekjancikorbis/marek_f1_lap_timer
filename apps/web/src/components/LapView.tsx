@@ -1,18 +1,16 @@
-import { compareLaps, sectorTimes, type LapProfile } from '@laptimer/timing';
+import { bigSplits, compareLaps, sectorColour, sectorTimes, type LapProfile } from '@laptimer/timing';
+import { ChevronDown } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { leaderboardFrom, sectorRecordsFrom } from '../lib/data';
-import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
+import { leaderboardFrom } from '../lib/data';
+import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
+import { bigEnds, bigRecords, bigRoute, distanceAt, recordsExcluding, timeAt } from '../lib/laps';
 import type { Post, Route, SectorColourName } from '../lib/types';
 import { DeltaGraph, SpeedGraph } from './Charts';
 import { RouteMap } from './RouteMap';
 import { RouteShape } from './RouteShape';
-import { Avatar, COLOUR_VAR, Segmented, STRIP_LABEL } from './ui';
-
-/** Sectors shown before "Show all": enough for a short route, a screenful on a long one. */
-const FOLD = 12;
-const COLOURS: SectorColourName[] = ['purple', 'green', 'yellow'];
+import { Avatar, Segmented, STRIP_LABEL } from './ui';
 
 export interface LapViewLap {
   /** Post id, or run id (a posted run's post shares its id). */
@@ -28,15 +26,34 @@ export interface LapViewLap {
   profile: LapProfile | null;
 }
 
+/** The lap every bar and graph is measured against. */
+export interface LapReference {
+  label: string;
+  splitTimesMs: number[];
+  totalMs: number;
+  penaltyMs: number;
+  profile: LapProfile | null;
+}
+
+interface Row {
+  /** "S2" or "2.3" */
+  name: string;
+  ms: number;
+  deltaMs: number | null;
+  colour: SectorColourName | null;
+}
+
 /**
- * The full breakdown of one lap: hero, sectors against the route records, map,
- * delta and speed graphs. Shared by posted laps and your own laps so both read the same.
+ * The full breakdown of one lap, measured against the lap it raced (or a
+ * fallback): sectors with their minisectors, graphs, and the map. Shared by
+ * posted laps and your own laps so both read the same.
  */
 export function LapView({
   lap,
   colours,
   route,
   posts,
+  reference,
   badges,
   caption,
   actions,
@@ -44,9 +61,11 @@ export function LapView({
   children,
 }: {
   lap: LapViewLap;
+  /** Minisector colours from when the lap was driven: used when there's nothing to measure against. */
   colours: (SectorColourName | null)[];
   route: Route | null;
   posts: Post[];
+  reference: LapReference | null;
   /** Extra badges after the rank badge. */
   badges?: ReactNode;
   /** Shown under the time. */
@@ -57,45 +76,98 @@ export function LapView({
   /** Rendered at the end. */
   children?: ReactNode;
 }) {
-  const [sort, setSort] = useState<'order' | 'lost'>('order');
-  const [showAll, setShowAll] = useState(false);
+  const [tab, setTab] = useState<'sectors' | 'graphs' | 'map'>('sectors');
+  const [open, setOpen] = useState<Set<number>>(new Set());
   const [carAtM, setCarAtM] = useState<number | null>(null);
 
   const board = useMemo(() => leaderboardFrom(posts), [posts]);
-  // Per-sector record now (the best anyone has posted), so every sector shows what it gave away.
-  const records = useMemo(() => {
-    // Needs at least one other lap to measure against.
-    if (!posts.some((p) => p.id !== lap.id)) return null;
-    const rec = sectorRecordsFrom(posts, lap.splitTimesMs.length);
-    return rec.some((x) => x == null) ? null : (rec as number[]);
-  }, [lap, posts]);
   const rank = board.find((r) => r.post.id === lap.id)?.rank;
-  // Against the route record: where this lap gains and loses on the best possible lap.
-  const vsRecord = useMemo(() => {
-    if (!route || !records || records.length !== route.boundaries.length) return null;
-    let acc = 0;
-    const splits = records.map((s) => (acc += s));
+  const n = lap.splitTimesMs.length;
+  const fits = !!route && route.boundaries.length === n;
+  const ref = reference && reference.splitTimesMs.length === n ? reference : null;
+  const isPublic = !!route?.isPublic;
+
+  const table = useMemo(() => {
+    if (!route || !fits) return null;
+    const ends = bigEnds(route);
+    // Purple = faster than everyone else's posted time for that (mini)sector.
+    const miniRec = isPublic ? recordsExcluding(posts, n, lap.id) : null;
+    const bigRec = isPublic ? bigRecords(posts, route, lap.id) : null;
+    const colourOf = (ms: number, refMs: number | null, rec: number | null | undefined, fallback: SectorColourName | null) =>
+      refMs == null ? fallback : isPublic ? sectorColour(ms, refMs, rec, true) : ms < refMs ? 'green' : 'yellow';
+    const minis = sectorTimes(lap.splitTimesMs);
+    const refMinis = ref ? sectorTimes(ref.splitTimesMs) : null;
+    const big = sectorTimes(bigSplits(lap.splitTimesMs, ends));
+    const refBig = ref ? sectorTimes(bigSplits(ref.splitTimesMs, ends)) : null;
+    let from = 0;
+    return ends.map((end, b) => {
+      const kids: Row[] = [];
+      for (let i = from; i <= end; i++) {
+        const refMs = refMinis?.[i] ?? null;
+        kids.push({ name: `${b + 1}.${i - from + 1}`, ms: minis[i], deltaMs: refMs == null ? null : minis[i] - refMs, colour: colourOf(minis[i], refMs, miniRec?.[i], colours[i] ?? null) });
+      }
+      from = end + 1;
+      const refMs = refBig?.[b] ?? null;
+      const bigColour = colourOf(big[b], refMs, bigRec?.[b], null);
+      return { row: { name: `S${b + 1}`, ms: big[b], deltaMs: refMs == null ? null : big[b] - refMs, colour: bigColour } as Row, kids };
+    });
+  }, [route, fits, isPublic, posts, n, lap, ref, colours]);
+
+  const miniColours = useMemo(() => table?.flatMap((t) => t.kids.map((k) => k.colour)) ?? colours, [table, colours]);
+  const bigScale = Math.max(1, ...(table ?? []).map((t) => Math.abs(t.row.deltaMs ?? 0)));
+  const miniScale = Math.max(1, ...(table ?? []).flatMap((t) => t.kids.map((k) => Math.abs(k.deltaMs ?? 0))));
+
+  const cmp = useMemo(() => {
+    if (!route || !fits || !ref) return null;
     try {
-      return compareLaps(lap, { splitTimesMs: splits, totalMs: acc }, route.boundaries);
+      return compareLaps(lap, ref, route.boundaries);
     } catch {
       return null;
     }
-  }, [lap, route, records]);
+  }, [route, fits, lap, ref]);
 
-  const secs = sectorTimes(lap.splitTimesMs);
-  const lost = records ? secs.map((ms, i) => Math.max(0, ms - records[i])) : null;
-  const theoretical = records ? records.reduce((a, b) => a + b, 0) : null;
-  const counts = COLOURS.map((c) => [c, colours.filter((x) => x === c).length] as const).filter(([, n]) => n > 0);
-  // Running gap to the best possible lap as the lap crossed each sector's end line.
-  let acc = 0;
-  const gapAt = lost ? lost.map((l) => (acc += l)) : null;
-  const rows = secs.map((ms, i) => ({ i, ms, lost: lost ? lost[i] : null }));
-  if (sort === 'lost' && lost) rows.sort((a, b) => (b.lost ?? 0) - (a.lost ?? 0));
-  // Folding away only two or three rows would just add a tap.
-  const folded = !showAll && rows.length > FOLD + 3;
-  const visible = folded ? rows.slice(0, FOLD) : rows;
   const hasSpeed = !!lap.profile && lap.profile.speedDms.length > 1;
-  const hasGraphs = !!route && (!!vsRecord || hasSpeed);
+  const lengthM = route?.boundaries[route.boundaries.length - 1] ?? 0;
+  const bigBoundaries = route ? bigRoute(route).boundaries : [];
+  // Where the reference was at the moment this lap reached carAtM.
+  const ghostAtM = route && ref && carAtM != null ? distanceAt(timeAt(carAtM, lap, route.boundaries, lap.profile), ref, route.boundaries, ref.profile) : null;
+  const gapAt = cmp && carAtM != null ? nearestBy(cmp.delta, carAtM)?.ms ?? null : null;
+  const speedAt = cmp?.speed && carAtM != null ? nearestBy(cmp.speed, carAtM) : null;
+  const ownSpeedAt = !cmp?.speed && hasSpeed && carAtM != null ? lap.profile!.speedDms[Math.min(lap.profile!.speedDms.length - 1, Math.round(carAtM / lap.profile!.stepM))] * 0.36 : null;
+  const sectorAt = carAtM != null ? bigBoundaries.findIndex((b) => b >= carAtM) + 1 : null;
+
+  const readout = carAtM != null && (
+    <div className="lap-readout">
+      <div>
+        <span>At {formatDistance(carAtM)}</span>
+        <strong className="num">S{sectorAt || 1}</strong>
+      </div>
+      {ref && (
+        <div>
+          <span>Gap</span>
+          <strong className={`num ${gapAt == null ? '' : gapAt <= 0 ? 'faster' : 'slower'}`}>{gapAt == null ? '—' : formatDelta(gapAt)}</strong>
+        </div>
+      )}
+      {tab === 'map' && ref && ghostAtM != null ? (
+        <div>
+          <span>{ref.label} is</span>
+          <strong className="num">
+            {Math.abs(ghostAtM - carAtM) < 1 ? 'level' : `${Math.round(Math.abs(ghostAtM - carAtM))} m ${ghostAtM > carAtM ? 'ahead' : 'behind'}`}
+          </strong>
+        </div>
+      ) : (
+        (speedAt || ownSpeedAt != null) && (
+          <div>
+            <span>Speed{speedAt ? ` / ${ref?.label}` : ''}</span>
+            <strong className="num">
+              {Math.round(speedAt ? speedAt.a : ownSpeedAt!)}
+              {speedAt && <small className="mute"> / {Math.round(speedAt.b)}</small>}
+            </strong>
+          </div>
+        )
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -110,11 +182,11 @@ export function LapView({
       </Link>
 
       <section className="lap-hero">
-        {route && <RouteShape route={route} colours={colours} height={190} label={`${lap.routeName}, sectors coloured by this lap`} />}
+        {route && <RouteShape route={bigRoute(route)} colours={table?.map((t) => t.row.colour) ?? []} height={150} label={`${lap.routeName}, sectors coloured by this lap`} />}
         <Link to={`/r/${lap.routeId}`} className="lap-hero-route">
           {lap.routeName}
         </Link>
-        <div className="lap-hero-time num">{formatLap(lap.totalMs)}</div>
+        <div className={`lap-hero-time num ${rank === 1 ? 'fastest' : ''}`}>{formatLap(lap.totalMs)}</div>
         <div className="row wrap" style={{ gap: 6, justifyContent: 'center' }}>
           {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>P{rank} now</span>}
           {badges}
@@ -123,117 +195,128 @@ export function LapView({
         {caption}
       </section>
 
+      {ref && (
+        <p className="lap-against">
+          <span className="mute">
+            Raced against <strong>{ref.label}</strong>
+          </span>
+          <span className="num">
+            {formatLap(ref.totalMs)} <span className={lap.totalMs <= ref.totalMs ? 'faster' : 'slower'}>{formatDelta(lap.totalMs - ref.totalMs, 3)}</span>
+          </span>
+        </p>
+      )}
+
       {actions}
 
-      <h2 className="section-title">Sectors · {secs.length}</h2>
-      <div className="panel lap-sectors-head">
-        <div className="lap-counts">
-          {counts.map(([c, n]) => (
-            <span key={c} className="lap-count">
-              <i style={{ background: COLOUR_VAR[c] }} aria-hidden="true" />
-              <strong className="num">{n}</strong> {STRIP_LABEL[c]}
-            </span>
-          ))}
-        </div>
-        {lost && theoretical != null && (
-          <>
-            <p className="lap-ideal">
-              <span className="mute">Best possible lap from sector records</span>
-              <span>
-                <strong className="num">{formatLap(theoretical)}</strong> <span className="num mute">this lap {formatDelta(lap.totalMs - theoretical, 3)}</span>
-              </span>
-            </p>
-            <LossChart lost={lost} colours={colours} />
-          </>
-        )}
+      <div className="lap-tabs">
+        <Segmented
+          label="Show"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'sectors', label: 'Sectors' },
+            { value: 'graphs', label: 'Graphs' },
+            { value: 'map', label: 'Map' },
+          ]}
+        />
       </div>
 
-      {lost && (
-        <div style={{ margin: '12px 0 8px' }}>
-          <Segmented
-            label="Sort sectors"
-            value={sort}
-            onChange={setSort}
-            options={[
-              { value: 'order', label: 'In order' },
-              { value: 'lost', label: 'Most time lost' },
-            ]}
-          />
-        </div>
-      )}
-      {lost && (
-        <div className="lap-sector lap-sector-cols" aria-hidden="true">
-          <span />
-          <span>Sector</span>
-          <span>Time</span>
-          <span>Lost</span>
-          <span>Gap</span>
-        </div>
-      )}
-      <ol className="list lap-sector-list" style={lost ? undefined : { marginTop: 12 }}>
-        {visible.map(({ i, ms, lost: l }) => {
-          const c = colours[i];
-          return (
-            <li key={i} className="lap-sector">
-              <span className="sector-chip" style={{ background: c ? COLOUR_VAR[c] : 'var(--hairline-2)' }} aria-hidden="true" />
-              <span className="lap-sector-n num">S{i + 1}</span>
-              {c && <span className="visually-hidden">{STRIP_LABEL[c]}</span>}
-              <strong className="lap-sector-time num">{formatLap(ms)}</strong>
-              {l != null && (
-                <span className={`lap-sector-lost num ${l === 0 ? 'rec' : ''}`}>
-                  <span className="visually-hidden">lost </span>
-                  {l === 0 ? 'Record' : formatDelta(l, 3)}
-                </span>
-              )}
-              {gapAt && (
-                <span className="lap-sector-gap num">
-                  <span className="visually-hidden">gap at end </span>
-                  {formatDelta(gapAt[i], 3)}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-      {folded && (
-        <button className="btn block" style={{ marginTop: 8 }} onClick={() => setShowAll(true)}>
-          Show all {rows.length} sectors
-        </button>
-      )}
+      {tab === 'sectors' &&
+        (!table ? (
+          <p className="mute">This lap was timed on an older version of the route, so its sectors can't be shown.</p>
+        ) : (
+          <>
+            {ref ? (
+              <div className="dscale" aria-hidden="true">
+                <span>← Faster</span>
+                <span>vs {ref.label}</span>
+                <span>Slower →</span>
+              </div>
+            ) : (
+              <p className="mute small-text" style={{ marginBottom: 8 }}>
+                Your first lap here: nothing to compare with yet.
+              </p>
+            )}
+            <ol className="list sec-list">
+              {table.map(({ row, kids }, b) => (
+                <li key={row.name}>
+                  <button
+                    className="sec-row"
+                    aria-expanded={open.has(b)}
+                    onClick={() => setOpen((o) => (o.has(b) ? new Set([...o].filter((x) => x !== b)) : new Set(o).add(b)))}
+                  >
+                    <SecCells row={row} scale={bigScale} />
+                    <span className="sec-sub">
+                      {formatLap(row.ms)}
+                      {row.colour === 'purple' && ref ? ' · fastest ever' : ''} · {kids.length} minisectors
+                      <ChevronDown size={14} aria-hidden="true" className="sec-chev" />
+                    </span>
+                  </button>
+                  {open.has(b) && (
+                    <ol className="sec-minis">
+                      {kids.map((k) => (
+                        <li key={k.name} className="sec-row mini">
+                          <SecCells row={k} scale={miniScale} />
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </>
+        ))}
 
-      {route && (
-        <>
-          <h2 className="section-title">Map</h2>
+      {tab === 'graphs' &&
+        (!route || !fits ? (
+          <p className="mute">No graphs for this lap.</p>
+        ) : (
+          <div className="stack">
+            {readout}
+            {cmp ? (
+              <div className="panel chart-panel">
+                <DeltaGraph data={cmp.delta} boundaries={bigBoundaries} aLabel={lap.username} bLabel={ref!.label} onScrub={setCarAtM} at={carAtM} />
+              </div>
+            ) : (
+              <p className="mute">The gap graph needs a lap to compare with.</p>
+            )}
+            {(cmp?.speed || hasSpeed) && (
+              <div className="panel chart-panel">
+                <SpeedGraph
+                  data={cmp?.speed ?? lap.profile!.speedDms.map((v, i) => ({ d: i * lap.profile!.stepM, a: v * 0.36, b: 0 }))}
+                  boundaries={bigBoundaries}
+                  aLabel={lap.username}
+                  bLabel={cmp?.speed ? ref!.label : null}
+                  onScrub={setCarAtM}
+                  at={carAtM}
+                />
+              </div>
+            )}
+          </div>
+        ))}
+
+      {tab === 'map' && route && (
+        <div className="stack">
           <div className="map-card">
-            <RouteMap route={route} colours={colours} height={240} extra={mapExtra} carAtM={carAtM} onPick={hasGraphs ? setCarAtM : undefined} />
+            <RouteMap route={route} colours={miniColours} height={360} extra={mapExtra} carAtM={carAtM} ghostAtM={ghostAtM} onPick={setCarAtM} />
           </div>
-          {hasGraphs && <p className="mute" style={{ fontSize: 13, marginTop: 6 }}>Tap a graph below or the route on the map to line the two up.</p>}
-        </>
-      )}
-
-      {route && vsRecord && (
-        <>
-          <h2 className="section-title">Against the best possible lap</h2>
-          <div className="panel chart-panel">
-            <DeltaGraph data={vsRecord.delta} boundaries={route.boundaries} aLabel={lap.username} bLabel="Sector records" onScrub={setCarAtM} at={carAtM} />
-          </div>
-        </>
-      )}
-
-      {route && lap.profile && hasSpeed && (
-        <>
-          <h2 className="section-title">Speed</h2>
-          <div className="panel chart-panel">
-            <SpeedGraph
-              data={lap.profile.speedDms.map((v, i) => ({ d: i * lap.profile!.stepM, a: v * 0.36, b: 0 }))}
-              boundaries={route.boundaries}
-              aLabel={lap.username}
-              bLabel={null}
-              onScrub={setCarAtM}
-              at={carAtM}
-            />
-          </div>
-        </>
+          <p className="maplegend">
+            <span>
+              <i style={{ background: 'var(--purple)' }} /> Fastest ever
+            </span>
+            <span>
+              <i style={{ background: 'var(--green)' }} /> Faster
+            </span>
+            <span>
+              <i style={{ background: 'var(--yellow)' }} /> Slower
+            </span>
+          </p>
+          <label className="lap-scrub">
+            <span className="visually-hidden">Position along the route</span>
+            <input type="range" min={0} max={Math.round(lengthM)} step={1} value={Math.round(carAtM ?? 0)} onChange={(e) => setCarAtM(Number(e.target.value))} />
+          </label>
+          {readout || <p className="mute small-text">Drag the slider or tap the route to replay the lap{ref ? ` against ${ref.label}` : ''}.</p>}
+        </div>
       )}
 
       {children}
@@ -241,51 +324,26 @@ export function LapView({
   );
 }
 
-/**
- * One bar per sector, height = time lost to that sector's record, coloured by
- * the lap's sector colour. Stays readable at dozens of sectors, where a list
- * alone hides where the lap went wrong.
- */
-function LossChart({ lost, colours }: { lost: number[]; colours: (SectorColourName | null)[] }) {
-  const max = Math.max(...lost, 1);
-  const n = lost.length;
-  const step = 1000 / n;
-  const gap = Math.min(step * 0.25, 6);
-  const worst = lost
-    .map((l, i) => ({ l, i }))
-    .filter((x) => x.l > 0)
-    .sort((a, b) => b.l - a.l)
-    .slice(0, 3);
+/** Name, the delta bar growing from the centre (faster left, slower right), and the delta. */
+function SecCells({ row, scale }: { row: Row; scale: number }) {
+  const w = row.deltaMs == null ? 0 : Math.max(2, (Math.abs(row.deltaMs) / scale) * 46);
+  const faster = row.deltaMs != null && row.deltaMs < 0;
   return (
-    <figure className="loss-chart">
-      <svg
-        viewBox="0 0 1000 120"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label={`Time lost per sector. ${worst.length ? `Most lost: ${worst.map((w) => `sector ${w.i + 1} ${formatDelta(w.l, 3)} s`).join(', ')}.` : 'Every sector is a record.'}`}
-      >
-        <line x1="0" x2="1000" y1="119.5" y2="119.5" className="loss-axis" />
-        {lost.map((l, i) => {
-          const h = l === 0 ? 3 : Math.max(5, (l / max) * 112);
-          const c = colours[i];
-          return <rect key={i} x={i * step + gap / 2} width={step - gap} y={120 - h} height={h} fill={c ? COLOUR_VAR[c] : 'var(--ink-2)'} />;
-        })}
-      </svg>
-      <figcaption className="loss-axis-labels num">
-        <span>S1</span>
-        <span>Time lost to each sector record</span>
-        <span>S{n}</span>
-      </figcaption>
-      {worst.length > 0 && (
-        <div className="loss-worst">
-          <span className="mute">Most lost</span>
-          {worst.map((w) => (
-            <span key={w.i} className="loss-worst-item num">
-              S{w.i + 1} <strong>{formatDelta(w.l, 3)}</strong>
-            </span>
-          ))}
-        </div>
-      )}
-    </figure>
+    <>
+      <span className="sec-name num">{row.name}</span>
+      <span className="dbar" aria-hidden="true">
+        {row.deltaMs != null && <b className={`${faster ? 'gain' : 'loss'} ${row.colour === 'purple' ? 'rec' : ''}`} style={{ width: `${w}%` }} />}
+      </span>
+      <span className={`sec-delta num ${row.colour ?? ''}`}>
+        {row.deltaMs != null ? formatDelta(row.deltaMs, 3) : formatLap(row.ms)}
+        {row.colour && <span className="visually-hidden"> {STRIP_LABEL[row.colour]}</span>}
+      </span>
+    </>
   );
+}
+
+function nearestBy<T extends { d: number }>(pts: T[], d: number): T | null {
+  let best: T | null = null;
+  for (const p of pts) if (!best || Math.abs(p.d - d) < Math.abs(best.d - d)) best = p;
+  return best;
 }

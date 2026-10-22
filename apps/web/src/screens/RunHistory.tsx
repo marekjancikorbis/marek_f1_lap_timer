@@ -4,8 +4,8 @@ import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
 import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
-import { pbsBefore } from '../lib/laps';
-import { bestSectors, sectorTimes, theoreticalBest } from '@laptimer/timing';
+import { bigEnds, toBig } from '../lib/laps';
+import { bestSectors, bigSplits, sectorTimes, theoreticalBest } from '@laptimer/timing';
 import { useMe } from '../lib/session';
 import type { Route, Run, SectorColourName } from '../lib/types';
 
@@ -65,14 +65,16 @@ export default function RunHistory() {
 
   // Your history, coloured against your bests as they stand today.
   const counted = useMemo(() => (runs && route ? runs.filter((r) => r.valid && r.splitTimesMs.length === route.boundaries.length) : []), [runs, route]);
-  const allTimeBest = useMemo(() => bestSectors(counted), [counted]);
+  // Strips show the 3 big sectors.
+  const allTimeBest = useMemo(() => (route ? bestSectors(toBig(counted, route)) : []), [counted, route]);
   const theoretical = useMemo(() => theoreticalBest(counted), [counted]);
 
   /** Purple: your all-time best sector. Green: it was your best when driven, since beaten. Yellow: never your best. Invalid laps don't count: grey. */
   function colours(run: Run): (SectorColourName | null)[] {
-    if (!counted.includes(run)) return run.splitTimesMs.map(() => null);
-    const before = pbsBefore(runs ?? [], run);
-    return sectorTimes(run.splitTimesMs).map((s, i) =>
+    if (!route) return [];
+    if (!counted.includes(run)) return bigEnds(route).map(() => null);
+    const before = bestSectors(toBig(counted.filter((r) => r.id !== run.id && r.startedAt < run.startedAt), route));
+    return sectorTimes(bigSplits(run.splitTimesMs, bigEnds(route))).map((s, i) =>
       s <= (allTimeBest[i] ?? Infinity) ? 'purple' : before[i] == null || s < before[i]! ? 'green' : 'yellow',
     );
   }

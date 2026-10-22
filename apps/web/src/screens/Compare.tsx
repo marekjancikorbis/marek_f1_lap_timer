@@ -1,4 +1,4 @@
-import { compareLaps, type LapComparison, type LapProfile } from '@laptimer/timing';
+import { bigSplits, compareLaps, type LapComparison } from '@laptimer/timing';
 import type mapboxgl from 'mapbox-gl';
 import { ArrowLeftRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,7 +11,7 @@ import { Empty, errorMessage, Loading, ScreenHead, Sheet } from '../components/u
 import { getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
 import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
 import { preparedFor, sectorLines } from '../lib/geo';
-import { resolveLap, type ResolvedLap } from '../lib/laps';
+import { bigEnds, bigRecords, bigRoute, distanceAt, resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
 
@@ -59,6 +59,18 @@ export default function Compare() {
       return null;
     }
   }, [route, a, b, records]);
+
+  // The sector table compares the 3 big sectors; the graphs keep every minisector.
+  const bigCmp: LapComparison | null = useMemo(() => {
+    if (!route || !a || !b || !cmp) return null;
+    const ends = bigEnds(route);
+    const cut = (l: ResolvedLap) => ({ ...l, splitTimesMs: bigSplits(l.splitTimesMs, ends), profile: null });
+    try {
+      return compareLaps(cut(a), cut(b), bigRoute(route).boundaries, bigRecords(posts, route));
+    } catch {
+      return null;
+    }
+  }, [route, a, b, cmp, posts]);
 
   const label = (l: ResolvedLap) => (l.username ? l.username : l.label === 'Your lap' ? `You ${l.sub}` : l.label);
 
@@ -113,20 +125,20 @@ export default function Compare() {
       {/* The delta line owns this screen. */}
       <h2 className="section-title">Where the time went</h2>
       <div className="panel chart-panel">
-        <DeltaGraph data={cmp.delta} boundaries={route.boundaries} aLabel={aLabel} bLabel={bLabel} />
+        <DeltaGraph data={cmp.delta} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} />
         {!cmp.smooth && <p className="mute" style={{ fontSize: 13, marginTop: 8 }}>Drawn from sector splits only: one of these laps has no 10 m profile.</p>}
       </div>
 
       <h2 className="section-title">Sectors</h2>
       <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-        <SectorTable rows={cmp.sectors} aLabel={aLabel} bLabel={bLabel} />
+        <SectorTable rows={(bigCmp ?? cmp).sectors} aLabel={aLabel} bLabel={bLabel} />
       </div>
 
       {cmp.speed && (
         <>
           <h2 className="section-title">Speed</h2>
           <div className="panel chart-panel">
-            <SpeedGraph data={cmp.speed} boundaries={route.boundaries} aLabel={aLabel} bLabel={bLabel} />
+            <SpeedGraph data={cmp.speed} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} />
           </div>
         </>
       )}
@@ -168,29 +180,6 @@ function LapHead({ lap, label, colour, tag, onChange }: { lap: ResolvedLap; labe
       )}
     </div>
   );
-}
-
-/** Position along the route at elapsed time t, from the profile or the splits. */
-function distanceAt(t: number, lap: ResolvedLap, boundaries: number[], profile: LapProfile | null): number {
-  const pen = lap.penaltyMs;
-  if (profile && profile.elapsedMs.length > 1) {
-    const e = profile.elapsedMs;
-    const tt = t - pen;
-    if (tt <= 0) return 0;
-    for (let i = 1; i < e.length; i++) {
-      if (e[i] >= tt) {
-        const f = (tt - e[i - 1]) / Math.max(1, e[i] - e[i - 1]);
-        return (i - 1 + f) * profile.stepM;
-      }
-    }
-    return boundaries[boundaries.length - 1];
-  }
-  const pts = [0, ...lap.splitTimesMs];
-  const ds = [0, ...boundaries];
-  for (let i = 1; i < pts.length; i++) {
-    if (pts[i] >= t) return ds[i - 1] + ((t - pts[i - 1]) / Math.max(1, pts[i] - pts[i - 1])) * (ds[i] - ds[i - 1]);
-  }
-  return ds[ds.length - 1];
 }
 
 function GhostMap({ route, a, b, cmp }: { route: Route; a: ResolvedLap; b: ResolvedLap; cmp: LapComparison }) {

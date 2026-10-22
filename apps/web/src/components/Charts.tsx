@@ -133,10 +133,10 @@ export function DeltaGraph({
     <figure className="chart">
       <figcaption className="chart-legend">
         <span>
-          <i style={{ background: SERIES.a }} /> {aLabel} ahead (below 0)
+          <i style={{ background: 'var(--green)' }} /> {aLabel} faster
         </span>
         <span>
-          <i style={{ background: SERIES.b }} /> {bLabel} ahead (above 0)
+          <i style={{ background: 'var(--yellow)' }} /> {aLabel} slower
         </span>
       </figcaption>
       <svg
@@ -157,14 +157,14 @@ export function DeltaGraph({
           </clipPath>
         </defs>
         <Frame axis={axis} yTicks={yTicks} y={y} yFmt={(v) => (v > 0 ? `+${v}` : String(v))} />
-        <path d={area} fill={SERIES.b} opacity={0.22} clipPath="url(#above)" />
-        <path d={area} fill={SERIES.a} opacity={0.22} clipPath="url(#below)" />
+        <path d={area} fill="var(--yellow)" opacity={0.3} clipPath="url(#above)" />
+        <path d={area} fill="var(--green)" opacity={0.35} clipPath="url(#below)" />
         <line x1={PAD.l} x2={W - PAD.r} y1={zeroY} y2={zeroY} stroke="var(--mute)" strokeWidth={1} />
         <path d={line} fill="none" stroke="var(--ink)" strokeWidth={2} strokeLinejoin="round" />
         {hover && (
           <g pointerEvents="none">
-            <line x1={x(hover.d)} x2={x(hover.d)} y1={PAD.t} y2={H - PAD.b} stroke="var(--ink-2)" strokeWidth={1} />
-            <circle cx={x(hover.d)} cy={y(hover.ms / 1000)} r={5} fill="var(--ink)" stroke="var(--raised)" strokeWidth={2} />
+            <line x1={x(hover.d)} x2={x(hover.d)} y1={PAD.t} y2={H - PAD.b} stroke="var(--blue)" strokeWidth={2} />
+            <circle cx={x(hover.d)} cy={y(hover.ms / 1000)} r={5} fill="var(--blue)" stroke="#fff" strokeWidth={2} />
           </g>
         )}
       </svg>

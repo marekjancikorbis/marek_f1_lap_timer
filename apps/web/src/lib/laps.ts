@@ -201,3 +201,44 @@ export function postBigColours(post: Pick<Post, 'bigColours' | 'sectorColours'>,
     return group.filter((c) => c === 'yellow').length * 2 > group.length ? 'yellow' : 'green';
   });
 }
+
+// ---------------------------------------------------------------- where a lap was
+
+/** Position along the route at elapsed time t, from the profile or the splits. */
+export function distanceAt(t: number, lap: Pick<ResolvedLap, 'penaltyMs' | 'splitTimesMs'>, boundaries: number[], profile: LapProfile | null): number {
+  const pen = lap.penaltyMs;
+  if (profile && profile.elapsedMs.length > 1) {
+    const e = profile.elapsedMs;
+    const tt = t - pen;
+    if (tt <= 0) return 0;
+    for (let i = 1; i < e.length; i++) {
+      if (e[i] >= tt) {
+        const f = (tt - e[i - 1]) / Math.max(1, e[i] - e[i - 1]);
+        return (i - 1 + f) * profile.stepM;
+      }
+    }
+    return boundaries[boundaries.length - 1];
+  }
+  const pts = [0, ...lap.splitTimesMs];
+  const ds = [0, ...boundaries];
+  for (let i = 1; i < pts.length; i++) {
+    if (pts[i] >= t) return ds[i - 1] + ((t - pts[i - 1]) / Math.max(1, pts[i] - pts[i - 1])) * (ds[i] - ds[i - 1]);
+  }
+  return ds[ds.length - 1];
+}
+
+/** Elapsed time when a lap reached distance d (the inverse of distanceAt). */
+export function timeAt(d: number, lap: Pick<ResolvedLap, 'penaltyMs' | 'splitTimesMs'>, boundaries: number[], profile: LapProfile | null): number {
+  if (profile && profile.elapsedMs.length > 1) {
+    const e = profile.elapsedMs;
+    const x = d / profile.stepM;
+    const i = Math.min(e.length - 2, Math.max(0, Math.floor(x)));
+    return e[i] + (e[i + 1] - e[i]) * Math.min(1, x - i) + lap.penaltyMs;
+  }
+  const pts = [0, ...lap.splitTimesMs];
+  const ds = [0, ...boundaries];
+  for (let i = 1; i < ds.length; i++) {
+    if (ds[i] >= d) return pts[i - 1] + ((d - ds[i - 1]) / Math.max(1, ds[i] - ds[i - 1])) * (pts[i] - pts[i - 1]);
+  }
+  return pts[pts.length - 1];
+}

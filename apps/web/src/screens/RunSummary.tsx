@@ -6,7 +6,7 @@ import { LapView } from '../components/LapView';
 import { Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
 import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatDelta, formatLap } from '../lib/format';
-import { coloursFor, pbsBefore, recordsExcluding, resolveLap, type ResolvedLap } from '../lib/laps';
+import { coloursFor, pbsBefore, recordsExcluding, resolveLap, runToLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import { shareLap } from '../lib/shareImage';
 import type { Post, Route, Run } from '../lib/types';
@@ -47,6 +47,14 @@ export default function RunSummary() {
     const records = route.isPublic ? recordsExcluding(posts, route.boundaries.length, run.id) : null;
     return coloursFor(run.splitTimesMs, pbsBefore(runs, run), records, ref?.splitTimesMs ?? null);
   }, [run, route, posts, runs, ref]);
+
+  // Bars and graphs measure against the raced lap, or else your best lap from before this one.
+  const against = useMemo(() => {
+    if (ref) return ref;
+    if (!run) return null;
+    const prev = runs.filter((r) => r.valid && r.id !== run.id && r.startedAt < run.startedAt && r.splitTimesMs.length === run.splitTimesMs.length).sort((a, b) => a.totalMs - b.totalMs)[0];
+    return prev ? runToLap(prev, 'your previous best') : null;
+  }, [ref, run, runs]);
 
   const session = useMemo(() => (run ? runs.filter((r) => r.sessionId === run.sessionId).sort((a, b) => a.lap - b.lap) : []), [run, runs]);
 
@@ -119,6 +127,7 @@ export default function RunSummary() {
         colours={colours}
         route={route}
         posts={posts}
+        reference={against}
         mapExtra={traceLayer}
         badges={
           <>

@@ -1563,157 +1563,253 @@
   text-wrap: balance;
 }
 
-.lap-sectors-head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
+.lap-hero .route-shape,
+.lap-hero svg {
+  max-width: 220px;
 }
 
-.lap-counts {
+.lap-hero {
+  border: 1px solid var(--hairline);
+}
+
+.lap-hero-route {
+  color: var(--blue-ink);
+  font-weight: 600;
+}
+
+.lap-against {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-4);
-  color: var(--ink-2);
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--raised);
+  border: 1px solid var(--hairline);
   font-size: 0.9375rem;
 }
 
-.lap-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.lap-count i {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-}
-
-.lap-count strong {
-  font-size: 1.25rem;
+.lap-against strong {
   color: var(--ink);
 }
 
-.lap-ideal {
+.lap-against .num {
+  font-size: 1.125rem;
+  white-space: nowrap;
+}
+
+.faster {
+  color: var(--green-ink);
+}
+
+.slower {
+  color: var(--yellow);
+}
+
+.lap-tabs {
+  margin: 20px 0 12px;
+}
+
+/* Delta bars grow from the centre: faster (green / purple) left, slower (yellow) right. */
+.dscale {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 84px 6px 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.sec-list {
+  list-style: none;
   margin: 0;
+  padding: 0;
+}
+
+.sec-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 76px;
+  align-items: center;
+  gap: 4px 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sec-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.sec-delta {
+  text-align: right;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.sec-delta.green {
+  color: var(--green-ink);
+}
+
+.sec-delta.yellow {
+  color: var(--yellow);
+}
+
+.sec-delta.purple {
+  color: var(--purple-ink);
+}
+
+.sec-sub {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 500 0.8125rem var(--font-num);
+  color: var(--mute);
+}
+
+.sec-chev {
+  margin-left: auto;
+  transition: transform 200ms var(--ease-out);
+}
+
+.sec-row[aria-expanded='true'] .sec-chev {
+  transform: rotate(180deg);
+}
+
+.sec-minis {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--tarmac-2);
+}
+
+.sec-row.mini {
+  padding: 6px 14px;
+  cursor: default;
+  border-top: 1px solid var(--hairline);
+}
+
+.sec-row.mini .sec-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.sec-row.mini .sec-delta {
+  font-size: 0.9375rem;
+}
+
+.dbar {
+  position: relative;
+  height: 12px;
+}
+
+.dbar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 5px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--hairline);
+}
+
+.dbar::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  width: 2px;
+  height: 14px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--hairline-2);
+}
+
+.dbar b {
+  position: absolute;
+  top: 2px;
+  height: 8px;
+}
+
+.dbar b.gain {
+  right: 50%;
+  border-radius: 4px 0 0 4px;
+  background: var(--green);
+}
+
+.dbar b.gain.rec {
+  background: var(--purple);
+}
+
+.dbar b.loss {
+  left: 50%;
+  border-radius: 0 4px 4px 0;
+  background: var(--yellow);
+}
+
+.sec-row.mini .dbar b {
+  top: 3px;
+  height: 6px;
+}
+
+.lap-readout {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--raised);
+  border: 1px solid var(--hairline-2);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.lap-readout > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  min-width: 0;
+}
+
+.lap-readout > div + div {
+  border-left: 1px solid var(--hairline);
+}
+
+.lap-readout span {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lap-readout strong {
+  font-size: 1.25rem;
+}
+
+.maplegend {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 2px var(--s-3);
-  font-size: 0.875rem;
-}
-
-.lap-ideal strong {
-  font-size: 1.375rem;
-}
-
-.loss-chart {
-  margin: 0;
-}
-
-.loss-chart svg {
-  display: block;
-  width: 100%;
-  height: 96px;
-}
-
-.loss-axis {
-  stroke: var(--hairline-2);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-
-.loss-axis-labels {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--s-2);
-  margin-top: 6px;
+  gap: 6px 14px;
   font-size: 0.8125rem;
   color: var(--mute);
 }
 
-.loss-worst {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px var(--s-3);
-  margin-top: var(--s-3);
-  font-size: 0.875rem;
-}
-
-.loss-worst-item {
-  font-size: 1rem;
-  color: var(--ink-2);
-}
-
-.loss-worst-item strong {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.lap-sector-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.lap-sector {
-  display: grid;
-  /* Fixed number columns so the separate header row lines up with the rows. */
-  grid-template-columns: 8px 2.75rem minmax(0, 1fr) 3.75rem 4.5rem;
-  align-items: center;
-  gap: var(--s-2) 10px;
-  padding: 0 var(--s-4);
-  min-height: 44px;
-}
-
-.lap-sector .sector-chip {
-  width: 8px;
-  height: 22px;
-}
-
-.lap-sector-n {
-  color: var(--mute);
-  font-size: 1.0625rem;
-}
-
-.lap-sector-time {
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.lap-sector-lost {
-  font-size: 1rem;
-  color: var(--mute);
-  text-align: right;
-}
-
-.lap-sector-gap {
-  font-size: 1.125rem;
-  font-weight: 600;
-  text-align: right;
-}
-
-.lap-sector-cols {
-  min-height: 0;
-  padding-bottom: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--mute);
-}
-
-.lap-sector-cols span:nth-child(n + 4) {
-  text-align: right;
-}
-
-.lap-sector-lost.rec {
-  color: var(--purple-ink);
-  font-family: var(--font-ui);
-  font-size: 0.875rem;
-  font-weight: 600;
+.maplegend i {
+  display: inline-block;
+  width: 16px;
+  height: 4px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: middle;
 }
 
 /* ================================================================ shared bits of the redesign */

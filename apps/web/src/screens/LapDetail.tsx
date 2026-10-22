@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { LapView } from '../components/LapView';
 import { Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
-import { getPost, getRoute, routePosts, runsForRoute, unpostLap, updatePostText } from '../lib/data';
+import { getPost, getRoute, getRun, routePosts, runsForRoute, unpostLap, updatePostText } from '../lib/data';
+import { resolveLap, runToLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
 
@@ -15,6 +16,7 @@ export default function LapDetail() {
   const [route, setRoute] = useState<Route | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [driven, setDriven] = useState(false);
+  const [against, setAgainst] = useState<ResolvedLap | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -25,6 +27,17 @@ export default function LapDetail() {
       setRoute(r);
       setPosts(all);
       setDriven(mine.some((x) => x.valid));
+      // Your own post: the lap you raced, else your best before it. Someone else's: your best, else the route record.
+      const valid = mine.filter((x) => x.valid && x.id !== p.id && x.splitTimesMs.length === p.splitTimesMs.length);
+      if (p.userId === profile.id) {
+        const run = await getRun(profile.id, p.id).catch(() => null);
+        const raced = run?.referenceRef ? await resolveLap(run.referenceRef, profile.id, p.routeId).catch(() => null) : null;
+        const prev = valid.filter((x) => x.startedAt < p.startedAt).sort((a, b) => a.totalMs - b.totalMs)[0];
+        setAgainst(raced ?? (prev ? runToLap(prev, 'your previous best') : null));
+      } else {
+        const best = [...valid].sort((a, b) => a.totalMs - b.totalMs)[0];
+        setAgainst(best ? runToLap(best, 'your best') : await resolveLap('record', profile.id, p.routeId).catch(() => null));
+      }
     })().catch((e) => {
       toast(errorMessage(e), 'error');
       setPost(null);
@@ -73,6 +86,7 @@ export default function LapDetail() {
         colours={post.sectorColours}
         route={route}
         posts={posts}
+        reference={against}
         badges={post.isPB && <span className="badge ink">PB when posted</span>}
         caption={
           (post.caption || post.car) && (
