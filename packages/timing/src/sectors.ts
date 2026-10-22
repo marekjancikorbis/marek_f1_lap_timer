@@ -56,3 +56,28 @@ export function theoreticalBest(laps: { splitTimesMs: number[] }[]): number[] | 
   if (!best.length || best.some((b) => b == null)) return null;
   return splitsFromSectors(best as number[]);
 }
+
+/**
+ * The 3 big sectors of a route, as indices into its minisector boundaries: each
+ * of the first two ends at the minisector end closest to a third and two thirds
+ * of the length, the last at the finish. Routes with 3 or fewer minisectors use
+ * them as they are.
+ */
+export function bigSectorEnds(boundaries: number[]): number[] {
+  const n = boundaries.length;
+  if (n <= 3) return boundaries.map((_, i) => i);
+  const L = boundaries[n - 1];
+  const closest = (target: number, from: number, to: number) => {
+    let best = from;
+    for (let i = from; i <= to; i++) if (Math.abs(boundaries[i] - target) < Math.abs(boundaries[best] - target)) best = i;
+    return best;
+  };
+  const a = closest(L / 3, 0, n - 3);
+  const b = closest((2 * L) / 3, a + 1, n - 2);
+  return [a, b, n - 1];
+}
+
+/** A lap's cumulative splits at the big sector ends only. */
+export function bigSplits(splitTimesMs: number[], ends: number[]): number[] {
+  return ends.map((i) => splitTimesMs[i]);
+}

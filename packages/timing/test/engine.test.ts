@@ -266,7 +266,7 @@ describe('standing start', () => {
     return { timer, goT };
   }
 
-  it('starts the timer exactly at GO and gives no penalty when the car waits', () => {
+  it('starts the timer when the car moves after GO and gives no penalty', () => {
     const { timer, goT } = setup();
     const ev: TimerEvent[] = [];
     ev.push(...run(timer, wander(T0 + 5000, goT)));
@@ -276,11 +276,13 @@ describe('standing start', () => {
     expect(of(ev, 'jumpStart')).toHaveLength(0);
     const result = of(ev, 'finished')[0].result;
     expect(result.penaltyMs).toBe(0);
-    expect(result.reactionMs).toBe(250);
+    // The 250 ms reaction is not part of the lap.
+    expect(result.startT).toBe(goT + 250);
+    expect(of(ev, 'started').at(-1)!.t).toBe(goT + 250);
     expect(result.countdownS).toBe(5);
   });
 
-  it('never reports a reaction before GO from the Doppler estimate alone (no accelerometer)', () => {
+  it('never moves the start before GO from the Doppler estimate alone (no accelerometer)', () => {
     const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'standing', countdownS: 5 });
     run(timer, wander(T0, T0 + 3000));
     const goT = timer.startCountdown(T0 + 4000)!;
@@ -288,8 +290,7 @@ describe('standing start', () => {
     ev.push(...run(timer, wander(T0 + 5000, goT)));
     // A hard 6 m/s² launch 0.2 s after GO: the 3 m/s² back-dating would land before GO.
     ev.push(...run(timer, launch(goT + 200, goT + 60_000, 6)));
-    const reaction = of(ev, 'reaction')[0];
-    expect(reaction.reactionMs).toBeGreaterThanOrEqual(0);
+    expect(of(ev, 'finished')[0].result.startT).toBeGreaterThanOrEqual(goT);
     expect(of(ev, 'jumpStart')).toHaveLength(0);
   });
 
@@ -313,7 +314,8 @@ describe('standing start', () => {
     const result = of(ev, 'finished')[0].result;
     expect(result.jumpStart).toBe(true);
     expect(result.valid).toBe(true);
-    expect(result.reactionMs).toBeLessThan(0);
+    // A jump start is timed from GO.
+    expect(result.startT).toBe(goT);
     // Penalty is included in every split.
     const sectors = of(ev, 'sector');
     expect(sectors[0].splitMs).toBeGreaterThan(5000);

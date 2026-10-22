@@ -41,7 +41,6 @@ export interface ComparableLap {
   splitTimesMs: number[];
   totalMs: number;
   penaltyMs?: number;
-  reactionMs?: number | null;
   profile?: LapProfile | null;
 }
 

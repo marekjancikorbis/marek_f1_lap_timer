@@ -159,8 +159,7 @@ function LapHead({ lap, label, colour, tag, onChange }: { lap: ResolvedLap; labe
       <strong className="ellipsis">{label}</strong>
       <span className="num cmp-total">{formatLap(lap.totalMs)}</span>
       <span className="mute" style={{ fontSize: 12 }}>
-        {lap.penaltyMs > 0 && `incl. +${formatSeconds(lap.penaltyMs)} · `}
-        {lap.reactionMs != null && `reaction ${formatSeconds(lap.reactionMs, 2)}`}
+        {lap.penaltyMs > 0 && `incl. +${formatSeconds(lap.penaltyMs)} jump start`}
       </span>
       {onChange && (
         <button className="btn sm ghost" onClick={onChange}>

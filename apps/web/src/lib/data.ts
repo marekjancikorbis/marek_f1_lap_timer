@@ -458,7 +458,6 @@ export async function postLap(
     totalMs: run.totalMs,
     splitTimesMs: run.splitTimesMs,
     penaltyMs: run.penaltyMs,
-    reactionMs: run.reactionMs,
     jumpStart: run.jumpStart,
     caption: extra.caption?.trim() || null,
     car: extra.car?.trim() || null,

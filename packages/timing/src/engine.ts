@@ -82,7 +82,6 @@ export interface LapResult {
   splitTimesMs: number[];
   totalMs: number;
   penaltyMs: number;
-  reactionMs: number | null;
   jumpStart: boolean;
   jumpDistanceM: number | null;
   countdownS: number | null;
@@ -103,7 +102,6 @@ export type TimerEvent =
   | { type: 'countdownCancelled' }
   | { type: 'started'; t: number; lap: number }
   | { type: 'jumpStart'; distanceM: number; penaltyMs: number }
-  | { type: 'reaction'; reactionMs: number }
   | {
       type: 'sector';
       lap: number;
@@ -170,7 +168,8 @@ export class LapTimer {
   private penaltyMs = 0;
   private jumpStart = false;
   private jumpDistanceM: number | null = null;
-  private reactionMs: number | null = null;
+  /** The lap clock has been moved from GO to the moment the car moved off. */
+  private startShifted = false;
 
   constructor(config: TimerConfig) {
     this.cfg = {
@@ -281,7 +280,7 @@ export class LapTimer {
       this.accelAboveSince ??= sample.t;
       if (sample.t - this.accelAboveSince >= this.cfg.th.MOTION_HOLD_MS) {
         this.accelMotionT = this.accelAboveSince;
-        this.maybeReaction(out);
+        this.maybeShiftStart(out);
       }
     } else {
       this.accelAboveSince = null;
@@ -460,15 +459,23 @@ export class LapTimer {
     return this.goT != null ? Math.max(est, this.goT) : est;
   }
 
-  private maybeReaction(out: TimerEvent[]): void {
-    if (this.reactionMs != null || this.goT == null) return;
-    // Reaction needs the GO reference; before GO we wait for the decision.
+  /**
+   * Standing starts time from the moment the car moves, not from GO, so a slow
+   * launch costs nothing. A jump start keeps GO as the start and takes the penalty.
+   */
+  private maybeShiftStart(out: TimerEvent[]): void {
+    if (this.startShifted || this.goT == null) return;
     if (this.phase !== 'running') return;
     if (this.jumpPending) return;
     const m = this.motionStartT();
     if (m == null) return;
-    this.reactionMs = Math.round(m - this.goT);
-    if (this.lapState) out.push({ type: 'reaction', reactionMs: this.reactionMs });
+    this.startShifted = true;
+    const lap = this.lapState;
+    if (this.jumpStart || !lap || lap.lap !== 0 || lap.splits.length || m <= this.goT) return;
+    const shift = Math.round(m - this.goT);
+    lap.startT += shift;
+    lap.trace = lap.trace.filter((p) => p.t >= shift).map((p) => ({ ...p, t: p.t - shift }));
+    out.push({ type: 'started', t: lap.startT, lap: 0 });
   }
 
   /**
@@ -520,7 +527,7 @@ export class LapTimer {
     } else if (motionBeforeGo) {
       this.jumpDistanceM = Math.round(distance * 10) / 10;
     }
-    this.maybeReaction(out);
+    this.maybeShiftStart(out);
   }
 
   // --------------------------------------------------------- running
@@ -685,7 +692,6 @@ export class LapTimer {
       splitTimesMs: [...lap.splits],
       totalMs: lap.splits[lap.splits.length - 1],
       penaltyMs: first ? this.penaltyMs : 0,
-      reactionMs: first ? this.reactionMs : null,
       jumpStart: first && this.jumpStart,
       jumpDistanceM: first ? this.jumpDistanceM : null,
       countdownS: first && this.cfg.startType === 'standing' ? this.cfg.countdownS : null,

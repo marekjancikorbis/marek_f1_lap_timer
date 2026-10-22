@@ -62,7 +62,6 @@ export interface Run {
   totalMs: number;
   splitTimesMs: number[];
   penaltyMs: number;
-  reactionMs: number | null;
   jumpStart: boolean;
   jumpDistanceM: number | null;
   countdownS: number | null;
@@ -91,7 +90,6 @@ export interface Post {
   totalMs: number;
   splitTimesMs: number[];
   penaltyMs: number;
-  reactionMs: number | null;
   jumpStart: boolean;
   caption: string | null;
   car: string | null;

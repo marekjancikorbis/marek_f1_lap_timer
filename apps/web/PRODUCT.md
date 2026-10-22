@@ -31,7 +31,7 @@ The live delta updates at every sector boundary against any chosen reference lap
 
 - Built for **tracks and closed roads**. Every user accepts terms before their first drive; no copy encourages speed on open public roads.
 - Phone GPS at about 1 Hz; times interpolated between fixes (about ±0.1–0.2 s).
-- Standing starts use a 3–10 s countdown with F1-style lights and beeps; a confirmed jump start of more than 10 m costs +5 s.
+- Standing starts use a 3–10 s countdown with F1-style lights and beeps. The lap is timed from the moment the car moves off after GO (reaction time is not part of the lap and is not shown); a confirmed jump start of more than 10 m costs +5 s and is timed from GO.
 - Drives must work with poor signal: data needed for a drive is cached, results sync later.
 - Mapbox usage is capped below the free tier; at the cap the app shows a "monthly limit reached" screen until the period resets.
 
@@ -57,7 +57,7 @@ No real users, laps, routes or testimonials exist yet. Do not fabricate leaderbo
 ## Product Principles
 
 1. **Eyes on the road.** Anything shown while driving is glanceable and needs no input.
-2. **The time must be trusted.** Show penalties, reaction time and GPS quality openly rather than hiding them.
+2. **The time must be trusted.** Show penalties and GPS quality openly rather than hiding them.
 3. **Private by default.** Nothing becomes public without an explicit post or publish, and raw GPS traces are never shared.
 4. **Every lap is a comparison.** Each lap points to what it can be compared with or raced against next.
 

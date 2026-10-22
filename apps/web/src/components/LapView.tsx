@@ -25,7 +25,6 @@ export interface LapViewLap {
   totalMs: number;
   splitTimesMs: number[];
   penaltyMs: number;
-  reactionMs: number | null;
   profile: LapProfile | null;
 }
 
@@ -120,7 +119,6 @@ export function LapView({
           {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>P{rank} now</span>}
           {badges}
           {lap.penaltyMs > 0 && <span className="badge red">incl. +{formatSeconds(lap.penaltyMs, 3)} jump start</span>}
-          {lap.reactionMs != null && <span className="badge outline">Reaction {formatSeconds(lap.reactionMs, 2)}</span>}
         </div>
         {caption}
       </section>

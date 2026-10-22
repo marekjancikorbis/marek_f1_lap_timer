@@ -18,7 +18,6 @@ export interface ResolvedLap {
   splitTimesMs: number[];
   totalMs: number;
   penaltyMs: number;
-  reactionMs: number | null;
   profile: LapProfile | null;
   userId: string | null;
   username: string | null;
@@ -32,7 +31,6 @@ export function runToLap(run: Run, label = 'Your lap'): ResolvedLap {
     splitTimesMs: run.splitTimesMs,
     totalMs: run.totalMs,
     penaltyMs: run.penaltyMs,
-    reactionMs: run.reactionMs,
     profile: run.profile,
     userId: null,
     username: null,
@@ -47,7 +45,6 @@ export function postToLap(post: Post): ResolvedLap {
     splitTimesMs: post.splitTimesMs,
     totalMs: post.totalMs,
     penaltyMs: post.penaltyMs,
-    reactionMs: post.reactionMs,
     profile: post.profile,
     userId: post.userId,
     username: post.username,
@@ -74,7 +71,6 @@ export async function resolveLap(ref: LapRef, uid: string, routeId: string): Pro
       splitTimesMs: splits,
       totalMs: splits[splits.length - 1],
       penaltyMs: 0,
-      reactionMs: null,
       profile: null,
       userId: null,
       username: null,
@@ -94,7 +90,6 @@ export async function resolveLap(ref: LapRef, uid: string, routeId: string): Pro
       splitTimesMs: splits,
       totalMs: acc,
       penaltyMs: 0,
-      reactionMs: null,
       profile: null,
       userId: null,
       username: null,

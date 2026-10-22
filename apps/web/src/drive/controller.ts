@@ -63,7 +63,6 @@ export interface DriveState {
   startRel: { a: number; c: number } | null;
   nextSector: number;
   jumpBannerUntil: number;
-  reactionMs: number | null;
   gpsOk: boolean;
   gpsError: string | null;
   invalidReason: string | null;
@@ -149,7 +148,6 @@ export class DriveController {
       startRel: null,
       nextSector: 0,
       jumpBannerUntil: 0,
-      reactionMs: null,
       gpsOk: false,
       gpsError: null,
       invalidReason: null,
@@ -427,9 +425,6 @@ export class DriveController {
           navigator.vibrate?.([200, 100, 200]);
           this.emit({ penaltyMs: ev.penaltyMs, jumpBannerUntil: Date.now() + 4000 });
           break;
-        case 'reaction':
-          this.emit({ reactionMs: ev.reactionMs });
-          break;
         case 'sector': {
           const info: SectorInfo = { k: ev.k, count: ev.count, splitMs: ev.splitMs, sectorMs: ev.sectorMs, deltaMs: ev.deltaMs, colour: ev.colour };
           this.sounds.gate(ev.colour);
@@ -485,7 +480,6 @@ export class DriveController {
       totalMs: lap.totalMs,
       splitTimesMs: lap.splitTimesMs,
       penaltyMs: lap.penaltyMs,
-      reactionMs: lap.reactionMs,
       jumpStart: lap.jumpStart,
       jumpDistanceM: lap.jumpDistanceM,
       countdownS: lap.countdownS,

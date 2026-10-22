@@ -242,7 +242,7 @@ export default function PreDrive() {
             </span>
             <input type="range" min={3} max={10} step={1} value={countdown} onChange={(e) => setCountdown(Number(e.target.value))} />
           </label>
-          <small className="mute">The timer starts at GO, so your reaction time counts. Moving more than 10 m before GO adds 5 s.</small>
+          <small className="mute">Timing starts when you move off after GO. Moving more than 10 m before GO adds 5 s.</small>
         </div>
       )}
 
