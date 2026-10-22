@@ -157,7 +157,7 @@ export function DeltaGraph({
           </clipPath>
         </defs>
         <Frame axis={axis} yTicks={yTicks} y={y} yFmt={(v) => (v > 0 ? `+${v}` : String(v))} />
-        <path d={area} fill="var(--yellow)" opacity={0.3} clipPath="url(#above)" />
+        <path d={area} fill="var(--yellow)" opacity={0.42} clipPath="url(#above)" />
         <path d={area} fill="var(--green)" opacity={0.35} clipPath="url(#below)" />
         <line x1={PAD.l} x2={W - PAD.r} y1={zeroY} y2={zeroY} stroke="var(--mute)" strokeWidth={1} />
         <path d={line} fill="none" stroke="var(--ink)" strokeWidth={2} strokeLinejoin="round" />
@@ -172,8 +172,8 @@ export function DeltaGraph({
         {hover ? (
           <>
             {formatDistance(hover.d)} ·{' '}
-            <strong style={{ color: hover.ms <= 0 ? 'var(--ink)' : 'var(--ink)' }}>
-              {hover.ms === 0 ? 'level' : hover.ms < 0 ? `${aLabel} ${formatDelta(hover.ms)}` : `${bLabel} ${formatDelta(-hover.ms)}`}
+            <strong style={{ color: hover.ms <= 0 ? 'var(--green-ink)' : 'var(--yellow)' }}>
+              {hover.ms === 0 ? 'level' : `${aLabel} ${formatDelta(hover.ms)} ${hover.ms < 0 ? 'ahead' : 'behind'}`}
             </strong>
           </>
         ) : (

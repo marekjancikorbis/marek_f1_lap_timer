@@ -85,6 +85,7 @@ export default function PreDrive() {
         totalMs: r.totalMs,
         splits: r.splitTimesMs,
         colours: route ? bigColoursFor(r.splitTimesMs, route, runs.filter((x) => x.startedAt < r.startedAt), bigRecs, racedSplits(r, runs)) : [],
+        who: { name: profile.username, hue: profile.avatarHue },
       }));
     const theirs: Option[] = leaderboardFrom(posts)
       .filter((row) => row.post.userId !== profile.id)
@@ -111,7 +112,7 @@ export default function PreDrive() {
       });
     }
     return { mine, theirs };
-  }, [runs, posts, extraPost, profile.id, route, bigRecs]);
+  }, [runs, posts, extraPost, profile.id, profile.username, profile.avatarHue, route, bigRecs]);
 
   async function go() {
     if (!route) return;
@@ -171,7 +172,7 @@ export default function PreDrive() {
   const renderOption = (o: Option) => (
     <button key={o.ref} className={`ref-option ${ref === o.ref ? 'on' : ''}`} onClick={() => setRef(o.ref)} aria-pressed={ref === o.ref}>
       <span className="radio" aria-hidden="true" />
-      {o.who ? <Avatar name={o.who.name} hue={o.who.hue} size={30} /> : <span className={`ref-dot ${o.fastest ? 'purple' : ''}`} />}
+      {o.who ? <Avatar name={o.who.name} hue={o.who.hue} size={30} /> : o.fastest ? <span className="ref-dot purple" /> : null}
       <span className="grow" style={{ minWidth: 0 }}>
         <strong className="ellipsis">{o.title}</strong>
         <span className="mute ellipsis small-text">{o.sub}</span>
@@ -275,7 +276,7 @@ export default function PreDrive() {
           <Play size={18} fill="currentColor" aria-hidden="true" /> {starting ? 'Getting GPS…' : 'Start'}
         </button>
         <p className="mute small-text" style={{ textAlign: 'center' }}>
-          Mount the phone first. The screen stays on and needs no taps while moving.
+          Mount the phone first. No taps needed while driving.
         </p>
       </div>
 

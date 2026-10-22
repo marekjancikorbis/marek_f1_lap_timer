@@ -132,11 +132,6 @@ export default function RunSummary() {
         badges={
           <>
             {session.length > 1 && <span className="badge outline">Lap {run.lap + 1}</span>}
-            {ref && (
-              <span className={`badge ${run.totalMs < ref.totalMs ? 'green' : ''}`}>
-                {formatDelta(run.totalMs - ref.totalMs, 3)} vs {ref.label}
-              </span>
-            )}
             {run.replay && <span className="badge yellow">Simulated</span>}
             {run.posted && <span className="badge blue">Posted</span>}
           </>
@@ -162,7 +157,7 @@ export default function RunSummary() {
                 </Link>
               )}
               <Link className="btn grow" to={`/drive/${run.routeId}?ref=run:${run.id}`}>
-                Race this lap
+                Race again
               </Link>
               {route && (
                 <button className="btn grow" onClick={share}>

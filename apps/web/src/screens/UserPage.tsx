@@ -144,7 +144,7 @@ export default function UserPage() {
 
       <p className="statline">
         <Link to={`/u/${user.username}/followers`}>
-          <strong className="num">{counts?.followers ?? '–'}</strong> followers
+          <strong className="num">{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
         </Link>
         <Link to={`/u/${user.username}/following`}>
           <strong className="num">{counts?.following ?? '–'}</strong> following

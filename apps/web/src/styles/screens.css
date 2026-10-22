@@ -495,7 +495,7 @@
   content: '';
   position: absolute;
   inset: auto 0 0;
-  height: 120px;
+  height: 150px;
   background: linear-gradient(to top, var(--tarmac) 10%, rgba(12, 14, 18, 0));
   pointer-events: none;
 }
@@ -517,7 +517,8 @@
   position: absolute;
   left: var(--s-4);
   right: var(--s-4);
-  bottom: 4px;
+  /* Above the Mapbox logo and attribution, which must stay visible. */
+  bottom: 40px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -1945,7 +1946,8 @@
 
 .explore-sheet-body {
   overflow-y: auto;
-  padding: 0 16px 16px;
+  /* Room for the Mapbox logo and attribution, which must stay visible. */
+  padding: 0 16px 44px;
 }
 
 .explore-sheet-body .section-title {

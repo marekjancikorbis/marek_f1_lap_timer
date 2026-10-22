@@ -132,8 +132,8 @@ export function Feed() {
 
       {loading ? (
         <div className="stack">
-          <div className="skeleton" style={{ height: 420 }} />
-          <div className="skeleton" style={{ height: 420 }} />
+          <div className="skeleton" style={{ height: 300 }} />
+          <div className="skeleton" style={{ height: 300 }} />
         </div>
       ) : follows && follows.length === 0 ? (
         <FeedEmpty onFollowed={loadFirst} />
