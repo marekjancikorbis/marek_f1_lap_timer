@@ -34,6 +34,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
     let cleanup: void | (() => void);
     let cancelled = false;
     let giveUp = 0;
+    let resize: ResizeObserver | null = null;
     (async () => {
       try {
         await consume('mapLoads');
@@ -55,6 +56,9 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
         pitchWithRotate: false,
       });
       map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
+      // Mapbox only follows window resizes: redraw when the container itself changes size or is unhidden.
+      resize = new ResizeObserver(() => map?.resize());
+      resize.observe(el.current);
       // Never spin forever: no signal, blocked token or a Mapbox failure ends here.
       giveUp = window.setTimeout(() => !cancelled && setState((s) => (s === 'loading' ? 'error' : s)), 20_000);
       map.on('load', () => {
@@ -71,6 +75,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
     return () => {
       cancelled = true;
       window.clearTimeout(giveUp);
+      resize?.disconnect();
       if (typeof cleanup === 'function') cleanup();
       map?.remove();
     };

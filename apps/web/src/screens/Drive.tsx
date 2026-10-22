@@ -5,6 +5,7 @@ import { DriveController, type DriveState } from '../drive/controller';
 import { clearPendingDrive, takePendingDrive } from '../drive/store';
 import { STRIP_LABEL } from '../components/ui';
 import { formatDelta, formatDistance, formatLap, formatSpeed } from '../lib/format';
+import { lockPortrait, unlockOrientation } from '../lib/orientation';
 
 export default function Drive() {
   const { routeId = '' } = useParams();
@@ -16,6 +17,10 @@ export default function Drive() {
   const [mode, setMode] = useState(() => cfg?.mode ?? 'hud');
   const landscape = useLandscape();
   const firstOrientation = useRef(true);
+  useEffect(() => {
+    unlockOrientation();
+    return lockPortrait;
+  }, []);
   useEffect(() => {
     if (firstOrientation.current) {
       firstOrientation.current = false;

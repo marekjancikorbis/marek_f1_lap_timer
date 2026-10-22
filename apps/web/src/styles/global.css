@@ -78,6 +78,8 @@ body {
 body {
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
+  /* No pinch or double-tap zoom of the page, like a native app. Maps and graphs handle their own touches. */
+  touch-action: pan-x pan-y;
 }
 
 #root {

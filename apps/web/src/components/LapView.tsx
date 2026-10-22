@@ -1,7 +1,7 @@
 import { bigSplits, compareLaps, sectorColour, sectorTimes, type LapProfile } from '@laptimer/timing';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Pause, Play } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { leaderboardFrom } from '../lib/data';
 import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
@@ -76,9 +76,7 @@ export function LapView({
   /** Rendered at the end. */
   children?: ReactNode;
 }) {
-  const [tab, setTab] = useState<'sectors' | 'graphs' | 'map'>('sectors');
   const [open, setOpen] = useState<Set<number>>(new Set());
-  const [carAtM, setCarAtM] = useState<number | null>(null);
 
   const board = useMemo(() => leaderboardFrom(posts), [posts]);
   const rank = board.find((r) => r.post.id === lap.id)?.rank;
@@ -117,56 +115,49 @@ export function LapView({
   const bigScale = Math.max(1, ...(table ?? []).map((t) => Math.abs(t.row.deltaMs ?? 0)));
   const miniScale = Math.max(1, ...(table ?? []).flatMap((t) => t.kids.map((k) => Math.abs(k.deltaMs ?? 0))));
 
-  const cmp = useMemo(() => {
-    if (!route || !fits || !ref) return null;
-    try {
-      return compareLaps(lap, ref, route.boundaries);
-    } catch {
-      return null;
-    }
-  }, [route, fits, lap, ref]);
-
-  const hasSpeed = !!lap.profile && lap.profile.speedDms.length > 1;
-  const lengthM = route?.boundaries[route.boundaries.length - 1] ?? 0;
-  const bigBoundaries = route ? bigRoute(route).boundaries : [];
-  // Where the reference was at the moment this lap reached carAtM.
-  const ghostAtM = route && ref && carAtM != null ? distanceAt(timeAt(carAtM, lap, route.boundaries, lap.profile), ref, route.boundaries, ref.profile) : null;
-  const gapAt = cmp && carAtM != null ? nearestBy(cmp.delta, carAtM)?.ms ?? null : null;
-  const speedAt = cmp?.speed && carAtM != null ? nearestBy(cmp.speed, carAtM) : null;
-  const ownSpeedAt = !cmp?.speed && hasSpeed && carAtM != null ? lap.profile!.speedDms[Math.min(lap.profile!.speedDms.length - 1, Math.round(carAtM / lap.profile!.stepM))] * 0.36 : null;
-  const sectorAt = carAtM != null ? bigBoundaries.findIndex((b) => b >= carAtM) + 1 : null;
-
-  const readout = carAtM != null && (
-    <div className="lap-readout">
-      <div>
-        <span>At {formatDistance(carAtM)}</span>
-        <strong className="num">S{sectorAt || 1}</strong>
-      </div>
-      {ref && (
-        <div>
-          <span>Gap</span>
-          <strong className={`num ${gapAt == null ? '' : gapAt <= 0 ? 'faster' : 'slower'}`}>{gapAt == null ? '—' : formatDelta(gapAt)}</strong>
-        </div>
-      )}
-      {tab === 'map' && ref && ghostAtM != null ? (
-        <div>
-          <span>{ref.label} is</span>
-          <strong className="num">
-            {Math.abs(ghostAtM - carAtM) < 1 ? 'level' : `${Math.round(Math.abs(ghostAtM - carAtM))} m ${ghostAtM > carAtM ? 'ahead' : 'behind'}`}
-          </strong>
+  const sectors = !table ? (
+    <p className="mute">This lap was timed on an older version of the route, so its sectors can't be shown.</p>
+  ) : (
+    <>
+      {ref ? (
+        <div className="dscale" aria-hidden="true">
+          <span>← Faster</span>
+          <span>vs {ref.label}</span>
+          <span>Slower →</span>
         </div>
       ) : (
-        (speedAt || ownSpeedAt != null) && (
-          <div>
-            <span>Speed{speedAt ? ` / ${ref?.label}` : ''}</span>
-            <strong className="num">
-              {Math.round(speedAt ? speedAt.a : ownSpeedAt!)}
-              {speedAt && <small className="mute"> / {Math.round(speedAt.b)}</small>}
-            </strong>
-          </div>
-        )
+        <p className="mute small-text" style={{ marginBottom: 8 }}>
+          Your first lap here: nothing to compare with yet.
+        </p>
       )}
-    </div>
+      <ol className="list sec-list">
+        {table.map(({ row, kids }, b) => (
+          <li key={row.name}>
+            <button
+              className="sec-row"
+              aria-expanded={open.has(b)}
+              onClick={() => setOpen((o) => (o.has(b) ? new Set([...o].filter((x) => x !== b)) : new Set(o).add(b)))}
+            >
+              <SecCells row={row} scale={bigScale} />
+              <span className="sec-sub">
+                {formatLap(row.ms)}
+                {row.colour === 'purple' && ref ? ' · fastest ever' : ''} · {kids.length} minisectors
+                <ChevronDown size={14} aria-hidden="true" className="sec-chev" />
+              </span>
+            </button>
+            {open.has(b) && (
+              <ol className="sec-minis">
+                {kids.map((k) => (
+                  <li key={k.name} className="sec-row mini">
+                    <SecCells row={k} scale={miniScale} />
+                  </li>
+                ))}
+              </ol>
+            )}
+          </li>
+        ))}
+      </ol>
+    </>
   );
 
   return (
@@ -208,11 +199,141 @@ export function LapView({
 
       {actions}
 
+      <LapTabs lap={lap} reference={ref} route={route} colours={miniColours} sectors={sectors} mapExtra={mapExtra} />
+
+      {children}
+    </>
+  );
+}
+
+type Tab = 'sectors' | 'graphs' | 'map';
+const SPEEDS = [1, 2, 4, 8];
+
+/**
+ * Sectors / Graphs / Map for a lap measured against a reference. The cars sit
+ * at one moment of the lap: scrubbing a graph, tapping the route or playing it
+ * back moves them, and the map shows that moment on both tabs.
+ */
+export function LapTabs({
+  lap,
+  reference,
+  route,
+  colours,
+  sectors,
+  mapExtra,
+}: {
+  lap: Pick<LapViewLap, 'username' | 'totalMs' | 'splitTimesMs' | 'penaltyMs' | 'profile'>;
+  reference: LapReference | null;
+  route: Route | null;
+  /** Minisector colours for the route line. */
+  colours: (SectorColourName | null)[];
+  /** The Sectors tab. */
+  sectors: ReactNode;
+  mapExtra?: (map: mapboxgl.Map) => void | (() => void);
+}) {
+  const [tab, setTab] = useState<Tab>('sectors');
+  // Every map mount counts against the monthly Mapbox cap: keep one alive once shown.
+  const [mapSeen, setMapSeen] = useState(false);
+  /** Ms into the lap the cars are shown at; null until something moves them. */
+  const [t, setT] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [follow, setFollow] = useState<'route' | 'car' | 'ghost'>('route');
+
+  const n = lap.splitTimesMs.length;
+  const fits = !!route && route.boundaries.length === n;
+  const ref = fits && reference && reference.splitTimesMs.length === n ? reference : null;
+  const endT = Math.max(lap.totalMs, ref?.totalMs ?? 0);
+
+  const cmp = useMemo(() => {
+    if (!route || !ref) return null;
+    try {
+      return compareLaps(lap, ref, route.boundaries);
+    } catch {
+      return null;
+    }
+  }, [route, lap, ref]);
+
+  // Play back at real speed, times the multiplier.
+  useEffect(() => {
+    if (!playing) return;
+    let raf = 0;
+    let last = performance.now();
+    const step = (now: number) => {
+      const dt = (now - last) * speed;
+      last = now;
+      setT((p) => Math.min(endT, (p ?? 0) + dt));
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [playing, speed, endT]);
+  useEffect(() => {
+    if (playing && t != null && t >= endT) setPlaying(false);
+  }, [playing, t, endT]);
+
+  const boundaries = route?.boundaries ?? [];
+  const carAtM = fits && t != null ? distanceAt(t, lap, boundaries, lap.profile) : null;
+  const ghostAtM = ref && t != null ? distanceAt(t, ref, boundaries, ref.profile) : null;
+  const scrubTo = (d: number) => {
+    setPlaying(false);
+    setT(timeAt(d, lap, boundaries, lap.profile));
+  };
+  const togglePlay = () => {
+    if (!playing && (t == null || t >= endT)) setT(0);
+    setPlaying(!playing);
+  };
+
+  const hasSpeed = !!lap.profile && lap.profile.speedDms.length > 1;
+  const bigBoundaries = route ? bigRoute(route).boundaries : [];
+  const gapAt = cmp && carAtM != null ? nearestBy(cmp.delta, carAtM)?.ms ?? null : null;
+  const speedAt = cmp?.speed && carAtM != null ? nearestBy(cmp.speed, carAtM) : null;
+  const ownSpeedAt = !cmp?.speed && hasSpeed && carAtM != null ? lap.profile!.speedDms[Math.min(lap.profile!.speedDms.length - 1, Math.round(carAtM / lap.profile!.stepM))] * 0.36 : null;
+  const sectorAt = carAtM != null ? bigBoundaries.findIndex((b) => b >= carAtM) + 1 : null;
+
+  const readout = carAtM != null && (
+    <div className="lap-readout">
+      <div>
+        <span>At {formatDistance(carAtM)}</span>
+        <strong className="num">S{sectorAt || 1}</strong>
+      </div>
+      {ref && (
+        <div>
+          <span>Gap</span>
+          <strong className={`num ${gapAt == null ? '' : gapAt <= 0 ? 'faster' : 'slower'}`}>{gapAt == null ? '—' : formatDelta(gapAt)}</strong>
+        </div>
+      )}
+      {tab === 'map' && ref && ghostAtM != null ? (
+        <div>
+          <span>{ref.label} is</span>
+          <strong className="num">
+            {Math.abs(ghostAtM - carAtM) < 1 ? 'level' : `${Math.round(Math.abs(ghostAtM - carAtM))} m ${ghostAtM > carAtM ? 'ahead' : 'behind'}`}
+          </strong>
+        </div>
+      ) : (
+        (speedAt || ownSpeedAt != null) && (
+          <div>
+            <span>Speed{speedAt ? ` / ${ref?.label}` : ''}</span>
+            <strong className="num">
+              {Math.round(speedAt ? speedAt.a : ownSpeedAt!)}
+              {speedAt && <small className="mute"> / {Math.round(speedAt.b)}</small>}
+            </strong>
+          </div>
+        )
+      )}
+    </div>
+  );
+
+  return (
+    <>
       <div className="lap-tabs">
         <Segmented
           label="Show"
           value={tab}
-          onChange={setTab}
+          onChange={(v) => {
+            setTab(v);
+            if (v !== 'sectors') setMapSeen(true);
+          }}
           options={[
             { value: 'sectors', label: 'Sectors' },
             { value: 'graphs', label: 'Graphs' },
@@ -221,61 +342,41 @@ export function LapView({
         />
       </div>
 
-      {tab === 'sectors' &&
-        (!table ? (
-          <p className="mute">This lap was timed on an older version of the route, so its sectors can't be shown.</p>
-        ) : (
-          <>
-            {ref ? (
-              <div className="dscale" aria-hidden="true">
-                <span>← Faster</span>
-                <span>vs {ref.label}</span>
-                <span>Slower →</span>
-              </div>
-            ) : (
-              <p className="mute small-text" style={{ marginBottom: 8 }}>
-                Your first lap here: nothing to compare with yet.
-              </p>
-            )}
-            <ol className="list sec-list">
-              {table.map(({ row, kids }, b) => (
-                <li key={row.name}>
-                  <button
-                    className="sec-row"
-                    aria-expanded={open.has(b)}
-                    onClick={() => setOpen((o) => (o.has(b) ? new Set([...o].filter((x) => x !== b)) : new Set(o).add(b)))}
-                  >
-                    <SecCells row={row} scale={bigScale} />
-                    <span className="sec-sub">
-                      {formatLap(row.ms)}
-                      {row.colour === 'purple' && ref ? ' · fastest ever' : ''} · {kids.length} minisectors
-                      <ChevronDown size={14} aria-hidden="true" className="sec-chev" />
-                    </span>
-                  </button>
-                  {open.has(b) && (
-                    <ol className="sec-minis">
-                      {kids.map((k) => (
-                        <li key={k.name} className="sec-row mini">
-                          <SecCells row={k} scale={miniScale} />
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </>
-        ))}
+      {tab === 'sectors' && sectors}
+
+      {/* One map for both tabs: small and pinned above the graphs, full size on the Map tab. */}
+      {mapSeen && route && (
+        <div className={tab === 'graphs' ? 'lap-pin' : ''} hidden={tab === 'sectors'}>
+          <div className="map-card">
+            <RouteMap
+              route={route}
+              colours={colours}
+              height={tab === 'map' ? 360 : 190}
+              extra={mapExtra}
+              carAtM={carAtM}
+              ghostAtM={ghostAtM}
+              follow={follow === 'route' ? null : follow}
+              onPick={fits ? scrubTo : undefined}
+            />
+          </div>
+          {tab === 'graphs' && readout}
+        </div>
+      )}
 
       {tab === 'graphs' &&
         (!route || !fits ? (
           <p className="mute">No graphs for this lap.</p>
         ) : (
           <div className="stack">
-            {readout}
+            {carAtM == null && <p className="mute small-text">Slide along a graph to see that spot on the map.</p>}
             {cmp ? (
               <div className="panel chart-panel">
-                <DeltaGraph data={cmp.delta} boundaries={bigBoundaries} aLabel={lap.username} bLabel={ref!.label} onScrub={setCarAtM} at={carAtM} />
+                <DeltaGraph data={cmp.delta} boundaries={bigBoundaries} aLabel={lap.username} bLabel={ref!.label} onScrub={scrubTo} at={carAtM} />
+                {!cmp.smooth && (
+                  <p className="mute small-text" style={{ marginTop: 8 }}>
+                    Drawn from sector splits only: one of these laps has no 10 m profile.
+                  </p>
+                )}
               </div>
             ) : (
               <p className="mute">The gap graph needs a lap to compare with.</p>
@@ -287,7 +388,7 @@ export function LapView({
                   boundaries={bigBoundaries}
                   aLabel={lap.username}
                   bLabel={cmp?.speed ? ref!.label : null}
-                  onScrub={setCarAtM}
+                  onScrub={scrubTo}
                   at={carAtM}
                 />
               </div>
@@ -297,13 +398,20 @@ export function LapView({
 
       {tab === 'map' && route && (
         <div className="stack">
-          <div className="map-card">
-            <RouteMap route={route} colours={miniColours} height={360} extra={mapExtra} carAtM={carAtM} ghostAtM={ghostAtM} onPick={setCarAtM} />
-          </div>
           <p className="maplegend">
             <span>
-              <i style={{ background: 'var(--purple)' }} /> Fastest ever
+              <i className="dot car" /> {lap.username}
             </span>
+            {ref && (
+              <span>
+                <i className="dot ghost" /> {ref.label}
+              </span>
+            )}
+            {colours.includes('purple') && (
+              <span>
+                <i style={{ background: 'var(--purple)' }} /> Fastest ever
+              </span>
+            )}
             <span>
               <i style={{ background: 'var(--green)' }} /> Faster
             </span>
@@ -311,15 +419,58 @@ export function LapView({
               <i style={{ background: 'var(--yellow)' }} /> Slower
             </span>
           </p>
-          <label className="lap-scrub">
-            <span className="visually-hidden">Position along the route</span>
-            <input type="range" min={0} max={Math.round(lengthM)} step={1} value={Math.round(carAtM ?? 0)} onChange={(e) => setCarAtM(Number(e.target.value))} />
-          </label>
-          {readout || <p className="mute small-text">Drag the slider or tap the route to replay the lap{ref ? ` against ${ref.label}` : ''}.</p>}
+          {fits ? (
+            <>
+              <div className="play-bar">
+                <button className="play-btn" aria-label={playing ? 'Pause' : 'Play the lap'} onClick={togglePlay}>
+                  {playing ? <Pause size={22} aria-hidden="true" /> : <Play size={22} aria-hidden="true" />}
+                </button>
+                <span className="play-time num">{formatLap(t ?? 0)}</span>
+                <label className="grow">
+                  <span className="visually-hidden">Time into the lap</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={Math.round(endT)}
+                    step={100}
+                    value={Math.round(t ?? 0)}
+                    onChange={(e) => {
+                      setPlaying(false);
+                      setT(Number(e.target.value));
+                    }}
+                  />
+                </label>
+                <label>
+                  <span className="visually-hidden">Playback speed</span>
+                  <select className="play-speed num" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
+                    {SPEEDS.map((x) => (
+                      <option key={x} value={x}>
+                        {x}×
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <Segmented
+                label="Follow"
+                value={follow}
+                onChange={(v) => {
+                  setFollow(v);
+                  if (v !== 'route' && t == null) setT(0);
+                }}
+                options={[
+                  { value: 'route', label: 'Whole route' },
+                  { value: 'car', label: lap.username },
+                  ...(ref ? [{ value: 'ghost' as const, label: ref.label }] : []),
+                ]}
+              />
+              {readout || <p className="mute small-text">Press play, drag the slider or tap the route{ref ? ` to race ${ref.label}` : ''}.</p>}
+            </>
+          ) : (
+            <p className="mute small-text">This lap was timed on an older version of the route, so it can't be played back.</p>
+          )}
         </div>
       )}
-
-      {children}
     </>
   );
 }

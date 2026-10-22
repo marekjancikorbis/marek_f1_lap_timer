@@ -1813,6 +1813,73 @@
   vertical-align: middle;
 }
 
+/* The two dots as the map draws them: this lap solid blue, the other lap hollow. */
+.maplegend i.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.maplegend i.dot.car {
+  background: var(--blue);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.maplegend i.dot.ghost {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+/* The small map stays in view while a finger slides along the graphs below it. */
+.lap-pin {
+  position: sticky;
+  top: var(--safe-t);
+  z-index: 2;
+  display: grid;
+  gap: 8px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  background: var(--tarmac);
+}
+
+.play-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.play-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  cursor: pointer;
+}
+
+.play-btn:active {
+  transform: scale(0.96);
+}
+
+.play-time {
+  flex: none;
+  min-width: 5.5ch;
+  font-size: 1.25rem;
+}
+
+.play-speed {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline-2);
+  border-radius: var(--r-md);
+  background: var(--raised);
+  font-size: 1rem;
+}
+
 /* ================================================================ shared bits of the redesign */
 
 .small-text {

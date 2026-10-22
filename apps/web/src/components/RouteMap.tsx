@@ -14,6 +14,7 @@ export function RouteMap({
   extra,
   carAtM,
   ghostAtM,
+  follow,
   onPick,
 }: {
   route: Route;
@@ -24,6 +25,8 @@ export function RouteMap({
   carAtM?: number | null;
   /** Metres from the start for a hollow second car (the lap compared with); null hides it. */
   ghostAtM?: number | null;
+  /** Keep the map centred on the car or the ghost; null shows the whole route. */
+  follow?: 'car' | 'ghost' | null;
   /** Called with the distance along the route when the route line is tapped. */
   onPick?: (d: number) => void;
 }) {
@@ -34,6 +37,8 @@ export function RouteMap({
   carRef.current = carAtM;
   const ghostRef = useRef(ghostAtM);
   ghostRef.current = ghostAtM;
+  const followRef = useRef(follow);
+  followRef.current = follow;
 
   const placeCar = useCallback(
     (map: mapboxgl.Map, d: number | null | undefined, source = 'car') => {
@@ -42,8 +47,9 @@ export function RouteMap({
       if (d == null) return src.setData({ type: 'FeatureCollection', features: [] });
       const p = preparedFor(route).pointAt(d);
       src.setData({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } });
+      if (followRef.current === source) map.jumpTo({ center: [p.lon, p.lat] });
       // Keep the car in view when the route runs off the visible map.
-      if (source === 'car' && !map.getBounds()?.contains([p.lon, p.lat])) map.easeTo({ center: [p.lon, p.lat], duration: 300 });
+      else if (source === 'car' && !followRef.current && !map.getBounds()?.contains([p.lon, p.lat])) map.easeTo({ center: [p.lon, p.lat], duration: 300 });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route.id],
@@ -56,6 +62,18 @@ export function RouteMap({
   useEffect(() => {
     if (mapRef.current) placeCar(mapRef.current, ghostAtM, 'ghost');
   }, [ghostAtM, placeCar]);
+
+  // Zoom in on the followed dot, or back out to the whole route.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const d = follow === 'car' ? carRef.current : follow === 'ghost' ? ghostRef.current : null;
+    if (follow && d != null) {
+      const p = preparedFor(route).pointAt(d);
+      map.jumpTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 16) });
+    } else if (!follow) map.fitBounds(route.bbox, { padding: 40, duration: 400 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [follow]);
 
   const onReady = useCallback(
     (map: mapboxgl.Map) => {

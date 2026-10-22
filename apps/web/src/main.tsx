@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { lockPortrait } from './lib/orientation';
 import './styles/global.css';
 import './styles/screens.css';
 
@@ -25,6 +26,10 @@ if ('serviceWorker' in navigator) {
     if (document.visibilityState === 'visible') void navigator.serviceWorker.getRegistration().then((r) => r?.update());
   });
 }
+
+lockPortrait();
+// iOS ignores user-scalable=no: block its pinch-zoom of the page (maps still pinch, they use touch events).
+document.addEventListener('gesturestart', (e) => e.preventDefault());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
