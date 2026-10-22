@@ -491,6 +491,20 @@
   border-radius: 0;
 }
 
+.route-hero .mapview {
+  transition: height 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.route-hero-btn {
+  background: rgba(12, 14, 18, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-hero .mapview {
+    transition: none;
+  }
+}
+
 .route-hero::after {
   content: '';
   position: absolute;
@@ -1409,7 +1423,8 @@
   width: 100%;
   height: auto;
   display: block;
-  touch-action: pan-y;
+  /* The graph keeps the finger; mostly-vertical drags scroll the page by hand (useScrub). */
+  touch-action: none;
   cursor: crosshair;
 }
 
@@ -1446,7 +1461,6 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   white-space: nowrap;
   pointer-events: none;
-  transition: left 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .chart-pill strong {
@@ -1460,10 +1474,6 @@
 .chart-pill span {
   font-size: 0.75rem;
   color: var(--mute);
-}
-
-.chart-cross {
-  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .chart-tick {
@@ -1487,10 +1497,6 @@
     animation: none;
   }
 
-  .chart-pill,
-  .chart-cross {
-    transition: none;
-  }
 }
 
 @media (min-width: 720px) {
@@ -2128,4 +2134,109 @@
 .home-course-shape {
   width: 112px;
   flex: none;
+}
+
+/* ================================================================ activity heatmap */
+
+.heat {
+  margin-top: var(--s-5);
+}
+
+.heat-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8125rem;
+}
+
+.heat-scroll {
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  scrollbar-width: none;
+}
+
+.heat-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.heat-months,
+.heat-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+  gap: 3px;
+  width: max-content;
+}
+
+.heat-months {
+  height: 16px;
+  font-size: 0.6875rem;
+  color: var(--mute);
+}
+
+.heat-months span {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.heat-grid {
+  grid-template-rows: repeat(7, 12px);
+}
+
+.heat-grid i,
+.heat-legend i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.heat-grid i {
+  cursor: pointer;
+}
+
+.heat-grid i.sel {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.heat-grid i.future {
+  visibility: hidden;
+}
+
+.l0 {
+  background: var(--raised-2);
+}
+
+.l1 {
+  background: rgba(47, 134, 255, 0.3);
+}
+
+.l2 {
+  background: rgba(47, 134, 255, 0.52);
+}
+
+.l3 {
+  background: rgba(47, 134, 255, 0.76);
+}
+
+.l4 {
+  background: var(--blue);
+}
+
+.heat-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8125rem;
+}
+
+.heat-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75rem;
+  color: var(--mute);
 }

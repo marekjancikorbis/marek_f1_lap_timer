@@ -6,6 +6,7 @@ import {
   getCountFromServer,
   getDoc,
   getDocs,
+  increment,
   limit,
   orderBy,
   query,
@@ -416,6 +417,8 @@ export async function saveRun(uid: string, run: Omit<Run, 'createdAt'>): Promise
   const { id, ...data } = run;
   // Don't wait for the server: offline saves complete when signal returns.
   void setDoc(doc(db, 'users', uid, 'runs', id), { ...data, createdAt: serverTimestamp() });
+  // Its own write: a failed count must never cost the lap.
+  if (!run.replay) void countActivity(uid, run.startedAt, 1);
 }
 
 export async function getRun(uid: string, id: string): Promise<Run | null> {
@@ -438,6 +441,41 @@ export async function deleteRun(uid: string, run: Run) {
   batch.delete(doc(db, 'users', uid, 'runs', run.id));
   if (run.posted) batch.delete(doc(db, 'posts', run.id));
   await batch.commit();
+  if (!run.replay) void countActivity(uid, run.startedAt, -1);
+}
+
+// ================================================================ activity
+
+/** Local calendar day of a timestamp: the key in a user's activity map. */
+export function dayKey(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export interface Activity {
+  /** Laps driven per day (simulated ones don't count). Public, unlike the runs themselves. */
+  days: Record<string, number>;
+  /** Set once the laps driven before activity was counted have been added. */
+  backfilled?: boolean;
+}
+
+function countActivity(uid: string, startedAt: number, by: 1 | -1) {
+  return setDoc(doc(db, 'activity', uid), { days: { [dayKey(startedAt)]: increment(by) } }, { merge: true }).catch(() => {});
+}
+
+export async function getActivity(uid: string): Promise<Activity | null> {
+  const snap = await getDoc(doc(db, 'activity', uid));
+  return snap.exists() ? (snap.data() as Activity) : null;
+}
+
+/** Recount every day from your own laps (runs are private, so only you can). */
+// shortcut: counts the newest 500 laps (allMyRuns' cap); page through runs if someone drives more before first opening their profile.
+export async function backfillActivity(uid: string): Promise<Activity> {
+  const days: Record<string, number> = {};
+  for (const r of await allMyRuns(uid)) if (!r.replay) days[dayKey(r.startedAt)] = (days[dayKey(r.startedAt)] ?? 0) + 1;
+  const a = { days, backfilled: true };
+  await setDoc(doc(db, 'activity', uid), a);
+  return a;
 }
 
 // ================================================================ posts

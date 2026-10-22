@@ -1,11 +1,14 @@
 import { Settings as SettingsIcon, Shield } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { FollowButton } from '../components/FollowButton';
 import { RouteShape } from '../components/RouteShape';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
 import {
+  backfillActivity,
   followCounts,
+  getActivity,
   getProfileByUsername,
   getRole,
   getRoute,
@@ -35,6 +38,7 @@ export default function UserPage() {
   const [ranks, setRanks] = useState<Map<string, number>>(new Map());
   const [wins, setWins] = useState(0);
   const isMe = user?.id === me.id;
+  const [activity, setActivity] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +49,11 @@ export default function UserPage() {
         if (!alive) return;
         setUser(p);
         if (!p) return;
+        setActivity(null);
+        void getActivity(p.id)
+          .then((a) => (p.id === me.id && !a?.backfilled ? backfillActivity(p.id) : a))
+          .then((a) => alive && setActivity(a?.days ?? {}))
+          .catch(() => alive && setActivity({}));
         const [ps, c, pr, r] = await Promise.all([userPosts(p.id), followCounts(p.id), publicRoutesOf(p.id), getRole(p.id)]);
         if (!alive) return;
         setPosts(ps);
@@ -164,6 +173,8 @@ export default function UserPage() {
           <Shield size={18} aria-hidden="true" /> Admin
         </Link>
       )}
+
+      {activity && <ActivityHeatmap days={activity} />}
 
       <h2 className="section-title">Best laps</h2>
       {groups.length === 0 ? (

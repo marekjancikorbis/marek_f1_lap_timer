@@ -434,3 +434,14 @@ describe('home course', () => {
     await assertSucceeds(updateDoc(doc(db('ex'), 'users/ex'), { homeRouteId: 'pub' }));
   });
 });
+
+describe('activity', () => {
+  it('anyone signed in reads it, only the owner writes it, in shape', async () => {
+    await assertSucceeds(setDoc(doc(db('driver'), 'activity/driver'), { days: { '2026-10-22': 3 }, backfilled: true }));
+    await assertSucceeds(getDoc(doc(db('creator'), 'activity/driver')));
+    await assertFails(getDoc(doc(anon(), 'activity/driver')));
+    await assertFails(setDoc(doc(db('creator'), 'activity/driver'), { days: {} }));
+    await assertFails(setDoc(doc(db('driver'), 'activity/driver'), { days: {}, extra: 1 }));
+    await assertFails(setDoc(doc(db('driver'), 'activity/driver'), { days: 'lots' }));
+  });
+});

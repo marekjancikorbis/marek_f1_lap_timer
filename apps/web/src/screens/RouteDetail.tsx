@@ -1,5 +1,6 @@
-import { Play, Star } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import type mapboxgl from 'mapbox-gl';
+import { Maximize2, Minimize2, Play, Star } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteMap } from '../components/RouteMap';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, useToast } from '../components/ui';
@@ -21,6 +22,43 @@ export default function RouteDetail() {
   const [homeBusy, setHomeBusy] = useState(false);
   const [ownerRole, setOwnerRole] = useState<Role | null>(null);
   const [tab, setTab] = useState<'board' | 'mine' | 'locals'>('board');
+  // The map grows to most of the screen to inspect the route: pull down at the top of
+  // the page (or the button) opens it, pushing the page up closes it again.
+  const [bigMap, setBigMap] = useState(false);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const keepMap = useCallback((m: mapboxgl.Map) => {
+    mapRef.current = m;
+    return () => {
+      mapRef.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    let y0: number | null = null;
+    const start = (e: TouchEvent) => {
+      // Drags on the map itself pan it instead.
+      y0 = window.scrollY <= 0 && !(e.target as Element).closest?.('.mapboxgl-canvas-container') ? e.touches[0].clientY : null;
+    };
+    const move = (e: TouchEvent) => {
+      if (y0 == null) return;
+      const dy = e.touches[0].clientY - y0;
+      if (dy > 50 || dy < -30) {
+        setBigMap(dy > 0);
+        y0 = null;
+      }
+    };
+    window.addEventListener('touchstart', start, { passive: true });
+    window.addEventListener('touchmove', move, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', start);
+      window.removeEventListener('touchmove', move);
+    };
+  }, []);
+  // Refit the route once the map has finished growing or shrinking.
+  useEffect(() => {
+    const t = window.setTimeout(() => route && mapRef.current?.fitBounds(route.bbox, { padding: 40, duration: 300 }), 380);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bigMap]);
 
   useEffect(() => {
     let alive = true;
@@ -122,9 +160,16 @@ export default function RouteDetail() {
   return (
     <main className="screen with-cta">
       <section className="route-hero">
-        <RouteMap route={bigRoute(route)} height={270} />
+        <RouteMap route={bigRoute(route)} height={bigMap ? '70dvh' : 270} extra={keepMap} />
         <div className="route-hero-top">
-          <ScreenHead back />
+          <ScreenHead
+            back
+            right={
+              <button className="icon-btn route-hero-btn" aria-label={bigMap ? 'Shrink the map' : 'Expand the map'} aria-pressed={bigMap} onClick={() => setBigMap((b) => !b)}>
+                {bigMap ? <Minimize2 size={20} aria-hidden="true" /> : <Maximize2 size={20} aria-hidden="true" />}
+              </button>
+            }
+          />
         </div>
         <div className="route-hero-over">
           <h1>{route.name}</h1>

@@ -105,6 +105,27 @@ function useScrub(xs: number[], axis: Axis, onScrub?: (d: number) => void, at?: 
     if (at != null) setI(nearest(xs, at));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [at]);
+  // With touch-action: none the browser never steals the drag; a mostly-vertical
+  // touch drag is turned back into a page scroll here.
+  const drag = useRef<{ x: number; y: number; scroll: boolean | null } | null>(null);
+  const onDown = (e: PointerEvent<SVGSVGElement>) => {
+    svg.current?.setPointerCapture(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, scroll: e.pointerType === 'touch' ? null : false };
+    if (!drag.current.scroll) onMove(e);
+  };
+  const onDrag = (e: PointerEvent<SVGSVGElement>) => {
+    const g = drag.current;
+    if (g && g.scroll == null && Math.hypot(e.clientX - g.x, e.clientY - g.y) > 6) g.scroll = Math.abs(e.clientY - g.y) > Math.abs(e.clientX - g.x);
+    if (g?.scroll) {
+      window.scrollBy(0, g.y - e.clientY);
+      g.y = e.clientY;
+      return;
+    }
+    if (g || e.pointerType === 'mouse') onMove(e);
+  };
+  const onUp = () => {
+    drag.current = null;
+  };
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
     const rect = svg.current!.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * W;
@@ -113,7 +134,7 @@ function useScrub(xs: number[], axis: Axis, onScrub?: (d: number) => void, at?: 
     onScrub?.(xs[best]);
   };
   // No clear on leave: the last spot stays highlighted after a finger lifts, so its readout can be read.
-  return { svg, i, onMove };
+  return { svg, i, onDown, onDrag, onUp };
 }
 
 /** Shared chrome: gradients, the reveal clip, the crosshair with its dots, and the value pill. */
@@ -141,7 +162,7 @@ function Plot({
   return (
     <>
       <div className="chart-plot">
-        <svg ref={scrub.svg} viewBox={`0 0 ${W} ${H}`} className="chart-svg" role="img" aria-label={label} onPointerMove={scrub.onMove} onPointerDown={scrub.onMove}>
+        <svg ref={scrub.svg} viewBox={`0 0 ${W} ${H}`} className="chart-svg" role="img" aria-label={label} onPointerDown={scrub.onDown} onPointerMove={scrub.onDrag} onPointerUp={scrub.onUp} onPointerCancel={scrub.onUp}>
           <defs>
             <clipPath id={`${id}-reveal`}>
               <rect className="chart-reveal" x={0} y={0} width={W} height={H} />
@@ -159,7 +180,7 @@ function Plot({
             <g className="chart-cross" pointerEvents="none" style={{ transform: `translateX(${hoverX}px)` }}>
               <line x1={0} x2={0} y1={PAD.t} y2={H - PAD.b} stroke={`url(#${id}-cross)`} strokeWidth={1.5} />
               {dots.map((d, k) => (
-                <circle key={k} cx={0} cy={d.y} r={5} fill={d.fill} stroke="var(--raised)" strokeWidth={2.5} style={{ transition: 'cy 140ms ease-out' }} />
+                <circle key={k} cx={0} cy={d.y} r={5} fill={d.fill} stroke="var(--raised)" strokeWidth={2.5} />
               ))}
             </g>
           )}

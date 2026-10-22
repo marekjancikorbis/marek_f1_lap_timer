@@ -336,6 +336,19 @@ service cloud.firestore {
       allow delete: if signedIn() && (resource.data.userId == uid() || isAdmin());
     }
 
+    // ------------------------------------------------------------ activity
+
+    // Laps driven per day, for the profile heatmap. Owner-written counts, like
+    // everything else here without a server; the shape is all that's checked.
+    match /activity/{userId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && userId == uid()
+        && request.resource.data.keys().hasOnly(['days', 'backfilled'])
+        && request.resource.data.days is map
+        && request.resource.data.days.size() <= 5000
+        && request.resource.data.get('backfilled', false) is bool;
+    }
+
     // ------------------------------------------------------------ follows
 
     match /follows/{id} {
