@@ -1,26 +1,32 @@
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
+import { ChevronDown, ChevronUp, Search as SearchIcon, X } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FollowButton } from '../components/FollowButton';
 import { MapView } from '../components/MapView';
-import { errorMessage, useToast } from '../components/ui';
-import { myRoutes, publicRoutes } from '../lib/data';
+import { RouteShape } from '../components/RouteShape';
+import { Avatar, errorMessage, Spinner, useToast } from '../components/ui';
+import { myRoutes, publicRoutes, searchUsers } from '../lib/data';
 import { db } from '../lib/firebase';
+import { formatDistance } from '../lib/format';
 import { lngLatPairs } from '../lib/geo';
 import { useMe } from '../lib/session';
-import type { Route } from '../lib/types';
+import type { Profile, Route } from '../lib/types';
 
 /** What a route on the map is, which sets its colour. */
 type Kind = 'official' | 'creator' | 'private';
 
 const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#2f86ff', private: '#1fa64f' };
-const KIND_LABEL: Record<Kind, string> = { official: 'Official', creator: 'By creators', private: 'Your private routes' };
+type Filter = 'all' | Kind | 'drivers';
+const FILTER_LABEL: Record<Filter, string> = { all: 'All routes', official: 'Official', creator: 'Creators', private: 'Mine', drivers: 'Drivers' };
 
 const kindOf = (r: Route): Kind => (!r.isPublic ? 'private' : r.official ? 'official' : 'creator');
 
 /** Mapbox expression: the colour for a feature's `kind`. */
 const KIND_PAINT = ['match', ['get', 'kind'], 'official', KIND_COLOUR.official, 'creator', KIND_COLOUR.creator, KIND_COLOUR.private] as unknown as string;
 
+/** Explore: the map of routes with one search for routes and drivers. */
 export default function MapScreen() {
   const nav = useNavigate();
   const toast = useToast();
@@ -28,6 +34,36 @@ export default function MapScreen() {
   const [routes, setRoutes] = useState<Route[] | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [q, setQ] = useState(() => sessionStorage.getItem('explore-q') ?? '');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [open, setOpen] = useState(false);
+  const [drivers, setDrivers] = useState<Profile[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const term = q.trim().toLowerCase();
+
+  // Drivers by username prefix, debounced.
+  useEffect(() => {
+    sessionStorage.setItem('explore-q', q);
+    if (!term) {
+      setDrivers(null);
+      return;
+    }
+    setSearching(true);
+    const t = window.setTimeout(() => {
+      searchUsers(term)
+        .then(setDrivers)
+        .catch((e) => toast(errorMessage(e), 'error'))
+        .finally(() => setSearching(false));
+    }, 220);
+    return () => window.clearTimeout(t);
+  }, [term, q, toast]);
+
+  // What the map and list show: the chip, then the search text.
+  const shown = useMemo(() => {
+    if (!routes) return null;
+    const byKind = filter === 'all' || filter === 'drivers' ? routes : routes.filter((r) => kindOf(r) === filter);
+    return term ? byKind.filter((r) => r.name.toLowerCase().includes(term)) : byKind;
+  }, [routes, filter, term]);
 
   useEffect(() => {
     // Public routes for everyone, plus your own private ones (only you can read those).
@@ -51,6 +87,7 @@ export default function MapScreen() {
 
   const draw = useCallback(() => {
     const map = mapRef.current;
+    const routes = shown;
     if (!map || !routes) return;
     const starts: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
@@ -72,6 +109,7 @@ export default function MapScreen() {
     if (s) {
       s.setData(starts);
       (map.getSource('lines') as mapboxgl.GeoJSONSource).setData(lines);
+      fit(map, routes);
       return;
     }
     map.addSource('lines', { type: 'geojson', data: lines });
@@ -100,7 +138,7 @@ export default function MapScreen() {
       paint: {
         // Clusters mix kinds, so they stay neutral; zoom in to see colours.
         'circle-color': '#161a20',
-        'circle-stroke-color': '#c9ccc8',
+        'circle-stroke-color': '#c3c9d2',
         'circle-stroke-width': 3,
         'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
       },
@@ -159,17 +197,8 @@ export default function MapScreen() {
       map.on('mouseenter', layer, () => (map.getCanvas().style.cursor = 'pointer'));
       map.on('mouseleave', layer, () => (map.getCanvas().style.cursor = ''));
     }
-    if (routes.length) {
-      let w = 180, s2 = 90, e2 = -180, n = -90;
-      routes.forEach((r) => {
-        w = Math.min(w, r.bbox[0]);
-        s2 = Math.min(s2, r.bbox[1]);
-        e2 = Math.max(e2, r.bbox[2]);
-        n = Math.max(n, r.bbox[3]);
-      });
-      map.fitBounds([w, s2, e2, n], { padding: 60, maxZoom: 13, duration: 0 });
-    }
-  }, [routes, counts, nav]);
+    fit(map, routes);
+  }, [shown, counts, nav]);
 
   useEffect(draw, [draw]);
 
@@ -184,35 +213,141 @@ export default function MapScreen() {
     [draw],
   );
 
-  const kinds = (['official', 'creator', 'private'] as const).filter((k) => k !== 'private' || isCreator);
-  const publicCount = routes?.filter((r) => r.isPublic).length ?? 0;
+  const listed = (shown ?? [])
+    .filter((r) => r.isPublic || filter === 'private')
+    .sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name));
+  const filters: Filter[] = ['all', 'official', 'creator', ...(isCreator ? (['private'] as const) : []), 'drivers'];
+  const showDrivers = filter === 'drivers' || (!!term && filter === 'all');
+  const showRoutes = filter !== 'drivers';
+  // Collapsed, the sheet shows a couple of rows; searching opens it.
+  const expanded = open || !!term || filter === 'drivers';
+  const title =
+    filter === 'drivers'
+      ? 'Drivers'
+      : routes === null
+        ? 'Loading routes…'
+        : `${filter === 'private' ? 'Your routes' : term ? 'Matching routes' : 'Public routes'} · ${listed.length}`;
 
   return (
     <main className="map-screen">
-      <MapView onReady={onReady} center={[15.5, 49.8]} zoom={6} height="100%" label="Public routes" />
-      <div className="map-screen-head">
-        <h1>Map</h1>
-        <span className="mute">
-          {routes === null ? 'Loading routes…' : `${publicCount} public ${publicCount === 1 ? 'route' : 'routes'}`}
-        </span>
-      </div>
-      <div className="map-bottom">
-        {routes && routes.length === 0 && (
-          <div className="panel">
-            <strong>No public routes yet</strong>
-            <p className="mute">When a creator publishes a route, it appears here with its leaderboard.</p>
-          </div>
-        )}
-        <ul className="map-legend" aria-label="Route colours">
-          {kinds.map((k) => (
-            <li key={k}>
-              <span className="map-legend-swatch" style={{ background: KIND_COLOUR[k] }} aria-hidden="true" />
-              {KIND_LABEL[k]}
-            </li>
+      <MapView onReady={onReady} center={[15.5, 49.8]} zoom={6} height="100%" label="Routes" />
+      <div className="explore-top">
+        <label className="search-box explore-search">
+          <SearchIcon size={18} aria-hidden="true" />
+          <span className="visually-hidden">Search routes and drivers</span>
+          <input
+            className="input"
+            type="search"
+            placeholder="Search routes and drivers"
+            value={q}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {searching ? (
+            <Spinner label="Searching" />
+          ) : (
+            q && (
+              <button className="icon-btn explore-clear" aria-label="Clear search" onClick={() => setQ('')}>
+                <X size={18} />
+              </button>
+            )
+          )}
+        </label>
+        <div className="chips" role="group" aria-label="Show">
+          {filters.map((f) => (
+            <button key={f} className="chip" aria-pressed={filter === f} onClick={() => setFilter(f)}>
+              {FILTER_LABEL[f]}
+            </button>
           ))}
-          <li className="mute">Tap a route for details</li>
-        </ul>
+        </div>
       </div>
+
+      <section className={`explore-sheet ${expanded ? 'open' : ''}`} aria-label="Results">
+        <button className="explore-sheet-head" onClick={() => setOpen((o) => !o)} aria-expanded={expanded}>
+          <span className="grabber" aria-hidden="true" />
+          <span className="row between" style={{ width: '100%' }}>
+            <strong className="explore-sheet-title">{title}</strong>
+            {showRoutes && !term && (
+              <span className="mute small-text row">
+                Most driven {expanded ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronUp size={16} aria-hidden="true" />}
+              </span>
+            )}
+          </span>
+        </button>
+        <div className="explore-sheet-body">
+          {showRoutes &&
+            (routes && listed.length === 0 ? (
+              <p className="mute explore-empty">
+                {term
+                  ? `No route name contains “${q.trim()}”.`
+                  : filter === 'private'
+                    ? 'You have no private routes.'
+                    : 'No public routes yet. When a creator publishes one, it shows up here with its leaderboard.'}
+              </p>
+            ) : (
+              <ul className="explore-list">
+                {(expanded ? listed : listed.slice(0, 2)).map((r) => (
+                  <li key={r.id}>
+                    <Link to={`/r/${r.id}`} className="explore-row">
+                      <span className="explore-shape" aria-hidden="true">
+                        <RouteShape route={r} height={40} ticks={false} />
+                      </span>
+                      <span className="grow">
+                        <strong className="ellipsis">{r.name}</strong>
+                        <span className="mute ellipsis small-text">
+                          {r.official ? 'Official' : r.isPublic ? `by ${r.ownerName}` : 'Private'} · {formatDistance(r.lengthM)}
+                        </span>
+                      </span>
+                      {r.isPublic && (
+                        <span className="explore-laps">
+                          <strong className="num">{counts[r.id] ?? '–'}</strong>
+                          <span className="mute small-text">{counts[r.id] === 1 ? 'lap' : 'laps'}</span>
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ))}
+          {showDrivers && (
+            <>
+              {filter === 'all' && <h2 className="section-title">Drivers</h2>}
+              {!term ? (
+                <p className="mute explore-empty">Type the start of a username to find a driver.</p>
+              ) : drivers && drivers.length === 0 && !searching ? (
+                <p className="mute explore-empty">Nobody's username starts with “{q.trim()}”.</p>
+              ) : (
+                <ul className="explore-list">
+                  {(drivers ?? []).map((p) => (
+                    <li key={p.id} className="explore-row">
+                      <Link to={`/u/${p.username}`} className="row grow" style={{ gap: 12, textDecoration: 'none' }}>
+                        <Avatar name={p.username} hue={p.avatarHue} size={36} />
+                        <strong className="grow ellipsis">{p.username}</strong>
+                      </Link>
+                      <FollowButton userId={p.id} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+      </section>
     </main>
   );
+}
+
+function fit(map: mapboxgl.Map, routes: Route[]) {
+  if (!routes.length) return;
+  let w = 180, s = 90, e = -180, n = -90;
+  routes.forEach((r) => {
+    w = Math.min(w, r.bbox[0]);
+    s = Math.min(s, r.bbox[1]);
+    e = Math.max(e, r.bbox[2]);
+    n = Math.max(n, r.bbox[3]);
+  });
+  // Leave room for the search on top and the results sheet below.
+  map.fitBounds([w, s, e, n], { padding: { top: 140, bottom: 200, left: 40, right: 40 }, maxZoom: 13, duration: 0 });
 }

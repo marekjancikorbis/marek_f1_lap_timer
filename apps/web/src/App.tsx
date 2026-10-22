@@ -10,7 +10,7 @@ import { Feed } from './screens/Feed';
 
 // Heavier screens load on demand; the drive screen is preloaded on pre-drive.
 const MapScreen = lazy(() => import('./screens/MapScreen'));
-const Search = lazy(() => import('./screens/Search'));
+const DriveLauncher = lazy(() => import('./screens/DriveLauncher'));
 const MyRoutes = lazy(() => import('./screens/MyRoutes'));
 const RouteBuilder = lazy(() => import('./screens/RouteBuilder'));
 const RouteDetail = lazy(() => import('./screens/RouteDetail'));
@@ -87,9 +87,13 @@ function Gate() {
         <Route path="/drive/:routeId/go" element={<Drive />} />
         <Route element={<Shell />}>
           <Route index element={<Feed />} />
-          <Route path="map" element={<MapScreen />} />
-          <Route path="search" element={<Search />} />
-          <Route path="routes" element={<MyRoutes />} />
+          <Route path="explore" element={<MapScreen />} />
+          <Route path="drive" element={<DriveLauncher />} />
+          <Route path="times" element={<MyRoutes />} />
+          {/* Old addresses from before Explore and My times. */}
+          <Route path="map" element={<Navigate to="/explore" replace />} />
+          <Route path="search" element={<Navigate to="/explore" replace />} />
+          <Route path="routes" element={<Navigate to="/times" replace />} />
           <Route path="routes/new" element={<RouteBuilder />} />
           <Route path="r/:routeId" element={<RouteDetail />} />
           <Route path="r/:routeId/edit" element={<RouteBuilder />} />

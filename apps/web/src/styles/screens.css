@@ -385,68 +385,6 @@
   inset: 0;
 }
 
-.map-screen-head {
-  position: absolute;
-  top: calc(var(--safe-t) + 12px);
-  left: 12px;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
-  background: rgba(22, 24, 26, 0.82);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.map-screen-head h1 {
-  font-size: 1.375rem;
-}
-
-/* Above the Mapbox logo and attribution, which must stay visible. */
-.map-bottom {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.map-bottom > * {
-  pointer-events: auto;
-}
-
-.map-legend {
-  list-style: none;
-  margin: 0;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
-  background: rgba(22, 24, 26, 0.82);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 16px;
-  font-size: 14px;
-}
-
-.map-legend li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.map-legend-swatch {
-  width: 18px;
-  height: 5px;
-  border-radius: 3px;
-  box-shadow: 0 0 0 1.5px #0c0d0e;
-}
-
 /* ================================================================ builder */
 
 .builder-map {
@@ -1575,4 +1513,247 @@
   font-family: var(--font-ui);
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+/* ================================================================ shared bits of the redesign */
+
+.small-text {
+  display: block;
+  font-size: 0.8125rem;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.chip {
+  flex: none;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink-2);
+  font: 600 0.8125rem/1 var(--font-ui);
+  box-shadow: inset 0 0 0 1px var(--hairline-2), 0 6px 16px -10px rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+  transition: background-color 150ms, color 150ms;
+}
+
+.chip[aria-pressed='true'] {
+  /* Solid: chips sit over the map. */
+  background: #14233b;
+  color: var(--blue-ink);
+  box-shadow: inset 0 0 0 1px rgba(47, 134, 255, 0.55);
+}
+
+.section-link {
+  font: 600 0.8125rem/1 var(--font-ui);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--blue-ink);
+  text-decoration: none;
+}
+
+.statline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 16px 0 12px;
+  font-size: 0.875rem;
+  color: var(--mute);
+}
+
+.statline strong {
+  font-size: 1.25rem;
+  color: var(--ink);
+  margin-right: 2px;
+}
+
+/* ---------------------------------------------------------------- explore */
+
+.explore-top {
+  position: absolute;
+  top: calc(var(--safe-t) + 12px);
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.explore-search .input {
+  background: rgba(22, 26, 32, 0.96);
+  border-color: var(--hairline-2);
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.8);
+  padding-right: 44px;
+}
+
+.explore-search .explore-clear {
+  position: absolute;
+  right: 2px;
+  width: 40px;
+  height: 40px;
+  color: var(--mute);
+}
+
+/* Bottom sheet above the Mapbox logo and attribution, which must stay visible. */
+.explore-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 34%;
+  display: flex;
+  flex-direction: column;
+  background: var(--raised);
+  border-top: 1px solid var(--hairline-2);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -16px 30px -18px rgba(0, 0, 0, 0.8);
+  transition: max-height 320ms var(--ease-out);
+}
+
+.explore-sheet.open {
+  max-height: 62%;
+}
+
+.explore-sheet-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 6px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.explore-sheet-head .grabber {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--hairline-2);
+}
+
+.explore-sheet-title {
+  font: 700 1.0625rem/1 var(--font-num);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.explore-sheet-body {
+  overflow-y: auto;
+  padding: 0 16px 16px;
+}
+
+.explore-sheet-body .section-title {
+  margin: 14px 0 6px;
+}
+
+.explore-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.explore-list > li + li {
+  border-top: 1px solid var(--hairline);
+}
+
+.explore-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.explore-row .grow strong {
+  display: block;
+}
+
+.explore-shape,
+.logbook-shape {
+  width: 52px;
+  flex: none;
+}
+
+.explore-laps,
+.logbook-pb {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+}
+
+.explore-laps strong,
+.logbook-pb strong,
+.logbook-time {
+  font-size: 1.1875rem;
+}
+
+.explore-empty {
+  padding: 8px 0 4px;
+  font-size: 0.9375rem;
+}
+
+/* ---------------------------------------------------------------- drive tab / my times */
+
+.list-item .grow strong {
+  display: block;
+}
+
+.home-course {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-xl);
+  background: linear-gradient(135deg, #12305e 0%, #0f1d38 60%, var(--raised) 100%);
+  border: 1px solid rgba(47, 134, 255, 0.35);
+  text-decoration: none;
+}
+
+.home-course .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-course-k {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--blue-ink);
+}
+
+.home-course-name {
+  font: 700 1.5rem/1.05 var(--font-num);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.home-course-pb {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+
+.home-course-pb .num {
+  font-size: 1.0625rem;
+  color: var(--ink);
+}
+
+.home-course-go {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.home-course-shape {
+  width: 112px;
+  flex: none;
 }

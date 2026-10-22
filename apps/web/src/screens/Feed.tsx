@@ -128,7 +128,7 @@ export function Feed() {
       ) : follows && follows.length === 0 ? (
         <FeedEmpty onFollowed={loadFirst} />
       ) : posts.length === 0 ? (
-        <Empty title="No laps yet" action={<Link className="btn" to="/search">Find more drivers</Link>}>
+        <Empty title="No laps yet" action={<Link className="btn" to="/explore">Find more drivers</Link>}>
           The drivers you follow haven't posted a lap yet. New posts show up here, newest first.
         </Empty>
       ) : (
@@ -185,7 +185,7 @@ function FeedEmpty({ onFollowed }: { onFollowed: () => void }) {
 
   return (
     <div>
-      <Empty title="Follow some drivers" action={<Link className="btn primary lg" to="/search">Find drivers</Link>}>
+      <Empty title="Follow some drivers" action={<Link className="btn primary lg" to="/explore">Find drivers</Link>}>
         Your feed shows laps posted by people you follow, newest at the top.
       </Empty>
       {suggested && suggested.length > 0 && (

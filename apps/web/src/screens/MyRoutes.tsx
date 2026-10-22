@@ -2,12 +2,13 @@ import { Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RouteShape } from '../components/RouteShape';
-import { Empty, errorMessage, Loading, ScreenHead, Sheet, Switch, useToast } from '../components/ui';
+import { Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Switch, useToast } from '../components/ui';
 import { allMyRuns, getMyRequest, getRoutes, myRoutes, publicLimit, requestCreatorAccess, setRoutePublic } from '../lib/data';
-import { formatDistance, formatLap, routeAuthor } from '../lib/format';
+import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { CreatorRequest, Route, Run } from '../lib/types';
 
+/** My times: every lap you've driven, by route, and the routes you've built. */
 export default function MyRoutes() {
   const { profile, role, isCreator } = useMe();
   const toast = useToast();
@@ -17,6 +18,7 @@ export default function MyRoutes() {
   const [request, setRequest] = useState<CreatorRequest | null | undefined>(undefined);
   const [confirm, setConfirm] = useState<Route | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'laps' | 'built'>('laps');
 
   const load = useCallback(async () => {
     try {
@@ -42,6 +44,22 @@ export default function MyRoutes() {
     runs.filter((r) => r.valid).forEach((r) => m.set(r.routeId, Math.min(m.get(r.routeId) ?? Infinity, r.totalMs)));
     return m;
   }, [runs]);
+
+  // One row per route you've driven, most recent first.
+  const logbook = useMemo(() => {
+    const routes = new Map([...(own ?? []), ...driven].map((r) => [r.id, r]));
+    const by = new Map<string, { route: Route; laps: number; last: number; posted: number }>();
+    for (const run of runs) {
+      const route = routes.get(run.routeId);
+      if (!route) continue;
+      const row = by.get(route.id) ?? { route, laps: 0, last: 0, posted: 0 };
+      row.laps += 1;
+      row.last = Math.max(row.last, run.startedAt);
+      if (run.posted) row.posted += 1;
+      by.set(route.id, row);
+    }
+    return [...by.values()].sort((a, b) => b.last - a.last);
+  }, [own, driven, runs]);
 
   async function setPublic(route: Route, makePublic: boolean) {
     setBusy(true);
@@ -72,18 +90,68 @@ export default function MyRoutes() {
   return (
     <main className="screen">
       <ScreenHead
-        title="Routes"
+        title="My times"
         right={
-          isCreator && (
+          isCreator &&
+          tab === 'built' && (
             <Link to="/routes/new" className="btn primary sm">
               <Plus size={18} aria-hidden="true" /> New route
             </Link>
           )
         }
       />
+      <Segmented
+        label="Show"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'laps', label: 'My laps' },
+          { value: 'built', label: isCreator ? 'Routes I built' : 'Build routes' },
+        ]}
+      />
 
-      {isCreator ? (
-        <>
+      {tab === 'laps' ? (
+        logbook.length === 0 ? (
+          <Empty title="No laps yet" action={<Link to="/drive" className="btn primary lg">Start a drive</Link>}>
+            Every lap you drive is saved here, grouped by route, with your best time.
+          </Empty>
+        ) : (
+          <>
+            <p className="statline">
+              <span>
+                <strong className="num">{runs.length}</strong> {runs.length === 1 ? 'lap' : 'laps'}
+              </span>
+              <span>
+                <strong className="num">{logbook.length}</strong> {logbook.length === 1 ? 'route' : 'routes'}
+              </span>
+              <span>
+                <strong className="num">{runs.filter((r) => r.posted).length}</strong> posted
+              </span>
+            </p>
+            <div className="list">
+              {logbook.map(({ route: r, laps, last, posted }) => (
+                <Link key={r.id} to={`/r/${r.id}/history`} className="list-item logbook-row">
+                  <span className="logbook-shape" aria-hidden="true">
+                    <RouteShape route={r} height={48} ticks={false} />
+                  </span>
+                  <span className="grow">
+                    <strong className="ellipsis">{r.name}</strong>
+                    <span className="mute ellipsis small-text">
+                      {laps} {laps === 1 ? 'lap' : 'laps'} · last {formatDate(last)}
+                      {posted > 0 && ` · ${posted} posted`}
+                    </span>
+                  </span>
+                  <span className="logbook-pb">
+                    <strong className="num">{pbs.has(r.id) ? formatLap(pbs.get(r.id)) : '—'}</strong>
+                    <span className="mute small-text">{pbs.has(r.id) ? 'PB' : 'no valid lap'}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </>
+        )
+      ) : isCreator ? (
+        <div style={{ marginTop: 16 }}>
           {own.length === 0 ? (
             <Empty title="No routes yet" action={<Link to="/routes/new" className="btn primary lg">Build a route</Link>}>
               Draw a route on the map, split it into sectors, then drive it.
@@ -106,7 +174,7 @@ export default function MyRoutes() {
                       </span>
                     </div>
                     <p className="mute" style={{ fontSize: 14 }}>
-                      {formatDistance(r.lengthM)} · {r.boundaries.length} sectors · {r.isLoop ? 'Lap' : 'Point to point'} ·{' '}
+                      {formatDistance(r.lengthM)} · {r.isLoop ? 'Lap' : 'Point to point'} ·{' '}
                       {r.startType === 'standing' ? 'Standing start' : 'Rolling start'}
                     </p>
                   </Link>
@@ -130,35 +198,10 @@ export default function MyRoutes() {
               ))}
             </div>
           )}
-        </>
+        </div>
       ) : (
-        <DriverPanel request={request} onRequested={setRequest} />
-      )}
-
-      <h2 className="section-title">{isCreator ? "Other people's routes you've driven" : "Public routes you've driven"}</h2>
-      {driven.length === 0 ? (
-        <p className="mute">
-          Pick a route on the <Link to="/map">map</Link> and drive it. It'll be listed here.
-        </p>
-      ) : (
-        <div className="list">
-          {driven.map((r) => (
-            <Link key={r.id} to={`/r/${r.id}`} className="list-item">
-              <div style={{ width: 64 }}>
-                <RouteShape route={r} height={44} ticks={false} />
-              </div>
-              <span className="grow">
-                <strong>{r.name}</strong>
-                <br />
-                <span className="mute" style={{ fontSize: 14 }}>
-                  by {routeAuthor(r)}
-                </span>
-              </span>
-              <span className="num" style={{ fontSize: 18 }}>
-                {pbs.has(r.id) ? formatLap(pbs.get(r.id)) : ''}
-              </span>
-            </Link>
-          ))}
+        <div style={{ marginTop: 16 }}>
+          <DriverPanel request={request} onRequested={setRequest} />
         </div>
       )}
 

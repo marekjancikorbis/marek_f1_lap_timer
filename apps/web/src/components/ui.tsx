@@ -1,4 +1,4 @@
-import { ChevronLeft, Map, Rss, Search, User, Waypoints } from 'lucide-react';
+import { ChevronLeft, Map, Play, Rss, Timer, User } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import type { SectorColourName } from '../lib/types';
@@ -73,20 +73,30 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
 export function TabBar() {
   const tabs = [
     { to: '/', label: 'Feed', icon: Rss, end: true },
-    { to: '/map', label: 'Map', icon: Map },
-    { to: '/search', label: 'Search', icon: Search },
-    { to: '/routes', label: 'Routes', icon: Waypoints },
+    { to: '/explore', label: 'Explore', icon: Map },
+    { to: '/drive', label: 'Drive', icon: Play, end: true },
+    { to: '/times', label: 'My times', icon: Timer },
     { to: '/me', label: 'Profile', icon: User },
   ];
   return (
     <div className="tabbar">
       <nav aria-label="Main">
-        {tabs.map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end}>
-            <Icon size={22} strokeWidth={2} aria-hidden="true" />
-            {label}
-          </NavLink>
-        ))}
+        {tabs.map(({ to, label, icon: Icon, end }) =>
+          to === '/drive' ? (
+            // Driving is the main job: a raised button in the middle.
+            <NavLink key={to} to={to} end={end} className="tab-go">
+              <span className="tab-go-btn">
+                <Icon size={26} fill="currentColor" aria-hidden="true" />
+              </span>
+              {label}
+            </NavLink>
+          ) : (
+            <NavLink key={to} to={to} end={end}>
+              <Icon size={22} strokeWidth={2} aria-hidden="true" />
+              {label}
+            </NavLink>
+          ),
+        )}
       </nav>
     </div>
   );

@@ -93,7 +93,7 @@ export default function RouteDetail() {
     try {
       await (canOwnChange ? deleteRoute(profile.id, route.id) : adminDeleteRoute(route.id));
       toast('Route deleted');
-      nav(isOwner ? '/routes' : '/', { replace: true });
+      nav(isOwner ? '/times' : '/', { replace: true });
     } catch (e) {
       toast(errorMessage(e), 'error');
     }

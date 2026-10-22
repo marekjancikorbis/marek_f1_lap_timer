@@ -145,7 +145,7 @@ export default function UserPage() {
         {home?.isPublic ? (
           <Link to={`/r/${home.id}`}>{home.name}</Link>
         ) : isMe ? (
-          <>none yet. Pick one on a route's page from the <Link to="/map">map</Link>.</>
+          <>none yet. Pick one on a route's page from the <Link to="/explore">map</Link>.</>
         ) : (
           'none'
         )}

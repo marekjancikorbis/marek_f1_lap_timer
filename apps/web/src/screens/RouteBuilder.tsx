@@ -210,7 +210,7 @@ export default function RouteBuilder() {
     }
   }
 
-  if (!isCreator) return <Navigate to="/routes" replace />;
+  if (!isCreator) return <Navigate to="/times" replace />;
   if (routeId && !orig) return <Loading />;
 
   return (
