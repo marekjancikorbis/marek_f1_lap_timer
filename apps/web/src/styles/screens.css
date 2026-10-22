@@ -1420,8 +1420,77 @@
 
 .chart-readout {
   min-height: 24px;
+  margin: 0;
   padding: 4px 8px 0;
+  font-size: 0.875rem;
+}
+
+.chart-plot {
+  position: relative;
+  /* A strip above the plot for the value pill, so it never covers the lines. */
+  padding-top: 34px;
+}
+
+/* Value pill riding along the top of the plot with the crosshair. */
+.chart-pill {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 10px;
+  border: 1px solid var(--hairline-2);
+  border-radius: 999px;
+  background: var(--raised-2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: left 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.chart-pill strong {
   font-size: 0.9375rem;
+}
+
+.chart-pill strong b {
+  font-weight: inherit;
+}
+
+.chart-pill span {
+  font-size: 0.75rem;
+  color: var(--mute);
+}
+
+.chart-cross {
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.chart-tick {
+  transition: opacity 160ms ease-out;
+}
+
+/* The lines draw in from the left on first show. */
+.chart-reveal {
+  transform-origin: 0 0;
+  animation: chart-reveal 1100ms cubic-bezier(0.85, 0, 0.15, 1);
+}
+
+@keyframes chart-reveal {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-reveal {
+    animation: none;
+  }
+
+  .chart-pill,
+  .chart-cross {
+    transition: none;
+  }
 }
 
 @media (min-width: 720px) {
