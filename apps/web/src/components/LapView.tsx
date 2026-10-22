@@ -7,7 +7,7 @@ import { leaderboardFrom } from '../lib/data';
 import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 import { bigEnds, bigRecords, bigRoute, distanceAt, recordsExcluding, timeAt } from '../lib/laps';
 import type { Post, Route, SectorColourName } from '../lib/types';
-import { DeltaGraph, SpeedGraph } from './Charts';
+import { DeltaGraph, SERIES, SpeedGraph } from './Charts';
 import { RouteMap } from './RouteMap';
 import { RouteShape } from './RouteShape';
 import { Avatar, Segmented, STRIP_LABEL } from './ui';
@@ -76,89 +76,15 @@ export function LapView({
   /** Rendered at the end. */
   children?: ReactNode;
 }) {
-  const [open, setOpen] = useState<Set<number>>(new Set());
-
   const board = useMemo(() => leaderboardFrom(posts), [posts]);
   const rank = board.find((r) => r.post.id === lap.id)?.rank;
   const n = lap.splitTimesMs.length;
-  const fits = !!route && route.boundaries.length === n;
   const ref = reference && reference.splitTimesMs.length === n ? reference : null;
-  const isPublic = !!route?.isPublic;
 
-  const table = useMemo(() => {
-    if (!route || !fits) return null;
-    const ends = bigEnds(route);
-    // Purple = faster than everyone else's posted time for that (mini)sector.
-    const miniRec = isPublic ? recordsExcluding(posts, n, lap.id) : null;
-    const bigRec = isPublic ? bigRecords(posts, route, lap.id) : null;
-    const colourOf = (ms: number, refMs: number | null, rec: number | null | undefined, fallback: SectorColourName | null) =>
-      refMs == null ? fallback : isPublic ? sectorColour(ms, refMs, rec, true) : ms < refMs ? 'green' : 'yellow';
-    const minis = sectorTimes(lap.splitTimesMs);
-    const refMinis = ref ? sectorTimes(ref.splitTimesMs) : null;
-    const big = sectorTimes(bigSplits(lap.splitTimesMs, ends));
-    const refBig = ref ? sectorTimes(bigSplits(ref.splitTimesMs, ends)) : null;
-    let from = 0;
-    return ends.map((end, b) => {
-      const kids: Row[] = [];
-      for (let i = from; i <= end; i++) {
-        const refMs = refMinis?.[i] ?? null;
-        kids.push({ name: `${b + 1}.${i - from + 1}`, ms: minis[i], deltaMs: refMs == null ? null : minis[i] - refMs, colour: colourOf(minis[i], refMs, miniRec?.[i], colours[i] ?? null) });
-      }
-      from = end + 1;
-      const refMs = refBig?.[b] ?? null;
-      const bigColour = colourOf(big[b], refMs, bigRec?.[b], null);
-      return { row: { name: `S${b + 1}`, ms: big[b], deltaMs: refMs == null ? null : big[b] - refMs, colour: bigColour } as Row, kids };
-    });
-  }, [route, fits, isPublic, posts, n, lap, ref, colours]);
+  const table = useSectorTable(lap, route, posts, ref, colours);
 
   const miniColours = useMemo(() => table?.flatMap((t) => t.kids.map((k) => k.colour)) ?? colours, [table, colours]);
-  const bigScale = Math.max(1, ...(table ?? []).map((t) => Math.abs(t.row.deltaMs ?? 0)));
-  const miniScale = Math.max(1, ...(table ?? []).flatMap((t) => t.kids.map((k) => Math.abs(k.deltaMs ?? 0))));
-
-  const sectors = !table ? (
-    <p className="mute">This lap was timed on an older version of the route, so its sectors can't be shown.</p>
-  ) : (
-    <>
-      {ref ? (
-        <div className="dscale" aria-hidden="true">
-          <span>← Faster</span>
-          <span>vs {ref.label}</span>
-          <span>Slower →</span>
-        </div>
-      ) : (
-        <p className="mute small-text" style={{ marginBottom: 8 }}>
-          Your first lap here: nothing to compare with yet.
-        </p>
-      )}
-      <ol className="list sec-list">
-        {table.map(({ row, kids }, b) => (
-          <li key={row.name}>
-            <button
-              className="sec-row"
-              aria-expanded={open.has(b)}
-              onClick={() => setOpen((o) => (o.has(b) ? new Set([...o].filter((x) => x !== b)) : new Set(o).add(b)))}
-            >
-              <SecCells row={row} scale={bigScale} />
-              <span className="sec-sub">
-                {formatLap(row.ms)}
-                {row.colour === 'purple' && ref ? ' · fastest ever' : ''} · {kids.length} minisectors
-                <ChevronDown size={14} aria-hidden="true" className="sec-chev" />
-              </span>
-            </button>
-            {open.has(b) && (
-              <ol className="sec-minis">
-                {kids.map((k) => (
-                  <li key={k.name} className="sec-row mini">
-                    <SecCells row={k} scale={miniScale} />
-                  </li>
-                ))}
-              </ol>
-            )}
-          </li>
-        ))}
-      </ol>
-    </>
-  );
+  const sectors = <SectorList table={table} refLabel={ref?.label ?? null} />;
 
   return (
     <>
@@ -202,6 +128,99 @@ export function LapView({
       <LapTabs lap={lap} reference={ref} route={route} colours={miniColours} sectors={sectors} mapExtra={mapExtra} />
 
       {children}
+    </>
+  );
+}
+
+type SectorTableRows = { row: Row; kids: Row[] }[];
+
+/** The 3 big sectors with their minisectors, each measured against the reference; null when the lap doesn't fit the route. */
+export function useSectorTable(
+  lap: Pick<LapViewLap, 'id' | 'splitTimesMs'> | null,
+  route: Route | null,
+  posts: Post[],
+  reference: Pick<LapReference, 'splitTimesMs'> | null,
+  colours: (SectorColourName | null)[],
+): SectorTableRows | null {
+  return useMemo(() => {
+    if (!lap || !route || route.boundaries.length !== lap.splitTimesMs.length) return null;
+    const n = lap.splitTimesMs.length;
+    const isPublic = !!route.isPublic;
+    const ref = reference && reference.splitTimesMs.length === n ? reference : null;
+    const ends = bigEnds(route);
+    // Purple = faster than everyone else's posted time for that (mini)sector.
+    const miniRec = isPublic ? recordsExcluding(posts, n, lap.id) : null;
+    const bigRec = isPublic ? bigRecords(posts, route, lap.id) : null;
+    const colourOf = (ms: number, refMs: number | null, rec: number | null | undefined, fallback: SectorColourName | null) =>
+      refMs == null ? fallback : isPublic ? sectorColour(ms, refMs, rec, true) : ms < refMs ? 'green' : 'yellow';
+    const minis = sectorTimes(lap.splitTimesMs);
+    const refMinis = ref ? sectorTimes(ref.splitTimesMs) : null;
+    const big = sectorTimes(bigSplits(lap.splitTimesMs, ends));
+    const refBig = ref ? sectorTimes(bigSplits(ref.splitTimesMs, ends)) : null;
+    let from = 0;
+    return ends.map((end, b) => {
+      const kids: Row[] = [];
+      for (let i = from; i <= end; i++) {
+        const refMs = refMinis?.[i] ?? null;
+        kids.push({ name: `${b + 1}.${i - from + 1}`, ms: minis[i], deltaMs: refMs == null ? null : minis[i] - refMs, colour: colourOf(minis[i], refMs, miniRec?.[i], colours[i] ?? null) });
+      }
+      from = end + 1;
+      const refMs = refBig?.[b] ?? null;
+      const bigColour = colourOf(big[b], refMs, bigRec?.[b], null);
+      return { row: { name: `S${b + 1}`, ms: big[b], deltaMs: refMs == null ? null : big[b] - refMs, colour: bigColour } as Row, kids };
+    });
+  }, [route, posts, lap, reference, colours]);
+
+}
+
+/** Big sectors as rows of centre-out delta bars; tap one to open its minisectors. */
+export function SectorList({ table, refLabel }: { table: SectorTableRows | null; refLabel: string | null }) {
+  const [open, setOpen] = useState<Set<number>>(new Set());
+  const bigScale = Math.max(1, ...(table ?? []).map((t) => Math.abs(t.row.deltaMs ?? 0)));
+  const miniScale = Math.max(1, ...(table ?? []).flatMap((t) => t.kids.map((k) => Math.abs(k.deltaMs ?? 0))));
+
+  return !table ? (
+    <p className="mute">This lap was timed on an older version of the route, so its sectors can't be shown.</p>
+  ) : (
+    <>
+      {refLabel ? (
+        <div className="dscale" aria-hidden="true">
+          <span>← Faster</span>
+          <span>vs {refLabel}</span>
+          <span>Slower →</span>
+        </div>
+      ) : (
+        <p className="mute small-text" style={{ marginBottom: 8 }}>
+          Your first lap here: nothing to compare with yet.
+        </p>
+      )}
+      <ol className="list sec-list">
+        {table.map(({ row, kids }, b) => (
+          <li key={row.name}>
+            <button
+              className="sec-row"
+              aria-expanded={open.has(b)}
+              onClick={() => setOpen((o) => (o.has(b) ? new Set([...o].filter((x) => x !== b)) : new Set(o).add(b)))}
+            >
+              <SecCells row={row} scale={bigScale} />
+              <span className="sec-sub">
+                {formatLap(row.ms)}
+                {row.colour === 'purple' && refLabel ? ' · fastest ever' : ''} · {kids.length} minisectors
+                <ChevronDown size={14} aria-hidden="true" className="sec-chev" />
+              </span>
+            </button>
+            {open.has(b) && (
+              <ol className="sec-minis">
+                {kids.map((k) => (
+                  <li key={k.name} className="sec-row mini">
+                    <SecCells row={k} scale={miniScale} />
+                  </li>
+                ))}
+              </ol>
+            )}
+          </li>
+        ))}
+      </ol>
     </>
   );
 }
@@ -289,13 +308,20 @@ export function LapTabs({
   const gapAt = cmp && carAtM != null ? nearestBy(cmp.delta, carAtM)?.ms ?? null : null;
   const speedAt = cmp?.speed && carAtM != null ? nearestBy(cmp.speed, carAtM) : null;
   const ownSpeedAt = !cmp?.speed && hasSpeed && carAtM != null ? lap.profile!.speedDms[Math.min(lap.profile!.speedDms.length - 1, Math.round(carAtM / lap.profile!.stepM))] * 0.36 : null;
-  const sectorAt = carAtM != null ? bigBoundaries.findIndex((b) => b >= carAtM) + 1 : null;
+  // "S2.3": the minisector the car is in, numbered within its big sector.
+  const sectorAt = (() => {
+    if (!route || carAtM == null) return null;
+    const i = Math.max(0, route.boundaries.findIndex((b) => b >= carAtM));
+    const ends = bigEnds(route);
+    const big = Math.max(0, ends.findIndex((e) => e >= i));
+    return `S${big + 1}.${i - (big ? ends[big - 1] + 1 : 0) + 1}`;
+  })();
 
   const readout = carAtM != null && (
     <div className="lap-readout">
       <div>
         <span>At {formatDistance(carAtM)}</span>
-        <strong className="num">S{sectorAt || 1}</strong>
+        <strong className="num">{sectorAt}</strong>
       </div>
       {ref && (
         <div>
@@ -303,23 +329,19 @@ export function LapTabs({
           <strong className={`num ${gapAt == null ? '' : gapAt <= 0 ? 'faster' : 'slower'}`}>{gapAt == null ? '—' : formatDelta(gapAt)}</strong>
         </div>
       )}
-      {tab === 'map' && ref && ghostAtM != null ? (
+      {(speedAt || ownSpeedAt != null) && (
         <div>
-          <span>{ref.label} is</span>
+          <span>Speed km/h</span>
           <strong className="num">
-            {Math.abs(ghostAtM - carAtM) < 1 ? 'level' : `${Math.round(Math.abs(ghostAtM - carAtM))} m ${ghostAtM > carAtM ? 'ahead' : 'behind'}`}
+            <b style={{ color: SERIES.a }}>{Math.round(speedAt ? speedAt.a : ownSpeedAt!)}</b>
+            {speedAt && (
+              <>
+                <b className="mute"> | </b>
+                <b style={{ color: SERIES.b }}>{Math.round(speedAt.b)}</b>
+              </>
+            )}
           </strong>
         </div>
-      ) : (
-        (speedAt || ownSpeedAt != null) && (
-          <div>
-            <span>Speed{speedAt ? ` / ${ref?.label}` : ''}</span>
-            <strong className="num">
-              {Math.round(speedAt ? speedAt.a : ownSpeedAt!)}
-              {speedAt && <small className="mute"> / {Math.round(speedAt.b)}</small>}
-            </strong>
-          </div>
-        )
       )}
     </div>
   );

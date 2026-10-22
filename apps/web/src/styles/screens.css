@@ -1424,69 +1424,6 @@
   font-size: 0.9375rem;
 }
 
-.sector-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9375rem;
-}
-
-.sector-table th,
-.sector-table td {
-  padding: 10px 12px;
-  text-align: right;
-  border-bottom: 1px solid var(--hairline);
-}
-
-.sector-table tr:last-child th,
-.sector-table tr:last-child td {
-  border-bottom: 0;
-}
-
-.sector-table th:first-child {
-  text-align: left;
-}
-
-.sector-table thead th {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--mute);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.sector-table thead i {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  margin-right: 6px;
-}
-
-.sector-table td.num {
-  font-size: 1.0625rem;
-}
-
-.sector-table td.faster {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.sector-table td:not(.faster):not(.gap) {
-  color: var(--mute);
-}
-
-.sector-table td.record {
-  color: var(--purple-ink) !important;
-}
-
-.sector-table td.gap.a {
-  color: #c9a6f5;
-}
-
-.sector-table td.gap.b {
-  color: #7fd0db;
-}
-
 @media (min-width: 720px) {
   .screen {
     padding-left: 24px;

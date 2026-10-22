@@ -88,8 +88,8 @@ export interface DeltaPoint {
 }
 
 /**
- * Cumulative gap A − B against route distance. Below zero A is ahead; the
- * area takes the colour of whoever is ahead at that point.
+ * How far A is ahead of B against route distance: above zero A is ahead
+ * (green), below it A is behind (yellow).
  */
 export function DeltaGraph({
   data,
@@ -110,7 +110,7 @@ export function DeltaGraph({
 }) {
   const axis = { maxD: boundaries[boundaries.length - 1], boundaries };
   const { minV, maxV, yTicks } = useMemo(() => {
-    const vs = data.map((p) => p.ms / 1000);
+    const vs = data.map((p) => -p.ms / 1000);
     const lo = Math.min(0, ...vs);
     const hi = Math.max(0, ...vs);
     const pad = Math.max(0.1, (hi - lo) * 0.12);
@@ -124,7 +124,7 @@ export function DeltaGraph({
     onScrub,
     at,
   );
-  const line = data.map((p, k) => `${k ? 'L' : 'M'}${x(p.d).toFixed(1)} ${y(p.ms / 1000).toFixed(1)}`).join('');
+  const line = data.map((p, k) => `${k ? 'L' : 'M'}${x(p.d).toFixed(1)} ${y(-p.ms / 1000).toFixed(1)}`).join('');
   const area = `${line}L${x(data[data.length - 1].d)} ${y(0)}L${x(data[0].d)} ${y(0)}Z`;
   const hover = scrub.i != null ? data[scrub.i] : null;
   const zeroY = y(0);
@@ -133,10 +133,10 @@ export function DeltaGraph({
     <figure className="chart">
       <figcaption className="chart-legend">
         <span>
-          <i style={{ background: 'var(--green)' }} /> {aLabel} faster
+          <i style={{ background: 'var(--green)' }} /> {aLabel} ahead
         </span>
         <span>
-          <i style={{ background: 'var(--yellow)' }} /> {aLabel} slower
+          <i style={{ background: 'var(--yellow)' }} /> {aLabel} behind
         </span>
       </figcaption>
       <svg
@@ -157,14 +157,14 @@ export function DeltaGraph({
           </clipPath>
         </defs>
         <Frame axis={axis} yTicks={yTicks} y={y} yFmt={(v) => (v > 0 ? `+${v}` : String(v))} />
-        <path d={area} fill="var(--yellow)" opacity={0.42} clipPath="url(#above)" />
-        <path d={area} fill="var(--green)" opacity={0.35} clipPath="url(#below)" />
+        <path d={area} fill="var(--green)" opacity={0.35} clipPath="url(#above)" />
+        <path d={area} fill="var(--yellow)" opacity={0.42} clipPath="url(#below)" />
         <line x1={PAD.l} x2={W - PAD.r} y1={zeroY} y2={zeroY} stroke="var(--mute)" strokeWidth={1} />
         <path d={line} fill="none" stroke="var(--ink)" strokeWidth={2} strokeLinejoin="round" />
         {hover && (
           <g pointerEvents="none">
             <line x1={x(hover.d)} x2={x(hover.d)} y1={PAD.t} y2={H - PAD.b} stroke="var(--blue)" strokeWidth={2} />
-            <circle cx={x(hover.d)} cy={y(hover.ms / 1000)} r={5} fill="var(--blue)" stroke="#fff" strokeWidth={2} />
+            <circle cx={x(hover.d)} cy={y(-hover.ms / 1000)} r={5} fill="var(--blue)" stroke="#fff" strokeWidth={2} />
           </g>
         )}
       </svg>

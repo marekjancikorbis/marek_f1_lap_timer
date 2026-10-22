@@ -1,16 +1,17 @@
-import { bigSplits, compareLaps, type LapComparison } from '@laptimer/timing';
+import { compareLaps, type LapComparison } from '@laptimer/timing';
 import { ArrowLeftRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { SERIES } from '../components/Charts';
-import { LapTabs } from '../components/LapView';
-import { SectorTable } from '../components/SectorTable';
+import { LapTabs, SectorList, useSectorTable } from '../components/LapView';
 import { Empty, errorMessage, Loading, ScreenHead, Sheet } from '../components/ui';
 import { getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
 import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
-import { bigEnds, bigRecords, bigRoute, resolveLap, type ResolvedLap } from '../lib/laps';
+import { resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
+
+const NO_COLOURS: never[] = [];
 
 export default function Compare() {
   const { routeId = '' } = useParams();
@@ -57,19 +58,10 @@ export default function Compare() {
     }
   }, [route, a, b, records]);
 
-  // The sector table compares the 3 big sectors; the graphs keep every minisector.
-  const bigCmp: LapComparison | null = useMemo(() => {
-    if (!route || !a || !b || !cmp) return null;
-    const ends = bigEnds(route);
-    const cut = (l: ResolvedLap) => ({ ...l, splitTimesMs: bigSplits(l.splitTimesMs, ends), profile: null });
-    try {
-      return compareLaps(cut(a), cut(b), bigRoute(route).boundaries, bigRecords(posts, route));
-    } catch {
-      return null;
-    }
-  }, [route, a, b, cmp, posts]);
-
   const label = (l: ResolvedLap) => (l.username ? l.username : l.label === 'Your lap' ? `You ${l.sub}` : l.label);
+  // A's own post (if any) doesn't count as the record it is measured against.
+  const aLap = useMemo(() => (a ? { id: a.ref.slice(a.ref.indexOf(':') + 1), splitTimesMs: a.splitTimesMs } : null), [a]);
+  const sectorTable = useSectorTable(aLap, route ?? null, posts, b ?? null, NO_COLOURS);
 
   if (route === undefined || a === undefined || b === undefined) return <Loading />;
   if (!route)
@@ -123,12 +115,8 @@ export default function Compare() {
         lap={{ ...a, username: aLabel }}
         reference={{ label: bLabel, splitTimesMs: b.splitTimesMs, totalMs: b.totalMs, penaltyMs: b.penaltyMs, profile: b.profile }}
         route={route}
-        colours={cmp.sectors.map((x) => (x.faster === 'b' ? 'yellow' : 'green'))}
-        sectors={
-          <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-            <SectorTable rows={(bigCmp ?? cmp).sectors} aLabel={aLabel} bLabel={bLabel} />
-          </div>
-        }
+        colours={sectorTable?.flatMap((x) => x.kids.map((k) => k.colour)) ?? []}
+        sectors={<SectorList table={sectorTable} refLabel={bLabel} />}
       />
 
       <Sheet open={picker} onClose={() => setPicker(false)} label="Compare with">
