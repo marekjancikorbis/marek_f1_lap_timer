@@ -446,7 +446,7 @@ export async function postLap(
   profile: Profile,
   run: Run,
   route: Route,
-  extra: Pick<Post, 'caption' | 'car' | 'sectorColours' | 'positionAtPost' | 'isPB'>,
+  extra: Pick<Post, 'caption' | 'car' | 'sectorColours' | 'bigColours' | 'positionAtPost' | 'isPB'>,
 ): Promise<void> {
   const batch = writeBatch(db);
   batch.set(doc(db, 'posts', run.id), {
@@ -466,6 +466,7 @@ export async function postLap(
     hidden: false,
     profile: run.profile,
     sectorColours: extra.sectorColours,
+    bigColours: extra.bigColours,
     positionAtPost: extra.positionAtPost,
     isPB: extra.isPB,
   });

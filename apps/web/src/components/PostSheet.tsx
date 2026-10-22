@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { leaderboardFrom, postLap, routePosts } from '../lib/data';
 import { formatLap } from '../lib/format';
-import { coloursFor, pbsBefore, recordsExcluding } from '../lib/laps';
+import { bigColoursFor, bigRecords, coloursFor, pbsBefore, recordsExcluding } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Route, Run } from '../lib/types';
 import { errorMessage, Sheet, useToast } from './ui';
@@ -23,6 +23,8 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
       // Green where the lap beat the driver's best sectors from before it.
       const prev = myRuns.filter((r) => r.id !== run.id && r.valid && r.startedAt < run.startedAt).sort((a, b) => a.totalMs - b.totalMs)[0];
       const sectorColours = coloursFor(run.splitTimesMs, pbsBefore(myRuns, run), records);
+      const before = myRuns.filter((r) => r.id !== run.id && r.startedAt < run.startedAt);
+      const bigColours = bigColoursFor(run.splitTimesMs, route, before, bigRecords(posts, route, run.id));
       // Leaderboard position with this lap in: 1 + drivers whose best beats my best.
       const board = leaderboardFrom(posts);
       const myBest = Math.min(run.totalMs, board.find((r) => r.post.userId === profile.id)?.post.totalMs ?? Infinity);
@@ -33,7 +35,7 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
       } catch {
         /* ignore */
       }
-      await postLap(profile, run, route, { caption, car, sectorColours, positionAtPost, isPB });
+      await postLap(profile, run, route, { caption, car, sectorColours, bigColours, positionAtPost, isPB });
       toast(positionAtPost ? `Posted · P${positionAtPost}` : 'Posted');
       onPosted();
       onClose();

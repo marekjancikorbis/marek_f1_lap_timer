@@ -17,6 +17,7 @@ import {
   userPosts,
 } from '../lib/data';
 import { formatDate, formatLap, ROLE_LABEL } from '../lib/format';
+import { postBigColours } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Profile, Role, Route } from '../lib/types';
 
@@ -122,90 +123,96 @@ export default function UserPage() {
         }
       />
       <section className="profile-head">
-        <Avatar name={user.username} hue={user.avatarHue} size={76} />
+        <Avatar name={user.username} hue={user.avatarHue} size={72} />
         <div className="grow">
-          <h1 style={{ fontSize: '2rem' }}>{user.username}</h1>
-          <div className="row wrap" style={{ marginTop: 6, gap: 6 }}>
+          <h1 className="profile-name">{user.username}</h1>
+          <p className="mute profile-sub">
             {role !== 'driver' && <span className="badge blue">{ROLE_LABEL[role]}</span>}
-            <span className="mute" style={{ fontSize: 14 }}>
-              Member since {formatDate(user.createdAt?.toDate())}
-            </span>
-          </div>
+            {home?.isPublic ? (
+              <>
+                Home course <Link to={`/r/${home.id}`}>{home.name}</Link>
+              </>
+            ) : isMe ? (
+              <>
+                No home course yet. Pick one on a route's page in <Link to="/explore">Explore</Link>.
+              </>
+            ) : null}
+            <span>Since {formatDate(user.createdAt?.toDate())}</span>
+          </p>
         </div>
       </section>
 
+      <p className="statline">
+        <Link to={`/u/${user.username}/followers`}>
+          <strong className="num">{counts?.followers ?? '–'}</strong> followers
+        </Link>
+        <Link to={`/u/${user.username}/following`}>
+          <strong className="num">{counts?.following ?? '–'}</strong> following
+        </Link>
+        <span>
+          <strong className="num">{posts.length}</strong> posted {posts.length === 1 ? 'lap' : 'laps'}
+        </span>
+        {wins > 0 && (
+          <span>
+            <strong className="num fastest">{wins}</strong> {wins === 1 ? 'P1' : 'P1s'}
+          </span>
+        )}
+      </p>
+      {!isMe && <FollowButtonBlock userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />}
       {isMe && isAdmin && (
-        <Link to="/admin" className="btn block" style={{ marginTop: 12 }}>
+        <Link to="/admin" className="btn block">
           <Shield size={18} aria-hidden="true" /> Admin
         </Link>
       )}
 
-      <p className="mute" style={{ fontSize: 14, marginTop: 12 }}>
-        Home course:{' '}
-        {home?.isPublic ? (
-          <Link to={`/r/${home.id}`}>{home.name}</Link>
-        ) : isMe ? (
-          <>none yet. Pick one on a route's page from the <Link to="/explore">map</Link>.</>
-        ) : (
-          'none'
-        )}
-      </p>
-
-      <div className="stats-row">
-        <Stat value={posts.length} label="Posted laps" />
-        <Stat value={routes.size || new Set(posts.map((p) => p.routeId)).size} label="Routes" />
-        <Stat value={wins} label="P1s" />
-      </div>
-
-      <div className="row" style={{ gap: 8, marginTop: 16 }}>
-        <Link to={`/u/${user.username}/followers`} className="btn grow">
-          <span className="num" style={{ fontSize: 18 }}>{counts?.followers ?? '–'}</span> Followers
-        </Link>
-        <Link to={`/u/${user.username}/following`} className="btn grow">
-          <span className="num" style={{ fontSize: 18 }}>{counts?.following ?? '–'}</span> Following
-        </Link>
-      </div>
-      {!isMe && (
-        <div style={{ marginTop: 12 }}>
-          <FollowButtonBlock userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />
+      <h2 className="section-title">Best laps</h2>
+      {groups.length === 0 ? (
+        <p className="mute">{isMe ? 'Laps you post on public routes appear here.' : `${user.username} hasn't posted a lap yet.`}</p>
+      ) : (
+        <div className="list">
+          {groups.map((g) => {
+            const rank = ranks.get(g.pb.id);
+            return (
+              <section key={g.routeId} className="trophy">
+                <Link to={`/lap/${g.pb.id}`} className="trophy-main">
+                  <span className="grow">
+                    <strong className="ellipsis">{g.routeName}</strong>
+                    <span className="mute ellipsis small-text">{[g.pb.car, formatDate(g.pb.startedAt)].filter(Boolean).join(' · ')}</span>
+                  </span>
+                  <span className="trophy-time">
+                    <strong className={`num ${rank === 1 ? 'fastest' : ''}`}>{formatLap(g.pb.totalMs)}</strong>
+                    {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>P{rank}</span>}
+                  </span>
+                </Link>
+                {(isMe || g.rest.length > 0) && (
+                  <details className="trophy-more">
+                    <summary>{g.rest.length ? `${g.rest.length} more posted ${g.rest.length === 1 ? 'lap' : 'laps'}` : 'Manage post'}</summary>
+                    {[g.pb, ...g.rest].map((p) => (
+                      <PostRow key={p.id} post={p} pb={p.id === g.pb.id} route={routes.get(p.routeId)} isMe={isMe} onRemove={remove} />
+                    ))}
+                  </details>
+                )}
+              </section>
+            );
+          })}
         </div>
       )}
 
       {publicRoutes.length > 0 && (
         <>
-          <h2 className="section-title">{publicRoutes.length === 1 ? 'Public route' : 'Public routes'}</h2>
-          <div className="stack">
+          <h2 className="section-title">{publicRoutes.length === 1 ? 'Route they built' : 'Routes they built'}</h2>
+          <div className="list">
             {publicRoutes.map((r) => (
-              <Link key={r.id} to={`/r/${r.id}`} className="panel route-tile">
-                <RouteShape map route={r} height={120} />
-                <div className="row between" style={{ marginTop: 8 }}>
-                  <strong>{r.name}</strong>
-                  <span className="mute">Leaderboard →</span>
-                </div>
+              <Link key={r.id} to={`/r/${r.id}`} className="list-item">
+                <span className="logbook-shape" aria-hidden="true">
+                  <RouteShape route={r} height={44} ticks={false} />
+                </span>
+                <strong className="grow ellipsis">{r.name}</strong>
+                <span className="mute small-text">Leaderboard</span>
               </Link>
             ))}
           </div>
         </>
-      )}
-
-      <h2 className="section-title">Posted laps</h2>
-      {groups.length === 0 ? (
-        <p className="mute">{isMe ? 'Laps you post on public routes appear here.' : `${user.username} hasn't posted a lap yet.`}</p>
-      ) : (
-        <div className="stack-lg">
-          {groups.map((g) => (
-            <section key={g.routeId} className="panel">
-              <Link to={`/r/${g.routeId}`} className="row between" style={{ textDecoration: 'none' }}>
-                <h3>{g.routeName}</h3>
-                {ranks.get(g.pb.id) && <span className={`badge ${ranks.get(g.pb.id) === 1 ? 'purple' : ''}`}>P{ranks.get(g.pb.id)}</span>}
-              </Link>
-              <PostRow post={g.pb} pb isMe={isMe} onRemove={remove} />
-              {g.rest.map((p) => (
-                <PostRow key={p.id} post={p} isMe={isMe} onRemove={remove} />
-              ))}
-            </section>
-          ))}
-        </div>
       )}
     </main>
   );
@@ -219,16 +226,7 @@ function FollowButtonBlock(props: { userId: string; onChange: (f: boolean) => vo
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="stat">
-      <span className="num">{value}</span>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function PostRow({ post, pb, isMe, onRemove }: { post: Post; pb?: boolean; isMe: boolean; onRemove: (p: Post) => void }) {
+function PostRow({ post, pb, route, isMe, onRemove }: { post: Post; pb?: boolean; route?: Route; isMe: boolean; onRemove: (p: Post) => void }) {
   return (
     <div className="post-row">
       <Link to={`/lap/${post.id}`} className="post-row-main">
@@ -242,7 +240,7 @@ function PostRow({ post, pb, isMe, onRemove }: { post: Post; pb?: boolean; isMe:
             </span>
           </span>
         </div>
-        <SectorStrip colours={post.sectorColours} height={5} />
+        <SectorStrip colours={postBigColours(post, route)} height={5} />
         {(post.caption || post.car) && (
           <p className="mute" style={{ fontSize: 14, marginTop: 6 }}>
             {[post.caption, post.car].filter(Boolean).join(' · ')}

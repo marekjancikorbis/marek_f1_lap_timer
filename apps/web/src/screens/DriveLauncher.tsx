@@ -1,6 +1,7 @@
-import { Map as MapIcon, Play } from 'lucide-react';
+import { Map as MapIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { HomeCourse } from '../components/HomeCourse';
 import { RouteShape } from '../components/RouteShape';
 import { Empty, errorMessage, Loading, useToast } from '../components/ui';
 import { allMyRuns, getRoutes, myRoutes } from '../lib/data';
@@ -79,27 +80,7 @@ export default function DriveLauncher() {
       </header>
 
       {home && drivable(home) && (
-        <Link to={`/drive/${home.id}`} className="home-course">
-          <span className="grow">
-            <span className="home-course-k">Your home course</span>
-            <strong className="home-course-name">{home.name}</strong>
-            <span className="home-course-pb">
-              {recent.get(home.id)?.pb != null ? (
-                <>
-                  PB <span className="num">{formatLap(recent.get(home.id)!.pb!)}</span>
-                </>
-              ) : (
-                'Not driven yet'
-              )}
-            </span>
-            <span className="btn primary sm home-course-go">
-              <Play size={16} fill="currentColor" aria-hidden="true" /> Drive
-            </span>
-          </span>
-          <span className="home-course-shape" aria-hidden="true">
-            <RouteShape route={home} height={96} ticks={false} />
-          </span>
-        </Link>
+        <HomeCourse route={home} pb={recent.get(home.id)?.pb ?? null} />
       )}
 
       {recentRoutes.length > 0 && (

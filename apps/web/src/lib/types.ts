@@ -97,7 +97,10 @@ export interface Post {
   startedAt: number;
   hidden: boolean;
   profile: LapProfile | null;
+  /** Minisector colours when posted. */
   sectorColours: SectorColourName[];
+  /** Big-sector colours when posted (missing on posts from before big sectors). */
+  bigColours?: SectorColourName[];
   positionAtPost: number | null;
   isPB: boolean;
 }

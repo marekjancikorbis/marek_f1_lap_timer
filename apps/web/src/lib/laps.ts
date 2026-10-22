@@ -1,6 +1,6 @@
-import { bestSectors, sectorColour, sectorTimes, theoreticalBest, type LapProfile } from '@laptimer/timing';
+import { bestSectors, bigSectorEnds, bigSplits, sectorColour, sectorTimes, theoreticalBest, type LapProfile } from '@laptimer/timing';
 import { getPost, getRun, routePosts, runsForRoute, sectorRecordsFrom } from './data';
-import type { Post, Run, SectorColourName } from './types';
+import type { Post, Route, Run, SectorColourName } from './types';
 
 /**
  * A lap that can be compared or raced against:
@@ -139,4 +139,65 @@ export function recordsExcluding(posts: Post[], sectorCount: number, excludeId?:
     posts.filter((p) => p.id !== excludeId),
     sectorCount,
   );
+}
+
+// ---------------------------------------------------------------- big sectors
+
+/*
+ * Routes are timed in minisectors (route.boundaries). On top of those every
+ * route has 3 big sectors ending at the minisector ends closest to its thirds;
+ * everything except lap detail shows only the big ones.
+ */
+
+/** Indices into route.boundaries where the 3 big sectors end. */
+export const bigEnds = (route: Pick<Route, 'boundaries'>) => bigSectorEnds(route.boundaries);
+
+/** The route cut into its 3 big sectors, for drawing (RouteShape, RouteMap). */
+export function bigRoute<R extends Pick<Route, 'boundaries'>>(route: R): R {
+  return { ...route, boundaries: bigSplits(route.boundaries, bigEnds(route)) };
+}
+
+/** Laps on the route's current minisectors, cut down to their big-sector splits. */
+export function toBig<T extends { splitTimesMs: number[] }>(laps: T[], route: Pick<Route, 'boundaries'>): T[] {
+  const ends = bigEnds(route);
+  return laps
+    .filter((l) => l.splitTimesMs.length === route.boundaries.length)
+    .map((l) => ({ ...l, splitTimesMs: bigSplits(l.splitTimesMs, ends) }));
+}
+
+/** Big-sector records (fastest posted time per big sector). */
+export function bigRecords(posts: Post[], route: Pick<Route, 'boundaries'>, excludeId?: string): (number | null)[] {
+  return sectorRecordsFrom(toBig(posts.filter((p) => p.id !== excludeId), route), bigEnds(route).length);
+}
+
+/** Big-sector colours of a lap: coloursFor on the big splits. */
+export function bigColoursFor(
+  splits: number[],
+  route: Pick<Route, 'boundaries'>,
+  priorRuns: Run[],
+  records: (number | null)[] | null,
+  refSplits: number[] | null = null,
+): SectorColourName[] {
+  const ends = bigEnds(route);
+  if (splits.length !== route.boundaries.length) return [];
+  const pbs = bestSectors(toBig(priorRuns.filter((r) => r.valid), route));
+  const ref = refSplits && refSplits.length === route.boundaries.length ? bigSplits(refSplits, ends) : null;
+  return coloursFor(bigSplits(splits, ends), pbs, records, ref);
+}
+
+/**
+ * A post's big-sector colours. Posts from before big sectors only stored
+ * minisector colours, so those are summarised.
+ * shortcut: approximate for old posts (all purple = purple, mostly yellow = yellow, else green); exact once reposted.
+ */
+export function postBigColours(post: Pick<Post, 'bigColours' | 'sectorColours'>, route: Pick<Route, 'boundaries'> | null | undefined): SectorColourName[] {
+  if (post.bigColours?.length) return post.bigColours;
+  if (!route || post.sectorColours.length !== route.boundaries.length) return [];
+  let from = 0;
+  return bigEnds(route).map((end) => {
+    const group = post.sectorColours.slice(from, end + 1);
+    from = end + 1;
+    if (group.every((c) => c === 'purple')) return 'purple';
+    return group.filter((c) => c === 'yellow').length * 2 > group.length ? 'yellow' : 'green';
+  });
 }

@@ -1,9 +1,10 @@
 import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { HomeCourse } from '../components/HomeCourse';
 import { LapCard } from '../components/LapCard';
 import { Avatar, Empty, errorMessage, Spinner, useToast } from '../components/ui';
-import { allMyRuns, feedPage, follow, followingIds, getRoutes, type FeedPage } from '../lib/data';
+import { allMyRuns, feedPage, follow, followingIds, getRoute, getRoutes, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
@@ -18,6 +19,7 @@ export function Feed() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [routes, setRoutes] = useState<Map<string, Route>>(new Map());
   const [driven, setDriven] = useState<Set<string>>(new Set());
+  const [home, setHome] = useState<{ route: Route; pb: number | null } | null>(null);
   const [newCount, setNewCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
@@ -49,10 +51,15 @@ export function Feed() {
 
   useEffect(() => {
     void loadFirst();
-    allMyRuns(profile.id)
-      .then((runs) => setDriven(new Set(runs.map((r) => r.routeId))))
+    const homeId = profile.homeRouteId;
+    Promise.all([allMyRuns(profile.id), homeId ? getRoute(homeId) : null])
+      .then(([runs, route]) => {
+        setDriven(new Set(runs.map((r) => r.routeId)));
+        const best = runs.filter((r) => r.valid && r.routeId === homeId).reduce<number | null>((m, r) => (m == null || r.totalMs < m ? r.totalMs : m), null);
+        setHome(route && route.isPublic && !route.hidden ? { route, pb: best } : null);
+      })
       .catch(() => undefined);
-  }, [loadFirst, profile.id]);
+  }, [loadFirst, profile.id, profile.homeRouteId]);
 
   // Live "new laps" pill: watch for posts newer than the top of the feed.
   const newest = posts[0]?.createdAt;
@@ -119,6 +126,9 @@ export function Feed() {
       )}
 
       {error && <p className="notice error">{error}</p>}
+
+      {home && <HomeCourse route={home.route} pb={home.pb} />}
+      {home && <h2 className="section-title">Following</h2>}
 
       {loading ? (
         <div className="stack">
