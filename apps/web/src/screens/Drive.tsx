@@ -1,8 +1,9 @@
-import { X } from 'lucide-react';
+import { Smartphone, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { DriveController, type DriveState } from '../drive/controller';
 import { clearPendingDrive, takePendingDrive } from '../drive/store';
+import { STRIP_LABEL } from '../components/ui';
 import { formatDelta, formatDistance, formatLap, formatSpeed } from '../lib/format';
 
 export default function Drive() {
@@ -11,6 +12,17 @@ export default function Drive() {
   const [cfg] = useState(() => takePendingDrive(routeId));
   const [ctl, setCtl] = useState<DriveController | null>(null);
   const [s, setS] = useState<DriveState | null>(null);
+  // Turning the phone sideways switches to delta only, upright back to the full HUD.
+  const [mode, setMode] = useState(() => cfg?.mode ?? 'hud');
+  const landscape = useLandscape();
+  const firstOrientation = useRef(true);
+  useEffect(() => {
+    if (firstOrientation.current) {
+      firstOrientation.current = false;
+      if (!landscape) return;
+    }
+    setMode(landscape ? 'delta' : 'hud');
+  }, [landscape]);
 
   useEffect(() => {
     if (!cfg) return;
@@ -48,7 +60,7 @@ export default function Drive() {
   const colourClass = s.lastSector ? `flag-${s.lastSector.colour}` : '';
 
   return (
-    <div className={`drive ${cfg.mode === 'delta' && running ? `delta-mode ${colourClass}` : ''}`}>
+    <div className={`drive ${mode === 'delta' && running ? `delta-mode ${colourClass}` : ''}`}>
       <header className="drive-top">
         <span className="drive-route ellipsis">{cfg.route.name}</span>
         <span className="row" style={{ gap: 10 }}>
@@ -97,8 +109,8 @@ export default function Drive() {
       {s.phase === 'countdown' && s.goT && <Countdown goT={s.goT} n={cfg.countdownS} onCancel={() => ctl.cancelCountdown()} />}
 
       {/* ---------------- running ---------------- */}
-      {running && cfg.mode === 'hud' && <Hud s={s} ctl={ctl} reference={cfg.reference?.label ?? null} />}
-      {running && cfg.mode === 'delta' && <DeltaOnly s={s} />}
+      {running && mode === 'hud' && <Hud s={s} ctl={ctl} reference={cfg.reference?.label ?? null} />}
+      {running && mode === 'delta' && <DeltaOnly s={s} reference={cfg.reference?.label ?? null} />}
 
       {jumpBanner && (
         <div className="jump-banner" role="alert">
@@ -136,8 +148,22 @@ export default function Drive() {
           <button className="btn primary lg block" onClick={stop}>
             {s.laps.length ? 'See results' : 'Back to route'}
           </button>
+        ) : running && mode === 'delta' ? (
+          <div className="delta-foot">
+            <span className="rotate-hint">
+              <Smartphone size={16} aria-hidden="true" /> Turn upright for full HUD
+            </span>
+            <HoldToStop onStop={stop} label="Hold to exit" compact />
+          </div>
         ) : running || s.phase === 'countdown' ? (
-          <HoldToStop onStop={stop} label={cfg.route.isLoop && s.laps.length ? 'Hold to finish session' : 'Hold to stop'} />
+          <>
+            {running && (
+              <p className="rotate-hint">
+                <Smartphone size={16} aria-hidden="true" style={{ transform: 'rotate(90deg)' }} /> Turn sideways for delta only
+              </p>
+            )}
+            <HoldToStop onStop={stop} label={cfg.route.isLoop && s.laps.length ? 'Hold to finish session' : 'Hold to stop'} />
+          </>
         ) : (
           <button className="btn lg block drive-exit" onClick={stop}>
             <X size={20} aria-hidden="true" /> Exit
@@ -208,7 +234,8 @@ function useElapsed(s: DriveState, ctl: DriveController) {
 function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; reference: string | null }) {
   const elapsed = useElapsed(s, ctl);
   const last = s.lastSector;
-  const count = ctl.timer.cfg.boundaries.length;
+  const ends = ctl.bigEnds;
+  const current = ends.findIndex((e) => e >= s.nextSector);
   return (
     <section className="hud">
       <div className="hud-time num">
@@ -219,44 +246,55 @@ function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; refer
         <small>{reference ? `vs ${reference}` : 'no reference'}</small>
       </div>
       <div className="hud-grid">
-        <div className={`hud-cell ${last ? `flag-${last.colour}` : ''}`}>
-          <span>Last sector</span>
-          <strong className="num">{last ? formatLap(last.sectorMs) : '—'}</strong>
-          {last && <em className="num">{last.deltaMs != null ? formatDelta(last.deltaMs) : last.colour}</em>}
-        </div>
-        <div className="hud-cell">
-          <span>Sector</span>
-          <strong className="num">
-            {Math.min(s.nextSector + 1, count)}/{count}
-          </strong>
-          <em className="num">{s.distanceToGateM != null ? `${formatDistance(s.distanceToGateM)} to gate` : ''}</em>
-        </div>
-        <div className="hud-cell">
-          <span>Speed</span>
-          <strong className="num">{formatSpeed(s.speed)}</strong>
-          <em>km/h</em>
-        </div>
+        {ends.map((_, b) => {
+          const big = s.bigThisLap.find((x) => x.k === b);
+          return (
+            <div key={b} className={`hud-cell ${big ? `flag-${big.colour}` : b === current ? 'current' : ''}`}>
+              <span>S{b + 1}</span>
+              <strong className="num">{big ? formatLap(big.sectorMs) : '—'}</strong>
+              {big && <em className="num">{big.deltaMs != null ? formatDelta(big.deltaMs) : STRIP_LABEL[big.colour]}</em>}
+            </div>
+          );
+        })}
       </div>
-      <div className="hud-strip" aria-hidden="true">
-        {Array.from({ length: count }, (_, i) => {
-          const sec = s.sectorsThisLap.find((x) => x.k === i);
-          return <span key={i} className={sec ? `flag-${sec.colour}` : i === s.nextSector ? 'current' : ''} />;
+      <div className="hud-minis" aria-hidden="true">
+        {ends.map((end, b) => {
+          const from = b === 0 ? 0 : ends[b - 1] + 1;
+          return (
+            <span key={b}>
+              {Array.from({ length: end - from + 1 }, (_, j) => {
+                const i = from + j;
+                const sec = s.sectorsThisLap.find((x) => x.k === i);
+                return <i key={i} className={sec ? `flag-${sec.colour}` : i === s.nextSector ? 'current' : ''} />;
+              })}
+            </span>
+          );
         })}
       </div>
     </section>
   );
 }
 
-function DeltaOnly({ s }: { s: DriveState }) {
+function DeltaOnly({ s, reference }: { s: DriveState; reference: string | null }) {
   const last = s.lastSector;
   return (
     <section className="delta-only" aria-live="polite">
       <div className="delta-value num">{last?.deltaMs != null ? formatDelta(last.deltaMs) : last ? formatLap(last.sectorMs) : 'GO'}</div>
-      <div className="delta-caption num">
-        {last ? `Sector ${last.k + 1} of ${last.count} · ${last.colour}` : 'Delta shows at the first sector end'}
-      </div>
+      <div className="delta-caption">{last ? (reference ? `vs ${reference}` : 'no reference') : 'The gap shows at the first minisector'}</div>
     </section>
   );
+}
+
+/** True while the screen is wider than tall. */
+function useLandscape() {
+  const [on, setOn] = useState(() => window.matchMedia('(orientation: landscape)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(orientation: landscape)');
+    const onChange = () => setOn(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return on;
 }
 
 function Countdown({ goT, n, onCancel }: { goT: number; n: number; onCancel: () => void }) {
@@ -288,7 +326,7 @@ function Countdown({ goT, n, onCancel }: { goT: number; n: number; onCancel: () 
   );
 }
 
-function HoldToStop({ onStop, label }: { onStop: () => void; label: string }) {
+function HoldToStop({ onStop, label, compact }: { onStop: () => void; label: string; compact?: boolean }) {
   const [holding, setHolding] = useState(false);
   const timer = useRef<number | null>(null);
   const begin = () => {
@@ -301,7 +339,7 @@ function HoldToStop({ onStop, label }: { onStop: () => void; label: string }) {
   };
   return (
     <button
-      className={`hold-stop ${holding ? 'holding' : ''}`}
+      className={`hold-stop ${compact ? 'compact' : ''} ${holding ? 'holding' : ''}`}
       onPointerDown={begin}
       onPointerUp={end}
       onPointerLeave={end}
@@ -310,7 +348,10 @@ function HoldToStop({ onStop, label }: { onStop: () => void; label: string }) {
       onContextMenu={(e) => e.preventDefault()}
     >
       <span className="hold-fill" aria-hidden="true" />
-      <span className="hold-label">{label}</span>
+      <span className="hold-label">
+        {compact && <X size={18} aria-hidden="true" />}
+        {label}
+      </span>
     </button>
   );
 }
