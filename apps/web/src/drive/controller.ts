@@ -1,7 +1,10 @@
 import {
+  bigSectorEnds,
+  bigSplits,
   computeSectorBoundaries,
   LapTimer,
   lapProfileFromTrace,
+  sectorColour,
   simulateDrive,
   simulateTrackDrive,
   type Fix,
@@ -30,6 +33,9 @@ export interface DriveConfig {
   records: (number | null)[] | null;
   /** Your best sector times on this route so far (green). */
   personalBests: (number | null)[];
+  /** The same two for the route's 3 big sectors. */
+  bigRecords: (number | null)[] | null;
+  bigPersonalBests: (number | null)[];
   countdownS: number;
   mode: DisplayMode;
   voice: boolean;
@@ -54,8 +60,11 @@ export interface DriveState {
   lapStartT: number | null;
   penaltyMs: number;
   goT: number | null;
+  /** Minisectors: the timer's own sectors. */
   lastSector: SectorInfo | null;
   sectorsThisLap: SectorInfo[];
+  /** The 3 big sectors finished so far this lap. */
+  bigThisLap: SectorInfo[];
   speed: number | null;
   accuracy: number | null;
   distanceToGateM: number | null;
@@ -101,6 +110,10 @@ export class DriveController {
   private log: GpsLog | null = null;
   /** Wall-clock time the last fix arrived, to notice a lost signal between fixes. */
   private lastFixAt = 0;
+  /** Minisector indices where the 3 big sectors end. */
+  readonly bigEnds: number[];
+  /** The reference lap's splits at those ends. */
+  private refBig: number[] | null;
 
   constructor(readonly cfg: DriveConfig) {
     this.prepared = preparedFor(cfg.route);
@@ -115,6 +128,9 @@ export class DriveController {
       personalBests: cfg.personalBests,
       countdownS: cfg.countdownS,
     });
+    this.bigEnds = bigSectorEnds(boundaries);
+    const ref = cfg.reference?.splits;
+    this.refBig = ref && ref.length === boundaries.length ? bigSplits(ref, this.bigEnds) : null;
     if (!cfg.replay) {
       this.log = {
         version: 1,
@@ -142,6 +158,7 @@ export class DriveController {
       goT: null,
       lastSector: null,
       sectorsThisLap: [],
+      bigThisLap: [],
       speed: null,
       accuracy: null,
       distanceToGateM: null,
@@ -418,7 +435,7 @@ export class DriveController {
       switch (ev.type) {
         case 'started':
           if (ev.lap === 0 && this.cfg.route.startType === 'rolling') this.sounds.gate();
-          this.emit({ lap: ev.lap, lapStartT: ev.t, sectorsThisLap: [], goT: this.state.goT });
+          this.emit({ lap: ev.lap, lapStartT: ev.t, sectorsThisLap: [], bigThisLap: [], goT: this.state.goT });
           break;
         case 'jumpStart':
           this.sounds.alarm();
@@ -427,10 +444,18 @@ export class DriveController {
           break;
         case 'sector': {
           const info: SectorInfo = { k: ev.k, count: ev.count, splitMs: ev.splitMs, sectorMs: ev.sectorMs, deltaMs: ev.deltaMs, colour: ev.colour };
-          this.sounds.gate(ev.colour);
-          navigator.vibrate?.(ev.colour === 'purple' ? [60, 40, 60] : 60);
-          if (this.cfg.voice) this.say(ev.k, ev.deltaMs, ev.colour);
-          this.emit({ lastSector: info, sectorsThisLap: [...this.state.sectorsThisLap, info] });
+          // Minisectors only fill the line; sound, buzz and voice come at the 3 big sector ends.
+          const big = this.bigSector(info, ev.lap === 0 && this.state.penaltyMs > 0);
+          if (big) {
+            this.sounds.gate(big.colour);
+            navigator.vibrate?.(big.colour === 'purple' ? [60, 40, 60] : 60);
+            if (this.cfg.voice) this.say(big.k, big.deltaMs, big.colour);
+          }
+          this.emit({
+            lastSector: info,
+            sectorsThisLap: [...this.state.sectorsThisLap, info],
+            ...(big && { bigThisLap: [...this.state.bigThisLap, big] }),
+          });
           break;
         }
         case 'lapComplete':
@@ -453,6 +478,24 @@ export class DriveController {
           break;
       }
     }
+  }
+
+  /** The big sector a minisector closes, coloured like the timer colours its own sectors. */
+  private bigSector(mini: SectorInfo, jumped: boolean): SectorInfo | null {
+    const b = this.bigEnds.indexOf(mini.k);
+    if (b < 0) return null;
+    const prevSplit = b === 0 ? 0 : (this.state.sectorsThisLap.find((x) => x.k === this.bigEnds[b - 1])?.splitMs ?? 0);
+    const ms = mini.splitMs - prevSplit;
+    const ref = this.refBig;
+    const refMs = ref ? ref[b] - (b === 0 ? 0 : ref[b - 1]) : null;
+    const pbs = this.cfg.bigPersonalBests;
+    const records = this.cfg.bigRecords;
+    let colour = sectorColour(ms, pbs[b], records?.[b], records != null, refMs);
+    // Same as the timer: a jump-start first sector can't be purple.
+    if (b === 0 && jumped && colour === 'purple') colour = refMs != null && ms < refMs ? 'green' : 'yellow';
+    if (pbs[b] == null || ms < pbs[b]!) pbs[b] = ms;
+    if (records && colour === 'purple') records[b] = ms;
+    return { k: b, count: this.bigEnds.length, splitMs: mini.splitMs, sectorMs: ms, deltaMs: ref ? mini.splitMs - ref[b] : null, colour };
   }
 
   private say(k: number, delta: number | null, colour: SectorColourName) {
