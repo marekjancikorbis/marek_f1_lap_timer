@@ -1,7 +1,7 @@
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
-import { ChevronDown, ChevronUp, Search as SearchIcon, X } from 'lucide-react';
+import { Search as SearchIcon, X } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
 import { MapView } from '../components/MapView';
@@ -37,6 +37,13 @@ export default function MapScreen() {
   const [q, setQ] = useState(() => sessionStorage.getItem('explore-q') ?? '');
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState(false);
+  // While typing, the results sit under the search instead of behind the keyboard.
+  const [docked, setDocked] = useState(false);
+  const [dock, setDock] = useState({ top: 0, h: 0 });
+  const topRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLElement>(null);
+  const drag = useRef<{ y: number; h: number; dy: number } | null>(null);
+  const dragged = useRef(false);
   const [drivers, setDrivers] = useState<Profile[] | null>(null);
   const [searching, setSearching] = useState(false);
   const term = q.trim().toLowerCase();
@@ -202,6 +209,50 @@ export default function MapScreen() {
 
   useEffect(draw, [draw]);
 
+  // The space left between the search and the keyboard.
+  useEffect(() => {
+    if (!docked) return;
+    const vv = window.visualViewport;
+    const fit = () => {
+      const el = topRef.current;
+      const top = el ? el.offsetTop + el.offsetHeight + 8 : 0;
+      setDock({ top, h: Math.max(120, (vv ? vv.height + vv.offsetTop : window.innerHeight) - top - 8) });
+    };
+    fit();
+    vv?.addEventListener('resize', fit);
+    vv?.addEventListener('scroll', fit);
+    return () => {
+      vv?.removeEventListener('resize', fit);
+      vv?.removeEventListener('scroll', fit);
+    };
+  }, [docked]);
+
+  // The pull tab: the sheet follows the finger, then snaps open or shut by the drag's direction.
+  const onPull = (e: PointerEvent<HTMLButtonElement>) => {
+    if (docked) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { y: e.clientY, h: sheetRef.current!.offsetHeight, dy: 0 };
+  };
+  const onPullMove = (e: PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    const sheet = sheetRef.current;
+    if (!d || !sheet) return;
+    d.dy = e.clientY - d.y;
+    if (Math.abs(d.dy) < 5) return;
+    sheet.style.transition = 'none';
+    sheet.style.maxHeight = `${Math.min(sheet.parentElement!.clientHeight * 0.85, Math.max(70, d.h - d.dy))}px`;
+  };
+  const onPullEnd = () => {
+    const d = drag.current;
+    const sheet = sheetRef.current;
+    drag.current = null;
+    if (!d || !sheet || Math.abs(d.dy) < 5) return;
+    dragged.current = true;
+    sheet.style.transition = '';
+    sheet.style.maxHeight = '';
+    setOpen(d.dy < 0);
+  };
+
   const onReady = useCallback(
     (map: mapboxgl.Map) => {
       mapRef.current = map;
@@ -220,7 +271,7 @@ export default function MapScreen() {
   const showDrivers = filter === 'drivers' || (!!term && filter === 'all');
   const showRoutes = filter !== 'drivers';
   // Collapsed, the sheet shows a couple of rows; searching opens it.
-  const expanded = open || !!term || filter === 'drivers';
+  const expanded = open || docked;
   const title =
     filter === 'drivers'
       ? 'Drivers'
@@ -231,7 +282,7 @@ export default function MapScreen() {
   return (
     <main className="map-screen">
       <MapView onReady={onReady} center={[15.5, 49.8]} zoom={6} height="100%" label="Routes" />
-      <div className="explore-top">
+      <div className="explore-top" ref={topRef}>
         <label className="search-box explore-search">
           <SearchIcon size={18} aria-hidden="true" />
           <span className="visually-hidden">Search routes and drivers</span>
@@ -243,7 +294,13 @@ export default function MapScreen() {
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              if (e.target.value) setOpen(true);
+            }}
+            onFocus={() => setDocked(true)}
+            onBlur={() => setDocked(false)}
+            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
           />
           {searching ? (
             <Spinner label="Searching" />
@@ -257,24 +314,38 @@ export default function MapScreen() {
         </label>
         <div className="chips" role="group" aria-label="Show">
           {filters.map((f) => (
-            <button key={f} className="chip" aria-pressed={filter === f} onClick={() => setFilter(f)}>
+            <button key={f} className="chip" aria-pressed={filter === f} onClick={() => {
+                setFilter(f);
+                if (f === 'drivers') setOpen(true);
+              }}>
               {FILTER_LABEL[f]}
             </button>
           ))}
         </div>
       </div>
 
-      <section className={`explore-sheet ${expanded ? 'open' : ''}`} aria-label="Results">
-        <button className="explore-sheet-head" onClick={() => setOpen((o) => !o)} aria-expanded={expanded}>
-          <span className="grabber" aria-hidden="true" />
-          <span className="row between" style={{ width: '100%' }}>
-            <strong className="explore-sheet-title">{title}</strong>
-            {showRoutes && !term && (
-              <span className="mute small-text row">
-                Most driven {expanded ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronUp size={16} aria-hidden="true" />}
-              </span>
-            )}
-          </span>
+      <section
+        ref={sheetRef}
+        className={`explore-sheet ${expanded ? 'open' : ''} ${docked ? 'docked' : ''}`}
+        style={docked ? { top: dock.top, maxHeight: dock.h } : undefined}
+        aria-label="Results"
+        // Keeps the search focused (and the list in place) when a result is tapped.
+        onMouseDown={(e) => docked && e.preventDefault()}
+      >
+        <button
+          className="explore-sheet-head"
+          aria-expanded={expanded}
+          onClick={() => {
+            if (dragged.current) dragged.current = false;
+            else if (!docked) setOpen((o) => !o);
+          }}
+          onPointerDown={onPull}
+          onPointerMove={onPullMove}
+          onPointerUp={onPullEnd}
+          onPointerCancel={onPullEnd}
+        >
+          {!docked && <span className="grabber" aria-hidden="true" />}
+          <strong className="explore-sheet-title">{title}</strong>
         </button>
         <div className="explore-sheet-body">
           {showRoutes &&

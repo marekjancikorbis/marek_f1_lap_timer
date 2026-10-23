@@ -1998,6 +1998,15 @@
   max-height: 62%;
 }
 
+.explore-sheet.docked {
+  bottom: auto;
+  left: 12px;
+  right: 12px;
+  border: 1px solid var(--hairline-2);
+  border-radius: 16px;
+  transition: none;
+}
+
 .explore-sheet-head {
   display: flex;
   flex-direction: column;
@@ -2006,8 +2015,14 @@
   padding: 8px 16px 6px;
   border: 0;
   background: none;
-  cursor: pointer;
+  cursor: grab;
   text-align: left;
+  /* The sheet follows the finger instead of the page panning. */
+  touch-action: none;
+}
+
+.explore-sheet-head .explore-sheet-title {
+  align-self: stretch;
 }
 
 .explore-sheet-head .grabber {
@@ -2239,4 +2254,9 @@
   gap: 3px;
   font-size: 0.75rem;
   color: var(--mute);
+}
+
+/* The explore search has its own clear button. */
+.explore-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
 }
