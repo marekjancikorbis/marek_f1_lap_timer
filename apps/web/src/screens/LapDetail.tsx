@@ -33,10 +33,10 @@ export default function LapDetail() {
         const run = await getRun(profile.id, p.id).catch(() => null);
         const raced = run?.referenceRef ? await resolveLap(run.referenceRef, profile.id, p.routeId).catch(() => null) : null;
         const prev = valid.filter((x) => x.startedAt < p.startedAt).sort((a, b) => a.totalMs - b.totalMs)[0];
-        setAgainst(raced ?? (prev ? runToLap(prev, 'your previous best') : null));
+        setAgainst(raced ?? (prev ? runToLap((await getRun(profile.id, prev.id)) ?? prev, 'your previous best') : null));
       } else {
         const best = [...valid].sort((a, b) => a.totalMs - b.totalMs)[0];
-        setAgainst(best ? runToLap(best, 'your best') : await resolveLap('record', profile.id, p.routeId).catch(() => null));
+        setAgainst(best ? runToLap((await getRun(profile.id, best.id)) ?? best, 'your best') : await resolveLap('record', profile.id, p.routeId).catch(() => null));
       }
     })().catch((e) => {
       toast(errorMessage(e), 'error');

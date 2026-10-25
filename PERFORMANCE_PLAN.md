@@ -60,6 +60,13 @@ updated on each saved lap would replace the 500-lap query there completely.
 **Done when:** opening Feed downloads a few KB of run data instead of MB, and the
 Firestore reads per Feed open drop from "number of laps" to ~1.
 
+**Done (2026-10-25), differently from points 5–6:** there are no admin credentials for a
+server-side migration, so each user's app moves its own old laps as it lists them
+(`moveDetails` in `lib/data.ts`, one run per commit, each queued once per session; the
+rules only let the two fields go once the detail exists). The read fallback in `getRun`
+stays, for laps of users who haven't opened the app since. Not done: the `stats` document,
+so Feed, Drive and My times still read one (now small) document per lap.
+
 ---
 
 ## 2. Load only what is on screen (1 day)
@@ -201,10 +208,10 @@ lap). Times are from tapping the tab until the spinner is gone.
 | Main JS chunk                          | 813 KB (215 KB gzip)         |       |
 | Service worker precache                | 3.18 MB, 52 files            |       |
 | One run document on the wire           | ~65 KB trace + ~3 KB profile |       |
-| Data per Feed / Drive / My times open  | ~13 MB (200 full laps)       |       |
-| Firestore reads per open of those      | 200 (one per lap)            |       |
-| My times, 200 laps                     | 11.4 s first, 44 s again     |       |
-| Drive, 200 laps                        | 40 s                         |       |
+| Data per Feed / Drive / My times open  | ~13 MB (200 full laps)       | ~0.1 MB (step 1) |
+| Firestore reads per open of those      | 200 (one per lap)            | 200 (stats doc not done) |
+| My times, 200 laps                     | 11.4 s first, 44 s again     | 1.1 s, 0.8 s again (step 1) |
+| Drive, 200 laps                        | 40 s                         | 1.1 s (step 1) |
 
 Not measured: a real phone, the live Firestore usage page, Lighthouse performance score
 (the DevTools tool here leaves performance out).

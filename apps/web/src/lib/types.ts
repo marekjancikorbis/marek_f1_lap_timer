@@ -68,9 +68,10 @@ export interface Run {
   valid: boolean;
   gpsAvgAccuracyM: number;
   gpsRateHz: number;
-  profile: LapProfile | null;
-  /** Compact trace, 5 numbers per point: t, s, v, lat, lon. Private to the owner. */
-  trace: number[];
+  /** Only on a run from getRun (it lives in the run's detail document). */
+  profile?: LapProfile | null;
+  /** Compact trace, 5 numbers per point: t, s, v, lat, lon. Private to the owner. Only on a run from getRun. */
+  trace?: number[];
   posted: boolean;
   replay: boolean;
   /** The lap raced against, as a LapRef. */

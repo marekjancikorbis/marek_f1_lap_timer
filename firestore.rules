@@ -120,6 +120,16 @@ service cloud.firestore {
           && request.resource.data.splitTimesMs[request.resource.data.splitTimesMs.size() - 1] == request.resource.data.totalMs;
         // Results are immutable; only the posted marker changes.
         allow update: if signedIn() && userId == uid() && onlyChanges(['posted']);
+        // Runs saved before the split hand their trace and profile to the detail doc.
+        allow update: if signedIn() && userId == uid() && onlyChanges(['trace', 'profile'])
+          && !('trace' in request.resource.data) && !('profile' in request.resource.data)
+          && existsAfter(/databases/$(database)/documents/users/$(userId)/runs/$(runId)/detail/main);
+
+        // The run's GPS trace and distance profile, owner-only. Writable so a
+        // repeated move (another tab, a reload mid-move) succeeds instead of failing.
+        match /detail/{d} {
+          allow read, write: if signedIn() && userId == uid();
+        }
       }
     }
 

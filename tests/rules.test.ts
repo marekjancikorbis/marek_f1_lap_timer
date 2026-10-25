@@ -1,7 +1,7 @@
 // Security rules tests against the Firestore emulator. Run with `npm run test:rules`
 // (needs Java 11+ on PATH for the emulator).
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { deleteDoc, deleteField, doc, getDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
@@ -166,6 +166,31 @@ describe('privacy', () => {
   it('lap results are immutable once saved', async () => {
     await assertFails(updateDoc(doc(db('driver'), 'users/driver/runs/run1'), { totalMs: 50_000 }));
     await assertSucceeds(updateDoc(doc(db('driver'), 'users/driver/runs/run1'), { posted: true }));
+  });
+
+  it('run details are owner-only', async () => {
+    await assertSucceeds(setDoc(doc(db('driver'), 'users/driver/runs/run1/detail/main'), { trace: [1, 2], profile: null }));
+    await assertSucceeds(getDoc(doc(db('driver'), 'users/driver/runs/run1/detail/main')));
+    await assertFails(getDoc(doc(db('stranger'), 'users/driver/runs/run1/detail/main')));
+    await assertFails(setDoc(doc(db('stranger'), 'users/driver/runs/run2/detail/main'), { trace: [] }));
+    await assertFails(updateDoc(doc(db('stranger'), 'users/driver/runs/run1/detail/main'), { trace: [3] }));
+  });
+
+  it("an old run's trace moves to its detail only together with the detail", async () => {
+    await seed({ 'users/driver/runs/old': run({ trace: [1, 2], profile: null }) });
+    const strip = { trace: deleteField(), profile: deleteField() };
+    await assertFails(updateDoc(doc(db('driver'), 'users/driver/runs/old'), strip));
+    const d = db('driver');
+    const batch = writeBatch(d);
+    batch.set(doc(d, 'users/driver/runs/old/detail/main'), { trace: [1, 2], profile: null });
+    batch.update(doc(d, 'users/driver/runs/old'), strip);
+    await assertSucceeds(batch.commit());
+    // Moving it again (another tab) is harmless.
+    const again = writeBatch(d);
+    again.set(doc(d, 'users/driver/runs/old/detail/main'), { trace: [1, 2], profile: null });
+    again.update(doc(d, 'users/driver/runs/old'), strip);
+    await assertSucceeds(again.commit());
+    await assertFails(updateDoc(doc(db('driver'), 'users/driver/runs/run1'), { trace: [9] }));
   });
 });
 

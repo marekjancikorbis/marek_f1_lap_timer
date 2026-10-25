@@ -49,12 +49,19 @@ export default function RunSummary() {
   }, [run, route, posts, runs, ref]);
 
   // Bars and graphs measure against the raced lap, or else your best lap from before this one.
-  const against = useMemo(() => {
-    if (ref) return ref;
-    if (!run) return null;
-    const prev = runs.filter((r) => r.valid && r.id !== run.id && r.startedAt < run.startedAt && r.splitTimesMs.length === run.splitTimesMs.length).sort((a, b) => a.totalMs - b.totalMs)[0];
-    return prev ? runToLap(prev, 'your previous best') : null;
+  const prev = useMemo(() => {
+    if (ref || !run) return null;
+    return runs.filter((r) => r.valid && r.id !== run.id && r.startedAt < run.startedAt && r.splitTimesMs.length === run.splitTimesMs.length).sort((a, b) => a.totalMs - b.totalMs)[0] ?? null;
   }, [ref, run, runs]);
+  // Listed runs come without their profile; fetch it for the graphs.
+  const [prevFull, setPrevFull] = useState<Run | null>(null);
+  useEffect(() => {
+    if (prev) getRun(profile.id, prev.id).then(setPrevFull).catch(() => undefined);
+  }, [prev, profile.id]);
+  const against = useMemo(
+    () => ref ?? (prev ? runToLap(prevFull?.id === prev.id ? prevFull : prev, 'your previous best') : null),
+    [ref, prev, prevFull],
+  );
 
   const session = useMemo(() => (run ? runs.filter((r) => r.sessionId === run.sessionId).sort((a, b) => a.lap - b.lap) : []), [run, runs]);
 
@@ -123,7 +130,7 @@ export default function RunSummary() {
     <main className="screen">
       <ScreenHead back={`/r/${run.routeId}`} title="Lap" />
       <LapView
-        lap={{ ...run, username: profile.username, avatarHue: profile.avatarHue }}
+        lap={{ ...run, profile: run.profile ?? null, username: profile.username, avatarHue: profile.avatarHue }}
         colours={colours}
         route={route}
         posts={posts}

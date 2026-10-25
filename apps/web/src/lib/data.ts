@@ -1,6 +1,7 @@
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   documentId,
   getCountFromServer,
@@ -16,6 +17,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type DocumentReference,
   type DocumentSnapshot,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
@@ -309,22 +311,24 @@ export async function renameRoute(id: string, name: string) {
   await updateDoc(doc(db, 'routes', id), { name: name.trim().slice(0, 60) });
 }
 
-async function deleteAll(docs: QueryDocumentSnapshot[]) {
-  for (const part of chunks(docs, 400)) {
+async function deleteAll(refs: DocumentReference[]) {
+  for (const part of chunks(refs, 400)) {
     const batch = writeBatch(db);
-    part.forEach((d) => batch.delete(d.ref));
+    part.forEach((r) => batch.delete(r));
     await batch.commit();
   }
 }
 
-function myRunsOn(uid: string, routeId: string) {
-  return getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', routeId)));
+/** Refs of your runs on a route and their details, for deleting. */
+async function myRunsOn(uid: string, routeId: string): Promise<DocumentReference[]> {
+  const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', routeId)));
+  return snap.docs.flatMap((d) => [d.ref, detailRef(uid, d.id)]);
 }
 
 /** Owner delete of a private route; the owner's own runs on it go too, as they'd have no route to show against. */
 export async function deleteRoute(uid: string, id: string) {
   await deleteDoc(doc(db, 'routes', id));
-  await deleteAll((await myRunsOn(uid, id)).docs);
+  await deleteAll(await myRunsOn(uid, id));
 }
 
 /**
@@ -335,8 +339,8 @@ export async function deleteRoute(uid: string, id: string) {
 export async function updateRoute(uid: string, route: Route, change: Partial<Route>, shapeChanged: boolean) {
   await updateDoc(doc(db, 'routes', route.id), shapeChanged ? { ...change, shapeVersion: (route.shapeVersion ?? 0) + 1 } : change);
   if (!shapeChanged) return;
-  if (route.publishedAt) await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', route.id)))).docs);
-  await deleteAll((await myRunsOn(uid, route.id)).docs);
+  if (route.publishedAt) await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', route.id)))).docs.map((d) => d.ref));
+  await deleteAll(await myRunsOn(uid, route.id));
 }
 
 /**
@@ -394,7 +398,7 @@ export async function moderateRoute(routeId: string, change: { isPublic?: boolea
 /** Admin delete. The route goes first so a refused delete leaves its posts alone; then its posts, which would point nowhere. */
 export async function adminDeleteRoute(routeId: string) {
   await deleteDoc(doc(db, 'routes', routeId));
-  await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)))).docs);
+  await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)))).docs.map((d) => d.ref));
 }
 
 export async function adminAllPublicRoutes(): Promise<Route[]> {
@@ -413,32 +417,75 @@ export function newRunId(uid: string): string {
   return doc(collection(db, 'users', uid, 'runs')).id;
 }
 
+/**
+ * A run's heavy part (GPS trace, distance profile, tens of KB) lives in its own
+ * document, so lists of runs download only times and splits.
+ */
+function detailRef(uid: string, runId: string) {
+  return doc(db, 'users', uid, 'runs', runId, 'detail', 'main');
+}
+
+export type RunDetail = Pick<Run, 'trace' | 'profile'>;
+
 export async function saveRun(uid: string, run: Omit<Run, 'createdAt'>): Promise<void> {
-  const { id, ...data } = run;
+  const { id, trace, profile, ...data } = run;
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'users', uid, 'runs', id), { ...data, createdAt: serverTimestamp() });
+  batch.set(detailRef(uid, id), { trace: trace ?? [], profile: profile ?? null });
   // Don't wait for the server: offline saves complete when signal returns.
-  void setDoc(doc(db, 'users', uid, 'runs', id), { ...data, createdAt: serverTimestamp() });
+  void batch.commit();
   // Its own write: a failed count must never cost the lap.
   if (!run.replay) void countActivity(uid, run.startedAt, 1);
 }
 
+/** A run with its trace and profile. Runs saved before the split still carry them themselves. */
 export async function getRun(uid: string, id: string): Promise<Run | null> {
-  const snap = await getDoc(doc(db, 'users', uid, 'runs', id));
-  return snap.exists() ? withId<Run>(snap) : null;
+  const [snap, detail] = await Promise.all([getDoc(doc(db, 'users', uid, 'runs', id)), getDoc(detailRef(uid, id))]);
+  return snap.exists() ? { ...withId<Run>(snap), ...(detail.data() as RunDetail | undefined) } : null;
+}
+
+/** Runs without trace and profile (see getRun for those). */
+function lightRuns(uid: string, docs: QueryDocumentSnapshot[]): Run[] {
+  moveDetails(uid, docs);
+  return docs.map((d) => {
+    const { trace: _t, profile: _p, ...run } = withId<Run>(d);
+    return run;
+  });
+}
+
+/**
+ * Moves the trace and profile of runs saved before the split into their detail
+ * document. The owner's app does it as it lists them (no server on Spark); the
+ * rules only let those two fields go once the detail exists.
+ */
+const moving = new Set<string>();
+function moveDetails(uid: string, docs: QueryDocumentSnapshot[]) {
+  // One run per commit (~70 KB, like saving a lap): a request too big for the
+  // transport is retried forever and would hold up every later write.
+  for (const d of docs.filter((d) => 'trace' in d.data() && !moving.has(d.id))) {
+    moving.add(d.id); // a list opened before the commit lands must not queue it again
+    const { trace, profile } = d.data();
+    const batch = writeBatch(db);
+    batch.set(detailRef(uid, d.id), { trace, profile: profile ?? null });
+    batch.update(d.ref, { trace: deleteField(), profile: deleteField() });
+    void batch.commit().catch(() => undefined); // tried again on the next list
+  }
 }
 
 export async function runsForRoute(uid: string, routeId: string): Promise<Run[]> {
   const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', routeId)));
-  return snap.docs.map((d) => withId<Run>(d)).sort((a, b) => b.startedAt - a.startedAt);
+  return lightRuns(uid, snap.docs).sort((a, b) => b.startedAt - a.startedAt);
 }
 
 export async function allMyRuns(uid: string): Promise<Run[]> {
   const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), orderBy('startedAt', 'desc'), limit(500)));
-  return snap.docs.map((d) => withId<Run>(d));
+  return lightRuns(uid, snap.docs);
 }
 
 export async function deleteRun(uid: string, run: Run) {
   const batch = writeBatch(db);
   batch.delete(doc(db, 'users', uid, 'runs', run.id));
+  batch.delete(detailRef(uid, run.id));
   if (run.posted) batch.delete(doc(db, 'posts', run.id));
   await batch.commit();
   if (!run.replay) void countActivity(uid, run.startedAt, -1);
@@ -502,7 +549,8 @@ export async function postLap(
     createdAt: serverTimestamp(),
     startedAt: run.startedAt,
     hidden: false,
-    profile: run.profile,
+    // A run from a list has no profile; fetch it.
+    profile: run.profile !== undefined ? run.profile : ((await getDoc(detailRef(profile.id, run.id))).data()?.profile ?? null),
     sectorColours: extra.sectorColours,
     bigColours: extra.bigColours,
     positionAtPost: extra.positionAtPost,

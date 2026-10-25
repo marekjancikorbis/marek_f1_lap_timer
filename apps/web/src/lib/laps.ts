@@ -31,7 +31,7 @@ export function runToLap(run: Run, label = 'Your lap'): ResolvedLap {
     splitTimesMs: run.splitTimesMs,
     totalMs: run.totalMs,
     penaltyMs: run.penaltyMs,
-    profile: run.profile,
+    profile: run.profile ?? null,
     userId: null,
     username: null,
   };

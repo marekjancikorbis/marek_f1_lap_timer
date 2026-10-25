@@ -25,7 +25,7 @@ await env.withSecurityRulesDisabled(async (ctx) => {
   b.set(doc(db, 'usernames', 'perf'), { uid });
   b.set(doc(db, 'users', uid), { username: 'perf', usernameLower: 'perf', createdAt: serverTimestamp(), publicRouteIds: [], avatarHue: 120, acceptedTermsAt: serverTimestamp() });
   b.set(doc(db, 'routes', 'perfroute'), {
-    ownerId: uid, ownerName: 'perf', name: 'Perf Hill', coords, lengthM: 3000, isLoop: false, sectorLengthM: 1000, boundaries: [1000, 2000],
+    ownerId: uid, ownerName: 'perf', name: 'Perf Hill', coords, lengthM: 3000, isLoop: false, sectorLengthM: 1000, boundaries: [1000, 2000, 3000],
     startType: 'standing', isPublic: false, publishedAt: null, hidden: false, hasRuns: true, createdAt: serverTimestamp(),
     start: [coords[0], coords[1]], bbox: [16.6, 49.198, 16.636, 49.202], shapeVersion: 0,
   });
