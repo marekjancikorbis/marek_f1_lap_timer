@@ -190,6 +190,21 @@ Each step ships on its own (commit, build, deploy) and is measured against step 
 
 ## Measurements
 
-| Screen | Before | After |
-|--------|--------|-------|
-|        |        |       |
+Step 0 baseline, 2026-10-25. Desktop Chrome emulating a phone (412 px, 4x CPU slowdown,
+"Fast 4G"), not a real phone. Signed-in screens ran against the local emulators with a
+seeded driver who has 200 laps (`node scripts/seed-perf.mjs 200`, 10 Hz traces of a 2 min
+lap). Times are from tapping the tab until the spinner is gone.
+
+| What                                   | Before                       | After |
+|----------------------------------------|------------------------------|-------|
+| Cold start, signed out (live site)     | FCP/LCP 1.3 s, 275 KB        |       |
+| Main JS chunk                          | 813 KB (215 KB gzip)         |       |
+| Service worker precache                | 3.18 MB, 52 files            |       |
+| One run document on the wire           | ~65 KB trace + ~3 KB profile |       |
+| Data per Feed / Drive / My times open  | ~13 MB (200 full laps)       |       |
+| Firestore reads per open of those      | 200 (one per lap)            |       |
+| My times, 200 laps                     | 11.4 s first, 44 s again     |       |
+| Drive, 200 laps                        | 40 s                         |       |
+
+Not measured: a real phone, the live Firestore usage page, Lighthouse performance score
+(the DevTools tool here leaves performance out).
