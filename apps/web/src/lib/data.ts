@@ -551,7 +551,7 @@ export async function deleteRun(uid: string, run: Run) {
     batch.delete(detailRef(uid, run.id));
     if (run.posted) {
       batch.delete(doc(db, 'posts', run.id));
-      if (count) await countPost(batch, run.routeId, run.id, -1);
+      if (count) countPost(batch, run.routeId, run.id, -1);
     }
     await batch.commit();
   });
@@ -599,15 +599,13 @@ export async function backfillActivity(uid: string): Promise<Activity> {
 
 /**
  * Posting or unposting a lap moves its route's postCount by one, in the same
- * batch as the post: the rules only allow the step next to that post's
- * creation or deletion. Skipped when the route is gone or hidden from you.
+ * batch as the post: the rules require the pair, both ways.
  */
-async function countPost(batch: WriteBatch, routeId: string, postId: string, by: 1 | -1) {
-  if (!(await getRoute(routeId))) return;
+function countPost(batch: WriteBatch, routeId: string, postId: string, by: 1 | -1) {
   batch.update(doc(db, 'routes', routeId), { postCount: increment(by), lastPostId: postId });
 }
 
-/** Write with the count; if that's refused (route deleted since, post already gone), write without it. */
+/** Write with the count; if that's refused (the route was deleted), write without it, which the rules then allow. */
 async function withPostCount(write: (count: boolean) => Promise<void>) {
   await write(true).catch(() => write(false));
 }
@@ -659,7 +657,7 @@ export async function unpostLap(uid: string, runId: string, routeId: string) {
     const batch = writeBatch(db);
     batch.delete(doc(db, 'posts', runId));
     batch.update(doc(db, 'users', uid, 'runs', runId), { posted: false });
-    if (count) await countPost(batch, routeId, runId, -1);
+    if (count) countPost(batch, routeId, runId, -1);
     await batch.commit();
   });
 }
@@ -669,7 +667,7 @@ export async function removePost(post: Pick<Post, 'id' | 'routeId'>) {
   await withPostCount(async (count) => {
     const batch = writeBatch(db);
     batch.delete(doc(db, 'posts', post.id));
-    if (count) await countPost(batch, post.routeId, post.id, -1);
+    if (count) countPost(batch, post.routeId, post.id, -1);
     await batch.commit();
   });
 }

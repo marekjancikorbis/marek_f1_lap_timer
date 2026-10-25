@@ -59,6 +59,14 @@ const run = (extra: object = {}) => ({
   ...extra,
 });
 
+/** Write a post the way the app does: with its route's count step in the same batch. */
+function postWrite(d: ReturnType<typeof db>, id: string, data: ReturnType<typeof post>) {
+  const batch = writeBatch(d);
+  batch.set(doc(d, `posts/${id}`), data);
+  batch.update(doc(d, `routes/${data.routeId}`), { postCount: increment(1), lastPostId: id });
+  return batch.commit();
+}
+
 const post = (extra: object = {}) => ({
   userId: 'driver',
   username: 'driver',
@@ -206,35 +214,35 @@ describe('posting laps', () => {
   );
 
   it('accepts a post that matches its run exactly', async () => {
-    await assertSucceeds(setDoc(doc(db('driver'), 'posts/run1'), post()));
+    await assertSucceeds(postWrite(db('driver'), 'run1', post()));
   });
 
   it('rejects doctored times, simulated laps, private routes and other people', async () => {
     const d = db('driver');
-    await assertFails(setDoc(doc(d, 'posts/run1'), post({ totalMs: 50_000, splitTimesMs: [15_000, 30_000, 50_000] })));
-    await assertFails(setDoc(doc(d, 'posts/sim'), post()));
-    await assertFails(setDoc(doc(d, 'posts/privrun'), post({ routeId: 'priv' })));
-    await assertFails(setDoc(doc(db('stranger'), 'posts/run1'), post({ userId: 'stranger' })));
+    await assertFails(postWrite(d, 'run1', post({ totalMs: 50_000, splitTimesMs: [15_000, 30_000, 50_000] })));
+    await assertFails(postWrite(d, 'sim', post()));
+    await assertFails(postWrite(d, 'privrun', post({ routeId: 'priv' })));
+    await assertFails(postWrite(db('stranger'), 'run1', post({ userId: 'stranger' })));
   });
 
   it('rejects a lap timed before the route was reshaped', async () => {
     await seed({ 'routes/pub': route('creator', { isPublic: true, shapeVersion: 1 }) });
-    await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post()));
+    await assertFails(postWrite(db('driver'), 'run1', post()));
     await seed({ 'users/driver/runs/run1': run({ shapeVersion: 1 }) });
-    await assertSucceeds(setDoc(doc(db('driver'), 'posts/run1'), post()));
+    await assertSucceeds(postWrite(db('driver'), 'run1', post()));
   });
 
   it('accepts 3 big-sector colours and rejects anything else', async () => {
     const d = db('driver');
-    await assertFails(setDoc(doc(d, 'posts/run1'), post({ bigColours: ['purple', 'purple', 'purple', 'purple'] })));
-    await assertFails(setDoc(doc(d, 'posts/run1'), post({ bigColours: ['gold', 'green', 'green'] })));
-    await assertFails(setDoc(doc(d, 'posts/run1'), post({ bigColours: 'purple' })));
-    await assertSucceeds(setDoc(doc(d, 'posts/run1'), post({ bigColours: ['purple', 'green', 'yellow'] })));
+    await assertFails(postWrite(d, 'run1', post({ bigColours: ['purple', 'purple', 'purple', 'purple'] })));
+    await assertFails(postWrite(d, 'run1', post({ bigColours: ['gold', 'green', 'green'] })));
+    await assertFails(postWrite(d, 'run1', post({ bigColours: 'purple' })));
+    await assertSucceeds(postWrite(d, 'run1', post({ bigColours: ['purple', 'green', 'yellow'] })));
   });
 
   it("rejects a post under someone else's name or a made-up route name", async () => {
-    await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post({ username: 'admin' })));
-    await assertFails(setDoc(doc(db('driver'), 'posts/run1'), post({ routeName: 'Fake stage' })));
+    await assertFails(postWrite(db('driver'), 'run1', post({ username: 'admin' })));
+    await assertFails(postWrite(db('driver'), 'run1', post({ routeName: 'Fake stage' })));
   });
 
   it('caps caption and car length on edit as well as on create', async () => {
@@ -249,6 +257,17 @@ describe('posting laps', () => {
     await seed({ 'posts/run1': post(), 'roles/admin': { role: 'admin' } });
     await assertFails(deleteDoc(doc(db('stranger'), 'posts/run1')));
     await assertSucceeds(deleteDoc(doc(db('admin'), 'posts/run1')));
+  });
+
+  it("a post can't come or go without its route's count moving", async () => {
+    const d = db('driver');
+    await assertFails(setDoc(doc(d, 'posts/run1'), post()));
+    await assertSucceeds(postWrite(d, 'run1', post()));
+    await assertFails(deleteDoc(doc(d, 'posts/run1')));
+    const batch = writeBatch(d);
+    batch.delete(doc(d, 'posts/run1'));
+    batch.update(doc(d, 'routes/pub'), { postCount: increment(-1), lastPostId: 'run1' });
+    await assertSucceeds(batch.commit());
   });
 
   it("moves the route's post count by one only together with its post", async () => {

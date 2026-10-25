@@ -329,7 +329,17 @@ service cloud.firestore {
       allow read: if signedIn() && (
         resource.data.hidden == false || resource.data.userId == uid() || isAdmin());
 
-      allow create: if signedIn() && postMatchesRun();
+      allow create: if signedIn() && postMatchesRun() && countMoved(request.resource.data.routeId, 1);
+
+      // The other half of the route's postCountStep: a post comes and goes only with
+      // its route's count moving by one in the same write (unless the route is gone),
+      // so posting and unposting can't be repeated to inflate it.
+      function countMoved(routeId, by) {
+        let route = /databases/$(database)/documents/routes/$(routeId);
+        return !existsAfter(route)
+          || (getAfter(route).data.get('postCount', 0) == get(route).data.get('postCount', 0) + by
+            && getAfter(route).data.get('lastPostId', '') == runId);
+      }
 
       function postMatchesRun() {
         let p = request.resource.data;
@@ -366,7 +376,8 @@ service cloud.firestore {
       allow update: if (signedIn() && resource.data.userId == uid() && onlyChanges(['caption', 'car']) && extrasOk(request.resource.data))
         || (isAdmin() && onlyChanges(['hidden']));
 
-      allow delete: if signedIn() && (resource.data.userId == uid() || isAdmin());
+      // Admins delete posts in bulk (a reshaped or removed route) and are trusted with the count.
+      allow delete: if signedIn() && (isAdmin() || (resource.data.userId == uid() && countMoved(resource.data.routeId, -1)));
     }
 
     // ------------------------------------------------------------ activity
