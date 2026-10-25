@@ -5,7 +5,6 @@ import { DriveController, type DriveState } from '../drive/controller';
 import { clearPendingDrive, takePendingDrive } from '../drive/store';
 import { STRIP_LABEL } from '../components/ui';
 import { formatDelta, formatDistance, formatLap, formatSpeed } from '../lib/format';
-import { lockPortrait, unlockOrientation } from '../lib/orientation';
 
 export default function Drive() {
   const { routeId = '' } = useParams();
@@ -15,16 +14,13 @@ export default function Drive() {
   const [s, setS] = useState<DriveState | null>(null);
   // Turning the phone sideways switches to delta only, upright back to the full HUD.
   const [mode, setMode] = useState(() => cfg?.mode ?? 'hud');
-  const landscape = useLandscape();
-  // The screen often stays upright while driving (rotation lock, or the OS ignoring a shaking car):
-  // then gravity says sideways and the screen is turned in CSS instead.
+  // Like TikTok: the app stays locked upright and gravity alone decides, turning the screen in CSS,
+  // so it works with the phone's rotation lock on and while the OS ignores a shaking car.
   const turn = useSideways();
-  const sideways = landscape || turn !== null;
+  const sideways = turn !== null;
+  // Where the portrait lock can't hold (iOS), the OS may rotate too: then don't turn it twice.
+  const landscape = useLandscape();
   const firstOrientation = useRef(true);
-  useEffect(() => {
-    unlockOrientation();
-    return lockPortrait;
-  }, []);
   useEffect(() => {
     if (firstOrientation.current) {
       firstOrientation.current = false;

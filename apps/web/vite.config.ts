@@ -15,8 +15,8 @@ export default defineConfig({
         theme_color: '#0C0E12',
         background_color: '#0C0E12',
         display: 'standalone',
-        // The drive screen turns sideways for delta only; the rest of the app locks itself upright (lib/orientation).
-        orientation: 'any',
+        // Always upright; the drive screen turns its own content from gravity (Drive.tsx useSideways).
+        orientation: 'portrait',
         start_url: '/',
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
