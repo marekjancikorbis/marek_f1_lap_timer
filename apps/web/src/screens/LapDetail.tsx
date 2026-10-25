@@ -65,7 +65,7 @@ export default function LapDetail() {
   async function remove() {
     if (!post || !confirm('Remove this post? The lap stays in your history.')) return;
     try {
-      await unpostLap(profile.id, post.id);
+      await unpostLap(profile.id, post.id, post.routeId);
       toast('Post removed');
       nav(-1);
     } catch (e) {

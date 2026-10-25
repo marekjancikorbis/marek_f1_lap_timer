@@ -66,6 +66,11 @@ function publish({ mapLoads, directions, staticMaps }: Counts) {
   listeners.forEach((l) => l(last!));
 }
 
+/** How many more this period allows, as last read; 0 while not read yet. */
+export function roomLeft(kind: UsageKind): number {
+  return last ? USAGE_CAP[kind] - last[kind] : 0;
+}
+
 export async function readUsage(): Promise<UsageState> {
   const snap = await getDoc(doc(db, 'usage', periodKey()));
   publish(counts(snap.data()));

@@ -96,7 +96,7 @@ export default function RunHistory() {
 
   async function unpost(run: Run) {
     try {
-      await unpostLap(profile.id, run.id);
+      await unpostLap(profile.id, run.id, run.routeId);
       setRuns((rs) => rs?.map((r) => (r.id === run.id ? { ...r, posted: false } : r)) ?? null);
       toast('Post removed');
     } catch (e) {

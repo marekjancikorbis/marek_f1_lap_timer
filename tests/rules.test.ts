@@ -1,7 +1,7 @@
 // Security rules tests against the Firestore emulator. Run with `npm run test:rules`
 // (needs Java 11+ on PATH for the emulator).
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, deleteField, doc, getDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { deleteDoc, deleteField, doc, increment, getDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
@@ -249,6 +249,35 @@ describe('posting laps', () => {
     await seed({ 'posts/run1': post(), 'roles/admin': { role: 'admin' } });
     await assertFails(deleteDoc(doc(db('stranger'), 'posts/run1')));
     await assertSucceeds(deleteDoc(doc(db('admin'), 'posts/run1')));
+  });
+
+  it("moves the route's post count by one only together with its post", async () => {
+    const d = db('driver');
+    const step = (by: number) => ({ postCount: increment(by), lastPostId: 'run1' });
+    // Not without a post, and never by more than one.
+    await assertFails(updateDoc(doc(d, 'routes/pub'), step(1)));
+    let batch = writeBatch(d);
+    batch.set(doc(d, 'posts/run1'), post());
+    batch.update(doc(d, 'routes/pub'), step(2));
+    await assertFails(batch.commit());
+    // Posting counts one up, unposting one down.
+    batch = writeBatch(d);
+    batch.set(doc(d, 'posts/run1'), post());
+    batch.update(doc(d, 'routes/pub'), step(1));
+    await assertSucceeds(batch.commit());
+    await assertFails(updateDoc(doc(d, 'routes/pub'), step(1))); // the post already existed
+    batch = writeBatch(d);
+    batch.delete(doc(d, 'posts/run1'));
+    batch.update(doc(d, 'routes/pub'), step(-1));
+    await assertSucceeds(batch.commit());
+  });
+
+  it('only moderators set a route count outright; owners never do', async () => {
+    await seed({ 'roles/admin': { role: 'admin' }, 'roles/creator': { role: 'creator' } });
+    await assertFails(updateDoc(doc(db('creator'), 'routes/pub'), { postCount: 99 }));
+    await assertFails(updateDoc(doc(db('creator'), 'routes/priv'), { postCount: 99, name: 'Renamed' }));
+    await assertFails(updateDoc(doc(db('driver'), 'routes/pub'), { postCount: 5, postCountV: 1 }));
+    await assertSucceeds(updateDoc(doc(db('admin'), 'routes/pub'), { postCount: 5, postCountV: 1 }));
   });
 });
 

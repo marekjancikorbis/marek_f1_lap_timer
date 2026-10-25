@@ -48,6 +48,12 @@ export interface Route {
   waypoints?: number[];
   /** Bumped on every shape change; only runs on the current shape can be posted. */
   shapeVersion?: number;
+  /** Posted laps on the route, moved by one with each post or unpost (see countPost in data.ts). */
+  postCount?: number;
+  /** 1 once a moderator has stored the exact count; routes from before counts were kept lack it. */
+  postCountV?: number;
+  /** The post whose creation or deletion last moved postCount; the rules check it. */
+  lastPostId?: string;
 }
 
 export interface Run {

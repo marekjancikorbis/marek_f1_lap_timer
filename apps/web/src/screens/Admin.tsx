@@ -294,7 +294,7 @@ function Posts() {
   async function remove(p: Post) {
     if (!confirm(`Remove ${p.username}'s ${formatLap(p.totalMs)} post on ${p.routeName}?`)) return;
     try {
-      await removePost(p.id);
+      await removePost(p);
       setPosts((ps) => ps?.filter((x) => x.id !== p.id) ?? null);
       toast('Post removed');
     } catch (e) {

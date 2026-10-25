@@ -102,7 +102,7 @@ export default function UserPage() {
   async function remove(post: Post) {
     if (!confirm(`Remove your ${formatLap(post.totalMs)} lap from ${post.routeName}? It stays in your run history.`)) return;
     try {
-      await unpostLap(me.id, post.id);
+      await unpostLap(me.id, post.id, post.routeId);
       setPosts((ps) => ps.filter((p) => p.id !== post.id));
       toast('Post removed');
     } catch (e) {

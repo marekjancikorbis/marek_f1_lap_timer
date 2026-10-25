@@ -2,7 +2,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useEffect, useRef, useState } from 'react';
 import { MAPBOX_STYLE, MAPBOX_TOKEN } from '../lib/config';
-import { consume, UsageLimitError } from '../lib/usage';
+import { consume, roomLeft, UsageLimitError } from '../lib/usage';
 import { Spinner } from './ui';
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -20,8 +20,8 @@ interface Props {
 }
 
 /**
- * A Mapbox map. Every mount counts one map load against the monthly cap
- * before Mapbox is contacted; at the cap the app's limit screen takes over.
+ * A Mapbox map. Every mount counts one map load against the monthly cap (before
+ * Mapbox is contacted when close to it); at the cap the app's limit screen takes over.
  */
 export function MapView({ onReady, bounds, center, zoom = 12, interactive = true, height = 280, className, label }: Props) {
   const el = useRef<HTMLDivElement>(null);
@@ -35,14 +35,22 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
     let cancelled = false;
     let giveUp = 0;
     let resize: ResizeObserver | null = null;
+    let refused = false;
     (async () => {
-      try {
-        await consume('mapLoads');
-      } catch (e) {
-        if (!cancelled) setState(e instanceof UsageLimitError ? 'limited' : 'error');
-        return;
-      }
-      if (cancelled || !el.current) return;
+      const counted = consume('mapLoads').then(
+        () => true,
+        (e) => {
+          refused = true;
+          if (!cancelled) setState(e instanceof UsageLimitError ? 'limited' : 'error');
+          map?.remove();
+          map = null;
+          return false;
+        },
+      );
+      // Far from the cap, the count's round trips run while Mapbox starts; near it, a load
+      // must be counted before Mapbox is contacted, so none goes past the cap.
+      if (roomLeft('mapLoads') < 500 && !(await counted)) return;
+      if (cancelled || refused || !el.current) return;
       // Start from a centre and fit the bounds once loaded: passing bounds to the constructor
       // throws "failed to invert matrix" in Mapbox GL 3, so 'load' never fired.
       map = new mapboxgl.Map({
@@ -62,7 +70,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
       // Never spin forever: no signal, blocked token or a Mapbox failure ends here.
       giveUp = window.setTimeout(() => !cancelled && setState((s) => (s === 'loading' ? 'error' : s)), 20_000);
       map.on('load', () => {
-        if (cancelled || !map) return;
+        if (cancelled || refused || !map) return;
         window.clearTimeout(giveUp);
         if (bounds) map.fitBounds(bounds, { padding: 40, duration: 0 });
         setState('ready');

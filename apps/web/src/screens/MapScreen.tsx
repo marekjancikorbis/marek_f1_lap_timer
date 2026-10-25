@@ -7,7 +7,7 @@ import { FollowButton } from '../components/FollowButton';
 import { MapView } from '../components/MapView';
 import { RouteShape } from '../components/RouteShape';
 import { Avatar, errorMessage, Spinner, useToast } from '../components/ui';
-import { myRoutes, publicRoutes, searchUsers } from '../lib/data';
+import { myRoutes, publicRoutes, searchUsers, setPostCount } from '../lib/data';
 import { db } from '../lib/firebase';
 import { formatDistance } from '../lib/format';
 import { lngLatPairs } from '../lib/geo';
@@ -26,14 +26,28 @@ const kindOf = (r: Route): Kind => (!r.isPublic ? 'private' : r.official ? 'offi
 /** Mapbox expression: the colour for a feature's `kind`. */
 const KIND_PAINT = ['match', ['get', 'kind'], 'official', KIND_COLOUR.official, 'creator', KIND_COLOUR.creator, KIND_COLOUR.private] as unknown as string;
 
+/** Where the map was last left (per device), so the next visit opens there without a jump. */
+const CAMERA_KEY = 'explore-camera';
+function savedCamera(): { center: [number, number]; zoom: number } | null {
+  try {
+    return JSON.parse(localStorage.getItem(CAMERA_KEY) ?? 'null');
+  } catch {
+    return null;
+  }
+}
+
 /** Explore: the map of routes with one search for routes and drivers. */
 export default function MapScreen() {
   const nav = useNavigate();
   const toast = useToast();
-  const { profile, isCreator } = useMe();
+  const { profile, isCreator, isAdmin } = useMe();
   const [routes, setRoutes] = useState<Route[] | null>(null);
-  const [counts, setCounts] = useState<Record<string, number>>({});
+  /** Counted here for routes from before counts were kept on the route. */
+  const [oldCounts, setOldCounts] = useState<Record<string, number>>({});
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [camera] = useState(savedCamera);
+  const [mapReady, setMapReady] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [q, setQ] = useState(() => sessionStorage.getItem('explore-q') ?? '');
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState(false);
@@ -72,25 +86,47 @@ export default function MapScreen() {
     return term ? byKind.filter((r) => r.name.toLowerCase().includes(term)) : byKind;
   }, [routes, filter, term]);
 
+  // The map's tiles get the network first; routes load once it has drawn (or after a few
+  // seconds, if the map can't load), then go on top.
+  const [routesDue, setRoutesDue] = useState(false);
   useEffect(() => {
+    if (mapReady) setRoutesDue(true);
+    const t = window.setTimeout(() => setRoutesDue(true), 4000);
+    return () => window.clearTimeout(t);
+  }, [mapReady]);
+
+  useEffect(() => {
+    if (!routesDue) return;
     // Public routes for everyone, plus your own private ones (only you can read those).
     Promise.all([publicRoutes(), isCreator ? myRoutes(profile.id).catch(() => []) : []])
       .then(async ([pub, mine]) => {
-        const rs = [...pub, ...mine.filter((r) => !r.isPublic && !r.hidden)];
-        setRoutes(rs);
+        setRoutes([...pub, ...mine.filter((r) => !r.isPublic && !r.hidden)]);
+        // Routes from before counts were kept: count them once here; a moderator's visit stores it.
+        // shortcut: a post landing between this count and the store is missed until the next recount.
+        const old = pub.filter((r) => r.postCountV !== 1).slice(0, 150);
         const entries = await Promise.all(
-          pub.slice(0, 150).map(async (r) => {
+          old.map(async (r) => {
             const c = await getCountFromServer(query(collection(db, 'posts'), where('routeId', '==', r.id), where('hidden', '==', false))).catch(() => null);
+            if (c && isAdmin) void setPostCount(r.id, c.data().count).catch(() => undefined);
             return [r.id, c?.data().count ?? 0] as const;
           }),
         );
-        setCounts(Object.fromEntries(entries));
+        if (entries.length) setOldCounts(Object.fromEntries(entries));
       })
       .catch((e) => {
         toast(errorMessage(e), 'error');
         setRoutes([]);
       });
-  }, [toast, isCreator, profile.id]);
+  }, [routesDue, toast, isCreator, isAdmin, profile.id]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const r of routes ?? []) c[r.id] = r.postCountV === 1 ? Math.max(0, r.postCount ?? 0) : (oldCounts[r.id] ?? Math.max(0, r.postCount ?? 0));
+    return c;
+  }, [routes, oldCounts]);
+
+  /** The routes the map was last fitted to: counts arriving must not move the map. */
+  const fitted = useRef<string | null>(null);
 
   const draw = useCallback(() => {
     const map = mapRef.current;
@@ -112,11 +148,18 @@ export default function MapScreen() {
         geometry: { type: 'LineString', coordinates: lngLatPairs(r.coords) },
       })),
     };
+    // Fit when the set of routes changes (a chip, a search), not when only counts change.
+    // The first time, a saved view stays put: it's where the driver left the map.
+    const key = routes.map((r) => r.id).join();
+    const refit = () => {
+      if (fitted.current !== key && (fitted.current !== null || !camera)) fit(map, routes);
+      fitted.current = key;
+    };
     const s = map.getSource('starts') as mapboxgl.GeoJSONSource | undefined;
     if (s) {
       s.setData(starts);
       (map.getSource('lines') as mapboxgl.GeoJSONSource).setData(lines);
-      fit(map, routes);
+      refit();
       return;
     }
     map.addSource('lines', { type: 'geojson', data: lines });
@@ -155,7 +198,7 @@ export default function MapScreen() {
       type: 'symbol',
       source: 'starts',
       filter: ['has', 'point_count'],
-      layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 14, 'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'] },
+      layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 14, 'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'] },
       paint: { 'text-color': '#eef1f5' },
     });
     // Pin size grows with the number of posted laps: busy routes read first.
@@ -204,8 +247,8 @@ export default function MapScreen() {
       map.on('mouseenter', layer, () => (map.getCanvas().style.cursor = 'pointer'));
       map.on('mouseleave', layer, () => (map.getCanvas().style.cursor = ''));
     }
-    fit(map, routes);
-  }, [shown, counts, nav]);
+    refit();
+  }, [shown, counts, nav, camera]);
 
   useEffect(draw, [draw]);
 
@@ -233,14 +276,18 @@ export default function MapScreen() {
     e.currentTarget.setPointerCapture(e.pointerId);
     drag.current = { y: e.clientY, h: sheetRef.current!.offsetHeight, dy: 0 };
   };
+  // The sheet's height follows the finger. While dragging it holds the whole list, so pulling
+  // up shows more rows at once (collapsed, it only has two, and couldn't grow past them).
   const onPullMove = (e: PointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
     const sheet = sheetRef.current;
     if (!d || !sheet) return;
     d.dy = e.clientY - d.y;
     if (Math.abs(d.dy) < 5) return;
+    setDragging(true);
     sheet.style.transition = 'none';
-    sheet.style.maxHeight = `${Math.min(sheet.parentElement!.clientHeight * 0.85, Math.max(70, d.h - d.dy))}px`;
+    sheet.style.maxHeight = 'none';
+    sheet.style.height = `${Math.min(sheet.parentElement!.clientHeight * 0.85, Math.max(70, d.h - d.dy))}px`;
   };
   const onPullEnd = () => {
     const d = drag.current;
@@ -248,16 +295,32 @@ export default function MapScreen() {
     drag.current = null;
     if (!d || !sheet || Math.abs(d.dy) < 5) return;
     dragged.current = true;
+    // Hand over to the open or shut height from where the finger let go, animated.
+    sheet.style.maxHeight = `${sheet.offsetHeight}px`;
+    sheet.style.height = '';
+    void sheet.offsetHeight;
     sheet.style.transition = '';
     sheet.style.maxHeight = '';
+    setDragging(false);
     setOpen(d.dy < 0);
   };
 
   const onReady = useCallback(
     (map: mapboxgl.Map) => {
       mapRef.current = map;
+      setMapReady(true);
       draw();
+      const keep = () => {
+        try {
+          const c = map.getCenter();
+          localStorage.setItem(CAMERA_KEY, JSON.stringify({ center: [c.lng, c.lat], zoom: map.getZoom() }));
+        } catch {
+          // Private mode or storage full: the next visit just starts on the whole country.
+        }
+      };
+      map.on('moveend', keep);
       return () => {
+        map.off('moveend', keep);
         mapRef.current = null;
       };
     },
@@ -271,7 +334,7 @@ export default function MapScreen() {
   const showDrivers = filter === 'drivers' || (!!term && filter === 'all');
   const showRoutes = filter !== 'drivers';
   // Collapsed, the sheet shows a couple of rows; searching opens it.
-  const expanded = open || docked;
+  const expanded = open || docked || dragging;
   const title =
     filter === 'drivers'
       ? 'Drivers'
@@ -281,7 +344,7 @@ export default function MapScreen() {
 
   return (
     <main className="map-screen">
-      <MapView onReady={onReady} center={[15.5, 49.8]} zoom={6} height="100%" label="Routes" />
+      <MapView onReady={onReady} center={camera?.center ?? [15.5, 49.8]} zoom={camera?.zoom ?? 6} height="100%" label="Routes" />
       <div className="explore-top" ref={topRef}>
         <label className="search-box explore-search">
           <SearchIcon size={18} aria-hidden="true" />

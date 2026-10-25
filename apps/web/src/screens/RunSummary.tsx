@@ -108,7 +108,7 @@ export default function RunSummary() {
   async function unpost() {
     if (!run) return;
     try {
-      await unpostLap(profile.id, run.id);
+      await unpostLap(profile.id, run.id, run.routeId);
       setRun({ ...run, posted: false });
       toast('Post removed');
     } catch (e) {

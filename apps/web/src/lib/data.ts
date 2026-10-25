@@ -20,6 +20,7 @@ import {
   type DocumentReference,
   type DocumentSnapshot,
   type QueryDocumentSnapshot,
+  type WriteBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { AuditEntry, CreatorRequest, Post, Profile, Role, Route, Run } from './types';
@@ -384,7 +385,9 @@ export async function deleteRoute(uid: string, id: string) {
  */
 export async function updateRoute(uid: string, route: Route, change: Partial<Route>, shapeChanged: boolean) {
   forget('route', 'run', 'post', 'feed');
-  await updateDoc(doc(db, 'routes', route.id), shapeChanged ? { ...change, shapeVersion: (route.shapeVersion ?? 0) + 1 } : change);
+  // A new shape on a published route deletes its posts (below), so its count starts again at 0.
+  const recount = route.publishedAt ? { postCount: 0, postCountV: 1 } : {};
+  await updateDoc(doc(db, 'routes', route.id), shapeChanged ? { ...change, ...recount, shapeVersion: (route.shapeVersion ?? 0) + 1 } : change);
   if (!shapeChanged) return;
   if (route.publishedAt) await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', route.id)))).docs.map((d) => d.ref));
   await deleteAll(await myRunsOn(uid, route.id));
@@ -541,12 +544,17 @@ export function allMyRuns(uid: string): Promise<Run[]> {
 }
 
 export async function deleteRun(uid: string, run: Run) {
-  forget('run', 'post', 'feed', 'activity');
-  const batch = writeBatch(db);
-  batch.delete(doc(db, 'users', uid, 'runs', run.id));
-  batch.delete(detailRef(uid, run.id));
-  if (run.posted) batch.delete(doc(db, 'posts', run.id));
-  await batch.commit();
+  forget('run', 'post', 'feed', 'activity', 'route');
+  await withPostCount(async (count) => {
+    const batch = writeBatch(db);
+    batch.delete(doc(db, 'users', uid, 'runs', run.id));
+    batch.delete(detailRef(uid, run.id));
+    if (run.posted) {
+      batch.delete(doc(db, 'posts', run.id));
+      if (count) await countPost(batch, run.routeId, run.id, -1);
+    }
+    await batch.commit();
+  });
   if (!run.replay) void countActivity(uid, run.startedAt, -1);
 }
 
@@ -589,14 +597,36 @@ export async function backfillActivity(uid: string): Promise<Activity> {
 
 // ================================================================ posts
 
+/**
+ * Posting or unposting a lap moves its route's postCount by one, in the same
+ * batch as the post: the rules only allow the step next to that post's
+ * creation or deletion. Skipped when the route is gone or hidden from you.
+ */
+async function countPost(batch: WriteBatch, routeId: string, postId: string, by: 1 | -1) {
+  if (!(await getRoute(routeId))) return;
+  batch.update(doc(db, 'routes', routeId), { postCount: increment(by), lastPostId: postId });
+}
+
+/** Write with the count; if that's refused (route deleted since, post already gone), write without it. */
+async function withPostCount(write: (count: boolean) => Promise<void>) {
+  await write(true).catch(() => write(false));
+}
+
+/** Moderators: store a route's exact count, for routes from before counts were kept. */
+export async function setPostCount(routeId: string, postCount: number) {
+  forget('route');
+  await updateDoc(doc(db, 'routes', routeId), { postCount, postCountV: 1 });
+}
+
 export async function postLap(
   profile: Profile,
   run: Run,
   route: Route,
   extra: Pick<Post, 'caption' | 'car' | 'sectorColours' | 'bigColours' | 'positionAtPost' | 'isPB'>,
 ): Promise<void> {
-  forget('run', 'post', 'feed');
+  forget('run', 'post', 'feed', 'route');
   const batch = writeBatch(db);
+  batch.update(doc(db, 'routes', route.id), { postCount: increment(1), lastPostId: run.id });
   batch.set(doc(db, 'posts', run.id), {
     userId: profile.id,
     username: profile.username,
@@ -623,17 +653,25 @@ export async function postLap(
   await batch.commit();
 }
 
-export async function unpostLap(uid: string, runId: string) {
-  forget('run', 'post', 'feed');
-  const batch = writeBatch(db);
-  batch.delete(doc(db, 'posts', runId));
-  batch.update(doc(db, 'users', uid, 'runs', runId), { posted: false });
-  await batch.commit();
+export async function unpostLap(uid: string, runId: string, routeId: string) {
+  forget('run', 'post', 'feed', 'route');
+  await withPostCount(async (count) => {
+    const batch = writeBatch(db);
+    batch.delete(doc(db, 'posts', runId));
+    batch.update(doc(db, 'users', uid, 'runs', runId), { posted: false });
+    if (count) await countPost(batch, routeId, runId, -1);
+    await batch.commit();
+  });
 }
 
-export async function removePost(postId: string) {
-  forget('post', 'feed');
-  await deleteDoc(doc(db, 'posts', postId));
+export async function removePost(post: Pick<Post, 'id' | 'routeId'>) {
+  forget('post', 'feed', 'route');
+  await withPostCount(async (count) => {
+    const batch = writeBatch(db);
+    batch.delete(doc(db, 'posts', post.id));
+    if (count) await countPost(batch, post.routeId, post.id, -1);
+    await batch.commit();
+  });
 }
 
 export function getPost(id: string): Promise<Post | null> {
