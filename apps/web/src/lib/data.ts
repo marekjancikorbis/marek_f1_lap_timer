@@ -28,6 +28,35 @@ function withId<T>(snap: DocumentSnapshot | QueryDocumentSnapshot): T {
   return { id: snap.id, ...snap.data() } as T;
 }
 
+// ================================================================ session cache
+
+/**
+ * Reads from the last minute come straight from memory, so going back to a
+ * screen needs no network. Every write below forgets the keys it touches, so
+ * your own changes always show; other people's show within a minute.
+ */
+const cache = new Map<string, { at: number; value: Promise<unknown> }>();
+const TTL_MS = 60_000;
+
+function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.value as Promise<T>;
+  const value = load();
+  cache.set(key, { at: Date.now(), value });
+  value.catch(() => cache.get(key)?.value === value && cache.delete(key)); // never keep a failure
+  return value;
+}
+
+/** Drop every cached read whose key starts with one of these. */
+export function forget(...prefixes: string[]) {
+  for (const key of [...cache.keys()]) if (prefixes.some((p) => key.startsWith(p))) cache.delete(key);
+}
+
+/** On sign-out or a user switch. */
+export function clearCache() {
+  cache.clear();
+}
+
 function chunks<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
@@ -58,6 +87,7 @@ export async function createProfile(uid: string, username: string): Promise<void
 }
 
 export async function setHomeRoute(uid: string, routeId: string | null): Promise<void> {
+  forget('profile');
   await updateDoc(doc(db, 'users', uid), { homeRouteId: routeId });
 }
 
@@ -68,12 +98,15 @@ export async function localsOf(routeId: string): Promise<Profile[]> {
 }
 
 export async function updateMyProfile(uid: string, data: Partial<Pick<Profile, 'countdownS' | 'avatarHue'>> & { acceptedTermsAt?: unknown }) {
+  forget('profile');
   await updateDoc(doc(db, 'users', uid), data);
 }
 
-export async function getProfile(uid: string): Promise<Profile | null> {
-  const snap = await getDoc(doc(db, 'users', uid));
-  return snap.exists() ? withId<Profile>(snap) : null;
+export function getProfile(uid: string): Promise<Profile | null> {
+  return cached(`profile:${uid}`, async () => {
+    const snap = await getDoc(doc(db, 'users', uid));
+    return snap.exists() ? withId<Profile>(snap) : null;
+  });
 }
 
 export async function getProfileByUsername(username: string): Promise<Profile | null> {
@@ -82,13 +115,16 @@ export async function getProfileByUsername(username: string): Promise<Profile | 
   return getProfile(name.data().uid as string);
 }
 
-export async function getProfiles(uids: string[]): Promise<Map<string, Profile>> {
-  const map = new Map<string, Profile>();
-  for (const part of chunks([...new Set(uids)], 30)) {
-    const snap = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', part)));
-    snap.forEach((d) => map.set(d.id, withId<Profile>(d)));
-  }
-  return map;
+export function getProfiles(uids: string[]): Promise<Map<string, Profile>> {
+  const ids = [...new Set(uids)].sort();
+  return cached(`profiles:${ids.join(',')}`, async () => {
+    const map = new Map<string, Profile>();
+    for (const part of chunks(ids, 30)) {
+      const snap = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', part)));
+      snap.forEach((d) => map.set(d.id, withId<Profile>(d)));
+    }
+    return map;
+  });
 }
 
 /** Username prefix search, case-insensitive, at most 20 results. */
@@ -205,6 +241,7 @@ export async function setAdmin(
   grant: boolean,
   fromRequest?: 'approve' | 'reject',
 ): Promise<void> {
+  forget('route');
   const batch = writeBatch(db);
   const audit = doc(collection(db, 'roleAudit'));
   const action = fromRequest ? `${fromRequest}_admin_request` : grant ? 'grant_admin' : 'revoke_admin';
@@ -253,6 +290,7 @@ export async function listAudit(): Promise<AuditEntry[]> {
 export type NewRoute = Omit<Route, 'id' | 'createdAt' | 'publishedAt' | 'isPublic' | 'hidden' | 'hasRuns'>;
 
 export async function createRoute(data: NewRoute): Promise<string> {
+  forget('route');
   const ref = doc(collection(db, 'routes'));
   await setDoc(ref, {
     ...data,
@@ -265,13 +303,15 @@ export async function createRoute(data: NewRoute): Promise<string> {
   return ref.id;
 }
 
-export async function getRoute(id: string): Promise<Route | null> {
-  try {
-    const snap = await getDoc(doc(db, 'routes', id));
-    return snap.exists() ? withId<Route>(snap) : null;
-  } catch {
-    return null; // private route of someone else, or hidden
-  }
+export function getRoute(id: string): Promise<Route | null> {
+  return cached(`route:${id}`, async () => {
+    try {
+      const snap = await getDoc(doc(db, 'routes', id));
+      return snap.exists() ? withId<Route>(snap) : null;
+    } catch {
+      return null; // private route of someone else, or hidden
+    }
+  });
 }
 
 export async function getRoutes(ids: string[]): Promise<Map<string, Route>> {
@@ -285,14 +325,18 @@ export async function getRoutes(ids: string[]): Promise<Map<string, Route>> {
   return map;
 }
 
-export async function myRoutes(uid: string): Promise<Route[]> {
-  const snap = await getDocs(query(collection(db, 'routes'), where('ownerId', '==', uid), orderBy('createdAt', 'desc')));
-  return snap.docs.map((d) => withId<Route>(d));
+export function myRoutes(uid: string): Promise<Route[]> {
+  return cached(`routes:mine:${uid}`, async () => {
+    const snap = await getDocs(query(collection(db, 'routes'), where('ownerId', '==', uid), orderBy('createdAt', 'desc')));
+    return snap.docs.map((d) => withId<Route>(d));
+  });
 }
 
-export async function publicRoutes(): Promise<Route[]> {
-  const snap = await getDocs(query(collection(db, 'routes'), where('isPublic', '==', true), where('hidden', '==', false), limit(500)));
-  return snap.docs.map((d) => withId<Route>(d));
+export function publicRoutes(): Promise<Route[]> {
+  return cached('routes:public', async () => {
+    const snap = await getDocs(query(collection(db, 'routes'), where('isPublic', '==', true), where('hidden', '==', false), limit(500)));
+    return snap.docs.map((d) => withId<Route>(d));
+  });
 }
 
 export async function publicRoutesOf(uid: string): Promise<Route[]> {
@@ -308,6 +352,7 @@ export function publicLimit(role: Role): number {
 }
 
 export async function renameRoute(id: string, name: string) {
+  forget('route');
   await updateDoc(doc(db, 'routes', id), { name: name.trim().slice(0, 60) });
 }
 
@@ -327,6 +372,7 @@ async function myRunsOn(uid: string, routeId: string): Promise<DocumentReference
 
 /** Owner delete of a private route; the owner's own runs on it go too, as they'd have no route to show against. */
 export async function deleteRoute(uid: string, id: string) {
+  forget('route', 'run');
   await deleteDoc(doc(db, 'routes', id));
   await deleteAll(await myRunsOn(uid, id));
 }
@@ -337,6 +383,7 @@ export async function deleteRoute(uid: string, id: string) {
  * Only a published route can have posts (and only admins edit those).
  */
 export async function updateRoute(uid: string, route: Route, change: Partial<Route>, shapeChanged: boolean) {
+  forget('route', 'run', 'post', 'feed');
   await updateDoc(doc(db, 'routes', route.id), shapeChanged ? { ...change, shapeVersion: (route.shapeVersion ?? 0) + 1 } : change);
   if (!shapeChanged) return;
   if (route.publishedAt) await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', route.id)))).docs.map((d) => d.ref));
@@ -349,6 +396,7 @@ export async function updateRoute(uid: string, route: Route, change: Partial<Rou
  * replaced; with more allowed, publishing past the limit is refused.
  */
 export async function setRoutePublic(profile: Profile, role: Role, own: Route[], route: Route, makePublic: boolean): Promise<void> {
+  forget('route', 'profile');
   const userRef = doc(db, 'users', profile.id);
   let ids = profile.publicRouteIds ?? [];
   // Drop ids of routes that are no longer public (e.g. unpublished by a moderator); the rules allow one per write.
@@ -379,11 +427,13 @@ export async function setRoutePublic(profile: Profile, role: Role, own: Route[],
 
 export async function markRouteHasRuns(route: Route) {
   if (route.hasRuns) return;
+  forget('route');
   await updateDoc(doc(db, 'routes', route.id), { hasRuns: true }).catch(() => undefined);
 }
 
 /** Admin moderation. Hiding a route also hides its posts from feeds and boards. */
 export async function moderateRoute(routeId: string, change: { isPublic?: boolean; hidden?: boolean; official?: boolean }) {
+  forget('route', 'post', 'feed');
   await updateDoc(doc(db, 'routes', routeId), change);
   if (change.hidden !== undefined) {
     const posts = await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)));
@@ -397,6 +447,7 @@ export async function moderateRoute(routeId: string, change: { isPublic?: boolea
 
 /** Admin delete. The route goes first so a refused delete leaves its posts alone; then its posts, which would point nowhere. */
 export async function adminDeleteRoute(routeId: string) {
+  forget('route', 'post', 'feed');
   await deleteDoc(doc(db, 'routes', routeId));
   await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)))).docs.map((d) => d.ref));
 }
@@ -429,6 +480,7 @@ export type RunDetail = Pick<Run, 'trace' | 'profile'>;
 
 export async function saveRun(uid: string, run: Omit<Run, 'createdAt'>): Promise<void> {
   const { id, trace, profile, ...data } = run;
+  forget('run', 'activity');
   const batch = writeBatch(db);
   batch.set(doc(db, 'users', uid, 'runs', id), { ...data, createdAt: serverTimestamp() });
   batch.set(detailRef(uid, id), { trace: trace ?? [], profile: profile ?? null });
@@ -439,9 +491,11 @@ export async function saveRun(uid: string, run: Omit<Run, 'createdAt'>): Promise
 }
 
 /** A run with its trace and profile. Runs saved before the split still carry them themselves. */
-export async function getRun(uid: string, id: string): Promise<Run | null> {
-  const [snap, detail] = await Promise.all([getDoc(doc(db, 'users', uid, 'runs', id)), getDoc(detailRef(uid, id))]);
-  return snap.exists() ? { ...withId<Run>(snap), ...(detail.data() as RunDetail | undefined) } : null;
+export function getRun(uid: string, id: string): Promise<Run | null> {
+  return cached(`run:${uid}:${id}`, async () => {
+    const [snap, detail] = await Promise.all([getDoc(doc(db, 'users', uid, 'runs', id)), getDoc(detailRef(uid, id))]);
+    return snap.exists() ? { ...withId<Run>(snap), ...(detail.data() as RunDetail | undefined) } : null;
+  });
 }
 
 /** Runs without trace and profile (see getRun for those). */
@@ -472,17 +526,22 @@ function moveDetails(uid: string, docs: QueryDocumentSnapshot[]) {
   }
 }
 
-export async function runsForRoute(uid: string, routeId: string): Promise<Run[]> {
-  const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', routeId)));
-  return lightRuns(uid, snap.docs).sort((a, b) => b.startedAt - a.startedAt);
+export function runsForRoute(uid: string, routeId: string): Promise<Run[]> {
+  return cached(`runs:route:${uid}:${routeId}`, async () => {
+    const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), where('routeId', '==', routeId)));
+    return lightRuns(uid, snap.docs).sort((a, b) => b.startedAt - a.startedAt);
+  });
 }
 
-export async function allMyRuns(uid: string): Promise<Run[]> {
-  const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), orderBy('startedAt', 'desc'), limit(500)));
-  return lightRuns(uid, snap.docs);
+export function allMyRuns(uid: string): Promise<Run[]> {
+  return cached(`runs:all:${uid}`, async () => {
+    const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), orderBy('startedAt', 'desc'), limit(500)));
+    return lightRuns(uid, snap.docs);
+  });
 }
 
 export async function deleteRun(uid: string, run: Run) {
+  forget('run', 'post', 'feed', 'activity');
   const batch = writeBatch(db);
   batch.delete(doc(db, 'users', uid, 'runs', run.id));
   batch.delete(detailRef(uid, run.id));
@@ -510,9 +569,11 @@ function countActivity(uid: string, startedAt: number, by: 1 | -1) {
   return setDoc(doc(db, 'activity', uid), { days: { [dayKey(startedAt)]: increment(by) } }, { merge: true }).catch(() => {});
 }
 
-export async function getActivity(uid: string): Promise<Activity | null> {
-  const snap = await getDoc(doc(db, 'activity', uid));
-  return snap.exists() ? (snap.data() as Activity) : null;
+export function getActivity(uid: string): Promise<Activity | null> {
+  return cached(`activity:${uid}`, async () => {
+    const snap = await getDoc(doc(db, 'activity', uid));
+    return snap.exists() ? (snap.data() as Activity) : null;
+  });
 }
 
 /** Recount every day from your own laps (runs are private, so only you can). */
@@ -521,6 +582,7 @@ export async function backfillActivity(uid: string): Promise<Activity> {
   const days: Record<string, number> = {};
   for (const r of await allMyRuns(uid)) if (!r.replay) days[dayKey(r.startedAt)] = (days[dayKey(r.startedAt)] ?? 0) + 1;
   const a = { days, backfilled: true };
+  forget('activity');
   await setDoc(doc(db, 'activity', uid), a);
   return a;
 }
@@ -533,6 +595,7 @@ export async function postLap(
   route: Route,
   extra: Pick<Post, 'caption' | 'car' | 'sectorColours' | 'bigColours' | 'positionAtPost' | 'isPB'>,
 ): Promise<void> {
+  forget('run', 'post', 'feed');
   const batch = writeBatch(db);
   batch.set(doc(db, 'posts', run.id), {
     userId: profile.id,
@@ -561,6 +624,7 @@ export async function postLap(
 }
 
 export async function unpostLap(uid: string, runId: string) {
+  forget('run', 'post', 'feed');
   const batch = writeBatch(db);
   batch.delete(doc(db, 'posts', runId));
   batch.update(doc(db, 'users', uid, 'runs', runId), { posted: false });
@@ -568,23 +632,28 @@ export async function unpostLap(uid: string, runId: string) {
 }
 
 export async function removePost(postId: string) {
+  forget('post', 'feed');
   await deleteDoc(doc(db, 'posts', postId));
 }
 
-export async function getPost(id: string): Promise<Post | null> {
-  try {
-    const snap = await getDoc(doc(db, 'posts', id));
-    return snap.exists() ? withId<Post>(snap) : null;
-  } catch {
-    return null;
-  }
+export function getPost(id: string): Promise<Post | null> {
+  return cached(`post:${id}`, async () => {
+    try {
+      const snap = await getDoc(doc(db, 'posts', id));
+      return snap.exists() ? withId<Post>(snap) : null;
+    } catch {
+      return null;
+    }
+  });
 }
 
-export async function routePosts(routeId: string, max = 300): Promise<Post[]> {
-  const snap = await getDocs(
-    query(collection(db, 'posts'), where('routeId', '==', routeId), where('hidden', '==', false), orderBy('totalMs', 'asc'), limit(max)),
-  );
-  return snap.docs.map((d) => withId<Post>(d));
+export function routePosts(routeId: string, max = 300): Promise<Post[]> {
+  return cached(`posts:route:${routeId}:${max}`, async () => {
+    const snap = await getDocs(
+      query(collection(db, 'posts'), where('routeId', '==', routeId), where('hidden', '==', false), orderBy('totalMs', 'asc'), limit(max)),
+    );
+    return snap.docs.map((d) => withId<Post>(d));
+  });
 }
 
 export interface LeaderRow {
@@ -617,11 +686,13 @@ export function sectorRecordsFrom(posts: Post[], sectorCount: number): (number |
   return rec;
 }
 
-export async function userPosts(uid: string, max = 200): Promise<Post[]> {
-  const snap = await getDocs(
-    query(collection(db, 'posts'), where('userId', '==', uid), where('hidden', '==', false), orderBy('createdAt', 'desc'), limit(max)),
-  );
-  return snap.docs.map((d) => withId<Post>(d));
+export function userPosts(uid: string, max = 200): Promise<Post[]> {
+  return cached(`posts:user:${uid}:${max}`, async () => {
+    const snap = await getDocs(
+      query(collection(db, 'posts'), where('userId', '==', uid), where('hidden', '==', false), orderBy('createdAt', 'desc'), limit(max)),
+    );
+    return snap.docs.map((d) => withId<Post>(d));
+  });
 }
 
 export interface FeedPage {
@@ -634,7 +705,13 @@ export interface FeedPage {
  * (createdAt, id). Firestore has no join, so each batch of 30 followees is
  * queried and the results are merged.
  */
-export async function feedPage(followeeIds: string[], cursor: FeedPage['cursor'], pageSize = 20): Promise<FeedPage> {
+export function feedPage(followeeIds: string[], cursor: FeedPage['cursor'], pageSize = 20): Promise<FeedPage> {
+  // Only the first page is kept: it's what going back to the Feed shows.
+  if (cursor) return loadFeedPage(followeeIds, cursor, pageSize);
+  return cached(`feed:${followeeIds.join(',')}:${pageSize}`, () => loadFeedPage(followeeIds, null, pageSize));
+}
+
+async function loadFeedPage(followeeIds: string[], cursor: FeedPage['cursor'], pageSize: number): Promise<FeedPage> {
   if (!followeeIds.length) return { posts: [], cursor: null };
   const results = await Promise.all(
     chunks(followeeIds, 30).map(async (part) => {
@@ -667,27 +744,34 @@ export async function recentPostsForAdmin(): Promise<Post[]> {
 }
 
 export async function updatePostText(id: string, caption: string | null, car: string | null) {
+  forget('post', 'feed');
   await updateDoc(doc(db, 'posts', id), { caption: caption?.trim() || null, car: car?.trim() || null });
 }
 
 // ================================================================ follows
 
 export async function follow(me: string, them: string) {
+  forget('follow', 'feed');
   await setDoc(doc(db, 'follows', `${me}_${them}`), { followerId: me, followeeId: them, createdAt: serverTimestamp() });
 }
 
 export async function unfollow(me: string, them: string) {
+  forget('follow', 'feed');
   await deleteDoc(doc(db, 'follows', `${me}_${them}`));
 }
 
-export async function followingIds(uid: string): Promise<string[]> {
-  const snap = await getDocs(query(collection(db, 'follows'), where('followerId', '==', uid)));
-  return snap.docs.map((d) => d.data().followeeId as string);
+export function followingIds(uid: string): Promise<string[]> {
+  return cached(`following:${uid}`, async () => {
+    const snap = await getDocs(query(collection(db, 'follows'), where('followerId', '==', uid)));
+    return snap.docs.map((d) => d.data().followeeId as string);
+  });
 }
 
-export async function followerIds(uid: string): Promise<string[]> {
-  const snap = await getDocs(query(collection(db, 'follows'), where('followeeId', '==', uid)));
-  return snap.docs.map((d) => d.data().followerId as string);
+export function followerIds(uid: string): Promise<string[]> {
+  return cached(`followers:${uid}`, async () => {
+    const snap = await getDocs(query(collection(db, 'follows'), where('followeeId', '==', uid)));
+    return snap.docs.map((d) => d.data().followerId as string);
+  });
 }
 
 export async function followCounts(uid: string): Promise<{ followers: number; following: number }> {

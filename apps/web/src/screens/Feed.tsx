@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
 import { LapCard } from '../components/LapCard';
 import { Avatar, Empty, errorMessage, Spinner, useToast } from '../components/ui';
-import { allMyRuns, feedPage, follow, followingIds, getRoute, getRoutes, type FeedPage } from '../lib/data';
+import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
@@ -31,7 +31,9 @@ export function Feed() {
     setRoutes((prev) => new Map([...prev, ...got]));
   }, [routes]);
 
-  const loadFirst = useCallback(async () => {
+  /** fresh: skip the session cache (pull to refresh, the new-laps pill). */
+  const loadFirst = useCallback(async (fresh = false) => {
+    if (fresh) forget('follow', 'feed');
     setError(null);
     try {
       const ids = await followingIds(profile.id);
@@ -106,7 +108,7 @@ export function Feed() {
     return () => io.disconnect();
   }, [loadMore]);
 
-  usePullToRefresh(loadFirst);
+  usePullToRefresh(() => loadFirst(true));
 
   return (
     <main className="screen feed">
@@ -120,7 +122,7 @@ export function Feed() {
       </header>
 
       {newCount > 0 && (
-        <button className="new-pill" onClick={() => void loadFirst()}>
+        <button className="new-pill" onClick={() => void loadFirst(true)}>
           {newCount} new {newCount === 1 ? 'lap' : 'laps'} ↑
         </button>
       )}

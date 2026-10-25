@@ -1,6 +1,7 @@
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { clearCache } from './data';
 import { auth, db } from './firebase';
 import type { Profile, Role } from './types';
 
@@ -22,7 +23,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [role, setRole] = useState<Role>('driver');
 
-  useEffect(() => onAuthStateChanged(auth, setUser), []);
+  useEffect(
+    () =>
+      onAuthStateChanged(auth, (u) => {
+        clearCache(); // one user's reads never show for the next
+        setUser(u);
+      }),
+    [],
+  );
 
   useEffect(() => {
     if (!user) {

@@ -136,6 +136,13 @@ if the hand-rolled cache grows past ~100 lines.
 
 **Done when:** going back to a screen already seen shows it instantly, with no spinner.
 
+**Done (2026-10-26), smaller than planned:** the cache lives inside `lib/data.ts` (`cached`,
+`forget`, `clearCache`), around the read functions, so no screen changed. Every write function
+forgets the keys it touches; the session clears it on sign-in/out; the Feed's pull to refresh
+and new-laps pill skip it. Entries expire after 60 s and are then fetched again (no background
+refresh while showing the old value). Point 5 (`getDocsFromCache` on cold start) not done.
+Back to a seen tab, 200 laps: My times 845 → 53 ms, Drive 849 → 88 ms.
+
 ---
 
 ## 4. Smaller first download (½ day)
@@ -216,7 +223,7 @@ lap). Times are from tapping the tab until the spinner is gone.
 | One run document on the wire           | ~65 KB trace + ~3 KB profile |       |
 | Data per Feed / Drive / My times open  | ~13 MB (200 full laps)       | ~0.1 MB (step 1) |
 | Firestore reads per open of those      | 200 (one per lap)            | 200 (stats doc not done) |
-| My times, 200 laps                     | 11.4 s first, 44 s again     | 1.1 s, 0.8 s again (step 1) |
+| My times, 200 laps                     | 11.4 s first, 44 s again     | 1.1 s (step 1), 53 ms again (step 3) |
 | Drive, 200 laps                        | 40 s                         | 1.1 s (step 1) |
 
 Not measured: a real phone, the live Firestore usage page, Lighthouse performance score
