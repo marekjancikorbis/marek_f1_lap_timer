@@ -194,6 +194,9 @@ files are precached, so the `.woff` copies cost nothing.
 - Add `font-display: swap` if text ever shows blank while fonts load (fontsource sets it
   by default; verify).
 
+**Checked (2026-10-26), nothing to change:** after visiting every screen the browser had loaded
+all six weights (`document.fonts`), and every fontsource face already has `font-display: swap`.
+
 ---
 
 ## Order and effort
