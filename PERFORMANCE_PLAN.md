@@ -180,6 +180,9 @@ screen.
 
 **Done when:** first-install precache is under ~1.5 MB.
 
+**Done (2026-10-26):** precache 3.18 MB → 1.27 MB. Checked on a preview build: the first map
+opened puts `MapView-*.js/.css` in the `map-library` cache (CacheFirst).
+
 ---
 
 ## 6. Fonts (small, 1 hour)
@@ -226,7 +229,7 @@ lap). Times are from tapping the tab until the spinner is gone.
 |----------------------------------------|------------------------------|-------|
 | Cold start, signed out (live site)     | FCP/LCP 1.3 s, 275 KB        |       |
 | Main JS chunk                          | 813 KB (215 KB gzip)         | 36 KB + firebase 585 KB + react 166 KB (step 4) |
-| Service worker precache                | 3.18 MB, 52 files            |       |
+| Service worker precache                | 3.18 MB, 52 files            | 1.27 MB (step 5) |
 | One run document on the wire           | ~65 KB trace + ~3 KB profile |       |
 | Data per Feed / Drive / My times open  | ~13 MB (200 full laps)       | ~0.1 MB (step 1) |
 | Firestore reads per open of those      | 200 (one per lap)            | 200 (stats doc not done) |

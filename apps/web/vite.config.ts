@@ -25,6 +25,15 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // The 1.9 MB map library isn't part of the install download; it's kept the first time a map opens.
+        globIgnores: ['**/MapView-*.js', '**/MapView-*.css'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.origin === self.location.origin && /\/assets\/MapView-[^/]+\.(js|css)$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'map-library', expiration: { maxEntries: 4 } },
+          },
+        ],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: '/index.html',
         // Firebase's own pages (Google sign-in handler and iframe) must reach Hosting, not the app shell.
