@@ -1141,6 +1141,30 @@
   opacity: 0.8;
 }
 
+/* Phone sideways but the screen didn't rotate: turn the drive screen ourselves (Drive.tsx useSideways). */
+.drive.turn-cw,
+.drive.turn-ccw {
+  inset: auto;
+  top: 0;
+  left: 0;
+  width: 100vh;
+  height: 100vw;
+  transform-origin: top left;
+}
+
+.drive.turn-cw {
+  transform: translateX(100vw) rotate(90deg);
+}
+
+.drive.turn-ccw {
+  transform: translateY(100vh) rotate(-90deg);
+}
+
+.drive.turn-cw .delta-value,
+.drive.turn-ccw .delta-value {
+  font-size: clamp(6rem, 24vh, 16rem);
+}
+
 @media (orientation: landscape) {
   .delta-value {
     font-size: clamp(6rem, 24vw, 16rem);

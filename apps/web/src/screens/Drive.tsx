@@ -16,6 +16,10 @@ export default function Drive() {
   // Turning the phone sideways switches to delta only, upright back to the full HUD.
   const [mode, setMode] = useState(() => cfg?.mode ?? 'hud');
   const landscape = useLandscape();
+  // The screen often stays upright while driving (rotation lock, or the OS ignoring a shaking car):
+  // then gravity says sideways and the screen is turned in CSS instead.
+  const turn = useSideways();
+  const sideways = landscape || turn !== null;
   const firstOrientation = useRef(true);
   useEffect(() => {
     unlockOrientation();
@@ -24,10 +28,10 @@ export default function Drive() {
   useEffect(() => {
     if (firstOrientation.current) {
       firstOrientation.current = false;
-      if (!landscape) return;
+      if (!sideways) return;
     }
-    setMode(landscape ? 'delta' : 'hud');
-  }, [landscape]);
+    setMode(sideways ? 'delta' : 'hud');
+  }, [sideways]);
 
   useEffect(() => {
     if (!cfg) return;
@@ -65,7 +69,7 @@ export default function Drive() {
   const colourClass = s.lastSector ? `flag-${s.lastSector.colour}` : '';
 
   return (
-    <div className={`drive ${mode === 'delta' && running ? `delta-mode ${colourClass}` : ''}`}>
+    <div className={`drive ${turn && !landscape ? `turn-${turn}` : ''} ${mode === 'delta' && running ? `delta-mode ${colourClass}` : ''}`}>
       <header className="drive-top">
         <span className="drive-route ellipsis">{cfg.route.name}</span>
         <span className="row" style={{ gap: 10 }}>
@@ -300,6 +304,32 @@ function useLandscape() {
     return () => mq.removeEventListener('change', onChange);
   }, []);
   return on;
+}
+
+// shortcut: iOS reports motion with the opposite sign to the spec (and Android); sniffed, not measured.
+const MOTION_SIGN = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? -1 : 1;
+
+/** Which way to turn the content so it reads upright on a sideways phone, from gravity; null while upright. */
+function useSideways() {
+  const [turn, setTurn] = useState<'cw' | 'ccw' | null>(null);
+  useEffect(() => {
+    let x = 0;
+    let y = 0;
+    const onMotion = (e: DeviceMotionEvent) => {
+      const a = e.accelerationIncludingGravity;
+      if (a?.x == null || a.y == null) return;
+      // Low-pass (about half a second) so bumps and kerbs don't flip the view.
+      x += (a.x - x) * 0.03;
+      y += (a.y - y) * 0.03;
+      if (Math.hypot(x, y) < 5) return; // lying flat: keep the current view
+      // 3:1 (about 70°) with a dead band between: a cornering car adds at most ~1 g sideways, which can't cross it.
+      if (Math.abs(x) > 3 * Math.abs(y)) setTurn(x * MOTION_SIGN > 0 ? 'cw' : 'ccw');
+      else if (Math.abs(y) > 3 * Math.abs(x)) setTurn(null);
+    };
+    window.addEventListener('devicemotion', onMotion);
+    return () => window.removeEventListener('devicemotion', onMotion);
+  }, []);
+  return turn;
 }
 
 function Countdown({ goT, n, onCancel }: { goT: number; n: number; onCancel: () => void }) {
