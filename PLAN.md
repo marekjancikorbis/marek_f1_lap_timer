@@ -26,26 +26,15 @@ own earlier times, and competing with other drivers on routes they publish.
 
 ---
 
-## 2. Recommended tech stack
+## 2. Tech stack
 
-> **Superseded**: the app is built as a web app on Firebase instead. See *Platform and backend* in section 10.
-
-| Layer | Choice | Why |
-|---|---|---|
-| Mobile app | **React Native + Expo** (TypeScript) | One codebase for iOS and Android. Expo dev builds still allow native modules for GPS and maps. |
-| Maps | **Mapbox** (`@rnmapbox/maps`) | Good custom styling for a dark "racing" look. Includes the Directions and Map Matching APIs, which snap routes to roads, and a generous free tier. |
-| Location | `expo-location` (foreground plus background while a run is active), `expo-sensors` (accelerometer) | GPS fixes for timing. On standing starts, the accelerometer catches a jump start and measures reaction time. |
-| Local storage | SQLite (`expo-sqlite`) | Works **offline**: routes, references and finished runs are stored on the device, so driving works without signal (mountain roads). |
-| Backend | **Supabase**: Postgres + **PostGIS**, Auth, Storage, Edge Functions | Row-level security covers "only I see my routes". PostGIS handles map viewport queries. Edge Functions run TypeScript (Deno). |
-| Shared code | `packages/timing`: a pure TypeScript timing engine | The **same code** runs on the phone during the drive and on the server to verify leaderboard runs. |
-
-### Repo layout (monorepo)
+Installable web app (PWA): React + TypeScript (Vite), Firebase Auth + Firestore (Spark plan),
+Firebase Hosting, Mapbox GL JS. See *Platform and backend* in section 9 and `apps/web/PRODUCT.md`.
 
 ```
-apps/mobile/            Expo app (screens, map, drive HUD)
-packages/timing/        Pure TS timing engine + unit tests + recorded GPS fixtures
-supabase/migrations/    SQL schema, RLS policies, PostGIS indexes
-supabase/functions/     Edge functions (verify-run, leaderboard refresh)
+apps/web/          the app (screens, map, drive HUD)
+packages/timing/   pure TS timing engine + unit tests + GPS fixtures
+firestore.rules    security rules (tests in tests/)
 ```
 
 ---
@@ -73,9 +62,9 @@ supabase/functions/     Edge functions (verify-run, leaderboard refresh)
 | `admin` | Set once **directly in the database** for your own account; it can't be granted from the app | Grant and revoke `creator`, review access requests, and hide or unpublish any public route. |
 
 - **The server enforces everything**, not just the app UI.
-  - Database policies (RLS) refuse a route insert from anyone who isn't a creator, even if someone calls the API directly.
+  - The Firestore security rules refuse a route insert from anyone who isn't a creator, even if someone calls the API directly.
   - Hiding the route builder button is only a convenience.
-- **Users can never change their own role.** Roles live in a separate `user_roles` table that only admins can write to, not in `profiles`, where users can edit their own row.
+- **Users can never change their own role.** Roles live in a separate `roles` collection that only admins can write to, not in the user's profile, which they can edit.
 - **Revoking creator access**:
   - The user can no longer create new routes or publish.
   - Their existing routes and runs stay, so other people's leaderboard times are not lost.
@@ -83,98 +72,8 @@ supabase/functions/     Edge functions (verify-run, leaderboard refresh)
 - **Requesting access**: a driver can tap "Request creator access" and add an optional note. The admin sees pending requests in the admin screen and approves or rejects each one. Every grant and revoke is logged.
 - **More admins**: only the bootstrap admin (you) exists at first. Making someone else an admin is also a database operation, which keeps it deliberate.
 
-### Schema sketch
-
-```sql
-profiles (id uuid pk = auth.uid, username text unique, avatar_url, created_at)
-
--- roles: writable ONLY by admins (RLS); a user may read their own row
-user_roles (user_id uuid pk fk profiles, role text check (role in ('creator','admin')),
-            granted_by uuid fk profiles, granted_at timestamptz)   -- no row = plain driver
-creator_requests (id uuid pk, user_id uuid fk, note text, status text check (status in ('pending','approved','rejected')),
-                  decided_by uuid, decided_at timestamptz, created_at timestamptz)
-role_audit_log (id bigserial pk, actor_id uuid, target_user_id uuid, action text, created_at timestamptz)
-
--- helpers used by RLS policies (security definer, stable):
---   is_admin()   := exists(select 1 from user_roles where user_id = auth.uid() and role = 'admin')
---   can_create() := exists(select 1 from user_roles where user_id = auth.uid() and role in ('creator','admin'))
-
-routes (
-  id uuid pk, owner_id uuid fk profiles,
-  name text, geometry geography(LineString), length_m numeric,
-  is_loop bool, sector_length_m int check (sector_length_m between 50 and 1000),
-  sector_boundaries_m numeric[], start_type text check (start_type in ('standing','rolling')),
-  is_public bool default false, published_at timestamptz, created_at timestamptz,
-  hidden_by_admin bool default false   -- moderation: hidden routes vanish from feed/leaderboards
-)
--- only ONE public route per user:
-create unique index one_public_route_per_user on routes(owner_id) where is_public;
-create index routes_geom_idx on routes using gist(geometry);
-
-runs (
-  id uuid pk, route_id uuid fk, user_id uuid fk, session_id uuid,
-  started_at timestamptz, total_ms int, split_times_ms int[],
-  valid bool, verified bool default false, trace_path text,
-  countdown_s smallint, reaction_ms int,                    -- standing starts only
-  jump_start bool default false, jump_distance_m real, penalty_ms int default 0,  -- +5000 on jump start
-  -- split_times_ms already includes penalty_ms; raw times = splits - penalty_ms
-  gps_avg_accuracy_m real, gps_rate_hz real, created_at timestamptz
-)
-
--- posting: a lap becomes public only through a post (public routes only)
-posts (
-  id uuid pk, run_id uuid unique fk runs, user_id uuid fk, route_id uuid fk,
-  caption text, car text,              -- optional, e.g. "E46 M3"
-  created_at timestamptz
-)
-
--- privacy-safe comparison data, computed by verify-run from the raw trace:
--- sampled every step_m metres of ROUTE DISTANCE, start gate → finish gate, no coordinates
-lap_profiles (run_id uuid pk fk runs, step_m smallint default 10,
-              elapsed_ms int[], speed_dms int[])   -- speed in 0.1 m/s
-
--- following (one-way, no approval needed)
-follows (
-  follower_id uuid fk profiles, followee_id uuid fk profiles,
-  created_at timestamptz default now(),
-  primary key (follower_id, followee_id),
-  check (follower_id <> followee_id)
-)
-create index follows_followee_idx on follows(followee_id);       -- "followers of X"
-create index posts_user_created_idx on posts(user_id, created_at desc, id desc);  -- feed
-
--- user search
-create extension if not exists pg_trgm;
-create index profiles_username_trgm on profiles using gin (username gin_trgm_ops);
-
--- derived (view or table refreshed by trigger/edge function), POSTED + verified runs only:
-route_sector_records (route_id, sector_idx, best_sector_ms, run_id, user_id)  -- for "purple"
-leaderboard          (route_id, user_id, best_run_id, best_total_ms, rank)     -- best posted lap per user
-public_laps          view: posts ⋈ runs, exposing only safe columns (times, splits, penalty,
-                     reaction, date, caption, car), never trace_path
-```
-
-### Who can see what (RLS)
-- **routes**:
-  - The owner can see their own routes.
-  - Anyone signed in can **read** routes where `is_public and not hidden_by_admin`.
-  - **Insert** requires `owner_id = auth.uid() and can_create()`.
-  - Setting `is_public = true` also requires `can_create()`.
-  - Admins can update `is_public` and `hidden_by_admin` on any route.
-- **user_roles / creator_requests / role_audit_log**:
-  - Admins can read and write everything.
-  - Users can read their own role and their own requests, and can insert a request for themselves.
-  - Grants go through a single `set_user_role(target, role | null)` database function that checks `is_admin()` and writes the audit log in the same transaction.
-- **runs**: only the owner can read their runs. Other users never query `runs` directly. They see **posted** laps through `public_laps`, `leaderboard` and `route_sector_records`, never raw GPS traces, because a trace can reveal where someone lives.
-- **posts**:
-  - Readable by everyone signed in, as long as the route is public and not hidden.
-  - **Insert** only for your own run, on a public route.
-  - A post becomes visible once its run is `verified`. Until then it shows only to you, marked "verifying…".
-  - **Delete**: by its owner, or by an admin for moderation.
-- **lap_profiles**: readable by the run's owner, or by anyone once the run is posted. They hold only time and speed against route distance, and the route is already public, so they reveal nothing beyond the lap itself.
-- **follows**: readable by everyone signed in, for follower and following lists. You can only insert or delete rows where `follower_id = auth.uid()`.
-- **profiles**: usernames and avatars are readable by everyone signed in, for search and user pages. Search goes through a `search_users(q)` function that is rate limited and returns at most 20 results.
-- Only the owner (and only while they are a creator) can insert or update their routes. Runs on public routes only reach the leaderboard after the server has **verified** them (section 6).
+Who can read and write what is enforced by `firestore.rules` (tests: `npm run test:rules`).
+Raw GPS traces stay private to their owner; others see only posted laps.
 
 ---
 
@@ -198,7 +97,7 @@ if s_prev < boundary <= s_curr:
 
 - Use **GPS fix timestamps**, not the time JavaScript received the fix.
 - Later, Hermite interpolation using the speed at both fixes can improve accuracy when the car is accelerating or braking.
-- Expected accuracy with a phone is about ±0.1–0.2 s. An external 10–25 Hz Bluetooth GPS (RaceBox, Dragy, etc.) would be a later upgrade (section 9).
+- Expected accuracy with a phone is about ±0.1–0.2 s. An external 10–25 Hz Bluetooth GPS (RaceBox, Dragy, etc.) would be a later upgrade (section 8).
 
 ### 4.3 Starts
 - **Rolling**: the timer arms when you are within ~50 m of the start and heading in the route's direction. It starts when you cross the start gate, which is a line perpendicular to the route at its first point, using the same interpolation.
@@ -239,6 +138,8 @@ colour_k  = purple  if sector_k < route_sector_records[k]   (fastest ever, any u
             green   if sector_k < ref sector_k
             yellow  otherwise
 ```
+> **Superseded** by *Sector colours* in section 9, which is what the code does.
+
 - Purple overrides green.
 - The sector records are **downloaded before the drive**, so colours work offline.
 - On a **private** route the only driver is you, so purple means your own all-time best for that sector.
@@ -272,18 +173,8 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 ### 4.7 Social feed
 - **Content**: every visible post (verified, on a public route that isn't hidden) by users **you follow**, newest first.
-- **Query**: the feed is built **when it is read**, which is simple and plenty fast at this scale.
-
-  ```sql
-  select ... from public_laps p
-  join follows f on f.followee_id = p.user_id and f.follower_id = auth.uid()
-  where (p.created_at, p.id) < (:cursor_created_at, :cursor_id)   -- keyset pagination
-  order by p.created_at desc, p.id desc
-  limit 20;
-  ```
-  - It is exposed as a `get_feed(cursor, limit)` database function and covered by `posts_user_created_idx`.
-  - **Keyset pagination**, rather than offset, keeps scrolling stable while new posts arrive.
-- **Freshness**: pull to refresh. While the app is open, Supabase Realtime watches for new posts from people you follow and shows a **"3 new laps ↑"** pill. Tapping it loads them at the top without jumping the scroll position.
+- **Query**: the feed is built **when it is read**: posts where `userId` is in your follows, newest first, 20 at a time (Firestore `in` takes at most 30 ids, so follows are queried in chunks of 30: `feedPage` in `lib/data.ts`).
+- **Freshness**: pull to refresh. While the app is open, a Firestore listener watches for new posts from people you follow and shows a **"3 new laps ↑"** pill. Tapping it loads them at the top without jumping the scroll position.
 - **Consistency**:
   - Unfollowing someone removes their posts from your feed immediately, because the feed is computed on read.
   - Deleted, unposted and moderated posts disappear the same way.
@@ -357,6 +248,8 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 ## 6. Leaderboard integrity
 
+> On the Spark plan there is no server, so `verify-run` doesn't exist: see *Platform and backend* in section 9.
+
 - A lap appears on the leaderboard, on user pages and in sector records only if it is **posted**, `valid` (no off-route time, every gate crossed in order, acceptable GPS quality) **and** `verified`. Jump-start penalties are included in the leaderboard time.
 - Unposted laps never affect what other people see. Purple therefore means the fastest **posted** sector.
 - **Verification**: an Edge Function `verify-run` downloads the uploaded trace and replays it through the **same `packages/timing` engine**. If the times it computes match the times the phone reported (within tolerance), the run is marked `verified`, its `lap_profiles` are computed, and, if the lap is posted, the leaderboard and sector records are updated.
@@ -365,20 +258,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 ---
 
-## 7. Milestones
-
-| Phase | Scope | Exit criteria |
-|---|---|---|
-| **0: Foundations and spikes** | Monorepo, Expo app, Supabase project. **Device GPS spike**: log real update rates and accuracy on a few iOS and Android phones while driving. | Recorded GPS traces saved as test fixtures. Confirmed which update rates are realistic. |
-| **1: Timing engine** | `packages/timing` with projection, windowing, interpolation, starts, sectors, laps, delta and colours. Unit tests run against synthetic traces and the recorded fixtures. | Gate crossing error below ~0.2 s on fixtures. Loop and self-crossing routes handled. |
-| **2: Accounts, roles and routes** | Auth, **roles** (`user_roles`, RLS helpers, bootstrap admin), **admin panel** (grant/revoke, requests, audit log), the route builder with road snapping, sector preview, loop/start options, and My routes. | Only users the admin has approved can create routes; a direct API insert from a driver is rejected (covered by a test). Creators' routes are private. |
-| **3: Drive (MVP)** | Pre-drive reference picker, both drive screens, cues, run summary, offline save and later sync, and **comparing your own laps** (sector table, delta and speed graphs from on-device lap profiles). A **GPS replay mode** plays a recorded trace into the app so drives can be tested at a desk. | A full drive works end to end on a real road, with deltas at each sector. **← First usable version** |
-| **4: Social** | Publish one route (creators), admin moderation of public routes and posts, verify-run function, **posting laps**, leaderboard, sector records (purple), routes map with clustering, route detail, **user search**, **user pages**, **following**, **social feed** (cursor pagination, new-posts pill), **lap detail**, **comparing with and racing against other people's laps**. | Two users can compete on a public route. A user can find another by search, open their page, compare with their posted lap and race against it. After following someone, their new posts appear at the top of the feed. |
-| **5: Polish** | Voice callouts, profiles and avatars, sharing a run as an image, external BLE GPS support, battery tuning. (Hermite interpolation dropped: see *Gate accuracy* in section 10.) | Ready for app store submission. |
-
----
-
-## 8. Risks and how to handle them
+## 7. Risks and how to handle them
 
 | Risk | Mitigation |
 |---|---|
@@ -391,7 +271,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 ---
 
-## 9. Later ideas (not in v1)
+## 8. Later ideas (not in v1)
 - Live "ghost" delta between sectors, interpolated from the reference trace.
 - Push notifications: a followed user posts, someone follows you, someone beats your time on a route.
 - Likes and comments on posts.
@@ -402,7 +282,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 ---
 
-## 10. Decisions made
+## 9. Decisions made
 - **Standing start**: countdown of 3–10 s (user-set), exact even timing with no random hold; the timer starts at GO.
 - **Jump start**: +5 s penalty, only for confirmed forward movement of more than 10 m before GO (section 4.3.1). The run stays valid.
 - **Route creation needs permission**: only users the admin approves (role `creator`) can create and publish routes. Everyone else is a driver who drives public routes. The admin role is set in the database, not from the app.
@@ -411,7 +291,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 - **Following and social feed**: one-way follows with no approval. The home tab is a feed of posted laps from people you follow, newest first. The routes map moves to its own tab.
 - **Posting and users**: laps are private until posted. Posting is only possible on public routes. There is user search and there are user pages showing posted laps.
 
-- **Platform and backend (replaces section 2)**: the app ships as an installable **web app (PWA)** built with React + TypeScript (Vite), hosted on **Firebase Hosting**. Firebase **Auth** and **Firestore** replace Supabase, and Firestore security rules replace RLS. The project is on the free **Spark** plan, so there are no Cloud Functions:
+- **Platform and backend**: the app ships as an installable **web app (PWA)** built with React + TypeScript (Vite), hosted on **Firebase Hosting**. Firebase **Auth** and **Firestore** replace Supabase, and Firestore security rules replace RLS. The project is on the free **Spark** plan, so there are no Cloud Functions:
   - `verify-run` cannot run on a server. Posted laps are trusted as sent; the security rules still check that they are self-consistent (positive, increasing splits, total = last split, penalty applied, only your own run on a public route).
   - Leaderboards, sector records and the feed are computed when read, from posts.
   - Browsers cannot keep GPS running with the screen locked, so the drive screen holds a screen wake lock instead of using background location.
@@ -427,7 +307,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 - **Sector colours**: on **public routes** purple = faster than the route record (fastest posted sector) and your own best (with nothing posted yet it means a new PB), green = faster than your own personal best for that sector. On **private routes** purple = faster than your personal best (your theoretical-best sector), green = faster than the same sector of the lap you're racing. Yellow otherwise. The delta always compares with the lap you race. PBs and records improve during a session, and saved laps show the colours they had when driven.
 
-## 11. Open questions (need decisions)
+## 10. Open questions (need decisions)
 
 1. **Platforms**: iOS and Android both (assumed), or one first?
 4. **Laps**: on a loop route, should laps run back to back in one session (assumed), with a fixed lap count or until you stop?

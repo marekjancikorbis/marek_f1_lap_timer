@@ -67,8 +67,8 @@ Firestore reads per Feed open drop from "number of laps" to ~1.
 ### 2a. Map images in lists
 `RouteShape` (`components/RouteShape.tsx`) asks for a Mapbox static map as soon as a
 card renders, through `allowStaticMap`, which also **counts against the monthly
-static-map quota**. A Feed of 100 posts spends up to 100 map images, even if the user
-only looks at the top three.
+static-map quota**. Every card that renders spends one, including the 20 cards of each Feed page
+below the screen, even if the user only looks at the top three.
 
 - Render the SVG shape at once (already there) and ask for the map image only when the
   card scrolls near the screen: an `IntersectionObserver` with `rootMargin: '300px'`
@@ -76,10 +76,11 @@ only looks at the top three.
 - Add `loading="lazy"` and `decoding="async"` to the `<img>`.
 
 ### 2b. Paging lists
-- Feed loads 100 posts at once (`Feed.tsx`): load 20, then the next 20 when the user
-  scrolls near the end (`startAfter` on the last post's `createdAt`).
-- Same pattern for the route list on the map screen (`limit(500)` public routes) once
-  routes grow, and for the user page.
+- The Feed already pages 20 at a time (`feedPage`). The empty-state "suggested drivers"
+  (`Feed.tsx`) reads the newest 100 posts to find route leaders: fine for now, but it
+  grows with the number of posts. Replace with a small `routeLeaders` summary later.
+- The route list on the map screen loads up to 500 public routes at once (`limit(500)`):
+  page or load by map viewport once there are many routes.
 
 ### 2c. Tabs and expandable parts
 - Lap Detail and Compare: fetch data for the **Graphs** and **Map** tabs when the tab is
