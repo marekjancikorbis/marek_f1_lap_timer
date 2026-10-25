@@ -3,12 +3,12 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'rea
 import { Loading, TabBar, ToastProvider } from './components/ui';
 import { SessionProvider, useSession } from './lib/session';
 import { onUsage, readUsage, type UsageState } from './lib/usage';
-import { AuthScreen } from './screens/Auth';
-import { LimitScreen } from './screens/LimitScreen';
-import { Onboarding } from './screens/Onboarding';
-import { Feed } from './screens/Feed';
 
-// Heavier screens load on demand; the drive screen is preloaded on pre-drive.
+// Screens load on demand, so the first download is only the shell; the drive screen is preloaded on pre-drive.
+const AuthScreen = lazy(() => import('./screens/Auth').then((m) => ({ default: m.AuthScreen })));
+const LimitScreen = lazy(() => import('./screens/LimitScreen').then((m) => ({ default: m.LimitScreen })));
+const Onboarding = lazy(() => import('./screens/Onboarding').then((m) => ({ default: m.Onboarding })));
+const Feed = lazy(() => import('./screens/Feed').then((m) => ({ default: m.Feed })));
 const MapScreen = lazy(() => import('./screens/MapScreen'));
 const DriveLauncher = lazy(() => import('./screens/DriveLauncher'));
 const MyRoutes = lazy(() => import('./screens/MyRoutes'));
@@ -31,7 +31,9 @@ export function App() {
       <BrowserRouter>
         <ToastProvider>
           <SessionProvider>
-            <Gate />
+            <Suspense fallback={<Loading />}>
+              <Gate />
+            </Suspense>
           </SessionProvider>
         </ToastProvider>
       </BrowserRouter>

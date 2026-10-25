@@ -159,6 +159,13 @@ are in it, along with Firebase.
 
 **Done when:** the main chunk is under ~400 KB.
 
+**Done (2026-10-26):** Feed, Auth, Onboarding and LimitScreen are lazy (saved only 26 KB: the
+rest was libraries). By source, the old 788 KB main chunk was Firestore 349 KB, react-dom 128 KB,
+Auth 122 KB, WebChannel 51 KB. Every signed-in screen needs those at once, so they moved to
+their own chunks (`manualChunks` in `vite.config.ts`): main 36 KB, `firebase` 585 KB,
+`react` 166 KB. Same first download, fetched in parallel; and since those two keep their
+names across deploys, an update now re-downloads ~36 KB of app code instead of ~790 KB.
+
 ---
 
 ## 5. Lighter background download (½ day)
@@ -218,7 +225,7 @@ lap). Times are from tapping the tab until the spinner is gone.
 | What                                   | Before                       | After |
 |----------------------------------------|------------------------------|-------|
 | Cold start, signed out (live site)     | FCP/LCP 1.3 s, 275 KB        |       |
-| Main JS chunk                          | 813 KB (215 KB gzip)         |       |
+| Main JS chunk                          | 813 KB (215 KB gzip)         | 36 KB + firebase 585 KB + react 166 KB (step 4) |
 | Service worker precache                | 3.18 MB, 52 files            |       |
 | One run document on the wire           | ~65 KB trace + ~3 KB profile |       |
 | Data per Feed / Drive / My times open  | ~13 MB (200 full laps)       | ~0.1 MB (step 1) |

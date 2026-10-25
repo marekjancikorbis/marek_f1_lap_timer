@@ -32,5 +32,17 @@ export default defineConfig({
       },
     }),
   ],
-  build: { chunkSizeWarningLimit: 2000 },
+  build: {
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        // Libraries in their own chunks keep their file names across deploys, so an update
+        // re-downloads only the app code. mapbox-gl stays with the lazy map screen.
+        manualChunks(id) {
+          if (/node_modules\/(@firebase|firebase|idb)\//.test(id)) return 'firebase';
+          if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom|@remix-run)\//.test(id)) return 'react';
+        },
+      },
+    },
+  },
 });
