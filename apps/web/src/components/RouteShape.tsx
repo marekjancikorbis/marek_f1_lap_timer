@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SectorColourName, Route } from '../lib/types';
 import { sectorLines } from '../lib/geo';
 import { allowStaticMap, staticMapFit } from '../lib/staticMap';
@@ -101,15 +101,25 @@ export function RouteShape({ route, colours, height = 150, ticks = true, classNa
     return { ...g, paths };
   }, [route, map, imgH]);
 
+  // Each picture counts against the monthly cap, so only cards near the screen ask for one.
+  const box = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (!map || near || !box.current) return;
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setNear(true), { rootMargin: '300px' });
+    io.observe(box.current);
+    return () => io.disconnect();
+  }, [map, near]);
+
   const [img, setImg] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
     setImg(null);
-    if (geom?.url) void allowStaticMap(geom.url).then((ok) => live && ok && setImg(geom.url));
+    if (near && geom?.url) void allowStaticMap(geom.url).then((ok) => live && ok && setImg(geom.url));
     return () => {
       live = false;
     };
-  }, [geom?.url]);
+  }, [near, geom?.url]);
 
   if (!geom) return null;
   const svg = (
@@ -147,8 +157,8 @@ export function RouteShape({ route, colours, height = 150, ticks = true, classNa
   );
   if (!map) return svg;
   return (
-    <div className={`route-map-pic ${className ?? ''}`} style={{ aspectRatio: `${IMG_W} / ${imgH}` }}>
-      {img && <img src={img} alt="" onError={() => setImg(null)} />}
+    <div ref={box} className={`route-map-pic ${className ?? ''}`} style={{ aspectRatio: `${IMG_W} / ${imgH}` }}>
+      {img && <img src={img} alt="" loading="lazy" decoding="async" onError={() => setImg(null)} />}
       {svg}
     </div>
   );

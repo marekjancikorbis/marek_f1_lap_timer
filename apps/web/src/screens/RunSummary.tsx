@@ -53,11 +53,12 @@ export default function RunSummary() {
     if (ref || !run) return null;
     return runs.filter((r) => r.valid && r.id !== run.id && r.startedAt < run.startedAt && r.splitTimesMs.length === run.splitTimesMs.length).sort((a, b) => a.totalMs - b.totalMs)[0] ?? null;
   }, [ref, run, runs]);
-  // Listed runs come without their profile; fetch it for the graphs.
+  // Listed runs come without their profile; fetch it once the graphs are opened.
+  const [opened, setOpened] = useState(false);
   const [prevFull, setPrevFull] = useState<Run | null>(null);
   useEffect(() => {
-    if (prev) getRun(profile.id, prev.id).then(setPrevFull).catch(() => undefined);
-  }, [prev, profile.id]);
+    if (opened && prev) getRun(profile.id, prev.id).then(setPrevFull).catch(() => undefined);
+  }, [opened, prev, profile.id]);
   const against = useMemo(
     () => ref ?? (prev ? runToLap(prevFull?.id === prev.id ? prevFull : prev, 'your previous best') : null),
     [ref, prev, prevFull],
@@ -135,6 +136,7 @@ export default function RunSummary() {
         route={route}
         posts={posts}
         reference={against}
+        onOpen={() => setOpened(true)}
         mapExtra={traceLayer}
         badges={
           <>

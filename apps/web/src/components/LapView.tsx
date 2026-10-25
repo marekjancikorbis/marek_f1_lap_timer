@@ -58,6 +58,7 @@ export function LapView({
   caption,
   actions,
   mapExtra,
+  onOpen,
   children,
 }: {
   lap: LapViewLap;
@@ -73,6 +74,8 @@ export function LapView({
   /** Buttons under the hero. */
   actions?: ReactNode;
   mapExtra?: (map: mapboxgl.Map) => void | (() => void);
+  /** Called when Graphs or Map is first opened: load what only they need. */
+  onOpen?: () => void;
   /** Rendered at the end. */
   children?: ReactNode;
 }) {
@@ -125,7 +128,7 @@ export function LapView({
 
       {actions}
 
-      <LapTabs lap={lap} reference={ref} route={route} colours={miniColours} sectors={sectors} mapExtra={mapExtra} />
+      <LapTabs lap={lap} reference={ref} route={route} colours={miniColours} sectors={sectors} mapExtra={mapExtra} onOpen={onOpen} />
 
       {children}
     </>
@@ -240,6 +243,7 @@ export function LapTabs({
   colours,
   sectors,
   mapExtra,
+  onOpen,
 }: {
   lap: Pick<LapViewLap, 'username' | 'totalMs' | 'splitTimesMs' | 'penaltyMs' | 'profile'>;
   reference: LapReference | null;
@@ -249,6 +253,7 @@ export function LapTabs({
   /** The Sectors tab. */
   sectors: ReactNode;
   mapExtra?: (map: mapboxgl.Map) => void | (() => void);
+  onOpen?: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('sectors');
   // Every map mount counts against the monthly Mapbox cap: keep one alive once shown.
@@ -354,7 +359,10 @@ export function LapTabs({
           value={tab}
           onChange={(v) => {
             setTab(v);
-            if (v !== 'sectors') setMapSeen(true);
+            if (v !== 'sectors' && !mapSeen) {
+              setMapSeen(true);
+              onOpen?.();
+            }
           }}
           options={[
             { value: 'sectors', label: 'Sectors' },

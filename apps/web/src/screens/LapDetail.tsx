@@ -17,6 +17,12 @@ export default function LapDetail() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [driven, setDriven] = useState(false);
   const [against, setAgainst] = useState<ResolvedLap | null>(null);
+  // Listed runs come without their profile; the graphs fetch it when first opened.
+  const [opened, setOpened] = useState(false);
+  const againstRun = opened && against?.ref.startsWith('run:') ? against.ref.slice(4) : null;
+  useEffect(() => {
+    if (againstRun) getRun(profile.id, againstRun).then((r) => r && setAgainst((a) => a && { ...a, profile: r.profile ?? null })).catch(() => undefined);
+  }, [againstRun, profile.id]);
 
   useEffect(() => {
     (async () => {
@@ -33,10 +39,10 @@ export default function LapDetail() {
         const run = await getRun(profile.id, p.id).catch(() => null);
         const raced = run?.referenceRef ? await resolveLap(run.referenceRef, profile.id, p.routeId).catch(() => null) : null;
         const prev = valid.filter((x) => x.startedAt < p.startedAt).sort((a, b) => a.totalMs - b.totalMs)[0];
-        setAgainst(raced ?? (prev ? runToLap((await getRun(profile.id, prev.id)) ?? prev, 'your previous best') : null));
+        setAgainst(raced ?? (prev ? runToLap(prev, 'your previous best') : null));
       } else {
         const best = [...valid].sort((a, b) => a.totalMs - b.totalMs)[0];
-        setAgainst(best ? runToLap((await getRun(profile.id, best.id)) ?? best, 'your best') : await resolveLap('record', profile.id, p.routeId).catch(() => null));
+        setAgainst(best ? runToLap(best, 'your best') : await resolveLap('record', profile.id, p.routeId).catch(() => null));
       }
     })().catch((e) => {
       toast(errorMessage(e), 'error');
@@ -87,6 +93,7 @@ export default function LapDetail() {
         route={route}
         posts={posts}
         reference={against}
+        onOpen={() => setOpened(true)}
         badges={post.isPB && <span className="badge ink">PB when posted</span>}
         caption={
           (post.caption || post.car) && (

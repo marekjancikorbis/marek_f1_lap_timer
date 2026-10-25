@@ -60,7 +60,7 @@ updated on each saved lap would replace the 500-lap query there completely.
 **Done when:** opening Feed downloads a few KB of run data instead of MB, and the
 Firestore reads per Feed open drop from "number of laps" to ~1.
 
-**Done (2026-10-25), differently from points 5�6:** there are no admin credentials for a
+**Done (2026-10-25), differently from points 5–6:** there are no admin credentials for a
 server-side migration, so each user's app moves its own old laps as it lists them
 (`moveDetails` in `lib/data.ts`, one run per commit, each queued once per session; the
 rules only let the two fields go once the detail exists). The read fallback in `getRun`
@@ -97,6 +97,12 @@ below the screen, even if the user only looks at the top three.
 
 **Done when:** scrolling the top of the Feed uses only as many static maps as cards seen,
 and opening a lap loads only the open tab's data.
+
+**Done (2026-10-26):** 2a in `RouteShape` (only My times → Routes I built uses map pictures
+today; 16 cards → 4 pictures at the top). 2c: the Mapbox map already mounted on first
+Graphs/Map tap; now the compared lap's detail also loads then (`onOpen` on `LapView`).
+Run Summary still loads its own lap's trace up front: the map draws it once, on load.
+Compare not changed (it picks laps explicitly). 2b left for later, as planned.
 
 ---
 
