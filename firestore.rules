@@ -88,6 +88,7 @@ service cloud.firestore {
         return !('displayName' in d) || (d.displayName is string
           && d.displayName.matches('.{1,30}')
           && d.displayName.trim() == d.displayName
+          && !d.displayName.matches('.*[\\x{200B}-\\x{200F}\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}\\x{FEFF}].*')
           && d.displayNameLower == d.displayName.lower());
       }
 

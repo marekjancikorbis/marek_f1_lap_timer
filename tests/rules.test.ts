@@ -582,6 +582,9 @@ describe('names and photos', () => {
     await assertFails(updateDoc(me, { displayName: '', displayNameLower: '' }));
     await assertFails(updateDoc(me, { displayName: ' padded ', displayNameLower: ' padded ' }));
     await assertFails(updateDoc(me, { displayName: 'x'.repeat(31), displayNameLower: 'x'.repeat(31) }));
+    // right-to-left override and zero-width space, which could make a name look like another
+    await assertFails(updateDoc(me, { displayName: 'ali\u202Eecila', displayNameLower: 'ali\u202Eecila' }));
+    await assertFails(updateDoc(me, { displayName: 'ali\u200Bce', displayNameLower: 'ali\u200Bce' }));
     await assertFails(updateDoc(me, { username: 'renamed', usernameLower: 'renamed' }));
     await assertFails(updateDoc(doc(db('creator'), 'users/driver'), { displayName: 'Hacked', displayNameLower: 'hacked' }));
   });

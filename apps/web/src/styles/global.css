@@ -855,3 +855,9 @@ input[type='range'] {
   flex-direction: column;
   min-width: 0;
 }
+
+/* The @handle after a display name: quieter, but always there. */
+.handle {
+  font-weight: 400;
+  color: var(--mute);
+}

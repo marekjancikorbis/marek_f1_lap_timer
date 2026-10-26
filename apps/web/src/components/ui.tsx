@@ -28,10 +28,19 @@ export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?
   );
 }
 
-/** A driver's current display name, where only their @handle was stored (posts, notifications). */
+/**
+ * A driver's current display name, where only their @handle was stored (posts, notifications).
+ * The @handle follows whenever the name differs from it, so nobody can pass as someone else by name.
+ */
 export function UserName({ uid, fallback }: { uid: string; fallback: string }) {
   const p = useLoaded(uid, getProfile);
-  return <>{p ? nameOf(p) : fallback}</>;
+  const name = p ? nameOf(p) : fallback;
+  return (
+    <>
+      {name}
+      {name !== fallback && <span className="handle"> @{fallback}</span>}
+    </>
+  );
 }
 
 /** Display name over @handle, for lists of drivers. */

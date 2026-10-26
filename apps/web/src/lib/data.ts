@@ -144,7 +144,8 @@ export function getProfile(uid: string): Promise<Profile | null> {
 export const NAME_MAX = 30;
 
 export async function setDisplayName(uid: string, name: string) {
-  const displayName = name.trim().replace(/\s+/g, ' ').slice(0, NAME_MAX);
+  // Invisible and direction-flipping characters could disguise a name; the rules refuse them too.
+  const displayName = name.replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, '').trim().replace(/\s+/g, ' ').slice(0, NAME_MAX);
   if (!displayName) throw new Error('Enter a name.');
   forget('profile');
   await updateDoc(doc(db, 'users', uid), { displayName, displayNameLower: displayName.toLowerCase() });
