@@ -20,7 +20,8 @@ export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?
         height: size,
         fontSize: size * 0.38,
         background: photo ? `center / cover url(${photo})` : `oklch(42% 0.09 ${hue})`,
-        boxShadow: `inset 0 0 0 1px oklch(60% 0.1 ${hue} / 0.5)`,
+        // The colour ring is for initials only: over a photo it shows as a coloured fringe.
+        boxShadow: photo ? undefined : `inset 0 0 0 1px oklch(60% 0.1 ${hue} / 0.5)`,
       }}
     >
       {!photo && initials}
