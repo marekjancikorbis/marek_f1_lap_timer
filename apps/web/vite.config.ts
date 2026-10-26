@@ -26,12 +26,18 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         // The 1.9 MB map library isn't part of the install download; it's kept the first time a map opens.
-        globIgnores: ['**/MapView-*.js', '**/MapView-*.css'],
+        // Same for the photo check (TensorFlow and its model), loaded only when someone picks a profile photo.
+        globIgnores: ['**/MapView-*.js', '**/MapView-*.css', '**/photo-check-*.js'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.origin === self.location.origin && /\/assets\/MapView-[^/]+\.(js|css)$/.test(url.pathname),
             handler: 'CacheFirst',
             options: { cacheName: 'map-library', expiration: { maxEntries: 4 } },
+          },
+          {
+            urlPattern: ({ url }) => url.origin === self.location.origin && /\/assets\/photo-check-[^/]+\.js$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: { cacheName: 'photo-check', expiration: { maxEntries: 4 } },
           },
         ],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
@@ -50,6 +56,7 @@ export default defineConfig({
         manualChunks(id) {
           if (/node_modules\/(@firebase|firebase|idb)\//.test(id)) return 'firebase';
           if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom|@remix-run)\//.test(id)) return 'react';
+          if (/node_modules\/(@tensorflow|nsfwjs|seedrandom|long)\//.test(id) || /src\/lib\/photoCheck/.test(id)) return 'photo-check';
         },
       },
     },

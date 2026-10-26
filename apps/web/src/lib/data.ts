@@ -165,14 +165,25 @@ export async function setPhoto(uid: string, photo: string | null) {
   await (photo ? setDoc(doc(db, 'avatars', uid), { photo }) : deleteDoc(doc(db, 'avatars', uid)));
 }
 
-/** Crop to the middle square and shrink to 160 px: about 10 KB, small enough to keep in Firestore. */
+/**
+ * Crop to the middle square and shrink to 160 px: about 10 KB, small enough to keep in Firestore.
+ * Refuses photos the on-device check finds sexual; if the check can't run (offline), nothing is saved.
+ */
 export async function squarePhoto(file: File): Promise<string> {
   const img = await createImageBitmap(file);
-  const side = Math.min(img.width, img.height);
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 160;
-  canvas.getContext('2d')!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 160, 160);
-  return canvas.toDataURL('image/jpeg', 0.82);
+  const crop = (size: number) => {
+    const side = Math.min(img.width, img.height);
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    canvas.getContext('2d')!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+    return canvas;
+  };
+  const { looksUnsafe } = await import('./photoCheck').catch(() => {
+    throw new Error("Couldn't check the photo. Try again when you're online.");
+  });
+  // The model sees 224 px, the size it was trained on, of the same square that gets shown.
+  if (await looksUnsafe(crop(224))) throw new Error("This photo can't be used. Pick a different one.");
+  return crop(160).toDataURL('image/jpeg', 0.82);
 }
 
 export async function getProfileByUsername(username: string): Promise<Profile | null> {

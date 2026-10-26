@@ -24,6 +24,7 @@ export default function Settings() {
   const [name, setName] = useState(nameOf(profile));
   const [savingName, setSavingName] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
   /** Bumped after a photo change so the avatar loads it again. */
   const [photoKey, setPhotoKey] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -45,12 +46,15 @@ export default function Settings() {
   }
 
   async function changePhoto(file: File | null, remove = false) {
+    setPhotoBusy(true);
     try {
       await setPhoto(profile.id, remove || !file ? null : await squarePhoto(file));
       setPhotoKey((k) => k + 1);
       toast(remove ? 'Photo removed' : 'Photo saved');
     } catch (e) {
       toast(errorMessage(e), 'error');
+    } finally {
+      setPhotoBusy(false);
     }
   }
 
@@ -110,8 +114,8 @@ export default function Settings() {
           </div>
         </div>
         <div className="row wrap" style={{ gap: 8 }}>
-          <button className="btn sm" onClick={() => fileRef.current?.click()}>
-            {hasPhoto ? 'Change photo' : 'Add photo'}
+          <button className="btn sm" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
+            {photoBusy ? 'Checking photo…' : hasPhoto ? 'Change photo' : 'Add photo'}
           </button>
           {hasPhoto && (
             <button className="btn ghost sm" onClick={() => void changePhoto(null, true)}>
