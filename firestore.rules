@@ -75,9 +75,11 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid();
 
       allow update: if signedIn() && userId == uid()
-        && onlyChanges(['countdownS', 'acceptedTermsAt', 'avatarHue', 'publicRouteIds', 'homeRouteId'])
+        && onlyChanges(['countdownS', 'acceptedTermsAt', 'avatarHue', 'publicRouteIds', 'homeRouteId', 'notifSeenAt'])
         && publicRoutesOk()
-        && homeRouteOk();
+        && homeRouteOk()
+        // When the notifications page was last opened: always now, never a made-up time.
+        && (!changedKeys().hasAny(['notifSeenAt']) || request.resource.data.notifSeenAt == request.time);
 
       // Home course: none, or a route anyone can see (public and not hidden).
       function homeRouteOk() {

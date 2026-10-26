@@ -2284,3 +2284,56 @@
 .explore-search input::-webkit-search-cancel-button {
   -webkit-appearance: none;
 }
+
+/* ---------------------------------------------------------------- notifications */
+
+.feed-head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.bell {
+  position: relative;
+}
+
+.bell-dot {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 0 2px var(--tarmac);
+}
+
+.notif {
+  color: var(--ink-2);
+}
+
+.notif.unread {
+  color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+
+.list-item.notif .grow strong {
+  display: inline;
+}
+
+.notif-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--raised-2);
+  color: var(--purple-ink);
+}
+
+.notif-time {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}

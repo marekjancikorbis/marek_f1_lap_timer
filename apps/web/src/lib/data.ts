@@ -20,10 +20,11 @@ import {
   type DocumentReference,
   type DocumentSnapshot,
   type QueryDocumentSnapshot,
+  type Timestamp,
   type WriteBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { AuditEntry, CreatorRequest, Post, Profile, Role, Route, Run } from './types';
+import type { AuditEntry, CreatorRequest, Notification, Post, Profile, Role, Route, Run } from './types';
 
 function withId<T>(snap: DocumentSnapshot | QueryDocumentSnapshot): T {
   return { id: snap.id, ...snap.data() } as T;
@@ -821,4 +822,88 @@ export async function followCounts(uid: string): Promise<{ followers: number; fo
 export async function postCount(uid: string): Promise<number> {
   const snap = await getCountFromServer(query(collection(db, 'posts'), where('userId', '==', uid), where('hidden', '==', false)));
   return snap.data().count;
+}
+
+// ================================================================ notifications
+
+const millis = (t: Timestamp | null | undefined) => t?.toMillis() ?? 0;
+const NOTIF_MAX = 30;
+
+/** Everything on the notifications page, newest first. No server, so all of it is read here. */
+export function notifications(me: Profile, role: Role): Promise<Notification[]> {
+  // Role in the key: it arrives after the profile, and admins see more.
+  return cached(`notifs:${me.id}:${role}`, async () => {
+    const lists = await Promise.all([newFollowers(me.id), beatenTimes(me.id), decidedRequests(me.id), pendingRequests(role)]);
+    return lists.flat().sort((a, b) => b.at - a.at);
+  });
+}
+
+async function newFollowers(uid: string): Promise<Notification[]> {
+  const snap = await getDocs(
+    query(collection(db, 'follows'), where('followeeId', '==', uid), orderBy('createdAt', 'desc'), limit(NOTIF_MAX)),
+  );
+  const rows = snap.docs.map((d) => ({ id: d.id, followerId: d.data().followerId as string, at: millis(d.data().createdAt) }));
+  const people = await getProfiles(rows.map((r) => r.followerId));
+  return rows.flatMap((r) => {
+    const p = people.get(r.followerId);
+    return p ? [{ id: `follow:${r.id}`, at: r.at, kind: 'follow' as const, userId: p.id, username: p.username, avatarHue: p.avatarHue }] : [];
+  });
+}
+
+/** Posted laps faster than your best posted lap, posted after it. One per driver per route. */
+async function beatenTimes(uid: string): Promise<Notification[]> {
+  const best = new Map<string, Post>();
+  for (const p of await userPosts(uid)) {
+    const cur = best.get(p.routeId);
+    if (!cur || p.totalMs < cur.totalMs) best.set(p.routeId, p);
+  }
+  const routes = [...best.values()].sort((a, b) => millis(b.createdAt) - millis(a.createdAt)).slice(0, 20);
+  const perRoute = await Promise.all(
+    routes.map(async (mine) => {
+      const snap = await getDocs(
+        query(
+          collection(db, 'posts'),
+          where('routeId', '==', mine.routeId),
+          where('hidden', '==', false),
+          where('totalMs', '<', mine.totalMs),
+          orderBy('totalMs', 'asc'),
+          limit(NOTIF_MAX),
+        ),
+      );
+      const seen = new Set<string>();
+      return snap.docs
+        .map((d) => withId<Post>(d))
+        .filter((p) => p.userId !== uid && millis(p.createdAt) > millis(mine.createdAt) && !seen.has(p.userId) && seen.add(p.userId))
+        .map((p): Notification => ({ id: `beaten:${p.id}`, at: millis(p.createdAt), kind: 'beaten', post: p, myBestMs: mine.totalMs }));
+    }),
+  );
+  return perRoute.flat();
+}
+
+async function decidedRequests(uid: string): Promise<Notification[]> {
+  const kinds: RequestKind[] = ['creator', 'admin'];
+  const mine = await Promise.all(kinds.map((k) => getMyRequest(uid, k)));
+  return mine.flatMap((r, i) =>
+    r && r.status !== 'pending'
+      ? [{ id: `decided:${kinds[i]}`, at: millis(r.decidedAt), kind: 'decided' as const, request: kinds[i], approved: r.status === 'approved' }]
+      : [],
+  );
+}
+
+/** Requests waiting on you: creator requests for admins, admin requests for the owner. */
+async function pendingRequests(role: Role): Promise<Notification[]> {
+  const kinds: RequestKind[] = role === 'owner' ? ['creator', 'admin'] : role === 'admin' ? ['creator'] : [];
+  const lists = await Promise.all(kinds.map((k) => listRequests('pending', k)));
+  return lists.flatMap((list, i) =>
+    list.map((r): Notification => ({ id: `request:${kinds[i]}:${r.id}`, at: millis(r.createdAt), kind: 'request', request: kinds[i], username: r.username })),
+  );
+}
+
+export function hasUnread(list: Notification[], me: Profile): boolean {
+  return list.some((n) => n.at > millis(me.notifSeenAt));
+}
+
+export async function markNotificationsSeen(uid: string) {
+  forget('profile');
+  await updateDoc(doc(db, 'users', uid), { notifSeenAt: serverTimestamp() });
 }

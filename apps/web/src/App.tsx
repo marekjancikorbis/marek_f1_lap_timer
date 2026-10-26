@@ -22,6 +22,7 @@ const LapDetail = lazy(() => import('./screens/LapDetail'));
 const Compare = lazy(() => import('./screens/Compare'));
 const UserPage = lazy(() => import('./screens/UserPage'));
 const FollowList = lazy(() => import('./screens/FollowList'));
+const Notifications = lazy(() => import('./screens/Notifications'));
 const Settings = lazy(() => import('./screens/Settings'));
 const Admin = lazy(() => import('./screens/Admin'));
 
@@ -107,6 +108,7 @@ function Gate() {
           <Route path="u/:username" element={<UserPage />} />
           <Route path="u/:username/:list" element={<FollowList />} />
           <Route path="me" element={<Navigate to={`/u/${profile.username}`} replace />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<Settings />} />
           <Route path="admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,16 +1,17 @@
 import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { Bell } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
 import { LapCard } from '../components/LapCard';
 import { Avatar, Empty, errorMessage, Spinner, useToast } from '../components/ui';
-import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, type FeedPage } from '../lib/data';
+import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, hasUnread, notifications, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
 
 export function Feed() {
-  const { profile } = useMe();
+  const { profile, role } = useMe();
   const toast = useToast();
   const [follows, setFollows] = useState<string[] | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -110,15 +111,30 @@ export function Feed() {
 
   usePullToRefresh(() => loadFirst(true));
 
+  // The dot only; a failed read just leaves it off.
+  const [unread, setUnread] = useState(false);
+  useEffect(() => {
+    notifications(profile, role)
+      .then((list) => setUnread(hasUnread(list, profile)))
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile.id, profile.notifSeenAt?.toMillis(), role]);
+
   return (
     <main className="screen feed">
       <header className="screen-head">
         <h1 className="wordmark small">
           Purple <span>Sector</span>
         </h1>
-        <Link to="/me" aria-label="Your profile">
-          <Avatar name={profile.username} hue={profile.avatarHue} size={36} />
-        </Link>
+        <div className="feed-head-actions">
+          <Link to="/notifications" className="icon-btn bell" aria-label={unread ? 'Notifications, new' : 'Notifications'}>
+            <Bell size={24} />
+            {unread && <span className="bell-dot" />}
+          </Link>
+          <Link to="/me" aria-label="Your profile">
+            <Avatar name={profile.username} hue={profile.avatarHue} size={36} />
+          </Link>
+        </div>
       </header>
 
       {newCount > 0 && (

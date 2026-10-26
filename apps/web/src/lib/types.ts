@@ -16,6 +16,8 @@ export interface Profile {
   countdownS?: number;
   acceptedTermsAt?: Timestamp | null;
   avatarHue?: number;
+  /** When the notifications page was last opened; newer items light the bell. */
+  notifSeenAt?: Timestamp | null;
 }
 
 export interface LngLat {
@@ -120,6 +122,14 @@ export interface CreatorRequest {
   createdAt: Timestamp | null;
   decidedAt?: Timestamp | null;
 }
+
+/** Worked out on the device from follows, posts and requests; nothing stores these. */
+export type Notification = { id: string; at: number } & (
+  | { kind: 'follow'; userId: string; username: string; avatarHue?: number }
+  | { kind: 'beaten'; post: Post; myBestMs: number }
+  | { kind: 'decided'; request: 'creator' | 'admin'; approved: boolean }
+  | { kind: 'request'; request: 'creator' | 'admin'; username: string }
+);
 
 export interface AuditEntry {
   id: string;

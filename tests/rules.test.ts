@@ -1,7 +1,7 @@
 // Security rules tests against the Firestore emulator. Run with `npm run test:rules`
 // (needs Java 11+ on PATH for the emulator).
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, deleteField, doc, increment, getDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { deleteDoc, deleteField, doc, increment, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
@@ -514,6 +514,17 @@ describe('home course', () => {
     await seed({ 'roles/ex': { role: 'creator' }, 'users/ex': { username: 'ex', publicRouteIds: ['a', 'b', 'c'] } });
     await assertSucceeds(updateDoc(doc(db('ex'), 'users/ex'), { countdownS: 7 }));
     await assertSucceeds(updateDoc(doc(db('ex'), 'users/ex'), { homeRouteId: 'pub' }));
+  });
+});
+
+describe('notifications seen', () => {
+  it('is set to the server time on your own profile', async () => {
+    await assertSucceeds(updateDoc(doc(db('driver'), 'users/driver'), { notifSeenAt: serverTimestamp() }));
+  });
+
+  it('cannot be a made-up time or set on someone else', async () => {
+    await assertFails(updateDoc(doc(db('driver'), 'users/driver'), { notifSeenAt: new Date(2100, 0, 1) }));
+    await assertFails(updateDoc(doc(db('driver'), 'users/creator'), { notifSeenAt: serverTimestamp() }));
   });
 });
 
