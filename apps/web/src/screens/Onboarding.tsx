@@ -32,7 +32,7 @@ export function Onboarding() {
     <main className="screen no-tabs onboarding">
       <h1>Pick a username</h1>
       <p className="mute" style={{ marginTop: 8 }}>
-        It's how other drivers find you and how your laps are signed on leaderboards.
+        Your @username is how other drivers find you, and it can't be changed later. Your display name (in Settings) can.
       </p>
       <form className="stack" style={{ marginTop: 24 }} onSubmit={submit} noValidate>
         <label className="field">

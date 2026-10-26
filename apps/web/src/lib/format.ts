@@ -54,6 +54,11 @@ export function formatDate(date: Date | number | null | undefined): string {
 }
 
 /** Who a route is credited to: Official for admin and owner routes, else the creator's username. */
+/** The name to show for a driver: their display name, or the @handle for profiles from before names. */
+export function nameOf(p: { username: string; displayName?: string }): string {
+  return p.displayName || p.username;
+}
+
 export function routeAuthor(route: { official?: boolean; ownerName: string }): string {
   return route.official ? 'Official' : route.ownerName;
 }

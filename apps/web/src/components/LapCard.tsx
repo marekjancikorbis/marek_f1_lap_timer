@@ -4,7 +4,7 @@ import { formatLap, formatSeconds, timeAgo } from '../lib/format';
 import { bigRoute, postBigColours } from '../lib/laps';
 import type { Post, Route } from '../lib/types';
 import { RouteShape } from './RouteShape';
-import { Avatar, SectorStrip } from './ui';
+import { Avatar, UserName, SectorStrip } from './ui';
 
 interface Props {
   post: Post;
@@ -22,9 +22,11 @@ export function LapCard({ post, route, canCompare, showAuthor = true }: Props) {
     <article className="lap-card">
       {showAuthor && (
         <Link to={`/u/${post.username}`} className="row lap-card-who">
-          <Avatar name={post.username} hue={post.avatarHue} size={34} />
+          <Avatar name={post.username} hue={post.avatarHue} size={34} uid={post.userId} />
           <span className="grow">
-            <strong>{post.username}</strong>
+            <strong>
+              <UserName uid={post.userId} fallback={post.username} />
+            </strong>
             <span className="mute"> · {timeAgo(created)}</span>
           </span>
         </Link>

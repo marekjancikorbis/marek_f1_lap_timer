@@ -59,6 +59,34 @@ export function clearCache() {
   cache.clear();
 }
 
+/**
+ * Load documents by id in batches: everything asked for in one tick shares `in` queries of 30.
+ * Missing documents resolve to null.
+ */
+function batched<T>(
+  run: (ids: string[]) => Promise<{ docs: QueryDocumentSnapshot[] }>,
+  pick: (d: QueryDocumentSnapshot) => T,
+): (id: string) => Promise<T | null> {
+  let queue: { id: string; resolve: (v: T | null) => void; reject: (e: unknown) => void }[] = [];
+  const flush = async () => {
+    const q = queue;
+    queue = [];
+    try {
+      const found = new Map<string, T>();
+      const snaps = await Promise.all(chunks([...new Set(q.map((x) => x.id))], 30).map(run));
+      for (const s of snaps) s.docs.forEach((d) => found.set(d.id, pick(d)));
+      q.forEach((x) => x.resolve(found.get(x.id) ?? null));
+    } catch (e) {
+      q.forEach((x) => x.reject(e));
+    }
+  };
+  return (id) =>
+    new Promise((resolve, reject) => {
+      if (!queue.length) setTimeout(flush);
+      queue.push({ id, resolve, reject });
+    });
+}
+
 function chunks<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
@@ -81,6 +109,8 @@ export async function createProfile(uid: string, username: string): Promise<void
   batch.set(doc(db, 'users', uid), {
     username,
     usernameLower: lower,
+    displayName: username,
+    displayNameLower: lower,
     createdAt: serverTimestamp(),
     publicRouteIds: [],
     avatarHue: Math.floor(Math.random() * 360),
@@ -104,11 +134,44 @@ export async function updateMyProfile(uid: string, data: Partial<Pick<Profile, '
   await updateDoc(doc(db, 'users', uid), data);
 }
 
+/** Display names can change, so a post's name is looked up by its driver: a list's names share a few queries. */
+const loadProfiles = batched((ids) => getDocs(query(collection(db, 'users'), where(documentId(), 'in', ids))), (d) => withId<Profile>(d));
+
 export function getProfile(uid: string): Promise<Profile | null> {
-  return cached(`profile:${uid}`, async () => {
-    const snap = await getDoc(doc(db, 'users', uid));
-    return snap.exists() ? withId<Profile>(snap) : null;
-  });
+  return cached(`profile:${uid}`, () => loadProfiles(uid));
+}
+
+export const NAME_MAX = 30;
+
+export async function setDisplayName(uid: string, name: string) {
+  const displayName = name.trim().replace(/\s+/g, ' ').slice(0, NAME_MAX);
+  if (!displayName) throw new Error('Enter a name.');
+  forget('profile');
+  await updateDoc(doc(db, 'users', uid), { displayName, displayNameLower: displayName.toLowerCase() });
+}
+
+// Photos live apart from profiles, so the many profile reads stay small. An `in` query only bills
+// the photos that exist, so drivers without one cost nothing.
+const loadPhotos = batched((ids) => getDocs(query(collection(db, 'avatars'), where(documentId(), 'in', ids))), (d) => d.data().photo as string);
+
+export function getPhoto(uid: string): Promise<string | null> {
+  return cached(`photo:${uid}`, () => loadPhotos(uid));
+}
+
+/** A square JPEG data URL (see squarePhoto), or null to go back to initials. */
+export async function setPhoto(uid: string, photo: string | null) {
+  forget(`photo:${uid}`);
+  await (photo ? setDoc(doc(db, 'avatars', uid), { photo }) : deleteDoc(doc(db, 'avatars', uid)));
+}
+
+/** Crop to the middle square and shrink to 160 px: about 10 KB, small enough to keep in Firestore. */
+export async function squarePhoto(file: File): Promise<string> {
+  const img = await createImageBitmap(file);
+  const side = Math.min(img.width, img.height);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 160;
+  canvas.getContext('2d')!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 160, 160);
+  return canvas.toDataURL('image/jpeg', 0.82);
 }
 
 export async function getProfileByUsername(username: string): Promise<Profile | null> {
@@ -129,20 +192,17 @@ export function getProfiles(uids: string[]): Promise<Map<string, Profile>> {
   });
 }
 
-/** Username prefix search, case-insensitive, at most 20 results. */
+/** Prefix search on the @handle and the display name, case-insensitive; "@..." searches handles only. At most 20. */
 export async function searchUsers(q: string): Promise<Profile[]> {
-  const term = q.trim().toLowerCase();
+  const handleOnly = q.trim().startsWith('@');
+  const term = q.trim().replace(/^@/, '').toLowerCase();
   if (!term) return [];
-  const snap = await getDocs(
-    query(
-      collection(db, 'users'),
-      where('usernameLower', '>=', term),
-      where('usernameLower', '<', term + ''),
-      orderBy('usernameLower'),
-      limit(20),
-    ),
-  );
-  return snap.docs.map((d) => withId<Profile>(d));
+  const by = (field: string) =>
+    getDocs(query(collection(db, 'users'), where(field, '>=', term), where(field, '<', term + ''), orderBy(field), limit(20)));
+  const snaps = await Promise.all(handleOnly ? [by('usernameLower')] : [by('usernameLower'), by('displayNameLower')]);
+  const found = new Map<string, Profile>();
+  for (const s of snaps) s.docs.forEach((d) => found.set(d.id, withId<Profile>(d)));
+  return [...found.values()].slice(0, 20);
 }
 
 export async function getRole(uid: string): Promise<Role> {

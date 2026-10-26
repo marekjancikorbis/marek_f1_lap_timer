@@ -19,7 +19,7 @@ import {
   unpostLap,
   userPosts,
 } from '../lib/data';
-import { formatDate, formatLap, ROLE_LABEL } from '../lib/format';
+import { formatDate, formatLap, nameOf, ROLE_LABEL } from '../lib/format';
 import { postBigColours } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Profile, Role, Route } from '../lib/types';
@@ -132,9 +132,10 @@ export default function UserPage() {
         }
       />
       <section className="profile-head">
-        <Avatar name={user.username} hue={user.avatarHue} size={72} />
+        <Avatar name={user.username} hue={user.avatarHue} size={72} uid={user.id} />
         <div className="grow">
-          <h1 className="profile-name">{user.username}</h1>
+          <h1 className="profile-name">{nameOf(user)}</h1>
+          <p className="mute profile-handle">@{user.username}</p>
           <p className="mute profile-sub">
             {role !== 'driver' && <span className="badge blue">{ROLE_LABEL[role]}</span>}
             {home?.isPublic ? (
@@ -178,7 +179,7 @@ export default function UserPage() {
 
       <h2 className="section-title">Best laps</h2>
       {groups.length === 0 ? (
-        <p className="mute">{isMe ? 'Laps you post on public routes appear here.' : `${user.username} hasn't posted a lap yet.`}</p>
+        <p className="mute">{isMe ? 'Laps you post on public routes appear here.' : `${nameOf(user)} hasn't posted a lap yet.`}</p>
       ) : (
         <div className="list">
           {groups.map((g) => {

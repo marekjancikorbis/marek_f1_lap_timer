@@ -3,7 +3,7 @@ import { Maximize2, Minimize2, Play, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteMap } from '../components/RouteMap';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, useToast } from '../components/ui';
+import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, UserName, useToast, WhoText } from '../components/ui';
 import { adminDeleteRoute, deleteRoute, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, setHomeRoute } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { bigRecords, bigRoute } from '../lib/laps';
@@ -216,9 +216,9 @@ export default function RouteDetail() {
                 <li key={post.id} className={`board-row ${post.userId === profile.id ? 'me' : ''}`}>
                   <span className={`board-pos num ${rank === 1 ? 'p1' : ''}`}>{rank}</span>
                   <Link to={`/u/${post.username}`} className="row grow" style={{ gap: 10, textDecoration: 'none', minWidth: 0 }}>
-                    <Avatar name={post.username} hue={post.avatarHue} size={32} />
+                    <Avatar name={post.username} hue={post.avatarHue} size={32} uid={post.userId} />
                     <span className="grow" style={{ minWidth: 0 }}>
-                      <strong className="ellipsis">{post.userId === profile.id ? 'You' : post.username}</strong>
+                      <strong className="ellipsis">{post.userId === profile.id ? 'You' : <UserName uid={post.userId} fallback={post.username} />}</strong>
                       {post.car && <span className="mute ellipsis small-text">{post.car}</span>}
                     </span>
                   </Link>
@@ -284,8 +284,8 @@ export default function RouteDetail() {
           <div className="list">
             {locals.map((l) => (
               <Link key={l.id} to={`/u/${l.username}`} className="list-item">
-                <Avatar name={l.username} hue={l.avatarHue} size={32} />
-                <strong className="grow ellipsis">{l.username}</strong>
+                <Avatar name={l.username} hue={l.avatarHue} size={32} uid={l.id} />
+                <WhoText p={l} />
                 {l.id === profile.id && <span className="badge outline">You</span>}
               </Link>
             ))}

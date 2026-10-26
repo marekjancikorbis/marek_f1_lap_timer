@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
 import { LapCard } from '../components/LapCard';
-import { Avatar, Empty, errorMessage, Spinner, useToast } from '../components/ui';
+import { Avatar, Empty, errorMessage, Spinner, UserName, useToast } from '../components/ui';
 import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, unreadNotices, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
@@ -214,9 +214,11 @@ function FeedEmpty({ onFollowed }: { onFollowed: () => void }) {
             {suggested.map((s) => (
               <div key={s.id} className="list-item">
                 <Link to={`/u/${s.username}`} className="row grow" style={{ textDecoration: 'none', gap: 12 }}>
-                  <Avatar name={s.username} hue={s.hue} />
+                  <Avatar name={s.username} hue={s.hue} uid={s.id} />
                   <span className="grow">
-                    <strong>{s.username}</strong>
+                    <strong>
+                      <UserName uid={s.id} fallback={s.username} />
+                    </strong>
                     <br />
                     <span className="mute" style={{ fontSize: 14 }}>
                       {s.note}

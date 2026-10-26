@@ -6,8 +6,12 @@ export type Role = 'driver' | 'creator' | 'admin' | 'owner';
 
 export interface Profile {
   id: string;
+  /** The @handle: unique, picked once, never changes. Links and posts use it. */
   username: string;
   usernameLower: string;
+  /** The name shown first, changeable any time; profiles from before it fall back to the handle. */
+  displayName?: string;
+  displayNameLower?: string;
   createdAt: Timestamp | null;
   /** The user's public routes; how many is limited by role (see publicLimit). */
   publicRouteIds?: string[];

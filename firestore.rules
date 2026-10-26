@@ -66,7 +66,8 @@ service cloud.firestore {
       allow read: if signedIn();
 
       allow create: if signedIn() && userId == uid()
-        && request.resource.data.keys().hasOnly(['username', 'usernameLower', 'createdAt', 'publicRouteIds', 'countdownS', 'acceptedTermsAt', 'avatarHue'])
+        && request.resource.data.keys().hasOnly(['username', 'usernameLower', 'displayName', 'displayNameLower', 'createdAt', 'publicRouteIds', 'countdownS', 'acceptedTermsAt', 'avatarHue'])
+        && displayNameOk()
         && request.resource.data.username is string
         && request.resource.data.username.matches('^[A-Za-z0-9_.]{3,20}$')
         && request.resource.data.usernameLower == request.resource.data.username.lower()
@@ -75,9 +76,20 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.usernameLower)).data.uid == uid();
 
       allow update: if signedIn() && userId == uid()
-        && onlyChanges(['countdownS', 'acceptedTermsAt', 'avatarHue', 'publicRouteIds', 'homeRouteId'])
+        && onlyChanges(['countdownS', 'acceptedTermsAt', 'avatarHue', 'publicRouteIds', 'homeRouteId', 'displayName', 'displayNameLower'])
+        && displayNameOk()
         && publicRoutesOk()
         && homeRouteOk();
+
+      // The changeable name (the @username never changes): 1–30 characters on one line, trimmed,
+      // with its lowercase copy for search.
+      function displayNameOk() {
+        let d = request.resource.data;
+        return !('displayName' in d) || (d.displayName is string
+          && d.displayName.matches('.{1,30}')
+          && d.displayName.trim() == d.displayName
+          && d.displayNameLower == d.displayName.lower());
+      }
 
       // Home course: none, or a route anyone can see (public and not hidden).
       function homeRouteOk() {
@@ -403,6 +415,19 @@ service cloud.firestore {
         && request.resource.data.followeeId != uid()
         && id == uid() + '_' + request.resource.data.followeeId;
       allow delete: if signedIn() && resource.data.followerId == uid();
+    }
+
+    // ------------------------------------------------------------ profile photos
+
+    // A small square JPEG as a data URL (no Storage on Spark). Admins can take one down.
+    match /avatars/{userId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && userId == uid()
+        && request.resource.data.keys().hasOnly(['photo'])
+        && request.resource.data.photo is string
+        && request.resource.data.photo.size() < 60000
+        && request.resource.data.photo.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+');
+      allow delete: if signedIn() && (userId == uid() || isAdmin());
     }
 
     // ------------------------------------------------------------ notifications

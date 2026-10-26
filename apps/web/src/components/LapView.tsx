@@ -10,12 +10,14 @@ import type { Post, Route, SectorColourName } from '../lib/types';
 import { DeltaGraph, SERIES, SpeedGraph } from './Charts';
 import { RouteMap } from './RouteMap';
 import { RouteShape } from './RouteShape';
-import { Avatar, Segmented, STRIP_LABEL } from './ui';
+import { Avatar, Segmented, STRIP_LABEL, UserName } from './ui';
 
 export interface LapViewLap {
   /** Post id, or run id (a posted run's post shares its id). */
   id: string;
   username: string;
+  /** The driver, for their photo and current name. */
+  userId?: string;
   avatarHue?: number;
   routeId: string;
   routeName: string;
@@ -92,9 +94,9 @@ export function LapView({
   return (
     <>
       <Link to={`/u/${lap.username}`} className="row" style={{ gap: 10, textDecoration: 'none' }}>
-        <Avatar name={lap.username} hue={lap.avatarHue} size={40} />
+        <Avatar name={lap.username} hue={lap.avatarHue} size={40} uid={lap.userId} />
         <span className="grow">
-          <strong>{lap.username}</strong>
+          <strong>{lap.userId ? <UserName uid={lap.userId} fallback={lap.username} /> : lap.username}</strong>
           <span className="mute" style={{ display: 'block', fontSize: 14 }}>
             {formatDate(lap.startedAt)}
           </span>

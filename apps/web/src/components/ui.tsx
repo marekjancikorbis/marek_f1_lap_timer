@@ -1,11 +1,15 @@
 import { ChevronLeft, Map, Play, Rss, Timer, User } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { getPhoto, getProfile } from '../lib/data';
+import { nameOf } from '../lib/format';
 import type { SectorColourName } from '../lib/types';
 
 // ---------------------------------------------------------------- avatar
 
-export function Avatar({ name, hue = 210, size = 36 }: { name: string; hue?: number; size?: number }) {
+/** Initials on the driver's colour, or their photo once it loads (pass uid). */
+export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?: number; size?: number; uid?: string }) {
+  const photo = useLoaded(uid, getPhoto);
   const initials = name.replace(/[^A-Za-z0-9]/g, '').slice(0, 2) || '?';
   return (
     <span
@@ -15,13 +19,43 @@ export function Avatar({ name, hue = 210, size = 36 }: { name: string; hue?: num
         width: size,
         height: size,
         fontSize: size * 0.38,
-        background: `oklch(42% 0.09 ${hue})`,
+        background: photo ? `center / cover url(${photo})` : `oklch(42% 0.09 ${hue})`,
         boxShadow: `inset 0 0 0 1px oklch(60% 0.1 ${hue} / 0.5)`,
       }}
     >
-      {initials}
+      {!photo && initials}
     </span>
   );
+}
+
+/** A driver's current display name, where only their @handle was stored (posts, notifications). */
+export function UserName({ uid, fallback }: { uid: string; fallback: string }) {
+  const p = useLoaded(uid, getProfile);
+  return <>{p ? nameOf(p) : fallback}</>;
+}
+
+/** Display name over @handle, for lists of drivers. */
+export function WhoText({ p }: { p: { username: string; displayName?: string } }) {
+  return (
+    <span className="grow who-text">
+      <strong className="ellipsis">{nameOf(p)}</strong>
+      <span className="mute ellipsis small-text">@{p.username}</span>
+    </span>
+  );
+}
+
+function useLoaded<T>(id: string | undefined, load: (id: string) => Promise<T | null>): T | null {
+  const [value, setValue] = useState<T | null>(null);
+  useEffect(() => {
+    setValue(null);
+    if (!id) return;
+    let live = true;
+    load(id).then((v) => live && setValue(v), () => undefined);
+    return () => {
+      live = false;
+    };
+  }, [id, load]);
+  return value;
 }
 
 // ---------------------------------------------------------------- sector strip

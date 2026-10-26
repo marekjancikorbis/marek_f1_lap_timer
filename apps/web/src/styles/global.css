@@ -849,3 +849,9 @@ input[type='range'] {
 .list-item .grow.notice-text strong {
   display: inline;
 }
+
+.who-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}

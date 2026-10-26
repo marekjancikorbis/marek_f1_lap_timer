@@ -573,3 +573,28 @@ describe('notifications', () => {
     await assertSucceeds(setDoc(item(db('admin'), 'creator', 'm1'), n('admin')));
   });
 });
+
+describe('names and photos', () => {
+  it('the display name changes, the @username never does', async () => {
+    const me = doc(db('driver'), 'users/driver');
+    await assertSucceeds(updateDoc(me, { displayName: 'Jana Nováková', displayNameLower: 'jana nováková' }));
+    await assertFails(updateDoc(me, { displayName: 'Jana', displayNameLower: 'someone else' }));
+    await assertFails(updateDoc(me, { displayName: '', displayNameLower: '' }));
+    await assertFails(updateDoc(me, { displayName: ' padded ', displayNameLower: ' padded ' }));
+    await assertFails(updateDoc(me, { displayName: 'x'.repeat(31), displayNameLower: 'x'.repeat(31) }));
+    await assertFails(updateDoc(me, { username: 'renamed', usernameLower: 'renamed' }));
+    await assertFails(updateDoc(doc(db('creator'), 'users/driver'), { displayName: 'Hacked', displayNameLower: 'hacked' }));
+  });
+
+  it('only you set your photo: a small JPEG; admins can remove it', async () => {
+    const photo = 'data:image/jpeg;base64,' + 'A'.repeat(1000);
+    await assertSucceeds(setDoc(doc(db('driver'), 'avatars/driver'), { photo }));
+    await assertSucceeds(getDoc(doc(db('creator'), 'avatars/driver')));
+    await assertFails(setDoc(doc(db('creator'), 'avatars/driver'), { photo }));
+    await assertFails(setDoc(doc(db('driver'), 'avatars/driver'), { photo: 'data:image/jpeg;base64,' + 'A'.repeat(60000) }));
+    await assertFails(setDoc(doc(db('driver'), 'avatars/driver'), { photo: 'data:text/html;base64,PHNjcmlwdD4=' }));
+    await assertFails(deleteDoc(doc(db('creator'), 'avatars/driver')));
+    await seed({ 'roles/admin': { role: 'admin' } });
+    await assertSucceeds(deleteDoc(doc(db('admin'), 'avatars/driver')));
+  });
+});

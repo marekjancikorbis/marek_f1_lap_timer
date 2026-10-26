@@ -131,7 +131,7 @@ export default function RunSummary() {
     <main className="screen">
       <ScreenHead back={`/r/${run.routeId}`} title="Lap" />
       <LapView
-        lap={{ ...run, profile: run.profile ?? null, username: profile.username, avatarHue: profile.avatarHue }}
+        lap={{ ...run, profile: run.profile ?? null, username: profile.username, userId: profile.id, avatarHue: profile.avatarHue }}
         colours={colours}
         route={route}
         posts={posts}

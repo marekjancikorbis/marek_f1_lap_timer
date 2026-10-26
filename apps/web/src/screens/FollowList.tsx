@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead } from '../components/ui';
+import { Avatar, Empty, errorMessage, Loading, ScreenHead, WhoText } from '../components/ui';
 import { followerIds, followingIds, getProfileByUsername, getProfiles } from '../lib/data';
 import type { Profile } from '../lib/types';
 
@@ -31,7 +31,7 @@ export default function FollowList() {
     <main className="screen">
       <ScreenHead back title={followers ? 'Followers' : 'Following'} />
       <p className="mute" style={{ marginTop: -8, marginBottom: 16 }}>
-        {username}
+        @{username}
       </p>
       {error && <p className="notice error">{error}</p>}
       {people === null ? (
@@ -43,8 +43,8 @@ export default function FollowList() {
           {people.map((p) => (
             <div className="list-item" key={p.id}>
               <Link to={`/u/${p.username}`} className="row grow" style={{ gap: 12, textDecoration: 'none' }}>
-                <Avatar name={p.username} hue={p.avatarHue} size={40} />
-                <strong className="grow">{p.username}</strong>
+                <Avatar name={p.username} hue={p.avatarHue} size={40} uid={p.id} />
+                <WhoText p={p} />
               </Link>
               <FollowButton userId={p.id} />
             </div>

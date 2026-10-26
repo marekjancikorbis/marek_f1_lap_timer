@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar, errorMessage, ScreenHead, useToast } from '../components/ui';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
-import { getMyRequest, requestCreatorAccess, updateMyProfile } from '../lib/data';
+import { getMyRequest, getPhoto, NAME_MAX, requestCreatorAccess, setDisplayName, setPhoto, squarePhoto, updateMyProfile } from '../lib/data';
+import { nameOf } from '../lib/format';
 import { useMe, useSession } from '../lib/session';
 import type { CreatorRequest } from '../lib/types';
 import { readUsage, type UsageState } from '../lib/usage';
@@ -20,6 +21,38 @@ export default function Settings() {
   const [busy, setBusy] = useState(false);
   const [usage, setUsage] = useState<UsageState | null>(null);
   const [logs, setLogs] = useState(listLogs);
+  const [name, setName] = useState(nameOf(profile));
+  const [savingName, setSavingName] = useState(false);
+  const [hasPhoto, setHasPhoto] = useState(false);
+  /** Bumped after a photo change so the avatar loads it again. */
+  const [photoKey, setPhotoKey] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    getPhoto(profile.id).then((p) => setHasPhoto(!!p), () => undefined);
+  }, [profile.id, photoKey]);
+
+  async function saveName() {
+    setSavingName(true);
+    try {
+      await setDisplayName(profile.id, name);
+      toast('Name saved');
+    } catch (e) {
+      toast(errorMessage(e), 'error');
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  async function changePhoto(file: File | null, remove = false) {
+    try {
+      await setPhoto(profile.id, remove || !file ? null : await squarePhoto(file));
+      setPhotoKey((k) => k + 1);
+      toast(remove ? 'Photo removed' : 'Photo saved');
+    } catch (e) {
+      toast(errorMessage(e), 'error');
+    }
+  }
 
   useEffect(() => {
     getMyRequest(profile.id).then(setRequest).catch(() => setRequest(null));
@@ -68,16 +101,47 @@ export default function Settings() {
       <h2 className="section-title">Profile</h2>
       <div className="panel stack">
         <div className="row" style={{ gap: 14 }}>
-          <Avatar name={profile.username} hue={profile.avatarHue} size={56} />
+          <Avatar key={photoKey} name={profile.username} hue={profile.avatarHue} size={56} uid={profile.id} />
           <div className="grow">
-            <strong style={{ fontSize: 18 }}>{profile.username}</strong>
+            <strong style={{ fontSize: 18 }}>{nameOf(profile)}</strong>
             <p className="mute" style={{ fontSize: 14 }}>
-              {user.email}
+              @{profile.username} · {user.email}
             </p>
           </div>
         </div>
+        <div className="row wrap" style={{ gap: 8 }}>
+          <button className="btn sm" onClick={() => fileRef.current?.click()}>
+            {hasPhoto ? 'Change photo' : 'Add photo'}
+          </button>
+          {hasPhoto && (
+            <button className="btn ghost sm" onClick={() => void changePhoto(null, true)}>
+              Remove photo
+            </button>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              e.target.value = '';
+              if (f) void changePhoto(f);
+            }}
+          />
+        </div>
+        <label className="field">
+          <span>Display name</span>
+          <div className="row" style={{ gap: 8 }}>
+            <input className="input grow" value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={profile.username} />
+            <button className="btn sm" disabled={savingName || !name.trim() || name.trim() === nameOf(profile)} onClick={saveName}>
+              {savingName ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+          <small>Shown on your profile, laps and leaderboards. Your @{profile.username} stays the same.</small>
+        </label>
         <div>
-          <p style={{ fontWeight: 500, marginBottom: 8 }}>Avatar colour</p>
+          <p style={{ fontWeight: 500, marginBottom: 8 }}>Avatar colour (without a photo)</p>
           <div className="row wrap" role="radiogroup" aria-label="Avatar colour">
             {HUES.map((h) => (
               <button

@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
 import { MapView } from '../components/MapView';
 import { RouteShape } from '../components/RouteShape';
-import { Avatar, errorMessage, Spinner, useToast } from '../components/ui';
+import { Avatar, errorMessage, Spinner, useToast, WhoText } from '../components/ui';
 import { myRoutes, publicRoutes, searchUsers, setPostCount } from '../lib/data';
 import { db } from '../lib/firebase';
 import { formatDistance } from '../lib/format';
@@ -449,16 +449,16 @@ export default function MapScreen() {
             <>
               {filter === 'all' && <h2 className="section-title">Drivers</h2>}
               {!term ? (
-                <p className="mute explore-empty">Type the start of a username to find a driver.</p>
+                <p className="mute explore-empty">Type the start of a name or @username to find a driver.</p>
               ) : drivers && drivers.length === 0 && !searching ? (
-                <p className="mute explore-empty">Nobody's username starts with “{q.trim()}”.</p>
+                <p className="mute explore-empty">No driver's name or @username starts with “{q.trim().replace(/^@/, '')}”.</p>
               ) : (
                 <ul className="explore-list">
                   {(drivers ?? []).map((p) => (
                     <li key={p.id} className="explore-row">
                       <Link to={`/u/${p.username}`} className="row grow" style={{ gap: 12, textDecoration: 'none' }}>
-                        <Avatar name={p.username} hue={p.avatarHue} size={36} />
-                        <strong className="grow ellipsis">{p.username}</strong>
+                        <Avatar name={p.username} hue={p.avatarHue} size={36} uid={p.id} />
+                        <WhoText p={p} />
                       </Link>
                       <FollowButton userId={p.id} />
                     </li>

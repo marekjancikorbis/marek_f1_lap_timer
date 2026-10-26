@@ -1,7 +1,7 @@
 import { ShieldAlert } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead } from '../components/ui';
+import { Avatar, Empty, errorMessage, Loading, ScreenHead, UserName } from '../components/ui';
 import { listNotices, markNoticesSeen } from '../lib/data';
 import { formatLap, timeAgo } from '../lib/format';
 import { useMe } from '../lib/session';
@@ -20,7 +20,11 @@ const ACCESS: Record<string, string> = {
 
 /** What a notification says and where tapping it goes. */
 function describe(n: Notice): { text: ReactNode; to?: string } {
-  const who = <strong>{n.fromName}</strong>;
+  const who = (
+    <strong>
+      <UserName uid={n.fromId} fallback={n.fromName} />
+    </strong>
+  );
   switch (n.type) {
     case 'follow':
       return { text: <>{who} started following you</>, to: `/u/${n.fromName}` };
@@ -78,7 +82,7 @@ export default function Notifications() {
             const body = (
               <>
                 {n.type === 'follow' || n.type === 'beaten' ? (
-                  <Avatar name={n.fromName} size={40} />
+                  <Avatar name={n.fromName} size={40} uid={n.fromId} />
                 ) : (
                   <span className="icon-btn" aria-hidden>
                     <ShieldAlert size={22} />

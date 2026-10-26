@@ -16,7 +16,7 @@ import {
   setCreator,
   type RequestKind,
 } from '../lib/data';
-import { formatLap, timeAgo } from '../lib/format';
+import { formatLap, nameOf, timeAgo } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { AuditEntry, CreatorRequest, Post, Profile, Role, Route } from '../lib/types';
 
@@ -181,9 +181,9 @@ function Users() {
           const role = roles.get(p.id) ?? 'driver';
           return (
             <div key={p.id} className="list-item">
-              <Avatar name={p.username} hue={p.avatarHue} />
+              <Avatar name={p.username} hue={p.avatarHue} uid={p.id} />
               <span className="grow">
-                <strong>{p.username}</strong>
+                <strong>{nameOf(p)}</strong> <span className="mute">@{p.username}</span>
                 <br />
                 <span className="mute" style={{ fontSize: 14, textTransform: 'capitalize' }}>
                   {role}
