@@ -8,7 +8,7 @@ import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { CreatorRequest, Route, Run } from '../lib/types';
 
-/** My times: every lap you've driven, by route, and the routes you've built. */
+/** Routes: every lap you've driven, by route, and the routes you've built. */
 export default function MyRoutes() {
   const { profile, role, isCreator } = useMe();
   const toast = useToast();
@@ -90,7 +90,7 @@ export default function MyRoutes() {
   return (
     <main className="screen">
       <ScreenHead
-        title="My times"
+        title="Routes"
         right={
           isCreator &&
           tab === 'built' && (

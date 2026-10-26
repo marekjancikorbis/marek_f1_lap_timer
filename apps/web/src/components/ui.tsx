@@ -1,4 +1,4 @@
-import { ChevronLeft, Map, Play, Rss, Timer, User } from 'lucide-react';
+import { ChevronLeft, Map, Play, Route as RouteIcon, Rss, User } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { getPhoto, getProfile } from '../lib/data';
@@ -119,7 +119,7 @@ export function TabBar() {
     { to: '/', label: 'Feed', icon: Rss, end: true },
     { to: '/explore', label: 'Explore', icon: Map },
     { to: '/drive', label: 'Drive', icon: Play, end: true },
-    { to: '/times', label: 'My times', icon: Timer },
+    { to: '/routes', label: 'Routes', icon: RouteIcon },
     { to: '/me', label: 'Profile', icon: User },
   ];
   return (

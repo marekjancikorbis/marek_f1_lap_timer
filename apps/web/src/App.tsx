@@ -92,11 +92,11 @@ function Gate() {
           <Route index element={<Feed />} />
           <Route path="explore" element={<MapScreen />} />
           <Route path="drive" element={<DriveLauncher />} />
-          <Route path="times" element={<MyRoutes />} />
-          {/* Old addresses from before Explore and My times. */}
+          <Route path="routes" element={<MyRoutes />} />
+          {/* Old addresses: before Explore, and when Routes was called My times. */}
           <Route path="map" element={<Navigate to="/explore" replace />} />
           <Route path="search" element={<Navigate to="/explore" replace />} />
-          <Route path="routes" element={<Navigate to="/times" replace />} />
+          <Route path="times" element={<Navigate to="/routes" replace />} />
           <Route path="routes/new" element={<RouteBuilder />} />
           <Route path="r/:routeId" element={<RouteDetail />} />
           <Route path="r/:routeId/edit" element={<RouteBuilder />} />
