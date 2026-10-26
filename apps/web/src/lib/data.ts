@@ -605,7 +605,7 @@ function countPost(batch: WriteBatch, routeId: string, postId: string, by: 1 | -
   batch.update(doc(db, 'routes', routeId), { postCount: increment(by), lastPostId: postId });
 }
 
-/** Write with the count; if that's refused (the route was deleted), write without it, which the rules then allow. */
+/** Write with the count; if that's refused (the route was deleted, or a moderator already removed the post), write without it, which the rules then allow. */
 async function withPostCount(write: (count: boolean) => Promise<void>) {
   await write(true).catch(() => write(false));
 }

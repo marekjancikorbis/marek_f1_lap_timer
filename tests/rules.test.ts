@@ -259,6 +259,15 @@ describe('posting laps', () => {
     await assertSucceeds(deleteDoc(doc(db('admin'), 'posts/run1')));
   });
 
+  it('a lap whose post a moderator removed can still be deleted, without moving the count', async () => {
+    const d = db('driver');
+    const withCount = writeBatch(d);
+    withCount.delete(doc(d, 'posts/run1'));
+    withCount.update(doc(d, 'routes/pub'), { postCount: increment(-1), lastPostId: 'run1' });
+    await assertFails(withCount.commit());
+    await assertSucceeds(deleteDoc(doc(d, 'posts/run1')));
+  });
+
   it("a post can't come or go without its route's count moving", async () => {
     const d = db('driver');
     await assertFails(setDoc(doc(d, 'posts/run1'), post()));

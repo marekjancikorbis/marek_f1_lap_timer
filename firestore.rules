@@ -377,7 +377,8 @@ service cloud.firestore {
         || (isAdmin() && onlyChanges(['hidden']));
 
       // Admins delete posts in bulk (a reshaped or removed route) and are trusted with the count.
-      allow delete: if signedIn() && (isAdmin() || (resource.data.userId == uid() && countMoved(resource.data.routeId, -1)));
+      // Already gone (a moderator removed it): nothing to delete, so a lap still marked posted can be unposted or deleted.
+      allow delete: if signedIn() && (resource == null || isAdmin() || (resource.data.userId == uid() && countMoved(resource.data.routeId, -1)));
     }
 
     // ------------------------------------------------------------ activity
