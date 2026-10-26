@@ -211,6 +211,7 @@ function Users() {
 }
 
 function Routes() {
+  const { profile } = useMe();
   const toast = useToast();
   const [routes, setRoutes] = useState<Route[] | null>(null);
   useEffect(() => {
@@ -219,7 +220,7 @@ function Routes() {
 
   async function act(r: Route, change: { isPublic?: boolean; hidden?: boolean; official?: boolean }, msg: string) {
     try {
-      await moderateRoute(r.id, change);
+      await moderateRoute(profile, r, change);
       setRoutes((rs) => rs?.map((x) => (x.id === r.id ? { ...x, ...change } : x)) ?? null);
       toast(msg);
     } catch (e) {
@@ -230,7 +231,7 @@ function Routes() {
   async function remove(r: Route) {
     if (!confirm(`Delete ${r.name} by ${r.ownerName} and all its posted laps? This cannot be undone.`)) return;
     try {
-      await adminDeleteRoute(r.id);
+      await adminDeleteRoute(profile, r);
       setRoutes((rs) => rs?.filter((x) => x.id !== r.id) ?? null);
       toast('Route deleted');
     } catch (e) {
@@ -285,6 +286,7 @@ function Routes() {
 }
 
 function Posts() {
+  const { profile } = useMe();
   const toast = useToast();
   const [posts, setPosts] = useState<Post[] | null>(null);
   useEffect(() => {
@@ -294,7 +296,7 @@ function Posts() {
   async function remove(p: Post) {
     if (!confirm(`Remove ${p.username}'s ${formatLap(p.totalMs)} post on ${p.routeName}?`)) return;
     try {
-      await removePost(p);
+      await removePost(profile, p);
       setPosts((ps) => ps?.filter((x) => x.id !== p.id) ?? null);
       toast('Post removed');
     } catch (e) {

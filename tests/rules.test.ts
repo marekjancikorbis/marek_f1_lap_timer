@@ -1,7 +1,7 @@
 // Security rules tests against the Firestore emulator. Run with `npm run test:rules`
 // (needs Java 11+ on PATH for the emulator).
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, deleteField, doc, increment, getDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { deleteDoc, deleteField, doc, increment, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
@@ -525,5 +525,51 @@ describe('activity', () => {
     await assertFails(setDoc(doc(db('creator'), 'activity/driver'), { days: {} }));
     await assertFails(setDoc(doc(db('driver'), 'activity/driver'), { days: {}, extra: 1 }));
     await assertFails(setDoc(doc(db('driver'), 'activity/driver'), { days: 'lots' }));
+  });
+});
+
+describe('notifications', () => {
+  const notice = (from: string, extra: object) => ({ fromId: from, fromName: from, createdAt: serverTimestamp(), ...extra });
+  const item = (d: ReturnType<typeof db>, owner: string, id: string) => doc(d, `notifications/${owner}/items/${id}`);
+
+  it('a follow notice needs the follow to exist, once per follower', async () => {
+    const d = db('driver');
+    await assertFails(setDoc(item(d, 'creator', 'follow_driver'), notice('driver', { type: 'follow' })));
+    await seed({ 'follows/driver_creator': { followerId: 'driver', followeeId: 'creator' } });
+    await assertFails(setDoc(item(d, 'creator', 'follow_x'), notice('driver', { type: 'follow' })));
+    await assertFails(setDoc(item(d, 'creator', 'follow_driver'), notice('creator', { type: 'follow' })));
+    await assertSucceeds(setDoc(item(d, 'creator', 'follow_driver'), notice('driver', { type: 'follow' })));
+    await assertFails(setDoc(item(d, 'creator', 'follow_driver'), notice('driver', { type: 'follow' })));
+  });
+
+  it('only the owner reads, clears and marks their notifications seen', async () => {
+    await seed({ 'notifications/creator/items/n1': { type: 'follow', fromId: 'driver' } });
+    await assertFails(getDoc(item(db('driver'), 'creator', 'n1')));
+    await assertSucceeds(getDoc(item(db('creator'), 'creator', 'n1')));
+    await assertFails(setDoc(doc(db('driver'), 'notifications/creator'), { seenAt: serverTimestamp() }));
+    await assertSucceeds(setDoc(doc(db('creator'), 'notifications/creator'), { seenAt: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(item(db('creator'), 'creator', 'n1')));
+  });
+
+  it('beaten only by a faster posted lap on the same board', async () => {
+    await seed({
+      'posts/fast': post({ userId: 'driver', totalMs: 50_000 }),
+      'posts/slow': post({ userId: 'creator', totalMs: 60_000 }),
+      'posts/other': post({ userId: 'owner', routeId: 'elsewhere', totalMs: 70_000 }),
+    });
+    const beaten = (from: string, postId: string, theirPostId: string, totalMs: number, theirMs: number) =>
+      notice(from, { type: 'beaten', postId, theirPostId, routeId: 'pub', routeName: 'Stage 1', totalMs, theirMs });
+    // the slower one can't claim it, nor can anyone use someone else's lap or another board's
+    await assertFails(setDoc(item(db('creator'), 'driver', 'beaten_slow'), beaten('creator', 'slow', 'fast', 60_000, 50_000)));
+    await assertFails(setDoc(item(db('admin'), 'creator', 'beaten_fast'), beaten('admin', 'fast', 'slow', 50_000, 60_000)));
+    await assertFails(setDoc(item(db('driver'), 'owner', 'beaten_fast'), beaten('driver', 'fast', 'other', 50_000, 70_000)));
+    await assertSucceeds(setDoc(item(db('driver'), 'creator', 'beaten_fast'), beaten('driver', 'fast', 'slow', 50_000, 60_000)));
+  });
+
+  it('moderation notices come from admins only', async () => {
+    await seed({ 'roles/admin': { role: 'admin' } });
+    const n = (from: string) => notice(from, { type: 'postRemoved', routeName: 'Stage 1', totalMs: 60_000 });
+    await assertFails(setDoc(item(db('driver'), 'creator', 'm1'), n('driver')));
+    await assertSucceeds(setDoc(item(db('admin'), 'creator', 'm1'), n('admin')));
   });
 });

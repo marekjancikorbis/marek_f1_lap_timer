@@ -405,6 +405,53 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.followerId == uid();
     }
 
+    // ------------------------------------------------------------ notifications
+
+    // There's no server, so whoever causes a notification writes it into the other
+    // driver's list; each kind is checked against what actually happened.
+    match /notifications/{owner} {
+      allow read: if signedIn() && uid() == owner;
+      allow create, update: if signedIn() && uid() == owner
+        && request.resource.data.keys().hasOnly(['seenAt'])
+        && request.resource.data.seenAt == request.time;
+
+      match /items/{id} {
+        allow read, delete: if signedIn() && uid() == owner;
+        allow create: if signedIn() && owner != uid()
+          && request.resource.data.fromId == uid()
+          && request.resource.data.fromName == myName()
+          && request.resource.data.createdAt == request.time
+          && noticeOk(request.resource.data);
+
+        function base() {
+          return ['type', 'fromId', 'fromName', 'createdAt'];
+        }
+
+        function noticeOk(n) {
+          return (n.type == 'follow' && id == 'follow_' + uid() && n.keys().hasOnly(base())
+              && exists(/databases/$(database)/documents/follows/$(uid() + '_' + owner)))
+            || (n.type == 'beaten' && beatenOk(n))
+            // Moderation and access decisions: admins are trusted with the wording.
+            || (n.type in ['access', 'postRemoved', 'route'] && isAdmin()
+              && n.keys().hasOnly(base().concat(['action', 'routeId', 'routeName', 'totalMs'])));
+        }
+
+        // My posted lap really is faster than theirs, on the same board.
+        function beatenOk(n) {
+          let mine = get(/databases/$(database)/documents/posts/$(n.postId)).data;
+          let theirs = get(/databases/$(database)/documents/posts/$(n.theirPostId)).data;
+          return id == 'beaten_' + n.postId
+            && n.keys().hasOnly(base().concat(['postId', 'theirPostId', 'routeId', 'routeName', 'totalMs', 'theirMs']))
+            && mine.userId == uid() && theirs.userId == owner
+            && mine.routeId == n.routeId && theirs.routeId == n.routeId
+            && mine.routeName == n.routeName
+            && mine.totalMs == n.totalMs && theirs.totalMs == n.theirMs
+            && n.totalMs < n.theirMs
+            && theirs.hidden == false;
+        }
+      }
+    }
+
     // ------------------------------------------------------------ Mapbox usage cap
 
     // One document per billing period. Each write bumps exactly one counter by

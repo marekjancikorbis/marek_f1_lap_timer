@@ -87,6 +87,16 @@ export interface Run {
 
 export type SectorColourName = 'purple' | 'green' | 'yellow';
 
+/** One notification, in notifications/{uid}/items. Written by whoever caused it: there's no server. */
+export type Notice = { id: string; createdAt: Timestamp | null; fromId: string; fromName: string } & (
+  | { type: 'follow' }
+  | { type: 'beaten'; postId: string; theirPostId: string; routeId: string; routeName: string; totalMs: number; theirMs: number }
+  /** action: the role audit's action, e.g. approve_request. */
+  | { type: 'access'; action: string }
+  | { type: 'postRemoved'; routeName: string; totalMs: number }
+  | { type: 'route'; routeId: string; routeName: string; action: 'hidden' | 'restored' | 'deleted' }
+);
+
 export interface Post {
   id: string;
   userId: string;

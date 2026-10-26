@@ -23,7 +23,8 @@ import {
   type WriteBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { AuditEntry, CreatorRequest, Post, Profile, Role, Route, Run } from './types';
+import type { Timestamp } from 'firebase/firestore';
+import type { AuditEntry, CreatorRequest, Notice, Post, Profile, Role, Route, Run } from './types';
 
 function withId<T>(snap: DocumentSnapshot | QueryDocumentSnapshot): T {
   return { id: snap.id, ...snap.data() } as T;
@@ -229,6 +230,7 @@ export async function setCreator(
     });
   }
   await batch.commit();
+  void notify(target.id, actor, { type: 'access', action });
 }
 
 /**
@@ -279,6 +281,7 @@ export async function setAdmin(
     });
   }
   await batch.commit();
+  void notify(target.id, actor, { type: 'access', action });
 }
 
 export async function listAudit(): Promise<AuditEntry[]> {
@@ -435,10 +438,12 @@ export async function markRouteHasRuns(route: Route) {
 }
 
 /** Admin moderation. Hiding a route also hides its posts from feeds and boards. */
-export async function moderateRoute(routeId: string, change: { isPublic?: boolean; hidden?: boolean; official?: boolean }) {
+export async function moderateRoute(actor: Profile, route: Route, change: { isPublic?: boolean; hidden?: boolean; official?: boolean }) {
+  const routeId = route.id;
   forget('route', 'post', 'feed');
   await updateDoc(doc(db, 'routes', routeId), change);
   if (change.hidden !== undefined) {
+    void notify(route.ownerId, actor, { type: 'route', routeId, routeName: route.name, action: change.hidden ? 'hidden' : 'restored' });
     const posts = await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)));
     for (const part of chunks(posts.docs, 400)) {
       const batch = writeBatch(db);
@@ -449,9 +454,11 @@ export async function moderateRoute(routeId: string, change: { isPublic?: boolea
 }
 
 /** Admin delete. The route goes first so a refused delete leaves its posts alone; then its posts, which would point nowhere. */
-export async function adminDeleteRoute(routeId: string) {
+export async function adminDeleteRoute(actor: Profile, route: Route) {
+  const routeId = route.id;
   forget('route', 'post', 'feed');
   await deleteDoc(doc(db, 'routes', routeId));
+  void notify(route.ownerId, actor, { type: 'route', routeId, routeName: route.name, action: 'deleted' });
   await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', routeId)))).docs.map((d) => d.ref));
 }
 
@@ -662,7 +669,8 @@ export async function unpostLap(uid: string, runId: string, routeId: string) {
   });
 }
 
-export async function removePost(post: Pick<Post, 'id' | 'routeId'>) {
+/** Moderators: take a post down; its driver is told. */
+export async function removePost(actor: Profile, post: Pick<Post, 'id' | 'routeId' | 'userId' | 'routeName' | 'totalMs'>) {
   forget('post', 'feed', 'route');
   await withPostCount(async (count) => {
     const batch = writeBatch(db);
@@ -670,6 +678,7 @@ export async function removePost(post: Pick<Post, 'id' | 'routeId'>) {
     if (count) countPost(batch, post.routeId, post.id, -1);
     await batch.commit();
   });
+  void notify(post.userId, actor, { type: 'postRemoved', routeName: post.routeName, totalMs: post.totalMs });
 }
 
 export function getPost(id: string): Promise<Post | null> {
@@ -786,9 +795,11 @@ export async function updatePostText(id: string, caption: string | null, car: st
 
 // ================================================================ follows
 
-export async function follow(me: string, them: string) {
+export async function follow(me: Pick<Profile, 'id' | 'username'>, them: string) {
   forget('follow', 'feed');
-  await setDoc(doc(db, 'follows', `${me}_${them}`), { followerId: me, followeeId: them, createdAt: serverTimestamp() });
+  await setDoc(doc(db, 'follows', `${me.id}_${them}`), { followerId: me.id, followeeId: them, createdAt: serverTimestamp() });
+  // One per follower ever: following again after an unfollow isn't news (the rules refuse the overwrite).
+  void notify(them, me, { type: 'follow' }, `follow_${me.id}`);
 }
 
 export async function unfollow(me: string, them: string) {
@@ -821,4 +832,57 @@ export async function followCounts(uid: string): Promise<{ followers: number; fo
 export async function postCount(uid: string): Promise<number> {
   const snap = await getCountFromServer(query(collection(db, 'posts'), where('userId', '==', uid), where('hidden', '==', false)));
   return snap.data().count;
+}
+
+// ================================================================ notifications
+
+const notices = (uid: string) => collection(db, 'notifications', uid, 'items');
+
+type NoticeData = Notice extends infer N ? (N extends Notice ? Omit<N, 'id' | 'createdAt' | 'fromId' | 'fromName'> : never) : never;
+
+/** Best effort, after the thing it's about: a notification that can't be sent never fails that. */
+function notify(to: string, from: Pick<Profile, 'id' | 'username'>, data: NoticeData, id?: string): Promise<void> {
+  if (to === from.id) return Promise.resolve();
+  const ref = id ? doc(notices(to), id) : doc(notices(to));
+  return setDoc(ref, { ...data, fromId: from.id, fromName: from.username, createdAt: serverTimestamp() }).catch(() => undefined);
+}
+
+/**
+ * Tell the drivers a new lap overtook on the board.
+ * shortcut: only the 10 placed highest are told; fan out in batches if boards get long.
+ */
+export function notifyOvertaken(me: Profile, post: Pick<Post, 'id' | 'routeId' | 'routeName' | 'totalMs'>, overtaken: Post[]) {
+  return Promise.all(
+    overtaken.slice(0, 10).map((p) =>
+      notify(
+        p.userId,
+        me,
+        { type: 'beaten', postId: post.id, theirPostId: p.id, routeId: post.routeId, routeName: post.routeName, totalMs: post.totalMs, theirMs: p.totalMs },
+        `beaten_${post.id}`,
+      ),
+    ),
+  );
+}
+
+/** The newest 50; older ones just drop off the list. */
+export async function listNotices(uid: string): Promise<{ notices: Notice[]; seenAt: Timestamp | null }> {
+  const [snap, seen] = await Promise.all([
+    getDocs(query(notices(uid), orderBy('createdAt', 'desc'), limit(50))),
+    getDoc(doc(db, 'notifications', uid)),
+  ]);
+  return { notices: snap.docs.map((d) => withId<Notice>(d)), seenAt: seen.data()?.seenAt ?? null };
+}
+
+/** How many arrived since the page was last opened. */
+export function unreadNotices(uid: string): Promise<number> {
+  return cached(`notif:${uid}`, async () => {
+    const seenAt = (await getDoc(doc(db, 'notifications', uid))).data()?.seenAt;
+    const snap = await getCountFromServer(seenAt ? query(notices(uid), where('createdAt', '>', seenAt)) : notices(uid));
+    return snap.data().count;
+  });
+}
+
+export async function markNoticesSeen(uid: string) {
+  forget('notif');
+  await setDoc(doc(db, 'notifications', uid), { seenAt: serverTimestamp() });
 }

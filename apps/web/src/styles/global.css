@@ -819,3 +819,33 @@ input[type='range'] {
     animation-iteration-count: infinite !important;
   }
 }
+
+/* Notifications: the bell's count, and a stripe on what's new since the last visit. */
+.bell {
+  position: relative;
+}
+
+.bell-count {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.list-item.unread {
+  box-shadow: inset 3px 0 0 var(--purple);
+}
+
+/* A sentence with bold names, not a title row. */
+.list-item .grow.notice-text strong {
+  display: inline;
+}

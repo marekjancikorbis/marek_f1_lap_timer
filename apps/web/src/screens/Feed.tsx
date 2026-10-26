@@ -1,10 +1,11 @@
 import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { Bell } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
 import { LapCard } from '../components/LapCard';
 import { Avatar, Empty, errorMessage, Spinner, useToast } from '../components/ui';
-import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, type FeedPage } from '../lib/data';
+import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, unreadNotices, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
@@ -110,14 +111,20 @@ export function Feed() {
 
   usePullToRefresh(() => loadFirst(true));
 
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    unreadNotices(profile.id).then(setUnread, () => undefined);
+  }, [profile.id]);
+
   return (
     <main className="screen feed">
       <header className="screen-head">
         <h1 className="wordmark small">
           Purple <span>Sector</span>
         </h1>
-        <Link to="/me" aria-label="Your profile">
-          <Avatar name={profile.username} hue={profile.avatarHue} size={36} />
+        <Link to="/notifications" className="icon-btn bell" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
+          <Bell size={24} />
+          {unread > 0 && <span className="bell-count">{unread > 9 ? '9+' : unread}</span>}
         </Link>
       </header>
 
@@ -188,7 +195,7 @@ function FeedEmpty({ onFollowed }: { onFollowed: () => void }) {
 
   async function doFollow(id: string) {
     try {
-      await follow(profile.id, id);
+      await follow(profile, id);
       setFollowed((s) => new Set(s).add(id));
     } catch (e) {
       toast(errorMessage(e), 'error');

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { leaderboardFrom, postLap, routePosts } from '../lib/data';
+import { leaderboardFrom, notifyOvertaken, postLap, routePosts } from '../lib/data';
 import { formatLap } from '../lib/format';
 import { bigColoursFor, bigRecords, coloursFor, pbsBefore, recordsExcluding } from '../lib/laps';
 import { useMe } from '../lib/session';
@@ -27,7 +27,10 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
       const bigColours = bigColoursFor(run.splitTimesMs, route, before, bigRecords(posts, route, run.id));
       // Leaderboard position with this lap in: 1 + drivers whose best beats my best.
       const board = leaderboardFrom(posts);
-      const myBest = Math.min(run.totalMs, board.find((r) => r.post.userId === profile.id)?.post.totalMs ?? Infinity);
+      const oldBest = board.find((r) => r.post.userId === profile.id)?.post.totalMs ?? Infinity;
+      const myBest = Math.min(run.totalMs, oldBest);
+      // Ahead of me before, behind me now: best placed first.
+      const overtaken = board.filter((r) => r.post.userId !== profile.id && r.post.totalMs > run.totalMs && r.post.totalMs < oldBest).map((r) => r.post);
       const positionAtPost = 1 + board.filter((r) => r.post.userId !== profile.id && r.post.totalMs < myBest).length;
       const isPB = !prev || run.totalMs < prev.totalMs;
       try {
@@ -36,6 +39,7 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
         /* ignore */
       }
       await postLap(profile, run, route, { caption, car, sectorColours, bigColours, positionAtPost, isPB });
+      void notifyOvertaken(profile, { id: run.id, routeId: route.id, routeName: route.name, totalMs: run.totalMs }, overtaken);
       toast(positionAtPost ? `Posted · P${positionAtPost}` : 'Posted');
       onPosted();
       onClose();

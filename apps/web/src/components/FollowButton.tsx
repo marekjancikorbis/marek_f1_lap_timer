@@ -27,7 +27,7 @@ export function FollowButton({ userId, size = 'sm', onChange }: { userId: string
     const next = !following;
     setFollowing(next); // optimistic
     try {
-      if (next) await follow(profile.id, userId);
+      if (next) await follow(profile, userId);
       else await unfollow(profile.id, userId);
       onChange?.(next);
     } catch (e) {

@@ -132,7 +132,7 @@ export default function RouteDetail() {
     if (!route) return;
     if (!confirm(`Delete “${route.name}”${canOwnChange ? (runs.length ? ' and your laps on it' : '') : ' and all its posted laps'}? This can't be undone.`)) return;
     try {
-      await (canOwnChange ? deleteRoute(profile.id, route.id) : adminDeleteRoute(route.id));
+      await (canOwnChange ? deleteRoute(profile.id, route.id) : adminDeleteRoute(profile, route));
       toast('Route deleted');
       nav(isOwner ? '/times' : '/', { replace: true });
     } catch (e) {

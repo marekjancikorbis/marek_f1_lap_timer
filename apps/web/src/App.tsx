@@ -24,6 +24,7 @@ const UserPage = lazy(() => import('./screens/UserPage'));
 const FollowList = lazy(() => import('./screens/FollowList'));
 const Settings = lazy(() => import('./screens/Settings'));
 const Admin = lazy(() => import('./screens/Admin'));
+const Notifications = lazy(() => import('./screens/Notifications'));
 
 export function App() {
   return (
@@ -108,6 +109,7 @@ function Gate() {
           <Route path="u/:username/:list" element={<FollowList />} />
           <Route path="me" element={<Navigate to={`/u/${profile.username}`} replace />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
