@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { lockPortrait } from './lib/orientation';
+import './lib/install'; // catches the install prompt, which can fire before the app renders
 import './styles/global.css';
 import './styles/screens.css';
 

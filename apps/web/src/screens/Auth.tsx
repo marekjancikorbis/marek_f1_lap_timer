@@ -11,6 +11,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { auth } from '../lib/firebase';
 import { errorMessage } from '../components/ui';
 import { Hero } from '../components/Hero';
+import { InstallButton } from '../components/InstallButton';
+import { isStandalone } from '../lib/install';
 
 export function AuthScreen() {
   const [mode, setMode] = useState<'in' | 'up'>('in');
@@ -133,10 +135,8 @@ export function AuthScreen() {
           </button>
         )}
       </form>
+      <InstallButton className="btn ghost block" />
     </main>
   );
 }
 
-function isStandalone(): boolean {
-  return matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
-}

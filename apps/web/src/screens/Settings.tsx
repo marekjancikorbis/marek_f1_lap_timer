@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { InstallButton } from '../components/InstallButton';
 import { Avatar, errorMessage, ScreenHead, useToast } from '../components/ui';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getMyRequest, getPhoto, NAME_MAX, requestCreatorAccess, setDisplayName, setPhoto, squarePhoto, updateMyProfile } from '../lib/data';
@@ -267,6 +268,8 @@ export default function Settings() {
           </div>
         </>
       )}
+
+      <InstallButton className="btn block install-cta" />
 
       <button className="btn danger block" style={{ marginTop: 32 }} onClick={signOut}>
         Sign out
