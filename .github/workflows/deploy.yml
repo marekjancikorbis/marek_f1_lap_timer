@@ -1,0 +1,38 @@
+# Deploys the web app to Firebase Hosting whenever main changes, or from the "Run workflow" button.
+# Needs the FIREBASE_SERVICE_ACCOUNT repository secret: a service account key (JSON) with the
+# Firebase Hosting Admin role. Secrets never reach pull requests from forks.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  hosting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Check the deploy key is set
+        env:
+          KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$KEY" ]; then echo "::error::Add the FIREBASE_SERVICE_ACCOUNT secret (Settings > Secrets and variables > Actions)"; exit 1; fi
+      - uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - run: npx --yes firebase-tools@15 deploy --only hosting --project marek-f1-lap-timer --non-interactive
