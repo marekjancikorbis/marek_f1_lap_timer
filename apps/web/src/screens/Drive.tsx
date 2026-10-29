@@ -54,9 +54,19 @@ export default function Drive() {
 
   async function stop() {
     const ids = await ctl!.stop();
+    // The signal cut this lap short: ask whether to keep it first.
+    if (!ctl!.state.partial) leave(ids);
+  }
+
+  function leave(ids: string[]) {
     clearPendingDrive();
     if (ids.length) nav(`/run/${ids[ids.length - 1]}`, { replace: true });
     else nav(`/r/${routeId}`, { replace: true });
+  }
+
+  async function savePartial() {
+    const id = await ctl!.savePartial();
+    leave(id ? [id] : ctl!.state.savedRunIds);
   }
 
   const standing = cfg.route.startType === 'standing';
@@ -123,7 +133,19 @@ export default function Drive() {
         </div>
       )}
 
-      {s.invalidReason && (
+      {s.partial && (
+        <section className="drive-center">
+          <h1 className="drive-big-label">Keep this lap?</h1>
+          <p className="drive-sub">
+            The GPS signal dropped out and the lap stopped before the finish. Save the{' '}
+            <span className="num">{formatDistance(s.partial.distanceM)}</span> you drove to view it and compare it with other laps. A partial lap can't
+            be posted or set a best.
+          </p>
+          {s.laps.length > 0 && <p className="drive-sub">Your {s.laps.length} completed {s.laps.length === 1 ? 'lap is' : 'laps are'} saved.</p>}
+        </section>
+      )}
+
+      {s.invalidReason && !s.partial && (
         <section className="drive-center">
           <h1 className="drive-big-label" style={{ color: 'var(--red-ink)' }}>
             Run stopped
@@ -133,7 +155,7 @@ export default function Drive() {
         </section>
       )}
 
-      {s.phase === 'finished' && !s.invalidReason && s.laps.length > 0 && (
+      {s.phase === 'finished' && !s.invalidReason && !s.partial && s.laps.length > 0 && (
         <section className="drive-center">
           <h1 className="drive-big-label armed">Finished</h1>
           <p className="drive-sub num">
@@ -149,7 +171,16 @@ export default function Drive() {
       )}
 
       <footer className="drive-bottom">
-        {s.invalidReason || s.phase === 'finished' ? (
+        {s.partial ? (
+          <div className="stack">
+            <button className="btn primary lg block" onClick={savePartial}>
+              Save partial lap
+            </button>
+            <button className="btn lg block" onClick={() => leave(ctl.state.savedRunIds)}>
+              Discard it
+            </button>
+          </div>
+        ) : s.invalidReason || s.phase === 'finished' ? (
           <button className="btn primary lg block" onClick={stop}>
             {s.laps.length ? 'See results' : 'Back to route'}
           </button>

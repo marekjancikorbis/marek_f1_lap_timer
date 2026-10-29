@@ -42,6 +42,8 @@ export interface ComparableLap {
   totalMs: number;
   penaltyMs?: number;
   profile?: LapProfile | null;
+  /** Stopped before the finish: splits cover only the gates crossed. */
+  partial?: boolean;
 }
 
 export interface SectorComparison {
@@ -57,8 +59,10 @@ export interface SectorComparison {
 }
 
 export interface LapComparison {
-  /** a − b total. */
+  /** a − b total, or at throughM when a lap is partial. */
   gapMs: number;
+  /** When either lap is partial: how far along the route both laps reach, m. null when both are complete. */
+  throughM: number | null;
   sectors: SectorComparison[];
   /** Cumulative gap (a − b) against distance along the route. */
   delta: { d: number; ms: number }[];
@@ -68,10 +72,15 @@ export interface LapComparison {
   smooth: boolean;
 }
 
+/** True when the lap's splits fit the route's boundaries: all of them, or no more than them for a partial lap. */
+export function fitsBoundaries(lap: Pick<ComparableLap, 'splitTimesMs' | 'partial'>, boundaries: number[]): boolean {
+  return lap.partial ? lap.splitTimesMs.length <= boundaries.length : lap.splitTimesMs.length === boundaries.length;
+}
+
 /**
  * Compare two laps on the same route (same frozen boundaries). Used by the
  * app for every comparison view; boundaries give the delta graph its x axis
- * when either lap has no profile.
+ * when either lap has no profile. A partial lap is compared as far as it got.
  */
 export function compareLaps(
   a: ComparableLap,
@@ -79,11 +88,14 @@ export function compareLaps(
   boundaries: number[],
   sectorRecords: (number | null)[] = [],
 ): LapComparison {
-  if (a.splitTimesMs.length !== b.splitTimesMs.length || a.splitTimesMs.length !== boundaries.length) {
+  if (!fitsBoundaries(a, boundaries) || !fitsBoundaries(b, boundaries)) {
     throw new Error('laps must be on the same route');
   }
-  const sa = sectorTimes(a.splitTimesMs);
-  const sb = sectorTimes(b.splitTimesMs);
+  const partial = !!(a.partial || b.partial);
+  // Sectors both laps finished.
+  const k = Math.min(a.splitTimesMs.length, b.splitTimesMs.length);
+  const sa = sectorTimes(a.splitTimesMs.slice(0, k));
+  const sb = sectorTimes(b.splitTimesMs.slice(0, k));
   const sectors = sa.map((aMs, k) => {
     const bMs = sb[k];
     const rec = sectorRecords[k];
@@ -118,10 +130,18 @@ export function compareLaps(
       speed.push({ d, a: (pa.speedDms[i] * 0.36), b: (pb.speedDms[i] * 0.36) });
     }
     // Make the line end exactly on the official gap.
-    delta.push({ d: boundaries[boundaries.length - 1], ms: a.totalMs - b.totalMs });
+    if (!partial) delta.push({ d: boundaries[boundaries.length - 1], ms: a.totalMs - b.totalMs });
   } else {
-    delta = [{ d: 0, ms: 0 }, ...boundaries.map((d, k) => ({ d, ms: a.splitTimesMs[k] - b.splitTimesMs[k] }))];
+    delta = [{ d: 0, ms: 0 }, ...boundaries.slice(0, k).map((d, i) => ({ d, ms: a.splitTimesMs[i] - b.splitTimesMs[i] }))];
   }
 
-  return { gapMs: a.totalMs - b.totalMs, sectors, delta, speed, smooth: !!haveProfiles };
+  const last = delta[delta.length - 1];
+  return {
+    gapMs: partial ? last.ms : a.totalMs - b.totalMs,
+    throughM: partial ? last.d : null,
+    sectors,
+    delta,
+    speed,
+    smooth: !!haveProfiles,
+  };
 }

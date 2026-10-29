@@ -171,6 +171,17 @@ describe('privacy', () => {
     await assertFails(setDoc(doc(db('stranger'), 'users/driver/runs/run2'), run()));
   });
 
+  it('keeps partial laps the signal cut short, never as valid', async () => {
+    const partial = run({ partial: true, valid: false, totalMs: 47_000, splitTimesMs: [20_000, 40_000] });
+    await assertSucceeds(setDoc(doc(db('driver'), 'users/driver/runs/p1'), partial));
+    await assertSucceeds(setDoc(doc(db('driver'), 'users/driver/runs/p2'), { ...partial, splitTimesMs: [] }));
+    await assertFails(setDoc(doc(db('driver'), 'users/driver/runs/p3'), { ...partial, valid: true }));
+    await assertFails(setDoc(doc(db('driver'), 'users/driver/runs/p4'), { ...partial, totalMs: 30_000 }));
+    // A complete lap still ends on its last split.
+    await assertFails(setDoc(doc(db('driver'), 'users/driver/runs/p5'), run({ totalMs: 47_000, splitTimesMs: [] })));
+    await assertFails(setDoc(doc(db('driver'), 'users/driver/runs/p6'), run({ totalMs: 61_000 })));
+  });
+
   it('lap results are immutable once saved', async () => {
     await assertFails(updateDoc(doc(db('driver'), 'users/driver/runs/run1'), { totalMs: 50_000 }));
     await assertSucceeds(updateDoc(doc(db('driver'), 'users/driver/runs/run1'), { posted: true }));

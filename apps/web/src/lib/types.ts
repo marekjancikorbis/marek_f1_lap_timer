@@ -75,7 +75,12 @@ export interface Run {
   jumpStart: boolean;
   jumpDistanceM: number | null;
   countdownS: number | null;
+  /** False for a partial lap or one with a long GPS dropout: it can't be posted and sets no bests. */
   valid: boolean;
+  /** Stopped before the finish after the signal dropped out, and kept: splits hold only the gates crossed. */
+  partial?: boolean;
+  /** Longest stretch without a GPS fix, ms (missing on runs from before it was kept). */
+  gpsGapMs?: number;
   gpsAvgAccuracyM: number;
   gpsRateHz: number;
   /** Only on a run from getRun (it lives in the run's detail document). */

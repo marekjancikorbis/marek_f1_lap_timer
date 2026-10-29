@@ -5,8 +5,8 @@ import { PostSheet } from '../components/PostSheet';
 import { LapView } from '../components/LapView';
 import { Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
 import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from '../lib/data';
-import { formatDate, formatDelta, formatLap } from '../lib/format';
-import { coloursFor, pbsBefore, recordsExcluding, resolveLap, runToLap, type ResolvedLap } from '../lib/laps';
+import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
+import { coloursFor, notCounted, pbsBefore, recordsExcluding, resolveLap, runToLap, sameSectors, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import { shareLap } from '../lib/shareImage';
 import type { Post, Route, Run } from '../lib/types';
@@ -51,7 +51,7 @@ export default function RunSummary() {
   // Bars and graphs measure against the raced lap, or else your best lap from before this one.
   const prev = useMemo(() => {
     if (ref || !run) return null;
-    return runs.filter((r) => r.valid && r.id !== run.id && r.startedAt < run.startedAt && r.splitTimesMs.length === run.splitTimesMs.length).sort((a, b) => a.totalMs - b.totalMs)[0] ?? null;
+    return runs.filter((r) => r.valid && r.id !== run.id && r.startedAt < run.startedAt && sameSectors(r, run)).sort((a, b) => a.totalMs - b.totalMs)[0] ?? null;
   }, [ref, run, runs]);
   // Listed runs come without their profile; fetch it once the graphs are opened.
   const [opened, setOpened] = useState(false);
@@ -143,13 +143,24 @@ export default function RunSummary() {
             {session.length > 1 && <span className="badge outline">Lap {run.lap + 1}</span>}
             {run.replay && <span className="badge yellow">Simulated</span>}
             {run.posted && <span className="badge blue">Posted</span>}
+            {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
           </>
         }
         caption={
-          <p className="lap-hero-caption mute" style={{ fontSize: 13 }}>
-            GPS ±{run.gpsAvgAccuracyM} m · {run.gpsRateHz} Hz
-            {run.jumpDistanceM != null && ` · moved ${run.jumpDistanceM} m before GO`}
-          </p>
+          <>
+            <p className="lap-hero-caption mute" style={{ fontSize: 13 }}>
+              GPS ±{run.gpsAvgAccuracyM} m · {run.gpsRateHz} Hz
+              {run.jumpDistanceM != null && ` · moved ${run.jumpDistanceM} m before GO`}
+            </p>
+            {!run.valid && (
+              <p className="lap-hero-caption mute" style={{ fontSize: 13 }}>
+                {run.partial
+                  ? `Stopped before the finish${run.splitTimesMs.length ? ` after ${run.splitTimesMs.length} of ${route?.boundaries.length ?? '?'} minisectors` : ''}.`
+                  : `No GPS signal for ${formatSeconds(run.gpsGapMs ?? 0, 0)}.`}{' '}
+                It can be compared but can't be posted or set a best.
+              </p>
+            )}
+          </>
         }
         actions={
           <div className="stack" style={{ marginTop: 16 }}>
@@ -168,7 +179,7 @@ export default function RunSummary() {
               <Link className="btn grow" to={`/drive/${run.routeId}?ref=run:${run.id}`}>
                 Race again
               </Link>
-              {route && (
+              {route && !run.partial && (
                 <button className="btn grow" onClick={share}>
                   Share image
                 </button>
@@ -198,7 +209,10 @@ export default function RunSummary() {
           <div className="list">
             {session.map((r) => (
               <Link key={r.id} to={`/run/${r.id}`} className="list-item" aria-current={r.id === run.id}>
-                <span className="grow">Lap {r.lap + 1}</span>
+                <span className="grow">
+                  Lap {r.lap + 1}
+                  {notCounted(r) && <span className="mute"> · {notCounted(r)}</span>}
+                </span>
                 <strong className="num" style={{ fontSize: 20 }}>
                   {formatLap(r.totalMs)}
                 </strong>

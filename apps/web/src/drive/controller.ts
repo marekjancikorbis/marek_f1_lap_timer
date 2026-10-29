@@ -78,6 +78,8 @@ export interface DriveState {
   savedRunIds: string[];
   finished: boolean;
   laps: LapResult[];
+  /** Stopped mid-lap after the signal dropped out: the lap so far, offered to keep (savePartial). */
+  partial: { distanceM: number } | null;
 }
 
 /** Compact trace for storage: t, s, v, lat, lon per point. */
@@ -110,6 +112,8 @@ export class DriveController {
   private log: GpsLog | null = null;
   /** Wall-clock time the last fix arrived, to notice a lost signal between fixes. */
   private lastFixAt = 0;
+  /** The lap the signal cut short, until it's saved or the driver leaves. */
+  private partial: LapResult | null = null;
   /** Minisector indices where the 3 big sectors end. */
   readonly bigEnds: number[];
   /** The reference lap's splits at those ends. */
@@ -171,6 +175,7 @@ export class DriveController {
       savedRunIds: [],
       finished: false,
       laps: [],
+      partial: null,
     };
   }
 
@@ -201,7 +206,7 @@ export class DriveController {
       const now = Date.now();
       this.handle(this.timer.tick(now));
       if (this.state.gpsOk && now - this.lastFixAt > GPS_LOST_MS) {
-        this.emit({ gpsOk: false, speed: null, gpsError: 'GPS signal lost. Timing carries on when it returns; after 30 s the run ends.' });
+        this.emit({ gpsOk: false, speed: null, gpsError: 'GPS signal lost. Keep driving: timing carries on when it returns.' });
       }
       this.rafId = requestAnimationFrame(loop);
     };
@@ -420,12 +425,27 @@ export class DriveController {
     this.emit({ goT: null });
   }
 
-  /** Stop: keeps completed laps, discards the lap in progress. */
+  /**
+   * Stop: keeps completed laps, discards the lap in progress. When the signal
+   * dropped out during that lap it's held instead, for the driver to keep (savePartial).
+   */
   async stop(): Promise<string[]> {
+    const lap = this.timer.partialLap();
+    if (lap && (lap.gpsGapMs > GPS_LOST_MS || !this.state.gpsOk)) {
+      this.partial = lap;
+      this.emit({ partial: { distanceM: lastS(lap) } });
+    }
     this.handle(this.timer.stop());
     this.emit({ finished: true });
     this.dispose();
     return this.state.savedRunIds;
+  }
+
+  /** Save the lap the signal cut short, as far as it got. */
+  async savePartial(): Promise<string | null> {
+    const lap = this.partial;
+    this.partial = null;
+    return lap ? this.persist(lap) : null;
   }
 
   // -------------------------------------------------------------- events
@@ -468,10 +488,7 @@ export class DriveController {
           break;
         case 'invalidated':
           this.sounds.alarm();
-          this.emit({
-            invalidReason:
-              ev.reason === 'off_route' ? 'You left the route.' : ev.reason === 'gps_gap' ? 'GPS signal was lost for too long.' : 'Stopped before the finish.',
-          });
+          this.emit({ invalidReason: ev.reason === 'off_route' ? 'You left the route.' : 'Stopped before the finish.' });
           break;
         case 'ready':
           this.sounds.tick();
@@ -510,7 +527,7 @@ export class DriveController {
     synth.speak(u);
   }
 
-  private async persist(lap: LapResult) {
+  private async persist(lap: LapResult): Promise<string> {
     const id = newRunId(this.cfg.uid);
     const run: Omit<Run, 'createdAt'> = {
       id,
@@ -527,9 +544,11 @@ export class DriveController {
       jumpDistanceM: lap.jumpDistanceM,
       countdownS: lap.countdownS,
       valid: lap.valid,
+      gpsGapMs: lap.gpsGapMs,
+      ...(lap.partial && { partial: true }),
       gpsAvgAccuracyM: lap.gpsAvgAccuracyM,
       gpsRateHz: lap.gpsRateHz,
-      profile: lapProfileFromTrace(lap.trace, this.prepared.lengthM),
+      profile: lapProfileFromTrace(lap.trace, lap.partial ? lastS(lap) : this.prepared.lengthM),
       trace: packTrace(lap),
       posted: false,
       replay: this.cfg.replay,
@@ -538,5 +557,11 @@ export class DriveController {
     await saveRun(this.cfg.uid, run);
     if (this.cfg.route.ownerId === this.cfg.uid) void markRouteHasRuns(this.cfg.route);
     this.emit({ savedRunIds: [...this.state.savedRunIds, id] });
+    return id;
   }
+}
+
+/** How far along the route a lap got. */
+function lastS(lap: LapResult): number {
+  return Math.max(0, ...lap.trace.map((p) => p.s));
 }

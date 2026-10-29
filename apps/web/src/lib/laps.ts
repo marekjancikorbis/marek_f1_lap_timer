@@ -21,6 +21,12 @@ export interface ResolvedLap {
   profile: LapProfile | null;
   userId: string | null;
   username: string | null;
+  partial?: boolean;
+}
+
+/** Why one of your laps doesn't count, as a label; null when it does. */
+export function notCounted(run: Pick<Run, 'valid' | 'partial'>): string | null {
+  return run.valid ? null : run.partial ? 'Partial' : 'Signal lost';
 }
 
 export function runToLap(run: Run, label = 'Your lap'): ResolvedLap {
@@ -34,6 +40,7 @@ export function runToLap(run: Run, label = 'Your lap'): ResolvedLap {
     profile: run.profile ?? null,
     userId: null,
     username: null,
+    partial: !!run.partial,
   };
 }
 
@@ -123,10 +130,13 @@ export function racedSplits(run: Pick<Run, 'referenceRef'>, runs: Run[]): number
  * The driver's best sectors from the laps before this one, so a saved lap
  * shows green where it was a personal best when it was driven.
  */
-export function pbsBefore(runs: Run[], lap: Pick<Run, 'id' | 'startedAt' | 'splitTimesMs'>): (number | null)[] {
-  return bestSectors(
-    runs.filter((r) => r.valid && r.id !== lap.id && r.startedAt < lap.startedAt && r.splitTimesMs.length === lap.splitTimesMs.length),
-  );
+export function pbsBefore(runs: Run[], lap: Pick<Run, 'id' | 'startedAt' | 'splitTimesMs' | 'partial'>): (number | null)[] {
+  return bestSectors(runs.filter((r) => r.valid && r.id !== lap.id && r.startedAt < lap.startedAt && sameSectors(r, lap)));
+}
+
+/** A complete lap timed on the same sectors as this one (a partial lap has only its first few). */
+export function sameSectors(full: Pick<Run, 'splitTimesMs'>, lap: Pick<Run, 'splitTimesMs' | 'partial'>): boolean {
+  return lap.partial ? full.splitTimesMs.length >= lap.splitTimesMs.length : full.splitTimesMs.length === lap.splitTimesMs.length;
 }
 
 /**
@@ -205,7 +215,7 @@ export function postBigColours(post: Pick<Post, 'bigColours' | 'sectorColours'>,
 // ---------------------------------------------------------------- where a lap was
 
 /** Position along the route at elapsed time t, from the profile or the splits. */
-export function distanceAt(t: number, lap: Pick<ResolvedLap, 'penaltyMs' | 'splitTimesMs'>, boundaries: number[], profile: LapProfile | null): number {
+export function distanceAt(t: number, lap: Pick<ResolvedLap, 'penaltyMs' | 'splitTimesMs' | 'partial'>, boundaries: number[], profile: LapProfile | null): number {
   const pen = lap.penaltyMs;
   if (profile && profile.elapsedMs.length > 1) {
     const e = profile.elapsedMs;
@@ -217,14 +227,15 @@ export function distanceAt(t: number, lap: Pick<ResolvedLap, 'penaltyMs' | 'spli
         return (i - 1 + f) * profile.stepM;
       }
     }
-    return boundaries[boundaries.length - 1];
+    // A partial lap stops where its profile does.
+    return lap.partial ? (e.length - 1) * profile.stepM : boundaries[boundaries.length - 1];
   }
   const pts = [0, ...lap.splitTimesMs];
   const ds = [0, ...boundaries];
   for (let i = 1; i < pts.length; i++) {
     if (pts[i] >= t) return ds[i - 1] + ((t - pts[i - 1]) / Math.max(1, pts[i] - pts[i - 1])) * (ds[i] - ds[i - 1]);
   }
-  return ds[ds.length - 1];
+  return ds[pts.length - 1];
 }
 
 /** Elapsed time when a lap reached distance d (the inverse of distanceAt). */
@@ -237,7 +248,7 @@ export function timeAt(d: number, lap: Pick<ResolvedLap, 'penaltyMs' | 'splitTim
   }
   const pts = [0, ...lap.splitTimesMs];
   const ds = [0, ...boundaries];
-  for (let i = 1; i < ds.length; i++) {
+  for (let i = 1; i < pts.length; i++) {
     if (ds[i] >= d) return pts[i - 1] + ((d - ds[i - 1]) / Math.max(1, ds[i] - ds[i - 1])) * (pts[i] - pts[i - 1]);
   }
   return pts[pts.length - 1];

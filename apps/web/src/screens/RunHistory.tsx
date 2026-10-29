@@ -4,7 +4,7 @@ import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
 import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
-import { bigEnds, toBig } from '../lib/laps';
+import { bigEnds, notCounted, toBig } from '../lib/laps';
 import { bestSectors, bigSplits, sectorTimes, theoreticalBest } from '@laptimer/timing';
 import { useMe } from '../lib/session';
 import type { Route, Run, SectorColourName } from '../lib/types';
@@ -153,7 +153,7 @@ export default function RunHistory() {
                     {run.posted && <span className="badge blue">Posted</span>}
                     {run.replay && <span className="badge yellow">Sim</span>}
                     {run.penaltyMs > 0 && <span className="badge red">+5 s</span>}
-                    {!run.valid && <span className="badge outline">Invalid</span>}
+                    {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
                   </span>
                 </div>
                 <SectorStrip colours={colours(run)} height={5} />

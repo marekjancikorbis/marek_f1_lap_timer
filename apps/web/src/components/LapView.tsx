@@ -1,4 +1,4 @@
-import { bigSplits, compareLaps, sectorColour, sectorTimes, type LapProfile } from '@laptimer/timing';
+import { compareLaps, fitsBoundaries, sectorColour, sectorTimes, type LapProfile } from '@laptimer/timing';
 import { ChevronDown, Pause, Play } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -26,6 +26,8 @@ export interface LapViewLap {
   splitTimesMs: number[];
   penaltyMs: number;
   profile: LapProfile | null;
+  /** Stopped before the finish: splits cover only the gates crossed. */
+  partial?: boolean;
 }
 
 /** The lap every bar and graph is measured against. */
@@ -35,6 +37,18 @@ export interface LapReference {
   totalMs: number;
   penaltyMs: number;
   profile: LapProfile | null;
+  partial?: boolean;
+}
+
+/** The reference when it was timed on the same version of the route as the lap. */
+function sameRouteRef<R extends Pick<LapReference, 'splitTimesMs' | 'partial'>>(
+  lap: Pick<LapViewLap, 'splitTimesMs' | 'partial'>,
+  ref: R | null,
+  route: Pick<Route, 'boundaries'> | null,
+): R | null {
+  if (!ref) return null;
+  if (route) return fitsBoundaries(lap, route.boundaries) && fitsBoundaries(ref, route.boundaries) ? ref : null;
+  return !lap.partial && !ref.partial && ref.splitTimesMs.length === lap.splitTimesMs.length ? ref : null;
 }
 
 interface Row {
@@ -83,8 +97,7 @@ export function LapView({
 }) {
   const board = useMemo(() => leaderboardFrom(posts), [posts]);
   const rank = board.find((r) => r.post.id === lap.id)?.rank;
-  const n = lap.splitTimesMs.length;
-  const ref = reference && reference.splitTimesMs.length === n ? reference : null;
+  const ref = sameRouteRef(lap, reference, route);
 
   const table = useSectorTable(lap, route, posts, ref, colours);
 
@@ -123,7 +136,8 @@ export function LapView({
             Raced against <strong>{ref.label}</strong>
           </span>
           <span className="num">
-            {formatLap(ref.totalMs)} <span className={lap.totalMs <= ref.totalMs ? 'faster' : 'slower'}>{formatDelta(lap.totalMs - ref.totalMs, 3)}</span>
+            {formatLap(ref.totalMs)}{' '}
+            {!lap.partial && !ref.partial && <span className={lap.totalMs <= ref.totalMs ? 'faster' : 'slower'}>{formatDelta(lap.totalMs - ref.totalMs, 3)}</span>}
           </span>
         </p>
       )}
@@ -139,19 +153,22 @@ export function LapView({
 
 type SectorTableRows = { row: Row; kids: Row[] }[];
 
-/** The 3 big sectors with their minisectors, each measured against the reference; null when the lap doesn't fit the route. */
+/**
+ * The 3 big sectors with their minisectors, each measured against the reference; null when the lap doesn't fit the route.
+ * A partial lap has only the sectors it got to, the last perhaps with only some of its minisectors.
+ */
 export function useSectorTable(
-  lap: Pick<LapViewLap, 'id' | 'splitTimesMs'> | null,
+  lap: Pick<LapViewLap, 'id' | 'splitTimesMs' | 'partial'> | null,
   route: Route | null,
   posts: Post[],
-  reference: Pick<LapReference, 'splitTimesMs'> | null,
+  reference: Pick<LapReference, 'splitTimesMs' | 'partial'> | null,
   colours: (SectorColourName | null)[],
 ): SectorTableRows | null {
   return useMemo(() => {
-    if (!lap || !route || route.boundaries.length !== lap.splitTimesMs.length) return null;
-    const n = lap.splitTimesMs.length;
+    if (!lap || !route || !fitsBoundaries(lap, route.boundaries)) return null;
+    const n = route.boundaries.length;
     const isPublic = !!route.isPublic;
-    const ref = reference && reference.splitTimesMs.length === n ? reference : null;
+    const ref = sameRouteRef(lap, reference, route);
     const ends = bigEnds(route);
     // Purple = faster than everyone else's posted time for that (mini)sector.
     const miniRec = isPublic ? recordsExcluding(posts, n, lap.id) : null;
@@ -160,20 +177,27 @@ export function useSectorTable(
       refMs == null ? fallback : isPublic ? sectorColour(ms, refMs, rec, true) : ms < refMs ? 'green' : 'yellow';
     const minis = sectorTimes(lap.splitTimesMs);
     const refMinis = ref ? sectorTimes(ref.splitTimesMs) : null;
-    const big = sectorTimes(bigSplits(lap.splitTimesMs, ends));
-    const refBig = ref ? sectorTimes(bigSplits(ref.splitTimesMs, ends)) : null;
+    /** Time from minisector a to b, when the lap got that far. */
+    const span = (xs: number[] | null, a: number, b: number) => (xs && b < xs.length ? xs.slice(a, b + 1).reduce((x, y) => x + y, 0) : null);
+    const rows: SectorTableRows = [];
     let from = 0;
-    return ends.map((end, b) => {
+    for (const [b, end] of ends.entries()) {
+      if (from >= minis.length) break;
       const kids: Row[] = [];
-      for (let i = from; i <= end; i++) {
+      for (let i = from; i <= end && i < minis.length; i++) {
         const refMs = refMinis?.[i] ?? null;
         kids.push({ name: `${b + 1}.${i - from + 1}`, ms: minis[i], deltaMs: refMs == null ? null : minis[i] - refMs, colour: colourOf(minis[i], refMs, miniRec?.[i], colours[i] ?? null) });
       }
+      // A big sector the lap didn't finish: its minisectors so far, with no verdict on the whole.
+      const ms = span(minis, from, end);
+      const refMs = ms == null ? null : span(refMinis, from, end);
+      const row: Row = ms == null
+        ? { name: `S${b + 1}`, ms: kids.reduce((x, k) => x + k.ms, 0), deltaMs: null, colour: null }
+        : { name: `S${b + 1}`, ms, deltaMs: refMs == null ? null : ms - refMs, colour: colourOf(ms, refMs, bigRec?.[b], null) };
+      rows.push({ row, kids });
       from = end + 1;
-      const refMs = refBig?.[b] ?? null;
-      const bigColour = colourOf(big[b], refMs, bigRec?.[b], null);
-      return { row: { name: `S${b + 1}`, ms: big[b], deltaMs: refMs == null ? null : big[b] - refMs, colour: bigColour } as Row, kids };
-    });
+    }
+    return rows;
   }, [route, posts, lap, reference, colours]);
 
 }
@@ -186,6 +210,8 @@ export function SectorList({ table, refLabel }: { table: SectorTableRows | null;
 
   return !table ? (
     <p className="mute">This lap was timed on an older version of the route, so its sectors can't be shown.</p>
+  ) : !table.length ? (
+    <p className="mute">The lap stopped before the first sector ended. The graphs and map show what was recorded.</p>
   ) : (
     <>
       {refLabel ? (
@@ -247,7 +273,7 @@ export function LapTabs({
   mapExtra,
   onOpen,
 }: {
-  lap: Pick<LapViewLap, 'username' | 'totalMs' | 'splitTimesMs' | 'penaltyMs' | 'profile'>;
+  lap: Pick<LapViewLap, 'username' | 'totalMs' | 'splitTimesMs' | 'penaltyMs' | 'profile' | 'partial'>;
   reference: LapReference | null;
   route: Route | null;
   /** Minisector colours for the route line. */
@@ -266,9 +292,8 @@ export function LapTabs({
   const [speed, setSpeed] = useState(1);
   const [follow, setFollow] = useState<'route' | 'car' | 'ghost'>('route');
 
-  const n = lap.splitTimesMs.length;
-  const fits = !!route && route.boundaries.length === n;
-  const ref = fits && reference && reference.splitTimesMs.length === n ? reference : null;
+  const fits = !!route && fitsBoundaries(lap, route.boundaries);
+  const ref = fits ? sameRouteRef(lap, reference, route) : null;
   const endT = Math.max(lap.totalMs, ref?.totalMs ?? 0);
 
   const cmp = useMemo(() => {

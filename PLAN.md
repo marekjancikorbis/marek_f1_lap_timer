@@ -263,7 +263,7 @@ Two laps can be compared only on the **same route**, so they share the same froz
 | Risk | Mitigation |
 |---|---|
 | **Safety, legal and app store policy.** Timed leaderboards on *public roads* can be read as encouraging street racing. Apple's guideline 1.4.5 rejects apps that urge risky activities, and there is liability exposure. | **Decided: track days and rally events only.** Require accepting the terms before the first drive. Do not reward anything just for being fast on unclosed roads (or label public roads clearly). Keep the drive screen free of controls to tap, and use a mount and voice cues. |
-| GPS accuracy (1 Hz, urban canyons, tunnels) | Interpolation, quality scoring, invalidating runs with gaps, and BLE GPS later. |
+| GPS accuracy (1 Hz, urban canyons, tunnels) | Interpolation, quality scoring, laps with long gaps kept but not valid, and BLE GPS later. |
 | Battery and heat during long sessions | High-accuracy GPS runs only while a run is armed. A dark UI saves power on OLED screens. |
 | No signal on mountain roads | Offline-first: everything needed for a drive is cached, and uploads are queued. |
 | Background location permission (store review) | Request "while using" first. Ask for background access only so the timer keeps running if the screen locks, and explain why. |
@@ -303,7 +303,8 @@ Two laps can be compared only on the **same route**, so they share the same froz
 - **Positioning**: the app is for **track days and rally events only** (closed courses). The app store listing, terms and copy say so; public-road timing is not a use case.
 - **Gate accuracy (measured on simulated driving)**: `simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error. Gate error is about 70 ms RMS and under 150 ms p95 on a rally stage and a circuit, and **5 Hz is no better than 1 Hz**. GPS position error dominates, not interpolation (with perfect GPS the error is under 60 ms), so Hermite interpolation is not worth building. Only better fixes help (external 10–25 Hz GNSS). `test/accuracy.test.ts` guards both numbers; real-drive logs dropped into `test/fixtures/` will confirm them.
 
-- **GPS dropouts**: a run survives up to **30 s** without a fix (tunnels and forest on rally stages); gates crossed during a dropout are interpolated across it. Longer gaps end the run.
+- **GPS dropouts**: losing the signal **never ends a run**; only the driver does. Gates crossed during a dropout are interpolated across it. A lap with dropouts up to **30 s** (tunnels and forest on rally stages) stays valid; a longer one still finishes and is saved, but is **not valid** (nothing is known about the route in between), so it can't be posted or set a best. Fixes too vague to place the car (accuracy worse than the 30 m off-route limit) don't count towards leaving the route.
+- **Partial laps**: when the driver stops mid-lap after the signal dropped out, the app offers to keep the lap as far as it got: the gates crossed, the trace and the profile up to the last fix. Partial laps are never valid; they can be viewed and compared with other laps up to where they stop.
 
 - **Sector colours**: on **public routes** purple = faster than the route record (fastest posted sector) and your own best (with nothing posted yet it means a new PB), green = faster than your own personal best for that sector. On **private routes** purple = faster than your personal best (your theoretical-best sector), green = faster than the same sector of the lap you're racing. Yellow otherwise. The delta always compares with the lap you race. PBs and records improve during a session, and saved laps show the colours they had when driven.
 

@@ -6,7 +6,7 @@ import { RouteMap } from '../components/RouteMap';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, UserName, useToast, WhoText } from '../components/ui';
 import { adminDeleteRoute, deleteRoute, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, setHomeRoute } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
-import { bigRecords, bigRoute } from '../lib/laps';
+import { bigRecords, bigRoute, notCounted } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Profile, Role, Route, Run } from '../lib/types';
 
@@ -262,12 +262,12 @@ export default function RouteDetail() {
                   <span className="grow">
                     <strong>{formatDate(r.startedAt)}</strong>
                     <span className="mute small-text">
-                      {r.valid ? (r.id === myBest?.id ? 'Your best' : `Lap ${r.lap + 1}`) : 'Not valid'}
+                      {r.valid ? (r.id === myBest?.id ? 'Your best' : `Lap ${r.lap + 1}`) : notCounted(r)}
                       {r.posted && ' · posted'}
                       {r.replay && ' · simulated'}
                     </span>
                   </span>
-                  <strong className="num logbook-time">{r.valid ? formatLap(r.totalMs) : '—'}</strong>
+                  <strong className="num logbook-time">{r.partial ? '—' : formatLap(r.totalMs)}</strong>
                 </Link>
               ))}
             </div>

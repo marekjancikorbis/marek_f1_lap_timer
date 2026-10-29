@@ -32,7 +32,11 @@ export const DEFAULTS = {
   OFF_ROUTE_M: 30,
   OFF_ROUTE_HOLD_MS: 4000,
   POOR_ACCURACY_M: 20,
-  /** Rally stages run through forests and tunnels: ride out dropouts this long. */
+  /**
+   * Rally stages run through forests and tunnels: a lap with dropouts up to this
+   * long stays valid. Longer ones never end the run (only the driver does), but
+   * nothing is known about the route in between, so the lap can't count.
+   */
   GPS_GAP_MS: 30_000,
   JUMP_START_THRESHOLD_M: 10,
   JUMP_START_PENALTY_MS: 5000,
@@ -85,13 +89,18 @@ export interface LapResult {
   jumpStart: boolean;
   jumpDistanceM: number | null;
   countdownS: number | null;
+  /** False when the signal dropped out for longer than GPS_GAP_MS, or the lap is partial. */
   valid: boolean;
+  /** Stopped before the finish and kept anyway: splits hold only the gates crossed, totalMs runs to the last fix. */
+  partial: boolean;
+  /** Longest stretch without a fix, ms. */
+  gpsGapMs: number;
   gpsAvgAccuracyM: number;
   gpsRateHz: number;
   trace: TracePoint[];
 }
 
-export type InvalidReason = 'off_route' | 'gps_gap' | 'stopped';
+export type InvalidReason = 'off_route' | 'stopped';
 
 export type TimerEvent =
   | { type: 'armed' }
@@ -133,6 +142,7 @@ interface LapState {
   trace: TracePoint[];
   accSum: number;
   fixCount: number;
+  gapMs: number;
 }
 
 const G = 9.80665;
@@ -320,8 +330,20 @@ export class LapTimer {
   }
 
   /**
+   * The lap in progress as a partial result: the gates crossed so far and the
+   * trace up to the last fix. null when no lap is running or it has no data yet.
+   */
+  partialLap(): LapResult | null {
+    const lap = this.lapState;
+    const last = lap?.trace[lap.trace.length - 1];
+    if (!lap || !last || last.t <= 0) return null;
+    const penalty = lap.lap === 0 ? this.penaltyMs : 0;
+    return { ...this.lapResult(lap), totalMs: Math.max(last.t + penalty, lap.splits[lap.splits.length - 1] ?? 0), valid: false, partial: true };
+  }
+
+  /**
    * Stop the session. A lap in progress is discarded (it never crossed the
-   * finish). Completed laps are kept.
+   * finish; see partialLap to keep it). Completed laps are kept.
    */
   stop(): TimerEvent[] {
     if (this.phase === 'finished' || this.phase === 'invalid') return [];
@@ -534,7 +556,7 @@ export class LapTimer {
 
   private beginLap(t: number, out: TimerEvent[]): void {
     const lap = this.lapsDone.length;
-    this.lapState = { lap, startT: t, splits: [], k: 0, trace: [], accSum: 0, fixCount: 0 };
+    this.lapState = { lap, startT: t, splits: [], k: 0, trace: [], accSum: 0, fixCount: 0, gapMs: 0 };
     this.phase = 'running';
     this.offRouteSince = null;
     out.push({ type: 'started', t, lap });
@@ -545,10 +567,10 @@ export class LapTimer {
     const prev = this.lastFix;
     if (this.jumpPending) this.motionFixes.push(fix);
 
-    if (prev && fix.t - prev.t > th.GPS_GAP_MS) {
-      this.invalidate('gps_gap', out);
-      return;
-    }
+    // A dropout never ends the run: timing picks up where the signal returns.
+    const lap = this.lapState as LapState;
+    const gapMs = prev ? fix.t - prev.t : 0;
+    lap.gapMs = Math.max(lap.gapMs, gapMs);
 
     const dt = prev ? (fix.t - prev.t) / 1000 : 1;
     const v = fix.speed ?? 30;
@@ -562,18 +584,18 @@ export class LapTimer {
       if (wrap.e < pr.e) pr = { ...wrap, s: wrap.s + L };
     }
 
-    if (pr.e > th.OFF_ROUTE_M) {
+    // A fix too vague to tell (weak signal) is no evidence of leaving the route.
+    if (pr.e > th.OFF_ROUTE_M && fix.accuracy <= th.OFF_ROUTE_M) {
       this.offRouteSince ??= fix.t;
       if (fix.t - this.offRouteSince > th.OFF_ROUTE_HOLD_MS) {
         this.invalidate('off_route', out);
         return;
       }
-    } else {
+    } else if (pr.e <= th.OFF_ROUTE_M) {
       this.offRouteSince = null;
     }
 
     let s = pr.s;
-    const lap = this.lapState as LapState;
     lap.accSum += fix.accuracy;
     lap.fixCount += 1;
 
@@ -591,6 +613,8 @@ export class LapTimer {
           // Next lap starts at the same instant; shift s into the new lap.
           s -= this.cfg.route.lengthM;
           sPrev -= this.cfg.route.lengthM;
+          // A lap that began inside the dropout shares it.
+          this.lapState!.gapMs = gapMs;
         } else if (finishedLap) {
           this.sLast = s;
           return;
@@ -695,7 +719,9 @@ export class LapTimer {
       jumpStart: first && this.jumpStart,
       jumpDistanceM: first ? this.jumpDistanceM : null,
       countdownS: first && this.cfg.startType === 'standing' ? this.cfg.countdownS : null,
-      valid: true,
+      valid: lap.gapMs <= this.cfg.th.GPS_GAP_MS,
+      partial: false,
+      gpsGapMs: lap.gapMs,
       gpsAvgAccuracyM: lap.fixCount ? Math.round((lap.accSum / lap.fixCount) * 10) / 10 : 0,
       gpsRateHz: durS > 0 ? Math.round((lap.fixCount / durS) * 100) / 100 : 0,
       trace: lap.trace,

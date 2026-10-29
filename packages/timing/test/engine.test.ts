@@ -211,11 +211,49 @@ describe('invalidation', () => {
     expect(of(ev, 'finished')[0].result.splitTimesMs[0] / 1000).toBeCloseTo(500 / (80 / 3.6), 0);
   });
 
-  it('invalidates on a GPS gap over 30 s', () => {
+  it('keeps timing through a GPS gap over 30 s, but the lap does not count', () => {
     const fixes = simulateDrive(route, { speedKmh: 80, leadInM: 100 });
-    const gapped = [...fixes.slice(0, 15), ...fixes.slice(47)];
+    const gapped = [...fixes.slice(0, 15), ...fixes.slice(55)];
     const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
-    expect(of(run(timer, gapped), 'invalidated')[0]?.reason).toBe('gps_gap');
+    const ev = run(timer, gapped);
+    expect(of(ev, 'invalidated')).toHaveLength(0);
+    const result = of(ev, 'finished')[0].result;
+    expect(result.splitTimesMs).toHaveLength(boundaries.length);
+    expect(result.gpsGapMs).toBe(41_000);
+    expect(result.valid).toBe(false);
+  });
+
+  it('a short dropout leaves the lap valid', () => {
+    const fixes = simulateDrive(route, { speedKmh: 80, leadInM: 100 });
+    const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
+    const result = of(run(timer, [...fixes.slice(0, 15), ...fixes.slice(25)]), 'finished')[0].result;
+    expect(result.valid).toBe(true);
+    expect(result.partial).toBe(false);
+  });
+
+  it('does not count vague fixes from a weak signal as leaving the route', () => {
+    const fixes = simulateDrive(route, { speedKmh: 80, leadInM: 100 });
+    // 10 s of fixes wandering 50 m off the road with ±60 m accuracy.
+    const weak = fixes.map((f, i) => (i >= 20 && i < 30 ? { ...f, ...offsetLatLon(f, 50, 135), accuracy: 60 } : f));
+    const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
+    const ev = run(timer, weak);
+    expect(of(ev, 'invalidated')).toHaveLength(0);
+    expect(of(ev, 'finished')).toHaveLength(1);
+  });
+
+  it('keeps the lap in progress as a partial lap when the signal never returns', () => {
+    const fixes = simulateDrive(route, { speedKmh: 80, leadInM: 100 });
+    const timer = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
+    // Lead-in is 100 m at 22 m/s, so fix 60 is ~1.2 km in: two gates crossed.
+    run(timer, fixes.slice(0, 60));
+    const partial = timer.partialLap()!;
+    expect(partial.partial).toBe(true);
+    expect(partial.valid).toBe(false);
+    expect(partial.splitTimesMs).toHaveLength(2);
+    expect(partial.totalMs).toBe(partial.trace[partial.trace.length - 1].t);
+    expect(partial.totalMs).toBeGreaterThan(partial.splitTimesMs[1]);
+    expect(timer.stop()).toEqual([{ type: 'invalidated', reason: 'stopped' }]);
+    expect(timer.partialLap()).toBeNull();
   });
 });
 
@@ -372,6 +410,26 @@ describe('comparison', () => {
     const cmp = compareLaps({ ...a, profile: null }, b, boundaries);
     expect(cmp.smooth).toBe(false);
     expect(cmp.delta).toHaveLength(boundaries.length + 1);
+  });
+
+  it('compares a partial lap as far as it got', () => {
+    const a = lap(100);
+    const t = new LapTimer({ route, boundaries, isLoop: false, startType: 'rolling' });
+    run(t, simulateDrive(route, { speedKmh: 90, leadInM: 100 }).slice(0, 50));
+    const p = t.partialLap()!;
+    const b = { ...p, profile: lapProfileFromTrace(p.trace, Math.max(...p.trace.map((x) => x.s))) };
+    const cmp = compareLaps(a, b, boundaries);
+    expect(cmp.sectors).toHaveLength(b.splitTimesMs.length);
+    expect(cmp.throughM).toBeGreaterThan(boundaries[b.splitTimesMs.length - 1]);
+    expect(cmp.throughM).toBeLessThan(boundaries[b.splitTimesMs.length]);
+    expect(cmp.gapMs).toBeLessThan(0);
+    expect(cmp.gapMs).toBe(cmp.delta[cmp.delta.length - 1].ms);
+    // Without profiles: the gap at the last gate both crossed.
+    const coarse = compareLaps({ ...a, profile: null }, b, boundaries);
+    expect(coarse.delta).toHaveLength(b.splitTimesMs.length + 1);
+    expect(coarse.throughM).toBe(boundaries[b.splitTimesMs.length - 1]);
+    // A complete lap with too few splits is from another version of the route.
+    expect(() => compareLaps(a, { ...b, partial: false }, boundaries)).toThrow();
   });
 
   it('builds a theoretical best from the best sectors', () => {

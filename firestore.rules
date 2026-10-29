@@ -126,11 +126,17 @@ service cloud.firestore {
       // Runs are private to their owner. Others only ever see posts.
       match /runs/{runId} {
         allow read, delete: if signedIn() && userId == uid();
+        // A partial lap (the signal cut it short) runs past its last gate, or has
+        // none yet; it's never valid, so it can't be posted.
         allow create: if signedIn() && userId == uid()
           && request.resource.data.totalMs is int && request.resource.data.totalMs > 0
           && request.resource.data.splitTimesMs is list
-          && request.resource.data.splitTimesMs.size() > 0
-          && request.resource.data.splitTimesMs[request.resource.data.splitTimesMs.size() - 1] == request.resource.data.totalMs;
+          && (request.resource.data.get('partial', false) == true
+            ? request.resource.data.valid == false
+              && (request.resource.data.splitTimesMs.size() == 0
+                || request.resource.data.splitTimesMs[request.resource.data.splitTimesMs.size() - 1] <= request.resource.data.totalMs)
+            : request.resource.data.splitTimesMs.size() > 0
+              && request.resource.data.splitTimesMs[request.resource.data.splitTimesMs.size() - 1] == request.resource.data.totalMs);
         // Results are immutable; only the posted marker changes.
         allow update: if signedIn() && userId == uid() && onlyChanges(['posted']);
         // Runs saved before the split hand their trace and profile to the detail doc.

@@ -6,8 +6,8 @@ import { SERIES } from '../components/Charts';
 import { LapTabs, SectorList, useSectorTable } from '../components/LapView';
 import { Empty, errorMessage, Loading, ScreenHead, Sheet } from '../components/ui';
 import { getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
-import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
-import { resolveLap, type ResolvedLap } from '../lib/laps';
+import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
+import { notCounted, resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
 
@@ -34,7 +34,7 @@ export default function Compare() {
       if (!r) return;
       const [p, mine] = await Promise.all([r.isPublic ? routePosts(r.id).catch(() => []) : [], runsForRoute(profile.id, r.id).catch(() => [])]);
       setPosts(p);
-      setRuns(mine.filter((x) => x.valid));
+      setRuns(mine);
     })().catch((e) => setError(errorMessage(e)));
   }, [routeId, profile.id]);
 
@@ -60,7 +60,7 @@ export default function Compare() {
 
   const label = (l: ResolvedLap) => (l.username ? l.username : l.label === 'Your lap' ? `You ${l.sub}` : l.label);
   // A's own post (if any) doesn't count as the record it is measured against.
-  const aLap = useMemo(() => (a ? { id: a.ref.slice(a.ref.indexOf(':') + 1), splitTimesMs: a.splitTimesMs } : null), [a]);
+  const aLap = useMemo(() => (a ? { id: a.ref.slice(a.ref.indexOf(':') + 1), splitTimesMs: a.splitTimesMs, partial: a.partial } : null), [a]);
   const sectorTable = useSectorTable(aLap, route ?? null, posts, b ?? null, NO_COLOURS);
 
   if (route === undefined || a === undefined || b === undefined) return <Loading />;
@@ -106,14 +106,17 @@ export default function Compare() {
         <LapHead lap={a} label={aLabel} colour={SERIES.a} tag="A" />
         <div className={`cmp-gap num ${cmp.gapMs < 0 ? 'a' : cmp.gapMs > 0 ? 'b' : ''}`}>
           {formatDelta(cmp.gapMs, 3)}
-          <small>{cmp.gapMs < 0 ? `${aLabel} faster` : cmp.gapMs > 0 ? `${bLabel} faster` : 'Dead heat'}</small>
+          <small>
+            {cmp.gapMs < 0 ? `${aLabel} faster` : cmp.gapMs > 0 ? `${bLabel} faster` : 'Dead heat'}
+            {cmp.throughM != null && ` at ${formatDistance(cmp.throughM)}`}
+          </small>
         </div>
         <LapHead lap={b} label={bLabel} colour={SERIES.b} tag="B" onChange={() => setPicker(true)} />
       </section>
 
       <LapTabs
         lap={{ ...a, username: aLabel }}
-        reference={{ label: bLabel, splitTimesMs: b.splitTimesMs, totalMs: b.totalMs, penaltyMs: b.penaltyMs, profile: b.profile }}
+        reference={{ label: bLabel, splitTimesMs: b.splitTimesMs, totalMs: b.totalMs, penaltyMs: b.penaltyMs, profile: b.profile, partial: b.partial }}
         route={route}
         colours={sectorTable?.flatMap((x) => x.kids.map((k) => k.colour)) ?? []}
         sectors={<SectorList table={sectorTable} refLabel={bLabel} />}
@@ -144,7 +147,7 @@ function LapHead({ lap, label, colour, tag, onChange }: { lap: ResolvedLap; labe
       <strong className="ellipsis">{label}</strong>
       <span className="num cmp-total">{formatLap(lap.totalMs)}</span>
       <span className="mute" style={{ fontSize: 12 }}>
-        {lap.penaltyMs > 0 && `incl. +${formatSeconds(lap.penaltyMs)} jump start`}
+        {lap.partial ? 'partial lap' : lap.penaltyMs > 0 && `incl. +${formatSeconds(lap.penaltyMs)} jump start`}
       </span>
       {onChange && (
         <button className="btn sm ghost" onClick={onChange}>
@@ -172,12 +175,12 @@ function LapPicker({ route, runs, posts, exclude, onPick }: { route: Route; runs
   return (
     <div className="stack" style={{ gap: 8 }}>
       <h2>Compare with</h2>
-      {runs.length > 0 && item('best', 'Your theoretical best', 'Best time in each sector', null)}
+      {runs.some((r) => r.valid) && item('best', 'Your theoretical best', 'Best time in each sector', null)}
       {posts.length > 0 && item('record', 'Route record', 'All purple sectors', null)}
-      {[...runs]
-        .sort((x, y) => x.totalMs - y.totalMs)
-        .slice(0, 10)
-        .map((r) => item(`run:${r.id}`, 'Your lap', formatDate(r.startedAt), r.totalMs))}
+      {/* Your fastest laps, then your newest that don't count (partial or signal lost) */}
+      {[...runs.filter((r) => r.valid).sort((x, y) => x.totalMs - y.totalMs).slice(0, 10), ...runs.filter((r) => !r.valid).sort((x, y) => y.startedAt - x.startedAt).slice(0, 5)].map((r) =>
+        item(`run:${r.id}`, notCounted(r) ? `Your lap · ${notCounted(r)}` : 'Your lap', formatDate(r.startedAt), r.partial ? null : r.totalMs),
+      )}
       {board.slice(0, 20).map(({ rank, post }) => item(`post:${post.id}`, `P${rank} ${post.username}`, post.car ?? formatDate(post.startedAt), post.totalMs))}
       {!runs.length && !posts.length && <p className="mute">No other laps on {route.name} yet.</p>}
     </div>
