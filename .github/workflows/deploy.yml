@@ -1,6 +1,7 @@
-# Deploys the web app to Firebase Hosting whenever main changes, or from the "Run workflow" button.
+# Deploys the Firestore security rules, then the web app to Firebase Hosting, whenever main
+# changes, or from the "Run workflow" button. Rules go first: the app may need what they newly allow.
 # Needs the FIREBASE_SERVICE_ACCOUNT repository secret: a service account key (JSON) with the
-# Firebase Hosting Admin role. Secrets never reach pull requests from forks.
+# Firebase Hosting Admin and Firebase Rules Admin roles. Secrets never reach pull requests from forks.
 name: Deploy
 
 on:
@@ -24,8 +25,15 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # The Firestore emulator for the rules tests needs Java.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
       - run: npm ci
       - run: npm test
+      - name: Test the Firestore rules
+        run: npx --yes firebase-tools@15 emulators:exec --only firestore --project demo-laptimer "npx vitest run --dir tests"
       - run: npm run build
       - name: Check the deploy key is set
         env:
@@ -35,4 +43,5 @@ jobs:
       - uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - run: npx --yes firebase-tools@15 deploy --only firestore:rules --project marek-f1-lap-timer --non-interactive
       - run: npx --yes firebase-tools@15 deploy --only hosting --project marek-f1-lap-timer --non-interactive
