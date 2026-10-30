@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
-import { Avatar, Empty, errorMessage, SkeletonRows, ScreenHead, WhoText } from '../components/ui';
+import { SkeletonRows } from '../components/Skeleton';
+import { Avatar, Empty, errorMessage, ScreenHead, WhoText } from '../components/ui';
 import { followerIds, followingIds, getProfileByUsername, getProfiles } from '../lib/data';
 import type { Profile } from '../lib/types';
 

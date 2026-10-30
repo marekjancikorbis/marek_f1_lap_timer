@@ -3,6 +3,7 @@ import { Bell } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
+import { LapCardSkeleton } from '../components/Skeleton';
 import { LapCard } from '../components/LapCard';
 import { Avatar, Empty, errorMessage, Spinner, UserName, useToast } from '../components/ui';
 import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, unreadNotices, type FeedPage } from '../lib/data';
@@ -140,9 +141,9 @@ export function Feed() {
       {home && <h2 className="section-title">Following</h2>}
 
       {loading ? (
-        <div className="stack">
-          <div className="skeleton" style={{ height: 300 }} />
-          <div className="skeleton" style={{ height: 300 }} />
+        <div className="stack-lg">
+          <LapCardSkeleton />
+          <LapCardSkeleton />
         </div>
       ) : follows && follows.length === 0 ? (
         <FeedEmpty onFollowed={loadFirst} />

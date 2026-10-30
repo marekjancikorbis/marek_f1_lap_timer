@@ -1,7 +1,8 @@
 import { ShieldAlert } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar, Empty, errorMessage, SkeletonRows, ScreenHead, UserName } from '../components/ui';
+import { SkeletonRows } from '../components/Skeleton';
+import { Avatar, Empty, errorMessage, ScreenHead, UserName } from '../components/ui';
 import { listNotices, markNoticesSeen } from '../lib/data';
 import { formatLap, timeAgo } from '../lib/format';
 import { useMe } from '../lib/session';

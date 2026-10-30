@@ -2,6 +2,7 @@ import { ChevronLeft, Map, Play, Route as RouteIcon, Rss, User } from 'lucide-re
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { getPhoto, getProfile } from '../lib/data';
+import { PageSkeleton } from './Skeleton';
 import { nameOf } from '../lib/format';
 import type { SectorColourName } from '../lib/types';
 
@@ -152,71 +153,9 @@ export function Spinner({ label = 'Loading' }: { label?: string }) {
   return <span className="spinner" role="status" aria-label={label} />;
 }
 
-/** Which skeleton fits the screen at this address. */
-function shapeFor(path: string): 'feed' | 'map' | 'detail' | 'profile' | 'list' {
-  if (path === '/') return 'feed';
-  if (path === '/explore') return 'map';
-  if (/^\/u\/[^/]+\/?$/.test(path)) return 'profile';
-  if (/^\/(r|lap|run|drive|compare)\/[^/]+(\/(go|edit))?\/?$/.test(path)) return 'detail';
-  return 'list';
-}
-
-/** Placeholder rows: an avatar and two lines each, the shape of most lists. */
-export function SkeletonRows({ count = 6 }: { count?: number }) {
-  return (
-    <div className="stack" aria-hidden="true">
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="sk-row">
-          <span className="skeleton sk-dot" />
-          <span className="sk-lines">
-            <span className="skeleton sk-line" style={{ width: `${70 - (i % 3) * 15}%` }} />
-            <span className="skeleton sk-line short" />
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /** A whole screen loading: a grey sketch of the screen at this address instead of a lone spinner. */
 export function Loading() {
-  const shape = shapeFor(useLocation().pathname);
-  const status = (
-    <span className="visually-hidden" role="status">
-      Loading
-    </span>
-  );
-  if (shape === 'map')
-    return (
-      <div className="map-screen">
-        {status}
-        <div className="skeleton sk-fill" />
-      </div>
-    );
-  return (
-    <div className="screen sk-screen" aria-busy="true">
-      {status}
-      {shape === 'detail' && <div className="skeleton sk-hero" />}
-      {shape === 'profile' && (
-        <div className="sk-row sk-profile">
-          <span className="skeleton sk-dot big" />
-          <span className="sk-lines">
-            <span className="skeleton sk-line" style={{ width: '50%' }} />
-            <span className="skeleton sk-line short" />
-          </span>
-        </div>
-      )}
-      {shape !== 'profile' && <span className="skeleton sk-title" />}
-      {shape === 'feed' ? (
-        <div className="stack">
-          <div className="skeleton" style={{ height: 300 }} />
-          <div className="skeleton" style={{ height: 300 }} />
-        </div>
-      ) : (
-        <SkeletonRows count={shape === 'list' ? 7 : 4} />
-      )}
-    </div>
-  );
+  return <PageSkeleton path={useLocation().pathname} />;
 }
 
 export function Empty({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
