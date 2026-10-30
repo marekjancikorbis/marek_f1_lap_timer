@@ -150,6 +150,11 @@ service cloud.firestore {
           allow read, write: if signedIn() && userId == uid();
         }
       }
+
+      // Your stats per route (laps, last, PB, posted), private like the runs they sum up.
+      match /stats/{d} {
+        allow read, write: if signedIn() && userId == uid();
+      }
     }
 
     match /usernames/{name} {

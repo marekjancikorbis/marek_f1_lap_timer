@@ -508,6 +508,7 @@ export async function deleteRoute(uid: string, id: string) {
   forget('route', 'run');
   await deleteDoc(doc(db, 'routes', id));
   await deleteAll(await myRunsOn(uid, id));
+  void restat(uid, id);
 }
 
 /**
@@ -523,6 +524,7 @@ export async function updateRoute(uid: string, route: Route, change: Partial<Rou
   if (!shapeChanged) return;
   if (route.publishedAt) await deleteAll((await getDocs(query(collection(db, 'posts'), where('routeId', '==', route.id)))).docs.map((d) => d.ref));
   await deleteAll(await myRunsOn(uid, route.id));
+  void restat(uid, route.id);
 }
 
 /**
@@ -625,8 +627,9 @@ export async function saveRun(uid: string, run: Omit<Run, 'createdAt'>): Promise
   batch.set(detailRef(uid, id), { trace: trace ?? [], profile: profile ?? null });
   // Don't wait for the server: offline saves complete when signal returns.
   void batch.commit();
-  // Its own write: a failed count must never cost the lap.
+  // Its own writes: a failed count must never cost the lap.
   if (!run.replay) void countActivity(uid, run.startedAt, 1);
+  void addToStats(uid, run);
 }
 
 /** A run with its trace and profile. Runs saved before the split still carry them themselves. */
@@ -702,6 +705,86 @@ export async function deleteRun(uid: string, run: Run) {
     await batch.commit();
   });
   if (!run.replay) void countActivity(uid, run.startedAt, -1);
+  void restat(uid, run.routeId);
+}
+
+// ================================================================ route stats
+
+/** Per route you've driven: what Feed, Drive and Routes show, instead of reading every lap. */
+export interface RouteStat {
+  laps: number;
+  /** startedAt of the newest lap. */
+  last: number;
+  /** Fastest valid lap, ms. */
+  pb: number | null;
+  posted: number;
+}
+export type RouteStats = Record<string, RouteStat>;
+
+const statsRef = (uid: string) => doc(db, 'users', uid, 'stats', 'routes');
+
+function statOf(runs: Pick<Run, 'startedAt' | 'valid' | 'totalMs' | 'posted'>[]): RouteStat {
+  const valid = runs.filter((r) => r.valid).map((r) => r.totalMs);
+  return {
+    laps: runs.length,
+    last: Math.max(...runs.map((r) => r.startedAt)),
+    pb: valid.length ? Math.min(...valid) : null,
+    posted: runs.filter((r) => r.posted).length,
+  };
+}
+
+/**
+ * Your stats per route, one small private document. Built from your laps the first time;
+ * after that every change to a route's laps updates its entry.
+ */
+// shortcut: the first build counts the newest 500 laps (allMyRuns' cap); later laps all count.
+export function routeStats(uid: string): Promise<RouteStats> {
+  return cached(
+    `runs:stats:${uid}`,
+    async () => {
+      const snap = await getDoc(statsRef(uid));
+      if (snap.exists()) return snap.data().routes as RouteStats;
+      const by = new Map<string, Run[]>();
+      for (const r of await allMyRuns(uid)) by.set(r.routeId, [...(by.get(r.routeId) ?? []), r]);
+      const routes = Object.fromEntries([...by].map(([id, runs]) => [id, statOf(runs)]));
+      await setDoc(statsRef(uid), { routes }).catch(() => undefined);
+      return routes;
+    },
+    async () => {
+      if (uid !== auth.currentUser?.uid) return null;
+      const snap = await getDocFromCache(statsRef(uid));
+      return snap.exists() ? (snap.data().routes as RouteStats) : null;
+    },
+  );
+}
+
+/** A new lap: one entry moves by it. Never blocks or fails saving the lap. */
+async function addToStats(uid: string, run: Pick<Run, 'routeId' | 'startedAt' | 'valid' | 'totalMs'>) {
+  try {
+    const cur = (await routeStats(uid))[run.routeId];
+    const pb = run.valid && (cur?.pb == null || run.totalMs < cur.pb) ? run.totalMs : (cur?.pb ?? null);
+    // Without signal the write only finishes once back online, but local reads see it at once.
+    const write = updateDoc(statsRef(uid), {
+      [`routes.${run.routeId}`]: { laps: (cur?.laps ?? 0) + 1, last: Math.max(cur?.last ?? 0, run.startedAt), pb, posted: cur?.posted ?? 0 },
+    });
+    forget(`runs:stats:${uid}`);
+    await write;
+  } catch {
+    // Offline before the stats were ever built: the next restat or build counts it.
+  }
+}
+
+/** Recount one route from its laps, after a delete, a post or a route change. */
+async function restat(uid: string, routeId: string) {
+  try {
+    forget(`runs:route:${uid}:${routeId}`, `runs:stats:${uid}`);
+    const runs = await runsForRoute(uid, routeId);
+    const write = updateDoc(statsRef(uid), { [`routes.${routeId}`]: runs.length ? statOf(runs) : deleteField() });
+    forget(`runs:stats:${uid}`);
+    await write;
+  } catch {
+    // No stats document yet: it's built from the laps when first read.
+  }
 }
 
 // ================================================================ activity
@@ -795,6 +878,7 @@ export async function postLap(
   });
   batch.update(doc(db, 'users', profile.id, 'runs', run.id), { posted: true });
   await batch.commit();
+  void restat(profile.id, route.id);
 }
 
 export async function unpostLap(uid: string, runId: string, routeId: string) {
@@ -806,6 +890,7 @@ export async function unpostLap(uid: string, runId: string, routeId: string) {
     if (count) countPost(batch, routeId, runId, -1);
     await batch.commit();
   });
+  void restat(uid, routeId);
 }
 
 /** Moderators: take a post down; its driver is told. */

@@ -4,45 +4,35 @@ import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
 import { RouteShape } from '../components/RouteShape';
 import { Empty, errorMessage, Loading, useToast } from '../components/ui';
-import { allMyRuns, getRoutes, myRoutes } from '../lib/data';
+import { getRoutes, myRoutes, routeStats, type RouteStats } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
-import type { Route, Run } from '../lib/types';
+import type { Route } from '../lib/types';
 
 /** The Drive tab: the routes you can drive right now, one tap from pre-drive. */
 export default function DriveLauncher() {
   const { profile, isCreator } = useMe();
   const toast = useToast();
-  const [runs, setRuns] = useState<Run[] | null>(null);
+  const [stats, setStats] = useState<RouteStats | null>(null);
   const [routes, setRoutes] = useState<Map<string, Route>>(new Map());
   const [own, setOwn] = useState<Route[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [mine, built] = await Promise.all([allMyRuns(profile.id), isCreator ? myRoutes(profile.id) : Promise.resolve([])]);
-      const ids = [...new Set([...mine.map((r) => r.routeId), ...(profile.homeRouteId ? [profile.homeRouteId] : [])])];
+      const [mine, built] = await Promise.all([routeStats(profile.id), isCreator ? myRoutes(profile.id) : Promise.resolve([])]);
+      const ids = [...new Set([...Object.keys(mine), ...(profile.homeRouteId ? [profile.homeRouteId] : [])])];
       setRoutes(await getRoutes(ids));
       setOwn(built.filter((r) => !r.hidden));
-      setRuns(mine);
+      setStats(mine);
     })().catch((e) => {
       toast(errorMessage(e), 'error');
-      setRuns([]);
+      setStats({});
     });
   }, [profile.id, profile.homeRouteId, isCreator, toast]);
 
-  const recent = useMemo(() => {
-    const by = new Map<string, { last: number; laps: number; pb: number | null }>();
-    for (const r of runs ?? []) {
-      const row = by.get(r.routeId) ?? { last: 0, laps: 0, pb: null };
-      row.last = Math.max(row.last, r.startedAt);
-      row.laps += 1;
-      if (r.valid) row.pb = Math.min(row.pb ?? Infinity, r.totalMs);
-      by.set(r.routeId, row);
-    }
-    return by;
-  }, [runs]);
+  const recent = useMemo(() => new Map(Object.entries(stats ?? {})), [stats]);
 
-  if (runs === null) return <Loading />;
+  if (stats === null) return <Loading />;
 
   const home = profile.homeRouteId ? routes.get(profile.homeRouteId) : undefined;
   const drivable = (r: Route | undefined): r is Route => !!r && !r.hidden && (r.isPublic || r.ownerId === profile.id);

@@ -6,7 +6,7 @@ import { HomeCourse } from '../components/HomeCourse';
 import { LapCardSkeleton } from '../components/Skeleton';
 import { LapCard } from '../components/LapCard';
 import { Avatar, Empty, errorMessage, Spinner, UserName, useToast } from '../components/ui';
-import { allMyRuns, feedPage, follow, followingIds, forget, getRoute, getRoutes, unreadNotices, type FeedPage } from '../lib/data';
+import { feedPage, follow, followingIds, forget, getRoute, getRoutes, routeStats, unreadNotices, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
@@ -66,11 +66,10 @@ export function Feed() {
       void loadFirst().then(() => loadFirst(true));
     }
     const homeId = profile.homeRouteId;
-    Promise.all([allMyRuns(profile.id), homeId ? getRoute(homeId) : null])
-      .then(([runs, route]) => {
-        setDriven(new Set(runs.map((r) => r.routeId)));
-        const best = runs.filter((r) => r.valid && r.routeId === homeId).reduce<number | null>((m, r) => (m == null || r.totalMs < m ? r.totalMs : m), null);
-        setHome(route && route.isPublic && !route.hidden ? { route, pb: best } : null);
+    Promise.all([routeStats(profile.id), homeId ? getRoute(homeId) : null])
+      .then(([stats, route]) => {
+        setDriven(new Set(Object.keys(stats)));
+        setHome(route && route.isPublic && !route.hidden ? { route, pb: homeId ? (stats[homeId]?.pb ?? null) : null } : null);
       })
       .catch(() => undefined);
   }, [loadFirst, profile.id, profile.homeRouteId]);

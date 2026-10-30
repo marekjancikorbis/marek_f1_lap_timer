@@ -195,6 +195,16 @@ describe('privacy', () => {
     await assertFails(updateDoc(doc(db('stranger'), 'users/driver/runs/run1/detail/main'), { trace: [3] }));
   });
 
+  it('route stats are owner-only', async () => {
+    const stat = { laps: 1, last: 1, pb: 60000, posted: 0 };
+    await assertSucceeds(setDoc(doc(db('driver'), 'users/driver/stats/routes'), { routes: { r1: stat } }));
+    await assertSucceeds(updateDoc(doc(db('driver'), 'users/driver/stats/routes'), { 'routes.r1': deleteField() }));
+    await assertSucceeds(getDoc(doc(db('driver'), 'users/driver/stats/routes')));
+    await assertFails(getDoc(doc(db('stranger'), 'users/driver/stats/routes')));
+    await assertFails(setDoc(doc(db('stranger'), 'users/driver/stats/routes'), { routes: {} }));
+    await assertFails(getDoc(doc(anon(), 'users/driver/stats/routes')));
+  });
+
   it("an old run's trace moves to its detail only together with the detail", async () => {
     await seed({ 'users/driver/runs/old': run({ trace: [1, 2], profile: null }) });
     const strip = { trace: deleteField(), profile: deleteField() };

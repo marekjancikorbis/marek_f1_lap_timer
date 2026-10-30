@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RouteShape } from '../components/RouteShape';
 import { Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Switch, useToast } from '../components/ui';
-import { allMyRuns, getMyRequest, getRoutes, myRoutes, publicLimit, requestCreatorAccess, setRoutePublic } from '../lib/data';
+import { getMyRequest, getRoutes, myRoutes, publicLimit, requestCreatorAccess, routeStats, setRoutePublic, type RouteStats } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
-import type { CreatorRequest, Route, Run } from '../lib/types';
+import type { CreatorRequest, Route } from '../lib/types';
 
 /** Routes: every lap you've driven, by route, and the routes you've built. */
 export default function MyRoutes() {
@@ -14,7 +14,7 @@ export default function MyRoutes() {
   const toast = useToast();
   const [own, setOwn] = useState<Route[] | null>(null);
   const [driven, setDriven] = useState<Route[]>([]);
-  const [runs, setRuns] = useState<Run[]>([]);
+  const [stats, setStats] = useState<RouteStats>({});
   const [request, setRequest] = useState<CreatorRequest | null | undefined>(undefined);
   const [confirm, setConfirm] = useState<Route | null>(null);
   const [busy, setBusy] = useState(false);
@@ -22,11 +22,11 @@ export default function MyRoutes() {
 
   const load = useCallback(async () => {
     try {
-      const [mine, myRuns] = await Promise.all([myRoutes(profile.id), allMyRuns(profile.id)]);
+      const [mine, myStats] = await Promise.all([myRoutes(profile.id), routeStats(profile.id)]);
       setOwn(mine);
-      setRuns(myRuns);
+      setStats(myStats);
       const ownIds = new Set(mine.map((r) => r.id));
-      const others = [...new Set(myRuns.map((r) => r.routeId))].filter((id) => !ownIds.has(id));
+      const others = Object.keys(myStats).filter((id) => !ownIds.has(id));
       setDriven([...(await getRoutes(others)).values()]);
     } catch (e) {
       toast(errorMessage(e), 'error');
@@ -39,27 +39,22 @@ export default function MyRoutes() {
     if (!isCreator) getMyRequest(profile.id).then(setRequest).catch(() => setRequest(null));
   }, [load, isCreator, profile.id]);
 
-  const pbs = useMemo(() => {
-    const m = new Map<string, number>();
-    runs.filter((r) => r.valid).forEach((r) => m.set(r.routeId, Math.min(m.get(r.routeId) ?? Infinity, r.totalMs)));
-    return m;
-  }, [runs]);
+  const pbs = useMemo(
+    () => new Map(Object.entries(stats).flatMap(([id, s]) => (s.pb == null ? [] : [[id, s.pb] as const]))),
+    [stats],
+  );
 
   // One row per route you've driven, most recent first.
   const logbook = useMemo(() => {
     const routes = new Map([...(own ?? []), ...driven].map((r) => [r.id, r]));
-    const by = new Map<string, { route: Route; laps: number; last: number; posted: number }>();
-    for (const run of runs) {
-      const route = routes.get(run.routeId);
-      if (!route) continue;
-      const row = by.get(route.id) ?? { route, laps: 0, last: 0, posted: 0 };
-      row.laps += 1;
-      row.last = Math.max(row.last, run.startedAt);
-      if (run.posted) row.posted += 1;
-      by.set(route.id, row);
-    }
-    return [...by.values()].sort((a, b) => b.last - a.last);
-  }, [own, driven, runs]);
+    return Object.entries(stats)
+      .flatMap(([id, s]) => {
+        const route = routes.get(id);
+        return route ? [{ route, laps: s.laps, last: s.last, posted: s.posted }] : [];
+      })
+      .sort((a, b) => b.last - a.last);
+  }, [own, driven, stats]);
+  const total = Object.values(stats).reduce((t, s) => ({ laps: t.laps + s.laps, posted: t.posted + s.posted }), { laps: 0, posted: 0 });
 
   async function setPublic(route: Route, makePublic: boolean) {
     setBusy(true);
@@ -119,13 +114,13 @@ export default function MyRoutes() {
           <>
             <p className="statline">
               <span>
-                <strong className="num">{runs.length}</strong> {runs.length === 1 ? 'lap' : 'laps'}
+                <strong className="num">{total.laps}</strong> {total.laps === 1 ? 'lap' : 'laps'}
               </span>
               <span>
                 <strong className="num">{logbook.length}</strong> {logbook.length === 1 ? 'route' : 'routes'}
               </span>
               <span>
-                <strong className="num">{runs.filter((r) => r.posted).length}</strong> posted
+                <strong className="num">{total.posted}</strong> posted
               </span>
             </p>
             <div className="list">
