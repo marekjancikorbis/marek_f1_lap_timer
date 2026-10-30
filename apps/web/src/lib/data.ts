@@ -37,12 +37,26 @@ function withId<T>(snap: DocumentSnapshot | QueryDocumentSnapshot): T {
  * screen needs no network. Every write below forgets the keys it touches, so
  * your own changes always show; other people's show within a minute.
  */
-const cache = new Map<string, { at: number; value: Promise<unknown> }>();
+const cache = new Map<string, { at: number; value: Promise<unknown>; refreshing?: boolean }>();
 const TTL_MS = 60_000;
+/** Older than the TTL but within this, a read answers from memory at once and refreshes behind it. */
+const STALE_MS = 10 * 60_000;
 
 function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.value as Promise<T>;
+  const age = hit ? Date.now() - hit.at : Infinity;
+  if (hit && age < TTL_MS) return hit.value as Promise<T>;
+  if (hit && age < STALE_MS) {
+    // The fresh copy shows on the next visit. A write in between forgets the key, so it never lands over the write.
+    if (!hit.refreshing) {
+      hit.refreshing = true;
+      load().then(
+        (v) => cache.get(key) === hit && cache.set(key, { at: Date.now(), value: Promise.resolve(v) }),
+        () => (hit.refreshing = false),
+      );
+    }
+    return hit.value as Promise<T>;
+  }
   const value = load();
   cache.set(key, { at: Date.now(), value });
   value.catch(() => cache.get(key)?.value === value && cache.delete(key)); // never keep a failure
@@ -124,9 +138,12 @@ export async function setHomeRoute(uid: string, routeId: string | null): Promise
 }
 
 /** Users who picked this route as their home course. */
-export async function localsOf(routeId: string): Promise<Profile[]> {
-  const snap = await getDocs(query(collection(db, 'users'), where('homeRouteId', '==', routeId), limit(100)));
-  return snap.docs.map((d) => withId<Profile>(d)).sort((a, b) => a.username.localeCompare(b.username));
+export function localsOf(routeId: string): Promise<Profile[]> {
+  // Under 'profile' so setting a home course forgets it.
+  return cached(`profile:locals:${routeId}`, async () => {
+    const snap = await getDocs(query(collection(db, 'users'), where('homeRouteId', '==', routeId), limit(100)));
+    return snap.docs.map((d) => withId<Profile>(d)).sort((a, b) => a.username.localeCompare(b.username));
+  });
 }
 
 export async function updateMyProfile(uid: string, data: Partial<Pick<Profile, 'countdownS' | 'avatarHue'>> & { acceptedTermsAt?: unknown }) {
@@ -187,9 +204,12 @@ export async function squarePhoto(file: File): Promise<string> {
 }
 
 export async function getProfileByUsername(username: string): Promise<Profile | null> {
-  const name = await getDoc(doc(db, 'usernames', username.toLowerCase()));
-  if (!name.exists()) return null;
-  return getProfile(name.data().uid as string);
+  // A username never moves to another driver, so the lookup caches like the profile.
+  const uid = await cached(`profile:name:${username.toLowerCase()}`, async () => {
+    const name = await getDoc(doc(db, 'usernames', username.toLowerCase()));
+    return name.exists() ? (name.data().uid as string) : null;
+  });
+  return uid ? getProfile(uid) : null;
 }
 
 export function getProfiles(uids: string[]): Promise<Map<string, Profile>> {
@@ -217,14 +237,16 @@ export async function searchUsers(q: string): Promise<Profile[]> {
   return [...found.values()].slice(0, 20);
 }
 
-export async function getRole(uid: string): Promise<Role> {
-  try {
-    const snap = await getDoc(doc(db, 'roles', uid));
-    return snap.exists() ? (snap.data().role as Role) : 'driver';
-  } catch {
-    // Other users' roles are admin-only reads.
-    return 'driver';
-  }
+export function getRole(uid: string): Promise<Role> {
+  return cached(`role:${uid}`, async () => {
+    try {
+      const snap = await getDoc(doc(db, 'roles', uid));
+      return snap.exists() ? (snap.data().role as Role) : 'driver';
+    } catch {
+      // Other users' roles are admin-only reads.
+      return 'driver';
+    }
+  });
 }
 
 // ================================================================ roles & admin
@@ -271,6 +293,7 @@ export async function setCreator(
   grant: boolean,
   fromRequest?: 'approve' | 'reject',
 ): Promise<void> {
+  forget('role');
   const batch = writeBatch(db);
   const audit = doc(collection(db, 'roleAudit'));
   const action = fromRequest === 'reject' ? 'reject_request' : fromRequest === 'approve' ? 'approve_request' : grant ? 'grant_creator' : 'revoke_creator';
@@ -316,7 +339,7 @@ export async function setAdmin(
   grant: boolean,
   fromRequest?: 'approve' | 'reject',
 ): Promise<void> {
-  forget('route');
+  forget('route', 'role');
   const batch = writeBatch(db);
   const audit = doc(collection(db, 'roleAudit'));
   const action = fromRequest ? `${fromRequest}_admin_request` : grant ? 'grant_admin' : 'revoke_admin';
@@ -415,11 +438,13 @@ export function publicRoutes(): Promise<Route[]> {
   });
 }
 
-export async function publicRoutesOf(uid: string): Promise<Route[]> {
-  const snap = await getDocs(
-    query(collection(db, 'routes'), where('ownerId', '==', uid), where('isPublic', '==', true), where('hidden', '==', false), limit(50)),
-  );
-  return snap.docs.map((d) => withId<Route>(d));
+export function publicRoutesOf(uid: string): Promise<Route[]> {
+  return cached(`routes:of:${uid}`, async () => {
+    const snap = await getDocs(
+      query(collection(db, 'routes'), where('ownerId', '==', uid), where('isPublic', '==', true), where('hidden', '==', false), limit(50)),
+    );
+    return snap.docs.map((d) => withId<Route>(d));
+  });
 }
 
 /** How many routes a role may have public at once. */
@@ -893,12 +918,14 @@ export function followerIds(uid: string): Promise<string[]> {
   });
 }
 
-export async function followCounts(uid: string): Promise<{ followers: number; following: number }> {
-  const [a, b] = await Promise.all([
-    getCountFromServer(query(collection(db, 'follows'), where('followeeId', '==', uid))),
-    getCountFromServer(query(collection(db, 'follows'), where('followerId', '==', uid))),
-  ]);
-  return { followers: a.data().count, following: b.data().count };
+export function followCounts(uid: string): Promise<{ followers: number; following: number }> {
+  return cached(`follow:counts:${uid}`, async () => {
+    const [a, b] = await Promise.all([
+      getCountFromServer(query(collection(db, 'follows'), where('followeeId', '==', uid))),
+      getCountFromServer(query(collection(db, 'follows'), where('followerId', '==', uid))),
+    ]);
+    return { followers: a.data().count, following: b.data().count };
+  });
 }
 
 export async function postCount(uid: string): Promise<number> {
