@@ -24,7 +24,7 @@ import {
   type QueryDocumentSnapshot,
   type WriteBatch,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { auth, db } from './firebase';
 import type { Timestamp } from 'firebase/firestore';
 import type { AuditEntry, CreatorRequest, Notice, Post, Profile, Role, Route, Run } from './types';
 
@@ -437,8 +437,10 @@ export function getRoute(id: string): Promise<Route | null> {
       }
     },
     async () => {
+      // The phone's copy is shared by everyone who signed in on it: only what the rules let this user read.
       const snap = await getDocFromCache(doc(db, 'routes', id));
-      return snap.exists() ? withId<Route>(snap) : null;
+      const r = snap.exists() ? withId<Route>(snap) : null;
+      return r && (r.ownerId === auth.currentUser?.uid || (r.isPublic && !r.hidden)) ? r : null;
     },
   );
 }
@@ -676,6 +678,7 @@ export function allMyRuns(uid: string): Promise<Run[]> {
     `runs:all:${uid}`,
     async () => lightRuns(uid, (await getDocs(q)).docs),
     async () => {
+      if (uid !== auth.currentUser?.uid) return null; // only your own laps from the phone's copy
       const snap = await getDocsFromCache(q);
       // Not lightRuns: moving old laps' details waits for the server's copy.
       return snap.empty ? null : snap.docs.map((d) => {
