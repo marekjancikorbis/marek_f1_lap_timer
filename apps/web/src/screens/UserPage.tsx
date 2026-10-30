@@ -56,31 +56,34 @@ export default function UserPage() {
           .then((a) => (p.id === me.id && !a?.backfilled ? backfillActivity(p.id) : a))
           .then((a) => a?.days ?? {})
           .catch(() => ({}));
+        // Unpublished or hidden since? Then getRoute returns null and nothing shows.
+        const homeRoute = p.homeRouteId ? getRoute(p.homeRouteId) : null;
         const [ps, c, pr, r] = await Promise.all([userPosts(p.id), followCounts(p.id), publicRoutesOf(p.id), getRole(p.id)]);
+        // Everything else needs only the posts, so it loads side by side.
+        const routeIds = [...new Set(ps.map((x) => x.routeId))];
+        const [home, routeMap, boards, activityDays] = await Promise.all([
+          homeRoute,
+          getRoutes(routeIds),
+          Promise.all(routeIds.map((rid) => routePosts(rid))),
+          days,
+        ]);
         if (!alive) return;
         setPosts(ps);
         setCounts(c);
         setPublicRoutes(pr);
-        // Unpublished or hidden since? Then getRoute returns null and nothing shows.
-        setHome(p.homeRouteId ? await getRoute(p.homeRouteId) : null);
+        setHome(home);
         setRole(r);
-        const routeIds = [...new Set(ps.map((x) => x.routeId))];
-        setRoutes(await getRoutes(routeIds));
+        setRoutes(routeMap);
         // Current leaderboard position on each route they've posted on.
         const rankMap = new Map<string, number>();
         let firsts = 0;
-        await Promise.all(
-          routeIds.map(async (rid) => {
-            const board = leaderboardFrom(await routePosts(rid));
-            const row = board.find((b) => b.post.userId === p.id);
-            if (row) {
-              rankMap.set(row.post.id, row.rank);
-              if (row.rank === 1) firsts++;
-            }
-          }),
-        );
-        const activityDays = await days;
-        if (!alive) return;
+        for (const board of boards) {
+          const row = leaderboardFrom(board).find((b) => b.post.userId === p.id);
+          if (row) {
+            rankMap.set(row.post.id, row.rank);
+            if (row.rank === 1) firsts++;
+          }
+        }
         setRanks(rankMap);
         setWins(firsts);
         setActivity(activityDays);
