@@ -36,8 +36,11 @@ function savedCamera(): { center: [number, number]; zoom: number } | null {
   }
 }
 
-/** Explore: the map of routes with one search for routes and drivers. */
-export default function MapScreen() {
+/**
+ * Explore: the map of routes with one search for routes and drivers. The shell keeps it
+ * mounted (hidden when off the tab), so it loads once in the background and opens instantly.
+ */
+export default function MapScreen({ visible = true }: { visible?: boolean }) {
   const nav = useNavigate();
   const toast = useToast();
   const { profile, isCreator, isAdmin } = useMe();
@@ -94,6 +97,11 @@ export default function MapScreen() {
     const t = window.setTimeout(() => setRoutesDue(true), 4000);
     return () => window.clearTimeout(t);
   }, [mapReady]);
+  // Each visit to the tab refetches the routes, so new ones show without reloading the map.
+  const [visit, setVisit] = useState(0);
+  useEffect(() => {
+    if (visible) setVisit((v) => v + 1);
+  }, [visible]);
 
   useEffect(() => {
     if (!routesDue) return;
@@ -117,7 +125,7 @@ export default function MapScreen() {
         toast(errorMessage(e), 'error');
         setRoutes([]);
       });
-  }, [routesDue, toast, isCreator, isAdmin, profile.id]);
+  }, [routesDue, visit, toast, isCreator, isAdmin, profile.id]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -343,7 +351,7 @@ export default function MapScreen() {
         : `${filter === 'private' ? 'Your routes' : term ? 'Matching routes' : 'Public routes'} · ${listed.length}`;
 
   return (
-    <main className="map-screen">
+    <main className="map-screen" hidden={!visible}>
       <MapView onReady={onReady} center={camera?.center ?? [15.5, 49.8]} zoom={camera?.zoom ?? 6} height="100%" label="Routes" />
       <div className="explore-top" ref={topRef}>
         <label className="search-box explore-search">

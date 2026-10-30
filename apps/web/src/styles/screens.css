@@ -409,6 +409,17 @@
   bottom: calc(var(--tabbar-h) + var(--safe-b));
 }
 
+/* Off the Explore tab: invisible and untouchable but still sized, so Mapbox keeps drawing tiles. */
+.map-screen[hidden] {
+  display: block;
+  visibility: hidden;
+}
+
+/* Mapbox's open attribution sets visibility: visible, which would show through. */
+.map-screen[hidden] * {
+  visibility: hidden !important;
+}
+
 .map-screen .mapview {
   position: absolute !important;
   inset: 0;

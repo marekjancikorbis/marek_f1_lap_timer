@@ -90,7 +90,8 @@ function Gate() {
         <Route path="/drive/:routeId/go" element={<Drive />} />
         <Route element={<Shell />}>
           <Route index element={<Feed />} />
-          <Route path="explore" element={<MapScreen />} />
+          {/* Drawn by the shell, which keeps it loaded. */}
+          <Route path="explore" element={null} />
           <Route path="drive" element={<DriveLauncher />} />
           <Route path="routes" element={<MyRoutes />} />
           {/* Old addresses: before Explore, and when Routes was called My times. */}
@@ -120,6 +121,17 @@ function Gate() {
 
 function Shell() {
   const { pathname } = useLocation();
+  const onExplore = pathname === '/explore';
+  // Explore's map loads shortly after the first screen and then stays, so the tab opens instantly.
+  const [keepMap, setKeepMap] = useState(false);
+  useEffect(() => {
+    if (onExplore) {
+      setKeepMap(true);
+      return;
+    }
+    const t = window.setTimeout(() => setKeepMap(true), 1500);
+    return () => window.clearTimeout(t);
+  }, [onExplore]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -128,6 +140,11 @@ function Shell() {
       <Suspense fallback={<Loading />}>
         <Outlet />
       </Suspense>
+      {(keepMap || onExplore) && (
+        <Suspense fallback={onExplore ? <Loading /> : null}>
+          <MapScreen visible={onExplore} />
+        </Suspense>
+      )}
       <TabBar />
     </div>
   );
