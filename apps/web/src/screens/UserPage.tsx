@@ -39,21 +39,23 @@ export default function UserPage() {
   const [wins, setWins] = useState(0);
   const isMe = user?.id === me.id;
   const [activity, setActivity] = useState<Record<string, number> | null>(null);
+  /** Everything loaded: the skeleton stays until then, so the page never fills in piece by piece. */
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let alive = true;
     setUser(undefined);
+    setReady(false);
     (async () => {
       try {
         const p = await getProfileByUsername(username);
         if (!alive) return;
         setUser(p);
         if (!p) return;
-        setActivity(null);
-        void getActivity(p.id)
+        const days = getActivity(p.id)
           .then((a) => (p.id === me.id && !a?.backfilled ? backfillActivity(p.id) : a))
-          .then((a) => alive && setActivity(a?.days ?? {}))
-          .catch(() => alive && setActivity({}));
+          .then((a) => a?.days ?? {})
+          .catch(() => ({}));
         const [ps, c, pr, r] = await Promise.all([userPosts(p.id), followCounts(p.id), publicRoutesOf(p.id), getRole(p.id)]);
         if (!alive) return;
         setPosts(ps);
@@ -77,11 +79,16 @@ export default function UserPage() {
             }
           }),
         );
+        const activityDays = await days;
         if (!alive) return;
         setRanks(rankMap);
         setWins(firsts);
+        setActivity(activityDays);
       } catch (e) {
         toast(errorMessage(e), 'error');
+      } finally {
+        // On a failure, show what did load rather than a skeleton forever.
+        if (alive) setReady(true);
       }
     })();
     return () => {
@@ -110,7 +117,7 @@ export default function UserPage() {
     }
   }
 
-  if (user === undefined) return <Loading />;
+  if (user === undefined || (user && !ready)) return <Loading />;
   if (user === null)
     return (
       <main className="screen">
