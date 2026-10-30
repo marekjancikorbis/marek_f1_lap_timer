@@ -6,7 +6,9 @@ import {
   documentId,
   getCountFromServer,
   getDoc,
+  getDocFromCache,
   getDocs,
+  getDocsFromCache,
   increment,
   limit,
   orderBy,
@@ -34,15 +36,23 @@ function withId<T>(snap: DocumentSnapshot | QueryDocumentSnapshot): T {
 
 /**
  * Reads from the last minute come straight from memory, so going back to a
- * screen needs no network. Every write below forgets the keys it touches, so
- * your own changes always show; other people's show within a minute.
+ * screen needs no network; older ones (up to 10 minutes) too, refreshed behind.
+ * Every write below forgets the keys it touches, so your own changes always show;
+ * other people's show on the next visit.
  */
 const cache = new Map<string, { at: number; value: Promise<unknown>; refreshing?: boolean }>();
 const TTL_MS = 60_000;
 /** Older than the TTL but within this, a read answers from memory at once and refreshes behind it. */
 const STALE_MS = 10 * 60_000;
+/** Keys read this session: only a key's first read may come from the phone's copy, never one after forget(). */
+const seen = new Set<string>();
 
-function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+/**
+ * disk: on a cold start (nothing in memory), answer from Firestore's copy on this phone
+ * instead of waiting for the server; null when it has nothing. It counts as already stale,
+ * so the next read refreshes it; a screen that must show fresh data now reloads with forget().
+ */
+function cached<T>(key: string, load: () => Promise<T>, disk?: () => Promise<T | null>): Promise<T> {
   const hit = cache.get(key);
   const age = hit ? Date.now() - hit.at : Infinity;
   if (hit && age < TTL_MS) return hit.value as Promise<T>;
@@ -57,8 +67,20 @@ function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
     }
     return hit.value as Promise<T>;
   }
-  const value = load();
-  cache.set(key, { at: Date.now(), value });
+  const at = Date.now();
+  if (seen.has(key)) disk = undefined;
+  seen.add(key);
+  const value = disk
+    ? disk()
+        .catch(() => null)
+        .then((v) => {
+          if (v != null) return v;
+          const e = cache.get(key);
+          if (e?.value === value) e.at = Date.now(); // came from the server after all: fresh
+          return load();
+        })
+    : load();
+  cache.set(key, { at: disk ? at - TTL_MS : at, value });
   value.catch(() => cache.get(key)?.value === value && cache.delete(key)); // never keep a failure
   return value;
 }
@@ -71,6 +93,7 @@ export function forget(...prefixes: string[]) {
 /** On sign-out or a user switch. */
 export function clearCache() {
   cache.clear();
+  seen.clear();
 }
 
 /**
@@ -403,14 +426,21 @@ export async function createRoute(data: NewRoute): Promise<string> {
 }
 
 export function getRoute(id: string): Promise<Route | null> {
-  return cached(`route:${id}`, async () => {
-    try {
-      const snap = await getDoc(doc(db, 'routes', id));
+  return cached(
+    `route:${id}`,
+    async () => {
+      try {
+        const snap = await getDoc(doc(db, 'routes', id));
+        return snap.exists() ? withId<Route>(snap) : null;
+      } catch {
+        return null; // private route of someone else, or hidden
+      }
+    },
+    async () => {
+      const snap = await getDocFromCache(doc(db, 'routes', id));
       return snap.exists() ? withId<Route>(snap) : null;
-    } catch {
-      return null; // private route of someone else, or hidden
-    }
-  });
+    },
+  );
 }
 
 export async function getRoutes(ids: string[]): Promise<Map<string, Route>> {
@@ -641,10 +671,19 @@ export function runsForRoute(uid: string, routeId: string): Promise<Run[]> {
 }
 
 export function allMyRuns(uid: string): Promise<Run[]> {
-  return cached(`runs:all:${uid}`, async () => {
-    const snap = await getDocs(query(collection(db, 'users', uid, 'runs'), orderBy('startedAt', 'desc'), limit(500)));
-    return lightRuns(uid, snap.docs);
-  });
+  const q = query(collection(db, 'users', uid, 'runs'), orderBy('startedAt', 'desc'), limit(500));
+  return cached(
+    `runs:all:${uid}`,
+    async () => lightRuns(uid, (await getDocs(q)).docs),
+    async () => {
+      const snap = await getDocsFromCache(q);
+      // Not lightRuns: moving old laps' details waits for the server's copy.
+      return snap.empty ? null : snap.docs.map((d) => {
+        const { trace: _t, profile: _p, ...run } = withId<Run>(d);
+        return run;
+      });
+    },
+  );
 }
 
 export async function deleteRun(uid: string, run: Run) {
@@ -850,10 +889,17 @@ export interface FeedPage {
 export function feedPage(followeeIds: string[], cursor: FeedPage['cursor'], pageSize = 20): Promise<FeedPage> {
   // Only the first page is kept: it's what going back to the Feed shows.
   if (cursor) return loadFeedPage(followeeIds, cursor, pageSize);
-  return cached(`feed:${followeeIds.join(',')}:${pageSize}`, () => loadFeedPage(followeeIds, null, pageSize));
+  return cached(
+    `feed:${followeeIds.join(',')}:${pageSize}`,
+    () => loadFeedPage(followeeIds, null, pageSize),
+    async () => {
+      const page = await loadFeedPage(followeeIds, null, pageSize, getDocsFromCache);
+      return page.posts.length ? page : null;
+    },
+  );
 }
 
-async function loadFeedPage(followeeIds: string[], cursor: FeedPage['cursor'], pageSize: number): Promise<FeedPage> {
+async function loadFeedPage(followeeIds: string[], cursor: FeedPage['cursor'], pageSize: number, get = getDocs): Promise<FeedPage> {
   if (!followeeIds.length) return { posts: [], cursor: null };
   const results = await Promise.all(
     chunks(followeeIds, 30).map(async (part) => {
@@ -864,7 +910,7 @@ async function loadFeedPage(followeeIds: string[], cursor: FeedPage['cursor'], p
         ...(cursor ? [startAfter(new Date(cursor.createdAtMs))] : []),
         limit(pageSize),
       ];
-      const snap = await getDocs(query(collection(db, 'posts'), ...constraints));
+      const snap = await get(query(collection(db, 'posts'), ...constraints));
       return snap.docs.map((d) => withId<Post>(d));
     }),
   );
@@ -905,10 +951,16 @@ export async function unfollow(me: string, them: string) {
 }
 
 export function followingIds(uid: string): Promise<string[]> {
-  return cached(`following:${uid}`, async () => {
-    const snap = await getDocs(query(collection(db, 'follows'), where('followerId', '==', uid)));
-    return snap.docs.map((d) => d.data().followeeId as string);
-  });
+  const q = query(collection(db, 'follows'), where('followerId', '==', uid));
+  const ids = (snap: { docs: QueryDocumentSnapshot[] }) => snap.docs.map((d) => d.data().followeeId as string);
+  return cached(
+    `following:${uid}`,
+    async () => ids(await getDocs(q)),
+    async () => {
+      const snap = await getDocsFromCache(q);
+      return snap.empty ? null : ids(snap);
+    },
+  );
 }
 
 export function followerIds(uid: string): Promise<string[]> {

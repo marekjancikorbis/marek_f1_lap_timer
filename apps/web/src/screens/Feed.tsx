@@ -11,6 +11,12 @@ import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
 
+/**
+ * Who has seen the Feed this session. The first time, it shows the phone's copy at once
+ * (an app start needs no network wait) and then reloads it from the server.
+ */
+const opened = new Set<string>();
+
 export function Feed() {
   const { profile } = useMe();
   const toast = useToast();
@@ -54,7 +60,11 @@ export function Feed() {
   }, [profile.id]);
 
   useEffect(() => {
-    void loadFirst();
+    if (opened.has(profile.id)) void loadFirst();
+    else {
+      opened.add(profile.id);
+      void loadFirst().then(() => loadFirst(true));
+    }
     const homeId = profile.homeRouteId;
     Promise.all([allMyRuns(profile.id), homeId ? getRoute(homeId) : null])
       .then(([runs, route]) => {
