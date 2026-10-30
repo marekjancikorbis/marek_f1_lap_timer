@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, WhoText } from '../components/ui';
+import { Avatar, Empty, errorMessage, SkeletonRows, ScreenHead, WhoText } from '../components/ui';
 import { followerIds, followingIds, getProfileByUsername, getProfiles } from '../lib/data';
 import type { Profile } from '../lib/types';
 
@@ -35,7 +35,7 @@ export default function FollowList() {
       </p>
       {error && <p className="notice error">{error}</p>}
       {people === null ? (
-        <Loading />
+        <SkeletonRows />
       ) : people.length === 0 ? (
         <Empty title={followers ? 'No followers yet' : 'Not following anyone'} />
       ) : (

@@ -1,7 +1,7 @@
 import { ShieldAlert } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, UserName } from '../components/ui';
+import { Avatar, Empty, errorMessage, SkeletonRows, ScreenHead, UserName } from '../components/ui';
 import { listNotices, markNoticesSeen } from '../lib/data';
 import { formatLap, timeAgo } from '../lib/format';
 import { useMe } from '../lib/session';
@@ -71,7 +71,7 @@ export default function Notifications() {
       <ScreenHead back title="Notifications" />
       {error && <p className="notice error">{error}</p>}
       {data === null ? (
-        <Loading />
+        <SkeletonRows />
       ) : data.notices.length === 0 ? (
         <Empty title="Nothing yet">New followers, laps that beat yours and news from the moderators show up here.</Empty>
       ) : (
