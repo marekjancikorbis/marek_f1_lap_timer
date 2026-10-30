@@ -2,6 +2,7 @@ import { ChevronLeft, Map, Play, Route as RouteIcon, Rss, User } from 'lucide-re
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { getPhoto, getProfile } from '../lib/data';
+import { useMe } from '../lib/session';
 import { PageSkeleton } from './Skeleton';
 import { nameOf } from '../lib/format';
 import type { SectorColourName } from '../lib/types';
@@ -116,12 +117,14 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
 // ---------------------------------------------------------------- tab bar
 
 export function TabBar() {
+  const { profile } = useMe();
   const tabs = [
     { to: '/', label: 'Feed', icon: Rss, end: true },
     { to: '/explore', label: 'Explore', icon: Map },
     { to: '/drive', label: 'Drive', icon: Play, end: true },
     { to: '/routes', label: 'Routes', icon: RouteIcon },
-    { to: '/me', label: 'Profile', icon: User },
+    // Your profile's own address, not /me (a redirect), so the tab lights up there.
+    { to: `/u/${profile.username}`, label: 'Profile', icon: User },
   ];
   return (
     <div className="tabbar">
