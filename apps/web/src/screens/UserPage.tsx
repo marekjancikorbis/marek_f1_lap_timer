@@ -170,9 +170,16 @@ export default function UserPage() {
         title={<h1 className="profile-handle">{user.username}</h1>}
         right={
           isMe && (
-            <Link to="/settings" className="icon-btn" aria-label="Settings">
-              <SettingsIcon size={22} />
-            </Link>
+            <div className="row" style={{ gap: 0 }}>
+              {isAdmin && (
+                <Link to="/admin" className="icon-btn" aria-label="Admin">
+                  <Shield size={22} />
+                </Link>
+              )}
+              <Link to="/settings" className="icon-btn" aria-label="Settings">
+                <SettingsIcon size={22} />
+              </Link>
+            </div>
           )
         }
       />
@@ -219,11 +226,6 @@ export default function UserPage() {
       </section>
 
       {!isMe && <FollowButtonBlock userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />}
-      {isMe && isAdmin && (
-        <Link to="/admin" className="btn block" style={{ marginTop: 12 }}>
-          <Shield size={18} aria-hidden="true" /> Admin
-        </Link>
-      )}
 
       {activity && <ActivityHeatmap days={activity} weeks={26} />}
 
