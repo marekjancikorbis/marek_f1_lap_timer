@@ -64,8 +64,12 @@ Firestore reads per Feed open drop from "number of laps" to ~1.
 server-side migration, so each user's app moves its own old laps as it lists them
 (`moveDetails` in `lib/data.ts`, one run per commit, each queued once per session; the
 rules only let the two fields go once the detail exists). The read fallback in `getRun`
-stays, for laps of users who haven't opened the app since. Not done: the `stats` document,
-so Feed, Drive and My times still read one (now small) document per lap.
+stays, for laps of users who haven't opened the app since.
+
+**`stats` document done (2026-10-31):** `users/{uid}/stats/routes` holds lap count, last time, PB
+and posted flag per route (`routeStats` in `lib/data.ts`). Saving a lap adds to it; deleting, posting,
+unposting or changing a route recounts that route. Built from the laps the first time it's missing.
+Feed, Drive and Routes read this one document instead of every lap.
 
 ---
 
@@ -141,6 +145,11 @@ if the hand-rolled cache grows past ~100 lines.
 forgets the keys it touches; the session clears it on sign-in/out; the Feed's pull to refresh
 and new-laps pill skip it. Entries expire after 60 s and are then fetched again (no background
 refresh while showing the old value). Point 5 (`getDocsFromCache` on cold start) not done.
+
+**Extended (2026-10-31):** stale-while-revalidate after all: an entry older than 60 s (up to 10 min)
+is shown at once and refreshed in the background. Point 5 done: on a key's first read in a session,
+the following list, Feed's first page, routes and your laps come from the phone's Firestore copy, then
+the server. Phone-copy reads only return routes and laps the signed-in user is allowed to see.
 Back to a seen tab, 200 laps: My times 845 → 53 ms, Drive 849 → 88 ms.
 
 ---
@@ -199,6 +208,19 @@ all six weights (`document.fonts`), and every fontsource face already has `font-
 
 ---
 
+## 7. Later work (2026-10-30/31)
+
+Done after the plan above, each measured locally (emulators, "Fast 4G"):
+
+- **Explore map kept loaded**: the shell mounts the map 1.5 s after start and keeps it hidden off
+  the tab, so Explore opens instantly instead of reloading Mapbox on every visit.
+- **Skeleton screens** shaped like the page being loaded (`components/Skeleton.tsx`) replace the
+  centred spinner; the profile waits for all its data so nothing pops in.
+- **Cold-start Feed from the phone's copy** (step 3 point 5): data wait 437 ms → 56 ms.
+- **Preconnect** to Firestore, Firebase Auth and Mapbox in `index.html`, while the app downloads.
+- **Profile loads in parallel**: home route, routes, leaderboards, activity and stats side by side
+  (4 round trips → 2).
+
 ## Order and effort
 
 | # | Step                         | Effort   | Gain                                   |
@@ -235,7 +257,7 @@ lap). Times are from tapping the tab until the spinner is gone.
 | Service worker precache                | 3.18 MB, 52 files            | 1.27 MB (step 5) |
 | One run document on the wire           | ~65 KB trace + ~3 KB profile |       |
 | Data per Feed / Drive / My times open  | ~13 MB (200 full laps)       | ~0.1 MB (step 1) |
-| Firestore reads per open of those      | 200 (one per lap)            | 200 (stats doc not done) |
+| Firestore reads per open of those      | 200 (one per lap)            | 1 (route stats doc) |
 | My times, 200 laps                     | 11.4 s first, 44 s again     | 1.1 s (step 1), 53 ms again (step 3) |
 | Drive, 200 laps                        | 40 s                         | 1.1 s (step 1) |
 

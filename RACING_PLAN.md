@@ -5,7 +5,7 @@
 Purple Sector times solo drives against a reference lap (sector deltas at each gate). The user wants
 two drivers on the same route to race in person, with the HUD showing the **live gap to the other
 car**. A PWA can't link phones directly (no Bluetooth on iOS, no Wi-Fi Direct; WebRTC still needs
-the internet), so the cars talk **through Firebase Realtime Database** (RTDB: free on Spark, billed
+the internet), and iPhones only have the PWA (the Android app could, but both phones must take part), so the cars talk **through Firebase Realtime Database** (RTDB: free on Spark, billed
 by bandwidth, 100 concurrent connections, built for frequent small updates; Firestore would burn
 the 20k writes/day).
 
@@ -29,8 +29,8 @@ for a "120 m ahead" line.
 
 Only the **shared countdown** needs clocks: the host writes `goAt` in server time. Each phone converts
 it with RTDB's `.info/serverTimeOffset` and calls the existing `controller.startCountdown(tap)` with
-`tap = goAtLocal − countdownS·1000` (`apps/web/src/drive/controller.ts:408`, the engine computes
-`goT = tap + countdownS`, `engine.ts:302`). The jump-start detection runs unchanged on each phone.
+`tap = goAtLocal − countdownS·1000` (`apps/web/src/drive/controller.ts` `startCountdown`, the engine computes
+`goT = tap + countdownS`, `LapTimer.startCountdown` in `engine.ts`). The jump-start detection runs unchanged on each phone.
 
 ## Data model (RTDB)
 
@@ -56,6 +56,8 @@ into the guest's list, reusing `notify()` and the Notifications page. Rule: allo
 follows the guest (`exists(follows/{uid()}_{owner})`), same pattern as the `follow` notice.
 
 ## Steps (each: test, fix, commit, deploy; push only when asked)
+
+**Status (2026-11-01):** only step 0 is done; nothing below is built yet.
 
 **0. Save this plan** as `RACING_PLAN.md` in the repo root. **Done (2026-10-26).**
 

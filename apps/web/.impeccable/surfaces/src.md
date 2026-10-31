@@ -17,7 +17,7 @@ OWN-WORLD: Blue-black ground #0C0E12 (raised #161A20, hairlines #232831), chalk 
 
 STORY: Feed (home course card, compact lap cards) → Drive tab (home course, recent routes) → pre-drive (pick who to race, pinned Start) → drive HUD (3 big sectors over a minisector line; sideways = delta only) → lap detail (Sectors / Graphs / Map against the raced lap).
 
-FIRST VIEWPORT: Feed: wordmark left, avatar right; blue home-course card; lap cards with the time first and the route shape beside it, one blue "Race this lap". Tab bar: Feed, Explore, raised blue Drive, My times, Profile.
+FIRST VIEWPORT: Feed: wordmark left, avatar right; blue home-course card; lap cards with the time first and the route shape beside it, one blue "Race this lap". Tab bar: Feed, Explore, raised blue Drive, Routes, Profile.
 
 FORM: Blue timing screen, user-pinned from colour mockups (no concept roll); seed: none (unavailable). Signature moves: route shape painted in big-sector colours; centre-out delta bars (faster left, slower right) opening into minisectors; full-bleed minisector colour on the sideways delta-only screen.
 

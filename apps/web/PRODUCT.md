@@ -4,11 +4,11 @@
 
 ## Platform
 
-web
+web (installable PWA), plus an Android app built from the same code
 
 ## Stack
 
-Installable web app (PWA): React + TypeScript (Vite), Mapbox GL JS, Firebase Auth + Firestore on the Spark plan, Firebase Hosting. The timing engine is the pure TypeScript package `packages/timing`. Chosen by the user over the plan's Expo + Supabase stack so it deploys to Firebase.
+Installable web app (PWA): React + TypeScript (Vite), Mapbox GL JS, Firebase Auth + Firestore on the Spark plan, Firebase Hosting. The timing engine is the pure TypeScript package `packages/timing`. The Android app is the same web build in a Capacitor shell (`apps/web/android`), built by GitHub Actions and downloaded from GitHub releases.
 
 ## Users
 
@@ -17,7 +17,7 @@ Drivers at track days, hill-climbs, karting and closed-road events, timing thems
 - **In the car**: the phone is mounted, the driver's eyes are on the road, gloves may be on. The screen must be readable in a glance, in sunlight, and never require a tap while moving.
 - **In the paddock / at home**: reviewing laps, comparing with friends, posting a lap, browsing routes and the feed of people they follow.
 
-A small group of **creators** (approved by the admin) build the routes. One **admin** (the owner) approves creators and moderates.
+A small group of **creators** (approved by an admin) build the routes. **Admins** approve creators and moderate; the **owner** also appoints admins.
 
 ## Product Purpose
 
@@ -25,7 +25,7 @@ Time drives on self-defined routes with a phone, race your own earlier laps thro
 
 ## Positioning
 
-The live delta updates at every sector boundary against any chosen reference lap — your own, a friend's posted lap, the route record — with F1-style sector colours (purple = fastest anyone, green = beat the reference, yellow = slower). Routes are drawn by creators, not fixed track databases, so any closed road or event can be timed.
+The live delta updates at every sector boundary against any chosen reference lap — your own, a friend's posted lap, the route record — with F1-style sector colours (purple = fastest posted on the route, or your best ever on a private route; green = beat your own best, or the lap you race on a private route; yellow = slower; exact rules in `PLAN.md` section 9). Routes are drawn by creators, not fixed track databases, so any closed road or event can be timed.
 
 ## Operating Context
 
@@ -37,13 +37,13 @@ The live delta updates at every sector boundary against any chosen reference lap
 
 ## Capabilities and Constraints
 
-- Roles: driver (default), creator (admin-granted), admin (set in the database).
-- Creators keep routes private and may publish one; published routes get leaderboards.
+- Roles: driver (default), creator (admin-granted), admin (owner-granted), owner (set in the database).
+- Routes are private unless published: a creator may publish one, an admin five; published routes get leaderboards.
 - Laps are private until posted; posting only on public routes.
 - Lap comparison: sector table, delta graph, speed graph, map coloured by who was faster.
-- Social: user search, user pages, one-way follows, feed of followed users' posted laps.
+- Social: search, profiles (Posts / Routes / Laps tabs), one-way follows, a feed of followed users' posted laps, notifications.
 - Spark plan: no server-side verification; posted laps are checked for consistency by security rules only.
-- Browsers cannot run GPS with the screen locked; the drive screen keeps the screen awake.
+- Browsers cannot run GPS with the screen locked, so the PWA's drive screen keeps the screen awake. The Android app keeps timing with the screen off (background GPS, with a notification).
 
 ## Brand Commitments
 

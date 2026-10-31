@@ -1,9 +1,10 @@
 # Lap Timer: Project Plan
 
 A mobile app for timing drives on routes you define yourself, racing against your
-own earlier times, and competing with other drivers on routes they publish.
+own earlier times, and competing with other drivers on routes they publish. It ships as an
+installable web app (PWA) and as an Android app built from the same code.
 
-**Only approved users can create routes.** An admin grants that permission from an admin account. Everyone else can still drive public routes and appear on their leaderboards.
+**Only approved users can create routes.** An admin grants that permission from the admin screen. Everyone else can still drive public routes and appear on their leaderboards.
 
 ---
 
@@ -11,66 +12,75 @@ own earlier times, and competing with other drivers on routes they publish.
 
 | Area | What it does |
 |---|---|
-| **Roles and permissions** | Three roles. A **driver** (every new account) can drive public routes, race their own times and appear on leaderboards. A **creator** can also create routes; an admin grants this. An **admin** grants and revokes creator access and can moderate public routes. |
-| **Route builder** | *Creators only.* Draw a route on a map, snapped to roads. It can be point-to-point or a **lap** (loop, where start = finish). Choose a **sector length** (50–1000 m) and a **standing** or **rolling** start. |
-| **My routes** | Each creator's routes are private. Only the owner can see them, except for the one public route described below. Drivers see the public routes they have driven. |
-| **Drive** | Pick a route and a previous run to race against (the reference), then drive. Times are taken from GPS crossings of the start, sector and finish gates. |
-| **Drive screens** | **Full HUD**: running time, delta, sector times, etc. **Delta-only**: the delta fills the screen, and the background colour shows how the last sector went (yellow/green/purple). |
-| **Delta logic** | The delta updates only when you **cross the end of a sector**: your elapsed time at that sector boundary minus the reference run's elapsed time at the same boundary. |
-| **Social feed (home)** | Shows the **posted laps of everyone you follow**, newest at the top. Each card has the lap time, route, sectors and caption, plus quick **Compare** and **Race against** buttons. |
+| **Roles and permissions** | Four roles. A **driver** (every new account) can drive public routes, race their own times and appear on leaderboards. A **creator** can also build routes and publish one; an admin grants this. An **admin** grants and revokes creator access, moderates public routes and posts, and can publish up to 5 routes. The **owner** is an admin who also grants and revokes admin. |
+| **Route builder** | *Creators and up.* Draw a route on a map, snapped to roads. It can be point-to-point or a **lap** (loop, where start = finish). Choose a **sector length** (50–1000 m) and a **standing** or **rolling** start. |
+| **Routes tab** | **My laps**: the routes you've driven, with your PB. **Routes I built**: your routes, each private unless you make it public (creators get one public route). Drivers can request creator access there. |
+| **Drive** | Pick a route and a lap to race against (the reference), then drive. Times are taken from GPS crossings of the start, sector and finish gates. |
+| **Drive screen** | **Full HUD**: three big sectors over a line of minisectors, the delta and the running time. **Delta only**: the delta fills the screen and the background shows how the last minisector went. Turning the phone sideways switches to delta only. |
+| **Delta logic** | The delta updates only when you **cross the end of a sector**: your elapsed time at that sector boundary minus the reference lap's elapsed time at the same boundary. |
+| **Social feed (home)** | Your home course, then the **posted laps of everyone you follow**, newest at the top, with **Race this lap** and **Compare** buttons. |
 | **Following** | Follow and unfollow anyone from their user page. Follower and following counts and lists are on every profile. |
-| **Routes map** | Each creator can make **one** route public, and it gets a leaderboard. The **Map** tab shows every public route, and tapping one opens its leaderboard. |
-| **Posting laps** | Laps are private by default. On a public route you can **post** a lap, which puts it on the route's leaderboard and on your user page. You can remove a post at any time. |
-| **Lap comparison** | Put any two laps side by side on the same route: your own laps, your lap against **another person's posted lap**, or against your theoretical best or the route record. It shows sector times, a delta graph, a speed graph and a map coloured by who was faster. |
-| **Users** | **User search** by username. **User pages** show a person's posted laps (with a PB per route), their public route and stats. From any posted lap you can **compare** with it or **race against it**. |
+| **Explore** | A map of every public route, with one search for routes and drivers. Tapping a route opens its page and leaderboard. |
+| **Posting laps** | Laps are private by default. On a public route you can **post** a valid lap, which puts it on the route's leaderboard, in followers' feeds and on your profile. You can remove a post at any time. |
+| **Lap comparison** | Put any two laps on the same route side by side: your own laps, another person's posted lap, your theoretical best or the route record. Sectors, a delta graph, a speed graph and a map coloured by who was faster. |
+| **Profiles** | Photo (checked on the phone before upload), display name and @username, home course, activity heatmap, and **Posts / Routes / Laps** tabs. |
+| **Notifications** | New followers, someone beating your time, decisions on access requests, and moderation news. |
+| **Android app** | The same app in a native shell, downloaded from the PWA. It keeps timing with the screen off (background GPS) and uses Android's own Google sign-in and share sheet. |
 
 ---
 
 ## 2. Tech stack
 
-Installable web app (PWA): React + TypeScript (Vite), Firebase Auth + Firestore (Spark plan),
-Firebase Hosting, Mapbox GL JS. See *Platform and backend* in section 9 and `apps/web/PRODUCT.md`.
+React + TypeScript (Vite), Firebase Auth + Firestore (Spark plan, no Cloud Functions),
+Firebase Hosting, Mapbox GL JS. The web build is installable (PWA) and is also wrapped by
+**Capacitor** into the Android app. See *Platform and backend* in section 9 and `apps/web/PRODUCT.md`.
 
 ```
-apps/web/          the app (screens, map, drive HUD)
-packages/timing/   pure TS timing engine + unit tests + GPS fixtures
-firestore.rules    security rules (tests in tests/)
+apps/web/            the app (screens, map, drive HUD)
+apps/web/android/    Capacitor's Android project (built in CI, not by hand)
+packages/timing/     pure TS timing engine + unit tests + GPS fixtures
+firestore.rules      security rules (tests in tests/)
+.github/workflows/   deploy.yml: rules + hosting on push to main;
+                     android.yml: signed APK published as a GitHub release
 ```
 
 ---
 
 ## 3. Core concepts and data model
 
-### Route
-- `geometry`: an ordered polyline (LineString). **Direction matters**, so it runs from start to finish.
-- `is_loop`: if true, the finish gate is the start gate and laps can run back to back.
-- `sector_length_m`: 50–1000 m, in steps of 50 m.
-- `sector_boundaries_m[]`: the distances along the route where each sector ends. These are **computed once and frozen** when the route is saved. Example: a 2,300 m route with 500 m sectors has boundaries `[500, 1000, 1500, 2000, 2300]`. If the last sector would be shorter than half a sector length, it is merged into the previous one.
-- `start_type`: `standing` | `rolling`.
-- Once a route has any runs, its geometry and sectors **cannot be edited**, because edits would make old times incomparable. Users can duplicate the route instead.
+### Route (`routes/{id}`)
+- `coords`: an ordered polyline. **Direction matters**, so it runs from start to finish.
+- `isLoop`: if true, the finish gate is the start gate and laps run back to back.
+- `sectorLengthM`: 50–1000 m, in steps of 50 m.
+- `boundaries[]`: the distances along the route where each sector (minisector) ends. These are **computed once and frozen** when the route is saved. Example: a 2,300 m route with 500 m sectors has boundaries `[500, 1000, 1500, 2000, 2300]`. If the last sector would be shorter than half a sector length, it is merged into the previous one.
+- **Big sectors**: three groups of minisectors, ending at the minisector ends closest to the route's thirds (`bigSectorEnds` in `packages/timing`). The HUD, lap cards and records show these.
+- `startType`: `standing` | `rolling`.
+- Once a route has laps, its shape and sectors can't change in ways that make old times incomparable.
 
-### Run
-- The time at each gate crossing, stored as cumulative times: `split_times_ms[]` (elapsed time at each sector end). Sector times are the differences between consecutive splits.
-- `total_ms`, a `valid` flag, GPS quality stats, and the raw GPS trace (kept in Storage and used for verification and replay).
-- On loop routes, each lap is its own run, and runs from the same session share a `session_id`.
+### Run (`users/{uid}/runs/{id}`)
+- `splitTimesMs[]`: elapsed time at each sector end. Sector times are the differences between consecutive splits.
+- `totalMs`, `penaltyMs`, `valid`, `partial`, and the GPS quality.
+- The raw GPS `trace` and the distance-indexed `profile` (time and speed every 10 m) live in a separate document, `…/runs/{id}/detail/main`, so lists don't download them. Only the owner can read either.
+- On loop routes, each lap is its own run.
+
+### Other collections
+- `posts/{runId}`: a posted lap (copy of its times, caption, car, PB flag), read by everyone signed in. Leaderboards and the feed are built from posts.
+- `users/{uid}/stats/routes`: per route you've driven, the lap count, last time, PB and whether you've posted. Feed, Drive and Routes read this one document instead of every lap.
+- `roles`, `roleAudit`, `creatorRequests`, `adminRequests`: who may do what, and the log of every grant.
+- `follows`, `notifications/{uid}/items`, `activity/{uid}` (heatmap), `usernames`, `avatars`, `usage/{period}` (Mapbox counters).
 
 ### Roles and permissions
 | Role | How you get it | What it allows |
 |---|---|---|
-| `driver` | Every new account | Follow people, see the social feed, browse the routes map. Drive **public** routes, see your own runs and appear on leaderboards. |
-| `creator` | An **admin grants it** in the admin screen | Everything a driver can do, plus create private routes and publish **one** of them. |
-| `admin` | Set once **directly in the database** for your own account; it can't be granted from the app | Grant and revoke `creator`, review access requests, and hide or unpublish any public route. |
+| `driver` | Every new account | Follow people, see the feed, browse Explore. Drive **public** routes, keep your own laps and post them. |
+| `creator` | An **admin grants it**, usually after a request | Everything a driver can do, plus build private routes and publish **one**. |
+| `admin` | The **owner grants it**; creators can request it | Grant and revoke `creator`, decide creator requests, hide or unpublish any public route, remove posts. Up to 5 public routes, shown as Official. |
+| `owner` | Set once **directly in the database** | Everything an admin can do, plus grant and revoke `admin`. No public-route limit. |
 
-- **The server enforces everything**, not just the app UI.
-  - The Firestore security rules refuse a route insert from anyone who isn't a creator, even if someone calls the API directly.
-  - Hiding the route builder button is only a convenience.
-- **Users can never change their own role.** Roles live in a separate `roles` collection that only admins can write to, not in the user's profile, which they can edit.
-- **Revoking creator access**:
-  - The user can no longer create new routes or publish.
-  - Their existing routes and runs stay, so other people's leaderboard times are not lost.
-  - The admin can separately unpublish or hide their public route.
-- **Requesting access**: a driver can tap "Request creator access" and add an optional note. The admin sees pending requests in the admin screen and approves or rejects each one. Every grant and revoke is logged.
-- **More admins**: only the bootstrap admin (you) exists at first. Making someone else an admin is also a database operation, which keeps it deliberate.
+- **The server enforces everything**, not just the app UI. The Firestore security rules refuse a route from anyone who isn't a creator, even if someone calls the API directly.
+- **Users can never change their own role.** Roles live in a separate `roles` collection that only admins can write to, and every grant must come with a `roleAudit` entry.
+- **Revoking creator access**: the user can no longer create or publish routes. Their existing routes and runs stay, so other people's leaderboard times are not lost.
+- **Requesting access**: a driver taps "Request creator access" (Routes tab) with an optional note; the admin approves or rejects it in the admin screen, and the driver gets a notification.
 
 Who can read and write what is enforced by `firestore.rules` (tests: `npm run test:rules`).
 Raw GPS traces stay private to their owner; others see only posted laps.
@@ -79,13 +89,13 @@ Raw GPS traces stay private to their owner; others see only posted laps.
 
 ## 4. Timing engine (`packages/timing`)
 
-The engine is a pure function with no UI. It takes a stream of GPS fixes `{lat, lon, t, accuracy, speed, heading}` and emits events: `armed`, `started`, `sectorComplete(k, splitMs, sectorMs, deltaMs, colour)`, `finished`, `lapComplete`, `invalidated(reason)`.
+The engine is a pure class with no UI (`LapTimer` in `engine.ts`). It takes a stream of GPS fixes `{lat, lon, t, accuracy, speed, heading}` and accelerometer samples, and emits events such as `armed`, `countdown`, `started`, `jumpStart`, `sector`, `lapComplete`, `finished` and `invalidated`.
 
 ### 4.1 Where am I on the route?
 1. Before the drive, resample the route polyline every ~2 m and record the cumulative distance at each point.
 2. Project each GPS fix onto the polyline to get **`s`** (distance along the route) and **`e`** (lateral offset from the line).
 3. Only search a **window** around the last known `s` (from slightly behind to a little ahead, scaled by speed). This handles routes that cross themselves and loops where start and finish are the same point.
-4. If `e` stays above ~30 m for more than a few seconds, you are off route and the run is invalidated. Fixes with poor accuracy (more than ~20 m) are flagged and lower the run's quality score.
+4. If `e` stays above ~30 m for more than a few seconds, you are off route and the run is invalidated. Fixes with poor accuracy are flagged and lower the run's quality.
 
 ### 4.2 Precise gate crossings
 Phone GPS usually updates at **about 1 Hz**, which at 100 km/h means a fix only every ~28 m. Taking the timestamp of the fix after the line would therefore be off by up to a second. Instead, the engine interpolates:
@@ -96,165 +106,123 @@ if s_prev < boundary <= s_curr:
 ```
 
 - Use **GPS fix timestamps**, not the time JavaScript received the fix.
-- Later, Hermite interpolation using the speed at both fixes can improve accuracy when the car is accelerating or braking.
-- Expected accuracy with a phone is about ±0.1–0.2 s. An external 10–25 Hz Bluetooth GPS (RaceBox, Dragy, etc.) would be a later upgrade (section 8).
+- Measured accuracy is in section 9 (*Gate accuracy*). An external 10–25 Hz Bluetooth GPS would be a later upgrade (section 8).
 
 ### 4.3 Starts
 - **Rolling**: the timer arms when you are within ~50 m of the start and heading in the route's direction. It starts when you cross the start gate, which is a line perpendicular to the route at its first point, using the same interpolation.
 - **Standing (countdown start)**:
-  1. You stop within ~15 m of the start. The engine confirms you are stationary (speed < 1 km/h for 2 s), then enables the **Start countdown** button. This is the only tap during a run, and it happens while the car is stopped.
+  1. You stop within ~15 m of the start. The engine confirms you are stationary, then enables the **Start countdown** button. This is the only tap during a run, and it happens while the car is stopped.
   2. A **countdown of 3–10 s** runs. You set its length on the pre-drive screen; the default is 5 s.
      - The timing is **exact and even**: one beat per second with no random hold, so GO always comes exactly N seconds after the tap.
      - It shows as large numbers plus an F1-style row of lights, with a beep each second and a different tone on GO.
-     - The countdown runs on a monotonic clock. The GO instant is matched to the GPS time base, so the timer start lines up with the fix timestamps used for the gates.
-  3. **The timer starts at GO**, not when the car moves, so your reaction time is part of the lap time. That is fair across all drivers, and the countdown length you choose doesn't affect the time.
+     - The GO instant is on the GPS time base, so it lines up with the fix timestamps used for the gates.
+  3. **The lap is timed from the moment the car moves off** after GO, so a slow launch costs nothing. Reaction time is not part of the lap and is not shown.
   4. **Jump start: a +5 s penalty**, applied only when the car has really moved **more than 10 m forward before GO** (see 4.3.1). Smaller movements are ignored.
-     - The run keeps going. The HUD shows a **"JUMP START +5.0 s"** banner for a few seconds.
-     - The penalty is added to sector 1, so every split, delta, colour and the final time include it. A jump can never earn a purple sector or a better delta.
+     - A jump-started lap is timed from GO, and the penalty is added to sector 1, so every split, delta, colour and the final time include it. A jump can never earn a purple sector or a better delta.
+     - The run keeps going. The HUD shows a red **"JUMP START +5.0 s"** banner for a few seconds.
      - Penalised runs are still **valid**. They count on the leaderboard with the penalty included and can be used as a reference.
-     - The countdown can also be cancelled before GO with no penalty.
-  5. **Reaction time** is the time from GO to first motion (accelerometer). It is saved with the run and shown in the summary. After a jump start it is shown as negative, e.g. "−0.4 s".
+     - The countdown can be cancelled before GO with no penalty.
 
 #### 4.3.1 Jump-start detection without false penalties
 GPS **position** is the unreliable part. A phone sitting still often shows its position wandering 3–10 m (or more near buildings and trees). Comparing raw positions against a 10 m threshold would therefore produce false penalties. Instead, the engine estimates the distance moved before GO **from signals that don't drift**:
 
-1. **Anchor**: during the ≥2 s stationary check and the countdown, average the GPS fixes to get one stable start position. The accelerometer baseline (gravity and phone mount angle) is captured at the same time.
+1. **Anchor**: during the stationary check and the countdown, average the GPS fixes to get one stable start position. The accelerometer baseline (gravity and phone mount angle) is captured at the same time.
 2. **Is the car really moving?** Motion counts only when **both** of these agree:
    - **Accelerometer**: sustained forward acceleration above ~0.1 g for more than 300 ms, after a low-pass filter. Engine revs, door slams and phone taps are short spikes and get filtered out.
    - **GPS Doppler speed** (the fix's `speed` field) above ~1.5 m/s. Speed comes from the Doppler shift of the satellite signals, not from position differences, so it stays near zero while the car is stationary even when the reported position is wandering.
-3. **How far before GO?** Once motion is confirmed, the distance travelled up to GO is the **integral of Doppler speed over time**. Accelerometer data fills the gaps between 1 Hz fixes. Only movement **forward along the route** counts, so rolling back on a hill is never penalised.
-4. **Decision**: a penalty applies only if the integrated distance is **> 10 m**.
-   - **Cross-check**: if the GPS reports poor accuracy (> 15 m) during the countdown, motion must also be confirmed by the projected route position `s` being clearly ahead of the anchor once the fixes settle. If the signals still disagree, **no penalty is given**, because the driver gets the benefit of the doubt.
-5. **Server re-check**: the trace upload includes a short accelerometer log covering 10 s before GO to 5 s after it. `verify-run` repeats the same decision, so the phone and the server agree on penalties for leaderboard runs.
+3. **How far before GO?** Once motion is confirmed, the distance travelled up to GO is the **integral of Doppler speed over time**. Only movement **forward along the route** counts, so rolling back on a hill is never penalised.
+4. **Decision**: a penalty applies only if the integrated distance is **> 10 m**. If the GPS reports poor accuracy during the countdown and the signals disagree, **no penalty is given**: the driver gets the benefit of the doubt.
 
-The 10 m threshold is a setting in the engine (`JUMP_START_THRESHOLD_M`). Because the method doesn't rely on raw positions, it could be lowered later, e.g. to 3–5 m, without causing false penalties. Under the threshold, creeping a few metres gives a tiny head start, which is accepted as the cost of never penalising GPS noise.
+The 10 m threshold is a setting in the engine (`JUMP_START_THRESHOLD_M`). Because the method doesn't rely on raw positions, it could be lowered later without causing false penalties.
 
-### 4.4 Delta and colours (at each sector end k)
+### 4.4 Delta and colours
 ```
 split_k   = t_cross_k - t_start                    // elapsed at sector end
 sector_k  = split_k - split_(k-1)
-delta_k   = split_k - ref.split_times_ms[k]         // negative = ahead
-colour_k  = purple  if sector_k < route_sector_records[k]   (fastest ever, any user)
-            green   if sector_k < ref sector_k
-            yellow  otherwise
+delta_k   = split_k - ref.splitTimesMs[k]           // negative = ahead
 ```
-> **Superseded** by *Sector colours* in section 9, which is what the code does.
-
-- Purple overrides green.
-- The sector records are **downloaded before the drive**, so colours work offline.
-- On a **private** route the only driver is you, so purple means your own all-time best for that sector.
+Colours are defined in *Sector colours*, section 9. Records and PBs are **downloaded before the drive**, so colours work offline.
 
 ### 4.5 Laps
-On loop routes, crossing the finish gate completes the lap and immediately starts the next one at the same instant. Each lap is compared against the selected reference lap.
+On loop routes, crossing the finish gate completes the lap and immediately starts the next one at the same instant. Each lap is compared against the selected reference lap. Laps continue until the driver holds **Finish session**.
 
 ### 4.6 Comparing laps (after the drive)
-Two laps can be compared only on the **same route**, so they share the same frozen sector boundaries. The comparison code lives in `packages/timing` (`compareLaps(a, b)`), so the app and the server use the same logic.
+Two laps can be compared only on the **same route**, so they share the same frozen sector boundaries. The comparison code lives in `packages/timing` (`compareLaps(a, b)`).
 
 **What lap B can be:**
 - Another one of **your own laps**.
-- **Someone else's posted lap**: picked from the leaderboard, their user page or the route's posts.
+- **Someone else's posted lap**: from the leaderboard, their profile or the feed.
 - **Your theoretical best**: the sum of your best time in each sector.
 - **The route record**: the sum of the purple sectors.
 
-**What the comparison shows:**
+**What the comparison shows** (Sectors / Graphs / Map tabs):
 
 | View | Data used |
 |---|---|
-| **Header** | Both total times, the gap, and penalties and reaction times shown separately. |
-| **Sector table** | A and B sector times side by side with the difference. The faster one is highlighted, and purple marks a route record. |
-| **Delta graph** | Cumulative gap (A − B) against **distance along the route**. With `lap_profiles`, the line is smooth (one point every 10 m), so it shows exactly *where* time is gained or lost. Without them, it is drawn from the sector splits only. |
-| **Speed graph** | Both speed traces against distance, overlaid, to show braking points, corner speed and exit speed. Needs `lap_profiles`. |
-| **Map** | The route coloured per sector by who was faster, with a slider that moves both "ghost" cars along the route. |
+| **Header** | Both total times, the gap, and penalties shown separately. |
+| **Sectors** | The three big sectors, each expandable into its minisectors, with A and B times and the difference. Purple marks a route record. |
+| **Graphs** | Cumulative gap against **distance along the route** (from the 10 m profiles, so it shows exactly *where* time is gained or lost), and both speed traces overlaid. |
+| **Map** | The route coloured per sector by who was faster, with playback that moves both laps along the route. |
 
-- `lap_profiles` exist for every **verified** run, whether yours or posted. Your own unverified runs on private routes have them too, computed **on the device** from your local trace.
-- Raw GPS traces of other users are never needed: comparisons use only distance-indexed time and speed.
+Raw GPS traces of other users are never needed: comparisons use only the distance-indexed profiles.
 
-**Racing against someone else's lap:** any posted lap on a route can be chosen as the **reference for a drive**. The live delta during the drive then compares you against that person's splits.
+**Racing against someone else's lap:** any posted lap on a route can be chosen as the **reference for a drive**. The live delta then compares you against that person's splits.
 
 ### 4.7 Social feed
-- **Content**: every visible post (verified, on a public route that isn't hidden) by users **you follow**, newest first.
-- **Query**: the feed is built **when it is read**: posts where `userId` is in your follows, newest first, 20 at a time (Firestore `in` takes at most 30 ids, so follows are queried in chunks of 30: `feedPage` in `lib/data.ts`).
-- **Freshness**: pull to refresh. While the app is open, a Firestore listener watches for new posts from people you follow and shows a **"3 new laps ↑"** pill. Tapping it loads them at the top without jumping the scroll position.
-- **Consistency**:
-  - Unfollowing someone removes their posts from your feed immediately, because the feed is computed on read.
-  - Deleted, unposted and moderated posts disappear the same way.
-  - A post shows up once its lap is verified, ordered by its **post time**.
-- **Scaling later**: if the number of follows grows very large, switch to writing each post into followers' feeds at post time, using a `feed_items` table filled by a trigger. Not needed for v1.
+- **Content**: every visible post (on a public route that isn't hidden) by users **you follow**, newest first.
+- **Query**: built **when it is read**: posts where `userId` is in your follows, 20 at a time (Firestore `in` takes at most 30 ids, so follows are queried in chunks of 30: `feedPage` in `lib/data.ts`).
+- **Freshness**: pull to refresh. While the app is open, a Firestore listener watches for new posts from people you follow and shows a **"new laps"** pill that loads them at the top.
+- **Consistency**: unfollowing someone, deleting, unposting or moderating a post removes it from the feed at once, because the feed is computed on read.
+- **Scaling later**: if follow counts grow very large, write each post into followers' feeds at post time instead. Needs a server; not needed now.
 
 ---
 
 ## 5. Screens
 
-1. **Auth**: sign up or log in (email, Apple, Google), then choose a username. New accounts are **drivers**.
-2. **Social feed (home)**: posted laps from people you follow, newest at the top, with infinite scroll and pull to refresh (see 4.7). Each card shows:
-   - avatar, username, and how long ago it was posted (tap to open their user page),
-   - route name with a small map thumbnail (tap to open the route leaderboard),
-   - a **big lap time**, a penalty badge if any, the leaderboard position when posted (e.g. **P3**) and a **New PB** badge when it beat their previous best,
-   - a strip of sector colours (purple for route records),
-   - caption and car,
-   - buttons: **Compare with my best** (only if you've driven that route), **Race against** and **Details** (opens Lap detail).
+**Navigation (bottom tabs):** Feed · Explore · **Drive** (raised, in the middle) · Routes · Profile.
+Admin is a shield icon on your own profile, shown only to admins.
 
-   **Empty state** (not following anyone yet): a "Find drivers" button that opens search, plus suggested drivers such as leaders on public routes near you, with one-tap Follow buttons.
-3. **Routes map**: a full-screen map.
-   - Zoomed out, public routes show as clustered start pins. Zoomed in, they show as coloured polylines.
-   - Data loads by viewport through a PostGIS bounding-box query, using simplified geometry.
-   - Tapping a route opens **Route detail**.
-4. **Route detail / leaderboard**: the route on a map, its length, sector count, start type and owner. Below that, a ranked list of each user's best **posted** lap, with the purple sector records. There is a "Drive this route" button.
-   - Tapping a username opens their **user page**.
-   - Each row has **Compare with my best** and **Race against** buttons.
-5. **My routes**:
-   - **Creators** see a list of their routes with thumbnails and personal bests. Each route has a "Make public" toggle.
-     - If you already have a public route, turning on "Make public" for another one opens a dialog asking whether to replace it.
-     - The dialog also warns that the start and end points become visible to everyone.
-   - **Drivers** see the public routes they have driven and a **"Request creator access"** button (or "Request pending" once sent).
-6. **Route builder** (*creators only*; the server refuses saves from anyone else):
-   - Tap waypoints on the map; they snap to roads through the Directions API.
-   - You can drag waypoints and undo.
-   - A **Loop** toggle closes the route.
-   - A sector slider (50–1000 m) shows a live preview of the sector boundaries as tick marks on the route.
-   - Standing/rolling toggle, a name field, and Save.
-7. **Pre-drive setup**: choose the route, then the reference lap. The list shows date, total time and sector times, with your PB at the top. On a public route you can also pick **any posted lap from another user**, such as the leader, a friend, or anyone found through search. You also choose the screen mode (Full HUD or Delta-only). On standing-start routes you set the **countdown length (3–10 s)**, which is remembered per user.
-8. **Drive screen**: the screen stays awake and there are no controls to tap while moving (large Stop button only).
-   - **Standing start**: while you wait at the start line, a big **Start countdown** button appears once you are stopped there. It is followed by the full-screen countdown (numbers, lights and beeps) and GO. A jump start shows a red **JUMP START +5.0 s** banner for a few seconds while the run continues.
-   - **Full HUD**: running time, current delta (updated at each sector end), last sector time and its delta, sector k/N, distance to the next gate, and speed.
-   - **Delta-only**: a huge `-0.42` / `+1.07`, with the full-screen background coloured yellow, green or purple by the last sector.
-   - Both modes give haptic and sound cues at each gate. Optional voice callouts ("Sector 3, minus zero point four") let the driver keep their eyes on the road.
-9. **Run summary**: total time (with any penalty shown separately, e.g. `1:42.310 (incl. +5.000 jump start)`), reaction time (standing starts), a table of sector times coloured like the HUD, the trace on the map coloured by sector, and Save or Discard.
-   - **Compare** opens the comparison against the reference lap you just raced.
-   - **Post** appears on public routes for valid laps. It takes an optional caption and car, and the post goes live once the server verifies the lap.
-10. **Run history**: all runs per route, with the option to delete runs.
-   - Select any two laps to **compare** them.
-   - Each lap shows a "Posted" badge, with Post and Unpost actions.
-11. **Admin panel** (*admins only*; hidden for everyone else):
-    - **Requests**: pending creator requests with the user's name and note, and Approve or Reject.
-    - **Users**: search by username, see each user's role, and **grant or revoke creator** with one toggle.
-    - **Public routes**: every published route, with Unpublish and Hide actions for moderation.
-    - **Log**: who granted or revoked what, and when.
-    - **Posts**: remove a post (moderation).
-12. **User search**: a search box with results as you type (username, partial match), showing avatar, username, a creator badge, the number of posted laps and a **Follow** button.
-13. **User page**:
-    - **Header**: avatar, username, a creator badge, member since, and stats (posted laps, routes driven, current #1 positions).
-    - **Follow / Following** button. **Followers** and **Following** counts; tapping them opens the lists, where each entry has its own Follow button.
-    - **Their public route**: shown if they have one, with a link to its leaderboard.
-    - **Posted laps**: grouped by route, with the PB per route at the top. Each entry shows time, date, leaderboard position, caption and car.
-    - Tapping a lap opens **Lap detail**.
-    - Your own page also has **Edit profile** (avatar, username) and lets you remove posts.
-14. **Lap detail**: one lap's sector table, delta and speed graph and map. It has **Compare with my best**, **Compare with…** (choose any lap on the route) and **Race against this**, which opens pre-drive with this lap as the reference.
-15. **Lap comparison**: the views described in 4.6. You can swap A and B, or change B to another lap.
-
-**Navigation (bottom tabs):** Feed (home) · Map · Search · My routes · Profile. Admins also get an Admin tab.
+1. **Auth**: email and password, or Google, then choose a username (onboarding). New accounts are **drivers**. The sign-in screen also offers *Add to home screen* and, on Android, *Get the Android app*.
+2. **Feed (home)**: your home course card (route, your PB), then posted laps from people you follow with pull to refresh and a "new laps" pill (4.7). Each lap card shows the author, the **big lap time**, a New PB or jump-start badge, the route's shape painted in big-sector colours, caption and car, and **Race this lap** and **Compare** (only if you've driven the route).
+   **Empty state**: a "Find drivers" button that opens Explore, plus suggested drivers (route leaders) with Follow buttons.
+3. **Explore**: a full-screen map that stays loaded in the background, so the tab opens instantly. Public routes show as clustered start pins zoomed out and as lines zoomed in. One search finds routes and drivers, with results in a draggable sheet. Tapping a route opens **Route detail**.
+4. **Route detail**: a map header, length, sector count, start type and owner, the big-sector records, and tabs: **Leaderboard** (each driver's best posted lap), **My laps** and **Locals** (drivers who call it their home course). **Set as my home course**, and a pinned "Drive" button.
+5. **Drive tab**: your home course and recent routes, to start a drive in one tap.
+6. **Routes tab**:
+   - **My laps**: the routes you've driven, with lap count and PB, linking to run history.
+   - **Routes I built** (creators and up): your routes with a "Make public" toggle. A creator with a public route who makes another public gets a dialog to replace it, which also warns that the start and end become visible to everyone. Admins see "N of 5 public".
+   - Drivers see **Build routes** with a **Request creator access** button (or "Request pending").
+7. **Route builder** (*creators and up*; the server refuses saves from anyone else): tap waypoints that snap to roads (Mapbox Directions), drag and undo, a **Loop** toggle, a sector-length slider with a live preview of the boundaries, standing/rolling, name, Save.
+8. **Pre-drive**: first **who to race**: your laps (PB at the top) and, on a public route, any posted lap, each with its big-sector strip. Then a folded setup: display mode (Full HUD or Delta only), voice callouts, the **countdown length (3–10 s)** on standing-start routes, and *Simulate* (a desk test that replays a synthetic or recorded drive). A pinned Start with a summary. The first drive asks you to accept the terms (closed roads and tracks only).
+9. **Drive screen**: the screen stays awake (and in the Android app, timing carries on with it off). No controls while moving except **hold to stop**.
+   - **Standing start**: "Stop at the start line", then a big **Start countdown** button once stopped there, the full-screen countdown and GO. A jump start shows the red banner while the run continues.
+   - **Full HUD**: three big sector boxes over the minisector line, the delta and running time.
+   - **Delta only** (or turn the phone sideways): a huge `-0.42` / `+1.07` on a full-screen background coloured by the last minisector.
+   - Sound and vibration at each big sector; optional voice callouts ("Sector 2, minus zero point four").
+   - Losing GPS never ends a run (section 9, *GPS dropouts*).
+10. **Run summary**: the lap is saved automatically. Total time (any penalty shown separately), sector times coloured like the HUD, the trace on the map. **Post to leaderboard** (public routes, valid laps; optional caption and car), **Compare**, **Share image** (a picture of the lap for other apps), and **Discard** (deletes it). Partial laps say how far they got.
+11. **Run history**: all your laps on a route with sector strips. Post and unpost, delete, and pick two to compare.
+12. **Lap detail**: one lap in **Sectors / Graphs / Map** tabs, measured against the lap it raced, with playback. **Compare with my best**, **Compare with…** (any lap on the route) and, for posted laps, **Race against this**.
+13. **Lap comparison**: the views in 4.6. You can swap A and B, or change either.
+14. **Profile** (`/u/{username}`): photo, @username, and posts / followers / following counts at the top; name, role badge, home course, P1 count and "Driving since"; Follow button on other people's profiles; a 6-month activity heatmap. Tabs:
+    - **Posts**: their posted laps as feed cards, newest first.
+    - **Routes**: "Best on" (their PB and leaderboard position per route) and the public routes they built.
+    - **Laps** (your own profile only): all your laps grouped by route, the newest three per route with sector strips and a Post link.
+    Your own profile has Settings and, for admins, Admin in the top bar.
+15. **Followers / Following** lists, each entry with its own Follow button.
+16. **Notifications**: new followers, laps that beat yours, decisions on your requests, removed posts and moderated routes. A bell with a count on the Feed.
+17. **Settings**: profile (photo, display name, avatar colour), the default countdown length, **GPS logs** (the raw GPS of your last 5 drives, kept on the phone, for replay or bug reports), route creation (your role, and requesting creator or admin access), Mapbox usage this month, *Add to home screen*, *Get the Android app*, sign out.
+18. **Admin** (*admins only*): **Requests** (creator requests; admin requests for the owner), **Users** (search, grant or revoke roles), **Routes** (unpublish, hide), **Posts** (remove), **Log** (every grant and decision).
+19. **Limit screen**: shown when a Mapbox cap is reached, until the period resets.
 
 ---
 
 ## 6. Leaderboard integrity
 
-> On the Spark plan there is no server, so `verify-run` doesn't exist: see *Platform and backend* in section 9.
-
-- A lap appears on the leaderboard, on user pages and in sector records only if it is **posted**, `valid` (no off-route time, every gate crossed in order, acceptable GPS quality) **and** `verified`. Jump-start penalties are included in the leaderboard time.
+- A lap appears on a leaderboard, in feeds, on profiles and in sector records only if it is **posted** and **valid** (no off-route time, every gate crossed in order, acceptable GPS quality, no dropout over 30 s). Jump-start penalties are included in the leaderboard time.
 - Unposted laps never affect what other people see. Purple therefore means the fastest **posted** sector.
-- **Verification**: an Edge Function `verify-run` downloads the uploaded trace and replays it through the **same `packages/timing` engine**. If the times it computes match the times the phone reported (within tolerance), the run is marked `verified`, its `lap_profiles` are computed, and, if the lap is posted, the leaderboard and sector records are updated.
-- Plausibility checks: maximum speed and acceleration limits, and a check that the GPS timestamps are monotonic and not too sparse.
-- This stops basic cheating, such as faking times in the request. A spoofed GPS trace is much harder to detect, so it is out of scope for v1.
+- **No server-side verification** on the Spark plan: posted laps are trusted as sent. The security rules check they are self-consistent (positive, increasing splits, total = last split, penalty applied, only your own run, only on a public route, the route's post count moving with it).
+- A spoofed GPS trace or edited request can't be detected without a server; out of scope for now.
 
 ---
 
@@ -262,60 +230,62 @@ Two laps can be compared only on the **same route**, so they share the same froz
 
 | Risk | Mitigation |
 |---|---|
-| **Safety, legal and app store policy.** Timed leaderboards on *public roads* can be read as encouraging street racing. Apple's guideline 1.4.5 rejects apps that urge risky activities, and there is liability exposure. | **Decided: track days and rally events only.** Require accepting the terms before the first drive. Do not reward anything just for being fast on unclosed roads (or label public roads clearly). Keep the drive screen free of controls to tap, and use a mount and voice cues. |
-| GPS accuracy (1 Hz, urban canyons, tunnels) | Interpolation, quality scoring, laps with long gaps kept but not valid, and BLE GPS later. |
-| Battery and heat during long sessions | High-accuracy GPS runs only while a run is armed. A dark UI saves power on OLED screens. |
-| No signal on mountain roads | Offline-first: everything needed for a drive is cached, and uploads are queued. |
-| Background location permission (store review) | Request "while using" first. Ask for background access only so the timer keeps running if the screen locks, and explain why. |
+| **Safety, legal and app store policy.** Timed leaderboards on *public roads* can be read as encouraging street racing. | **Decided: track days and rally events only.** Every user accepts the terms before the first drive. The drive screen has no controls to tap; use a mount and voice cues. |
+| GPS accuracy (1 Hz, tunnels, trees) | Interpolation, quality flags, dropouts that keep the run going (laps over 30 s of dropout kept but not valid), BLE GPS later. |
+| Battery and heat during long sessions | High-accuracy GPS runs only on the drive screen. A dark UI saves power on OLED screens. |
+| No signal at the track | Everything needed for a drive is cached before it starts; Firestore queues writes until the signal returns. |
+| Screen locking mid-drive | PWA: a screen wake lock. Android app: background GPS (a foreground service with a "Timing your drive" notification), so the screen can turn off. |
 | Privacy (routes that start at home) | Warn when publishing. Never expose other users' raw traces. |
+| Losing the Android signing key | Updates and native Google sign-in depend on it. The key is kept outside the repo, with a copy in GitHub secrets. |
 
 ---
 
-## 8. Later ideas (not in v1)
+## 8. Later ideas
 - Live "ghost" delta between sectors, interpolated from the reference trace.
-- Push notifications: a followed user posts, someone follows you, someone beats your time on a route.
+- In-person racing: a live gap between two cars (`RACING_PLAN.md`).
+- Push notifications (needs a server, or FCM from the Android app).
 - Likes and comments on posts.
 - Blocking users and private profiles where follows need approval.
 - Car profiles (compare times by car class).
-- External 10–25 Hz GNSS receivers over BLE.
+- External 10–25 Hz GNSS receivers over BLE (possible in the Android app).
 - Video overlay export (time and delta burned into dashcam footage).
+- An iOS app (Capacitor supports it; needs a Mac and an Apple developer account).
 
 ---
 
 ## 9. Decisions made
-- **Standing start**: countdown of 3–10 s (user-set), exact even timing with no random hold; the timer starts at GO.
-- **Jump start**: +5 s penalty, only for confirmed forward movement of more than 10 m before GO (section 4.3.1). The run stays valid.
-- **Route creation needs permission**: only users the admin approves (role `creator`) can create and publish routes. Everyone else is a driver who drives public routes. The admin role is set in the database, not from the app.
+- **Standing start**: countdown of 3–10 s (user-set), exact even timing with no random hold. The lap is timed from when the car moves off after GO; no reaction time.
+- **Jump start**: +5 s penalty, only for confirmed forward movement of more than 10 m before GO (section 4.3.1). The lap is then timed from GO. The run stays valid.
+- **Route creation needs permission**: only creators (admin-granted) and up can build and publish routes. The owner role is set in the database; the owner grants admin.
+- **Public routes per role**: creator 1, admin 5, owner unlimited. Admin and owner routes show as Official.
 
 - **Lap comparison**: any two laps on the same route, either your own or against other people's posted laps (section 4.6). Any posted lap can be used as a drive reference.
-- **Following and social feed**: one-way follows with no approval. The home tab is a feed of posted laps from people you follow, newest first. The routes map moves to its own tab.
-- **Posting and users**: laps are private until posted. Posting is only possible on public routes. There is user search and there are user pages showing posted laps.
+- **Following and social feed**: one-way follows with no approval. The home tab is a feed of posted laps from people you follow, newest first. Explore has the routes map and search.
+- **Posting and users**: laps are private until posted. Posting is only possible on public routes. Many posts per route are allowed; the leaderboard takes each driver's best.
 
-- **Platform and backend**: the app ships as an installable **web app (PWA)** built with React + TypeScript (Vite), hosted on **Firebase Hosting**. Firebase **Auth** and **Firestore** replace Supabase, and Firestore security rules replace RLS. The project is on the free **Spark** plan, so there are no Cloud Functions:
-  - `verify-run` cannot run on a server. Posted laps are trusted as sent; the security rules still check that they are self-consistent (positive, increasing splits, total = last split, penalty applied, only your own run on a public route).
+- **Platform and backend**: React + TypeScript (Vite) on **Firebase Hosting**, with Firebase **Auth** and **Firestore** (security rules instead of a server). The project is on the free **Spark** plan, so there are no Cloud Functions:
+  - Posted laps are trusted as sent; the security rules still check that they are self-consistent (section 6).
   - Leaderboards, sector records and the feed are computed when read, from posts.
-  - Browsers cannot keep GPS running with the screen locked, so the drive screen holds a screen wake lock instead of using background location.
-- **Maps**: Mapbox GL JS for maps, Mapbox Directions for snapping routes to roads. Route thumbnails are drawn as SVG from the route geometry, so they cost no map loads.
-- **Mapbox usage cap**: the app counts every map load and every Directions request in Firestore (`usage/{period}`) and stops at **45,000 map loads** and **90,000 Directions requests** per period, just under Mapbox's free tier. Once a cap is reached the app shows a "monthly limit reached, back on [date]" screen and is unusable until the period resets.
-  - The period resets on the **1st of each month, 00:00 UTC**. The reset day is one setting (`USAGE_RESET_DAY`), so it can be matched to the Mapbox billing cycle.
-  - The security rules only allow the counters to go up by one at a time and refuse increments past the cap. On Spark the cap is still enforced by the app, so the Mapbox token must also be **URL-restricted** to the app's domain in the Mapbox dashboard.
+- **Two ways to install**:
+  - **PWA** (all phones; the only option on iPhone). Browsers can't keep GPS running with the screen locked, so the drive screen holds a screen wake lock.
+  - **Android app**: Capacitor wraps the same web build. Differences are behind `Capacitor.isNativePlatform()`: native Google sign-in (Google blocks its web sign-in inside apps), background GPS with a notification so timing works with the screen off, Android's share sheet, and no service worker. GitHub Actions builds a signed APK on every push that changes the app and publishes it as the latest GitHub release; the PWA's *Get the Android app* button links to it. App updates need a new download; the web version updates on deploy.
+- **Maps**: Mapbox GL JS for maps, Mapbox Directions for snapping routes to roads. Route shapes in lists are drawn as SVG from the geometry; a few cards also use Mapbox static images, loaded only when scrolled into view.
+- **Mapbox usage cap**: the app counts every map load, Directions request and static map in Firestore (`usage/{period}`) and stops at **45,000 map loads**, **90,000 Directions requests** and **45,000 static maps** per period, just under Mapbox's free tiers. Once a cap is reached the app shows a "monthly limit reached, back on [date]" screen until the period resets.
+  - The period resets on the **1st of each month, 00:00 UTC** (`USAGE_RESET_DAY`).
+  - The security rules only allow the counters to go up by one at a time and refuse increments past the cap. The cap is still enforced by the app, so the Mapbox token should also be **URL-restricted** in the Mapbox dashboard (it isn't yet; the Android app loads from `https://localhost`, so that origin must be allowed too).
 
-- **Positioning**: the app is for **track days and rally events only** (closed courses). The app store listing, terms and copy say so; public-road timing is not a use case.
+- **Positioning**: the app is for **track days and rally events only** (closed courses). The terms and copy say so; public-road timing is not a use case.
 - **Gate accuracy (measured on simulated driving)**: `simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error. Gate error is about 70 ms RMS and under 150 ms p95 on a rally stage and a circuit, and **5 Hz is no better than 1 Hz**. GPS position error dominates, not interpolation (with perfect GPS the error is under 60 ms), so Hermite interpolation is not worth building. Only better fixes help (external 10–25 Hz GNSS). `test/accuracy.test.ts` guards both numbers; real-drive logs dropped into `test/fixtures/` will confirm them.
 
-- **GPS dropouts**: losing the signal **never ends a run**; only the driver does. Gates crossed during a dropout are interpolated across it. A lap with dropouts up to **30 s** (tunnels and forest on rally stages) stays valid; a longer one still finishes and is saved, but is **not valid** (nothing is known about the route in between), so it can't be posted or set a best. Fixes too vague to place the car (accuracy worse than the 30 m off-route limit) don't count towards leaving the route.
-- **Partial laps**: when the driver stops mid-lap after the signal dropped out, the app offers to keep the lap as far as it got: the gates crossed, the trace and the profile up to the last fix. Partial laps are never valid; they can be viewed and compared with other laps up to where they stop.
+- **GPS dropouts**: losing the signal **never ends a run**; only the driver does. Gates crossed during a dropout are interpolated across it. A lap with dropouts up to **30 s** (tunnels and forest on rally stages) stays valid; a longer one still finishes and is saved, but is **not valid**, so it can't be posted or set a best. Fixes too vague to place the car (accuracy worse than the 30 m off-route limit) don't count towards leaving the route.
+- **Partial laps**: when the driver stops mid-lap after the signal dropped out, the app offers to keep the lap as far as it got. Partial laps are never valid; they can be viewed and compared with other laps up to where they stop.
 
 - **Sector colours**: on **public routes** purple = faster than the route record (fastest posted sector) and your own best (with nothing posted yet it means a new PB), green = faster than your own personal best for that sector. On **private routes** purple = faster than your personal best (your theoretical-best sector), green = faster than the same sector of the lap you're racing. Yellow otherwise. The delta always compares with the lap you race. PBs and records improve during a session, and saved laps show the colours they had when driven.
 
 ## 10. Open questions (need decisions)
 
-1. **Platforms**: iOS and Android both (assumed), or one first?
-4. **Laps**: on a loop route, should laps run back to back in one session (assumed), with a fixed lap count or until you stop?
-5. **Changing your public route**: when you swap to a different route, should the old leaderboard be archived (still viewable) or hidden?
-6. **Can others save a public route** to their own list, or only drive it from the feed?
-8. **Map provider**: is Mapbox OK, or do you prefer Google Maps?
-9. **Scope of the permission**: should approval be needed to create **any** route (assumed), or only to **publish** one? With the second option, everyone could build private routes and only approved users could make one public.
-11. **Leaderboard and posting**: should the leaderboard show only **posted** laps (assumed, so nothing appears publicly without your choice), or automatically include every verified lap on a public route?
-12. **Posts per route**: can a user post many laps on one route (assumed: yes, with the leaderboard taking their best), or only one, so a new post replaces the old one?
-13. **Your own posts in the feed**: should your own posted laps also appear in your feed, or only followed users' (assumed, per the brief)?
+1. **Changing your public route**: when you swap to a different route, should the old leaderboard be archived (still viewable) or hidden? (Today it is hidden while the route is private.)
+2. **Can others save a public route** to their own list, or only drive it?
+3. **Leaderboard and posting**: should the leaderboard keep showing only **posted** laps (today), or include every valid lap on a public route automatically?
+4. **Your own posts in the feed**: should your own posted laps also appear in your feed? (Today: only followed users'.)
+5. **iPhone**: stay with the PWA (screen must stay on while driving), or build the iOS app too?
