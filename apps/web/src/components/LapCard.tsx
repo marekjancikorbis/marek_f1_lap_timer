@@ -18,6 +18,8 @@ export function LapCard({ post, route, canCompare, showAuthor = true }: Props) {
   const created = post.createdAt?.toDate() ?? null;
   const colours = postBigColours(post, route);
   const p1 = post.positionAtPost === 1;
+  // Without the author row (on their own profile) the date moves here.
+  const meta = [post.car, showAuthor ? null : timeAgo(created)].filter(Boolean).join(' · ');
   return (
     <article className="lap-card">
       {showAuthor && (
@@ -50,10 +52,10 @@ export function LapCard({ post, route, canCompare, showAuthor = true }: Props) {
         </span>
       </Link>
       {colours.length > 0 && <SectorStrip colours={colours} height={6} />}
-      {(post.caption || post.car) && (
+      {(post.caption || meta) && (
         <p className="lap-card-caption">
           {post.caption}
-          {post.car && <span className="mute">{post.caption ? ' · ' : ''}{post.car}</span>}
+          {meta && <span className="mute">{post.caption ? ' · ' : ''}{meta}</span>}
         </p>
       )}
       <div className="lap-card-actions">

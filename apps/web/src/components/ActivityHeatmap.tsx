@@ -2,11 +2,10 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { dayKey } from '../lib/data';
 import { formatDate } from '../lib/format';
 
-const WEEKS = 53;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** GitHub-style grid of laps driven per day over the last year: weeks as columns, Monday on top. */
-export function ActivityHeatmap({ days }: { days: Record<string, number> }) {
+/** GitHub-style grid of laps driven per day: weeks as columns, Monday on top. */
+export function ActivityHeatmap({ days, weeks: WEEKS = 53 }: { days: Record<string, number>; weeks?: number }) {
   const scroller = useRef<HTMLDivElement>(null);
   const [sel, setSel] = useState<number | null>(null);
   // Newest weeks are on the right: start scrolled there.
@@ -40,13 +39,14 @@ export function ActivityHeatmap({ days }: { days: Record<string, number> }) {
     if (i != null) setSel(Number(i));
   };
   const picked = sel != null ? cells[sel] : null;
+  const span = WEEKS >= 52 ? 'the last year' : `${Math.round(WEEKS / 4.35)} months`;
 
   return (
     <section className="heat">
       <div className="heat-head">
         <h2 className="section-title">Activity</h2>
         <span className="mute num">
-          {total} {total === 1 ? 'lap' : 'laps'} in the last year
+          {total} {total === 1 ? 'lap' : 'laps'} in {span}
         </span>
       </div>
       <div className="heat-scroll" ref={scroller}>
@@ -55,7 +55,7 @@ export function ActivityHeatmap({ days }: { days: Record<string, number> }) {
             <span key={w}>{m}</span>
           ))}
         </div>
-        <div className="heat-grid" role="img" aria-label={`${total} laps driven in the last year`} onClick={pick}>
+        <div className="heat-grid" role="img" aria-label={`${total} laps driven in ${span}`} onClick={pick}>
           {cells.map((c, i) => (
             <i key={i} data-i={c.future ? undefined : i} className={c.future ? 'future' : `l${level(c.n)} ${i === sel ? 'sel' : ''}`} title={c.future ? undefined : `${c.n} on ${formatDate(c.date)}`} />
           ))}

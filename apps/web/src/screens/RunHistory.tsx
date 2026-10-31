@@ -4,10 +4,10 @@ import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
 import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatLap } from '../lib/format';
-import { bigEnds, notCounted, toBig } from '../lib/laps';
-import { bestSectors, bigSplits, sectorTimes, theoreticalBest } from '@laptimer/timing';
+import { historyColours, notCounted } from '../lib/laps';
+import { theoreticalBest } from '@laptimer/timing';
 import { useMe } from '../lib/session';
-import type { Route, Run, SectorColourName } from '../lib/types';
+import type { Route, Run } from '../lib/types';
 
 type SortBy = 'date' | 'time';
 const SORT_KEY = 'my-laps-sort';
@@ -65,19 +65,9 @@ export default function RunHistory() {
 
   // Your history, coloured against your bests as they stand today.
   const counted = useMemo(() => (runs && route ? runs.filter((r) => r.valid && r.splitTimesMs.length === route.boundaries.length) : []), [runs, route]);
-  // Strips show the 3 big sectors.
-  const allTimeBest = useMemo(() => (route ? bestSectors(toBig(counted, route)) : []), [counted, route]);
   const theoretical = useMemo(() => theoreticalBest(counted), [counted]);
-
-  /** Purple: your all-time best sector. Green: it was your best when driven, since beaten. Yellow: never your best. Invalid laps don't count: grey. */
-  function colours(run: Run): (SectorColourName | null)[] {
-    if (!route) return [];
-    if (!counted.includes(run)) return bigEnds(route).map(() => null);
-    const before = bestSectors(toBig(counted.filter((r) => r.id !== run.id && r.startedAt < run.startedAt), route));
-    return sectorTimes(bigSplits(run.splitTimesMs, bigEnds(route))).map((s, i) =>
-      s <= (allTimeBest[i] ?? Infinity) ? 'purple' : before[i] == null || s < before[i]! ? 'green' : 'yellow',
-    );
-  }
+  // Strips show the 3 big sectors, against your bests as they stand today.
+  const colours = useMemo(() => (runs && route ? historyColours(runs, route) : () => []), [runs, route]);
 
   function toggle(id: string) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s.slice(-1), id]));

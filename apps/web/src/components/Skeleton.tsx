@@ -49,13 +49,15 @@ export function SkeletonRows({ count = 6, h = 66, pic = 40, square, end, rank }:
 }
 
 /** A feed card: who, route and time beside the shape, sector strip, the two actions. */
-export function LapCardSkeleton() {
+export function LapCardSkeleton({ author = true }: { author?: boolean }) {
   return (
     <div className="lap-card sk-card" aria-hidden="true">
-      <div className="row lap-card-who">
-        <B w={34} h={34} r="50%" />
-        <B w={130} h={14} r={4} />
-      </div>
+      {author && (
+        <div className="row lap-card-who">
+          <B w={34} h={34} r="50%" />
+          <B w={130} h={14} r={4} />
+        </div>
+      )}
       <div className="lap-card-body">
         <span className="lap-card-main">
           <B w={80} h={17} r={4} />
@@ -113,25 +115,36 @@ function DriveLauncher() {
 function Profile() {
   return (
     <>
-      <Head />
-      <section className="profile-head">
-        <B w={72} h={72} r="50%" />
-        <div className="grow sk-lines">
-          <B w={160} h={30} r={6} />
-          <B w={80} h={16} r={4} />
-          <B w={70} h={22} r={6} />
-          <B w={220} h={16} r={4} />
-          <B w={160} h={16} r={4} />
+      <Head title={120} h={24} />
+      <section className="profile-top">
+        <B w={86} h={86} r="50%" />
+        <div className="profile-counts">
+          {[0, 1, 2].map((i) => (
+            <span key={i} style={{ alignItems: 'center' }}>
+              <B w={30} h={24} r={4} />
+              <B w={56} h={12} r={4} style={{ marginTop: 3 }} />
+            </span>
+          ))}
         </div>
       </section>
-      <p className="statline">
-        <B w={260} h={18} r={4} style={{ margin: '6px 0 5px' }} />
-      </p>
-      <section className="heat">
-        <B h={194} r={12} />
+      <section className="profile-bio">
+        <B w={90} h={18} r={4} style={{ margin: '3px 0' }} />
+        <B w={170} h={14} r={4} style={{ margin: '3px 0' }} />
+        <B w={190} h={14} r={4} style={{ margin: '3px 0' }} />
       </section>
-      <Title />
-      <SkeletonRows count={3} h={68} />
+      <section className="heat">
+        <B h={169} r={12} />
+      </section>
+      <div className="profile-tabs">
+        {[0, 1, 2].map((i) => (
+          <span key={i} style={{ flex: 1, height: 46, display: 'grid', placeItems: 'center' }}>
+            <B w={60} h={14} r={4} />
+          </span>
+        ))}
+      </div>
+      <div className="stack-lg">
+        <LapCardSkeleton author={false} />
+      </div>
     </>
   );
 }

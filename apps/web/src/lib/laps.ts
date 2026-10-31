@@ -176,6 +176,23 @@ export function toBig<T extends { splitTimesMs: number[] }>(laps: T[], route: Pi
 }
 
 /** Big-sector records (fastest posted time per big sector). */
+/**
+ * Big-sector strip colours for your laps on a route, against your own bests as they stand today.
+ * Purple: your all-time best sector. Green: it was your best when driven, since beaten. Yellow: never
+ * your best. Laps that don't count (invalid, or timed on other sectors) are grey.
+ */
+export function historyColours(runs: Run[], route: Pick<Route, 'boundaries'>): (run: Run) => (SectorColourName | null)[] {
+  const counted = runs.filter((r) => r.valid && r.splitTimesMs.length === route.boundaries.length);
+  const allTimeBest = bestSectors(toBig(counted, route));
+  return (run) => {
+    if (!counted.includes(run)) return bigEnds(route).map(() => null);
+    const before = bestSectors(toBig(counted.filter((r) => r.id !== run.id && r.startedAt < run.startedAt), route));
+    return sectorTimes(bigSplits(run.splitTimesMs, bigEnds(route))).map((s, i) =>
+      s <= (allTimeBest[i] ?? Infinity) ? 'purple' : before[i] == null || s < before[i]! ? 'green' : 'yellow',
+    );
+  };
+}
+
 export function bigRecords(posts: Post[], route: Pick<Route, 'boundaries'>, excludeId?: string): (number | null)[] {
   return sectorRecordsFrom(toBig(posts.filter((p) => p.id !== excludeId), route), bigEnds(route).length);
 }

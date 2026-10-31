@@ -1,11 +1,14 @@
-import { Settings as SettingsIcon, Shield } from 'lucide-react';
+import { Check, ChevronRight, Flag, LayoutGrid, Lock, Route as RouteIcon, Settings as SettingsIcon, Shield } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { FollowButton } from '../components/FollowButton';
+import { LapCard } from '../components/LapCard';
 import { RouteShape } from '../components/RouteShape';
+import { SkeletonRows } from '../components/Skeleton';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
 import {
+  allMyRuns,
   backfillActivity,
   followCounts,
   getActivity,
@@ -16,13 +19,15 @@ import {
   leaderboardFrom,
   publicRoutesOf,
   routePosts,
-  unpostLap,
+  routeStats,
   userPosts,
 } from '../lib/data';
-import { formatDate, formatLap, nameOf, ROLE_LABEL } from '../lib/format';
-import { postBigColours } from '../lib/laps';
+import { formatDate, formatDistance, formatLap, nameOf, ROLE_LABEL } from '../lib/format';
+import { historyColours } from '../lib/laps';
 import { useMe } from '../lib/session';
-import type { Post, Profile, Role, Route } from '../lib/types';
+import type { Post, Profile, Role, Route, Run } from '../lib/types';
+
+type Tab = 'posts' | 'routes' | 'laps';
 
 export default function UserPage() {
   const { username = '' } = useParams();
@@ -39,6 +44,11 @@ export default function UserPage() {
   const [wins, setWins] = useState(0);
   const isMe = user?.id === me.id;
   const [activity, setActivity] = useState<Record<string, number> | null>(null);
+  /** Routes you've driven: a post on one of them gets Compare, as in the Feed. */
+  const [driven, setDriven] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<Tab>('posts');
+  /** Your own laps by route, loaded when the Laps tab first opens. */
+  const [laps, setLaps] = useState<{ route: Route; runs: Run[] }[] | null>(null);
   /** Everything loaded: the skeleton stays until then, so the page never fills in piece by piece. */
   const [ready, setReady] = useState(false);
 
@@ -46,6 +56,8 @@ export default function UserPage() {
     let alive = true;
     setUser(undefined);
     setReady(false);
+    setTab('posts');
+    setLaps(null);
     (async () => {
       try {
         const p = await getProfileByUsername(username);
@@ -61,11 +73,12 @@ export default function UserPage() {
         const [ps, c, pr, r] = await Promise.all([userPosts(p.id), followCounts(p.id), publicRoutesOf(p.id), getRole(p.id)]);
         // Everything else needs only the posts, so it loads side by side.
         const routeIds = [...new Set(ps.map((x) => x.routeId))];
-        const [home, routeMap, boards, activityDays] = await Promise.all([
+        const [home, routeMap, boards, activityDays, myStats] = await Promise.all([
           homeRoute,
           getRoutes(routeIds),
           Promise.all(routeIds.map((rid) => routePosts(rid))),
           days,
+          routeStats(me.id).catch(() => ({})),
         ]);
         if (!alive) return;
         setPosts(ps);
@@ -87,6 +100,7 @@ export default function UserPage() {
         setRanks(rankMap);
         setWins(firsts);
         setActivity(activityDays);
+        setDriven(new Set(Object.keys(myStats)));
       } catch (e) {
         toast(errorMessage(e), 'error');
       } finally {
@@ -99,26 +113,39 @@ export default function UserPage() {
     };
   }, [username, toast]);
 
-  // Group by route, PB first in each group.
-  const groups = useMemo(() => {
-    const m = new Map<string, Post[]>();
-    posts.forEach((p) => m.set(p.routeId, [...(m.get(p.routeId) ?? []), p]));
-    return [...m.entries()].map(([routeId, list]) => {
-      const sorted = [...list].sort((a, b) => a.totalMs - b.totalMs);
-      return { routeId, routeName: sorted[0].routeName, pb: sorted[0], rest: sorted.slice(1).sort((a, b) => b.startedAt - a.startedAt) };
-    });
-  }, [posts]);
-
-  async function remove(post: Post) {
-    if (!confirm(`Remove your ${formatLap(post.totalMs)} lap from ${post.routeName}? It stays in your run history.`)) return;
-    try {
-      await unpostLap(me.id, post.id, post.routeId);
-      setPosts((ps) => ps.filter((p) => p.id !== post.id));
-      toast('Post removed');
-    } catch (e) {
+  // Laps are private: only your own profile has the tab, and it loads on first open.
+  useEffect(() => {
+    if (tab !== 'laps' || laps || !isMe) return;
+    (async () => {
+      const runs = await allMyRuns(me.id);
+      const byRoute = new Map<string, Run[]>();
+      for (const r of runs) byRoute.set(r.routeId, [...(byRoute.get(r.routeId) ?? []), r]);
+      const found = await getRoutes([...byRoute.keys()]);
+      // Most recently driven route first; its runs come newest first.
+      setLaps(
+        [...byRoute]
+          .flatMap(([id, rs]) => {
+            const route = found.get(id);
+            return route ? [{ route, runs: rs }] : [];
+          })
+          .sort((a, b) => b.runs[0].startedAt - a.runs[0].startedAt),
+      );
+    })().catch((e) => {
       toast(errorMessage(e), 'error');
-    }
-  }
+      setLaps([]);
+    });
+  }, [tab, laps, isMe, me.id, toast]);
+
+  // Best posted lap per route, best positions first.
+  const best = useMemo(() => {
+    const m = new Map<string, Post>();
+    for (const p of posts) if (!m.has(p.routeId) || p.totalMs < m.get(p.routeId)!.totalMs) m.set(p.routeId, p);
+    return [...m.values()]
+      .map((pb) => ({ pb, rank: ranks.get(pb.id), count: posts.filter((p) => p.routeId === pb.routeId).length }))
+      .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
+  }, [posts, ranks]);
+
+  const newest = useMemo(() => [...posts].sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)), [posts]);
 
   if (user === undefined || (user && !ready)) return <Loading />;
   if (user === null)
@@ -129,10 +156,18 @@ export default function UserPage() {
       </main>
     );
 
+  const name = nameOf(user);
+  const tabs: { id: Tab; label: string; icon: typeof Lock }[] = [
+    { id: 'posts', label: 'Posts', icon: LayoutGrid },
+    { id: 'routes', label: 'Routes', icon: RouteIcon },
+    ...(isMe ? [{ id: 'laps' as const, label: 'Laps', icon: Lock }] : []),
+  ];
+
   return (
     <main className="screen">
       <ScreenHead
         back={!isMe}
+        title={<h1 className="profile-handle">{user.username}</h1>}
         right={
           isMe && (
             <Link to="/settings" className="icon-btn" aria-label="Settings">
@@ -141,101 +176,156 @@ export default function UserPage() {
           )
         }
       />
-      <section className="profile-head">
-        <Avatar name={user.username} hue={user.avatarHue} size={72} uid={user.id} />
-        <div className="grow">
-          <h1 className="profile-name">{nameOf(user)}</h1>
-          <p className="mute profile-handle">@{user.username}</p>
-          <p className="mute profile-sub">
-            {role !== 'driver' && <span className="badge blue">{ROLE_LABEL[role]}</span>}
-            {home?.isPublic ? (
-              <>
-                Home course <Link to={`/r/${home.id}`}>{home.name}</Link>
-              </>
-            ) : isMe ? (
-              <>
-                No home course yet. Pick one on a route's page in <Link to="/explore">Explore</Link>.
-              </>
-            ) : null}
-            <span>Since {formatDate(user.createdAt?.toDate())}</span>
-          </p>
+
+      <section className="profile-top">
+        <Avatar name={user.username} hue={user.avatarHue} size={86} uid={user.id} />
+        <div className="profile-counts">
+          <span>
+            <strong className="num">{posts.length}</strong> {posts.length === 1 ? 'post' : 'posts'}
+          </span>
+          <Link to={`/u/${user.username}/followers`}>
+            <strong className="num">{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
+          </Link>
+          <Link to={`/u/${user.username}/following`}>
+            <strong className="num">{counts?.following ?? '–'}</strong> following
+          </Link>
         </div>
       </section>
 
-      <p className="statline">
-        <Link to={`/u/${user.username}/followers`}>
-          <strong className="num">{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
-        </Link>
-        <Link to={`/u/${user.username}/following`}>
-          <strong className="num">{counts?.following ?? '–'}</strong> following
-        </Link>
-        <span>
-          <strong className="num">{posts.length}</strong> posted {posts.length === 1 ? 'lap' : 'laps'}
-        </span>
-        {wins > 0 && (
-          <span>
-            <strong className="num fastest">{wins}</strong> {wins === 1 ? 'P1' : 'P1s'}
-          </span>
+      <section className="profile-bio">
+        <p className="row" style={{ gap: 8 }}>
+          <strong className="profile-name">{name}</strong>
+          {role !== 'driver' && <span className="badge blue">{ROLE_LABEL[role]}</span>}
+        </p>
+        {home?.isPublic ? (
+          <p className="profile-home">
+            <Flag size={14} aria-hidden="true" /> Home course <Link to={`/r/${home.id}`}>{home.name}</Link>
+          </p>
+        ) : (
+          isMe && (
+            <p className="mute">
+              No home course yet. Pick one on a route's page in <Link to="/explore">Explore</Link>.
+            </p>
+          )
         )}
-      </p>
+        <p className="mute">
+          {wins > 0 && (
+            <>
+              <strong className="num fastest">{wins}× P1</strong> ·{' '}
+            </>
+          )}
+          Driving since {formatDate(user.createdAt?.toDate())}
+        </p>
+      </section>
+
       {!isMe && <FollowButtonBlock userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />}
       {isMe && isAdmin && (
-        <Link to="/admin" className="btn block">
+        <Link to="/admin" className="btn block" style={{ marginTop: 12 }}>
           <Shield size={18} aria-hidden="true" /> Admin
         </Link>
       )}
 
-      {activity && <ActivityHeatmap days={activity} />}
+      {activity && <ActivityHeatmap days={activity} weeks={26} />}
 
-      <h2 className="section-title">Best laps</h2>
-      {groups.length === 0 ? (
-        <p className="mute">{isMe ? 'Laps you post on public routes appear here.' : `${nameOf(user)} hasn't posted a lap yet.`}</p>
-      ) : (
-        <div className="list">
-          {groups.map((g) => {
-            const rank = ranks.get(g.pb.id);
-            return (
-              <section key={g.routeId} className="trophy">
-                <Link to={`/lap/${g.pb.id}`} className="trophy-main">
-                  <span className="grow">
-                    <strong className="ellipsis">{g.routeName}</strong>
-                    <span className="mute ellipsis small-text">{[g.pb.car, formatDate(g.pb.startedAt)].filter(Boolean).join(' · ')}</span>
-                  </span>
-                  <span className="trophy-time">
-                    <strong className={`num ${rank === 1 ? 'fastest' : ''}`}>{formatLap(g.pb.totalMs)}</strong>
-                    {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>P{rank}</span>}
-                  </span>
-                </Link>
-                {(isMe || g.rest.length > 0) && (
-                  <details className="trophy-more">
-                    <summary>{g.rest.length ? `${g.rest.length} more posted ${g.rest.length === 1 ? 'lap' : 'laps'}` : 'Manage post'}</summary>
-                    {[g.pb, ...g.rest].map((p) => (
-                      <PostRow key={p.id} post={p} pb={p.id === g.pb.id} route={routes.get(p.routeId)} isMe={isMe} onRemove={remove} />
-                    ))}
-                  </details>
-                )}
-              </section>
-            );
-          })}
-        </div>
-      )}
+      <div className="profile-tabs" role="tablist" aria-label="Profile">
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button key={id} role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`panel-${id}`} onClick={() => setTab(id)}>
+            <Icon size={16} aria-hidden="true" /> {label}
+          </button>
+        ))}
+      </div>
 
-      {publicRoutes.length > 0 && (
-        <>
-          <h2 className="section-title">{publicRoutes.length === 1 ? 'Route they built' : 'Routes they built'}</h2>
-          <div className="list">
-            {publicRoutes.map((r) => (
-              <Link key={r.id} to={`/r/${r.id}`} className="list-item">
-                <span className="logbook-shape" aria-hidden="true">
-                  <RouteShape route={r} height={44} ticks={false} />
-                </span>
-                <strong className="grow ellipsis">{r.name}</strong>
-                <span className="mute small-text">Leaderboard</span>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {tab === 'posts' &&
+          (newest.length === 0 ? (
+            <p className="mute profile-empty">{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn't posted a lap yet.`}</p>
+          ) : (
+            <div className="stack-lg">
+              {newest.map((p) => (
+                <LapCard key={p.id} post={p} route={routes.get(p.routeId)} canCompare={driven.has(p.routeId)} showAuthor={false} />
+              ))}
+            </div>
+          ))}
+
+        {tab === 'routes' && (
+          <>
+            {best.length > 0 && (
+              <>
+                <h2 className="section-title">Best on</h2>
+                <div className="list">
+                  {best.map(({ pb, rank, count }) => {
+                    const route = routes.get(pb.routeId);
+                    return (
+                      <Link key={pb.routeId} to={`/r/${pb.routeId}`} className="list-item">
+                        <span className="logbook-shape" aria-hidden="true">
+                          {route && <RouteShape route={route} height={44} ticks={false} />}
+                        </span>
+                        <span className="grow" style={{ minWidth: 0 }}>
+                          <strong className="ellipsis">{pb.routeName}</strong>
+                          <span className="mute ellipsis small-text">
+                            {[route && formatDistance(route.lengthM), `${count} ${count === 1 ? 'lap' : 'laps'} posted`].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+                        <span className="trophy-time">
+                          <strong className={`num ${rank === 1 ? 'fastest' : ''}`}>{formatLap(pb.totalMs)}</strong>
+                          {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>P{rank}</span>}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+            {publicRoutes.length > 0 && (
+              <>
+                <h2 className="section-title">Built by {name}</h2>
+                <div className="list">
+                  {publicRoutes.map((r) => (
+                    <Link key={r.id} to={`/r/${r.id}`} className="list-item">
+                      <span className="logbook-shape" aria-hidden="true">
+                        <RouteShape route={r} height={44} ticks={false} />
+                      </span>
+                      <span className="grow" style={{ minWidth: 0 }}>
+                        <strong className="ellipsis">{r.name}</strong>
+                        <span className="mute ellipsis small-text">
+                          {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : 'A to B'}
+                        </span>
+                      </span>
+                      <span className="section-link row" style={{ gap: 2 }}>
+                        Leaderboard <ChevronRight size={16} aria-hidden="true" />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+            {best.length === 0 && publicRoutes.length === 0 && (
+              <p className="mute profile-empty">{isMe ? 'Routes you post a lap on, or build, appear here.' : `${name} hasn't posted on or built a route yet.`}</p>
+            )}
+          </>
+        )}
+
+        {tab === 'laps' && isMe && (
+          <>
+            <p className="mute profile-private">
+              <Lock size={14} aria-hidden="true" /> Only you see this tab
+            </p>
+            {laps === null ? (
+              <SkeletonRows count={4} />
+            ) : laps.length === 0 ? (
+              <Empty title="No laps yet" action={<Link to="/drive" className="btn primary lg">Start a drive</Link>}>
+                Every lap you drive is saved here, grouped by route.
+              </Empty>
+            ) : (
+              <div className="stack">
+                {laps.map(({ route, runs }) => (
+                  <RouteLaps key={route.id} route={route} runs={runs} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </main>
   );
 }
@@ -248,32 +338,51 @@ function FollowButtonBlock(props: { userId: string; onChange: (f: boolean) => vo
   );
 }
 
-function PostRow({ post, pb, route, isMe, onRemove }: { post: Post; pb?: boolean; route?: Route; isMe: boolean; onRemove: (p: Post) => void }) {
+/** One route's newest laps, its PB and the way to all of them. */
+function RouteLaps({ route, runs }: { route: Route; runs: Run[] }) {
+  const colours = useMemo(() => historyColours(runs, route), [runs, route]);
+  const pb = runs.filter((r) => r.valid).reduce<number | null>((m, r) => (m == null || r.totalMs < m ? r.totalMs : m), null);
+  // Only a public route takes posts.
+  const postable = route.isPublic && !route.hidden;
   return (
-    <div className="post-row">
-      <Link to={`/lap/${post.id}`} className="post-row-main">
-        <div className="row between">
-          <span className={`num post-row-time ${pb ? 'pb' : ''}`}>{formatLap(post.totalMs)}</span>
-          <span className="row" style={{ gap: 6 }}>
-            {pb && <span className="badge ink">PB</span>}
-            {post.penaltyMs > 0 && <span className="badge red">+5 s</span>}
-            <span className="mute" style={{ fontSize: 14 }}>
-              {formatDate(post.startedAt)}
-            </span>
-          </span>
-        </div>
-        <SectorStrip colours={postBigColours(post, route)} height={5} />
-        {(post.caption || post.car) && (
-          <p className="mute" style={{ fontSize: 14, marginTop: 6 }}>
-            {[post.caption, post.car].filter(Boolean).join(' · ')}
-          </p>
-        )}
+    <section className="list" aria-label={route.name}>
+      <Link to={`/r/${route.id}/history`} className="list-item">
+        <strong className="grow ellipsis">{route.name}</strong>
+        <span className="mute small-text">
+          {pb != null && (
+            <>
+              PB <strong className="num">{formatLap(pb)}</strong> ·{' '}
+            </>
+          )}
+          {runs.length} {runs.length === 1 ? 'lap' : 'laps'}
+        </span>
+        <ChevronRight size={16} aria-hidden="true" />
       </Link>
-      {isMe && (
-        <button className="btn ghost sm" onClick={() => onRemove(post)} aria-label={`Remove post ${formatLap(post.totalMs)}`}>
-          Remove
-        </button>
-      )}
-    </div>
+      {runs.slice(0, 3).map((run) => (
+        <div key={run.id} className="list-item">
+          <Link to={`/run/${run.id}`} className="grow lap-row-main">
+            <span className="row" style={{ gap: 8, alignItems: 'baseline' }}>
+              <strong className="num lap-row-time">{formatLap(run.totalMs)}</strong>
+              <span className="mute small-text">{formatDate(run.startedAt)}</span>
+            </span>
+            <span style={{ maxWidth: 150 }}>
+              <SectorStrip colours={colours(run)} height={4} />
+            </span>
+          </Link>
+          {run.posted ? (
+            <span className="mute small-text row" style={{ gap: 4 }}>
+              <Check size={14} aria-hidden="true" /> Posted
+            </span>
+          ) : (
+            postable &&
+            run.valid && (
+              <Link to={`/run/${run.id}`} className="btn sm">
+                Post
+              </Link>
+            )
+          )}
+        </div>
+      ))}
+    </section>
   );
 }
