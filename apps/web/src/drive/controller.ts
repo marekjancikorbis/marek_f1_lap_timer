@@ -296,6 +296,9 @@ export class DriveController {
    * screen off or the app in the background, so timing carries on. Fixes drive the engine, not frames.
    */
   private async startNativeGps() {
+    // Android 13+ hides the service's notification without this; timing runs either way.
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    await LocalNotifications.requestPermissions().catch(() => undefined);
     const id = await BackgroundGeolocation.addWatcher(
       {
         backgroundTitle: 'Timing your drive',
