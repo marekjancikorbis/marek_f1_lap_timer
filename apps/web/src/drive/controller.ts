@@ -1,5 +1,6 @@
 import { KeepAwake } from '@capacitor-community/keep-awake';
-import { Capacitor } from '@capacitor/core';
+import type { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import {
   bigSectorEnds,
   bigSplits,
@@ -97,6 +98,9 @@ function spoken(ms: number): string {
   return `${sign} ${whole === 0 ? 'zero' : whole} point ${tenths === 10 ? 9 : tenths}`;
 }
 
+// The plugin ships only its types; its native side is found by this name.
+const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');
+
 export class DriveController {
   readonly timer: LapTimer;
   readonly prepared: PreparedRoute;
@@ -108,6 +112,9 @@ export class DriveController {
   private wakeLock: WakeLockSentinel | null = null;
   private replayTimer: number | null = null;
   private rafId: number | null = null;
+  /** Background GPS watcher in the Android app. */
+  private nativeWatchId: string | null = null;
+  private disposed = false;
   private motionHandler = (e: DeviceMotionEvent) => this.onMotion(e);
   private visibilityHandler = () => this.onVisibility();
   /** Raw session record for real drives (null in replay), kept for desk replays and test fixtures. */
@@ -217,6 +224,11 @@ export class DriveController {
 
   dispose() {
     if (this.watchId != null) navigator.geolocation.clearWatch(this.watchId);
+    this.disposed = true;
+    if (this.nativeWatchId != null) {
+      const id = this.nativeWatchId;
+      void BackgroundGeolocation.removeWatcher({ id });
+    }
     if (this.replayTimer != null) window.clearTimeout(this.replayTimer);
     if (this.rafId != null) cancelAnimationFrame(this.rafId);
     window.removeEventListener('devicemotion', this.motionHandler);
@@ -251,6 +263,7 @@ export class DriveController {
   // -------------------------------------------------------------- inputs
 
   private startGps() {
+    if (Capacitor.isNativePlatform()) return void this.startNativeGps();
     if (!navigator.geolocation) {
       this.emit({ gpsError: 'This device has no GPS access.' });
       return;
@@ -276,6 +289,43 @@ export class DriveController {
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
     );
+  }
+
+  /**
+   * The Android app: a foreground service (with its notification) keeps GPS fixes coming with the
+   * screen off or the app in the background, so timing carries on. Fixes drive the engine, not frames.
+   */
+  private async startNativeGps() {
+    const id = await BackgroundGeolocation.addWatcher(
+      {
+        backgroundTitle: 'Timing your drive',
+        backgroundMessage: 'Purple Sector keeps timing with the screen off.',
+        requestPermissions: true,
+        stale: false,
+        distanceFilter: 0,
+      },
+      (l, err) => {
+        if (err) {
+          this.emit({
+            gpsOk: false,
+            gpsError: err.code === 'NOT_AUTHORIZED' ? 'Location permission was denied. Allow it in the app settings.' : 'Waiting for GPS…',
+          });
+          return;
+        }
+        if (!l) return;
+        this.onFix({
+          lat: l.latitude,
+          lon: l.longitude,
+          t: l.time ?? Date.now(),
+          accuracy: l.accuracy,
+          speed: l.speed,
+          heading: l.bearing,
+        });
+      },
+    );
+    // Left the drive while the watcher was starting.
+    if (this.disposed) void BackgroundGeolocation.removeWatcher({ id });
+    else this.nativeWatchId = id;
   }
 
   /**

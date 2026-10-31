@@ -4,4 +4,8 @@
     <string name="title_activity_main">Purple Sector</string>
     <string name="package_name">com.marekjancik.purplesector</string>
     <string name="custom_url_scheme">com.marekjancik.purplesector</string>
+    <!-- The notification shown while a drive keeps timing with the screen off. -->
+    <string name="capacitor_background_geolocation_notification_channel_name">Drive timing</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_drive</string>
+    <string name="capacitor_background_geolocation_notification_color">#8B3FE0</string>
 </resources>

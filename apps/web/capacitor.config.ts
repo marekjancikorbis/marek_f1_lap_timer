@@ -7,6 +7,8 @@ const config: CapacitorConfig = {
   appName: 'Purple Sector',
   webDir: 'dist',
   backgroundColor: '#0C0E12',
+  // Background GPS: without it Android halts location updates after 5 minutes with the screen off.
+  android: { useLegacyBridge: true },
   plugins: {
     // Google sign-in happens natively; the web Firebase SDK then signs in with its token (Auth.tsx).
     FirebaseAuthentication: { skipNativeAuth: true, providers: ['google.com'] },
