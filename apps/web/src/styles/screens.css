@@ -2353,6 +2353,9 @@
 .install-cta {
   margin-top: var(--s-6);
 }
+.install-cta + .install-cta {
+  margin-top: var(--s-2);
+}
 
 .install-steps {
   display: flex;

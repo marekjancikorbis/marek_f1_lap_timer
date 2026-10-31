@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
@@ -9,7 +10,8 @@ import './styles/screens.css';
 // Deploys install in the background, but an open app keeps running the old code
 // until it reloads. Reload as soon as the new version takes over, except
 // mid-drive (that would end the run): then wait until the drive screen is left.
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
+  window.addEventListener('load', () => void navigator.serviceWorker.register('/sw.js', { scope: '/' }));
   let hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadController) {

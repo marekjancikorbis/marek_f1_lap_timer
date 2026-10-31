@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { useState } from 'react';
 import { useInstall } from '../lib/install';
 import { Sheet, useToast } from './ui';
@@ -63,6 +64,23 @@ export function InstallButton({ className = 'btn block' }: { className?: string 
         </div>
       </Sheet>
     </>
+  );
+}
+
+/** The newest Android app, built by CI (.github/workflows/android.yml) into a GitHub release. */
+const APK_URL = 'https://github.com/marekjancikorbis/marek_f1_lap_timer/releases/latest/download/purple-sector.apk';
+
+/** Download the Android app: shown on Android phones, but not inside the app itself. */
+export function AndroidAppButton({ className = 'btn block' }: { className?: string }) {
+  if (Capacitor.isNativePlatform() || !/Android/.test(navigator.userAgent)) return null;
+  return (
+    <a className={className} href={APK_URL}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 3v12M7 10l5 5 5-5" />
+        <path d="M5 21h14" />
+      </svg>
+      Get the Android app
+    </a>
   );
 }
 

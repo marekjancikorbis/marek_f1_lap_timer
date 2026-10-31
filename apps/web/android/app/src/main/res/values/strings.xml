@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Purple Sector</string>
+    <string name="title_activity_main">Purple Sector</string>
+    <string name="package_name">com.marekjancik.purplesector</string>
+    <string name="custom_url_scheme">com.marekjancik.purplesector</string>
+</resources>

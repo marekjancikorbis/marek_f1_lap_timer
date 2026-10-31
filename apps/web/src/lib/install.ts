@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { useEffect, useState } from 'react';
 
 // Adding the app to the home screen. Chrome and Edge (Android, desktop) offer their own install
@@ -26,6 +27,7 @@ window.addEventListener('appinstalled', () => {
 });
 
 export function isStandalone(): boolean {
+  if (Capacitor.isNativePlatform()) return true; // the Android app
   return matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
 }
 

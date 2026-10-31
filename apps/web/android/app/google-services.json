@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "261253288488",
+    "project_id": "marek-f1-lap-timer",
+    "storage_bucket": "marek-f1-lap-timer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:261253288488:android:e3dedd3e4c24560b299b1d",
+        "android_client_info": {
+          "package_name": "com.marekjancik.purplesector"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "261253288488-stsd8ucj5lbbnvqmn88618kqvb9r6ql0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.marekjancik.purplesector",
+            "certificate_hash": "53b2ca466bf76334e470f12add013cf5b0379585"
+          }
+        },
+        {
+          "client_id": "261253288488-q0gl73evdfiocoskvu2vilmn8baom10p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDx_O2BAcz3ixToeCkUt6ETd6Z30dxX57s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "261253288488-q0gl73evdfiocoskvu2vilmn8baom10p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,3 +1,5 @@
+import { KeepAwake } from '@capacitor-community/keep-awake';
+import { Capacitor } from '@capacitor/core';
 import {
   bigSectorEnds,
   bigSplits,
@@ -220,6 +222,7 @@ export class DriveController {
     window.removeEventListener('devicemotion', this.motionHandler);
     document.removeEventListener('visibilitychange', this.visibilityHandler);
     void this.wakeLock?.release().catch(() => undefined);
+    if (Capacitor.isNativePlatform()) void KeepAwake.allowSleep().catch(() => undefined);
     this.sounds.close();
     window.speechSynthesis?.cancel();
     this.saveLog();
@@ -231,6 +234,8 @@ export class DriveController {
 
   private async requestWakeLock() {
     try {
+      // The Android app's WebView has no Wake Lock API; keep the screen on natively instead.
+      if (Capacitor.isNativePlatform()) return void (await KeepAwake.keepAwake());
       this.wakeLock = await navigator.wakeLock?.request('screen');
     } catch {
       /* not supported or denied: the HUD still works, the screen may dim */

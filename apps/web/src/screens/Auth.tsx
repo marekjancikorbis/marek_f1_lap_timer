@@ -1,8 +1,10 @@
+import { Capacitor } from '@capacitor/core';
 import {
   createUserWithEmailAndPassword,
   getRedirectResult,
   GoogleAuthProvider,
   sendPasswordResetEmail,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
@@ -11,7 +13,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { auth } from '../lib/firebase';
 import { errorMessage } from '../components/ui';
 import { Hero } from '../components/Hero';
-import { InstallButton } from '../components/InstallButton';
+import { AndroidAppButton, InstallButton } from '../components/InstallButton';
 import { isStandalone } from '../lib/install';
 
 export function AuthScreen() {
@@ -48,13 +50,23 @@ export function AuthScreen() {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     try {
+      // The Android app: Google blocks its sign-in page inside apps, so Android's own account picker
+      // signs in and the web SDK takes over with its token.
+      if (Capacitor.isNativePlatform()) {
+        const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+        const { credential } = await FirebaseAuthentication.signInWithGoogle();
+        if (credential?.idToken) await signInWithCredential(auth, GoogleAuthProvider.credential(credential.idToken));
+        return;
+      }
       // An installed app (home-screen PWA) can't open popups on iOS: go to Google and back instead.
       if (isStandalone()) await signInWithRedirect(auth, provider);
       else await signInWithPopup(auth, provider);
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === 'auth/popup-blocked') await signInWithRedirect(auth, provider).catch((e) => setError(errorMessage(e)));
-      else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') setError(errorMessage(err));
+      // The app's account picker reports closing it as an error whose message says "cancel".
+      else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request' && !/cancel/i.test((err as Error).message ?? ''))
+        setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -136,6 +148,7 @@ export function AuthScreen() {
         )}
       </form>
       <InstallButton className="btn ghost block" />
+      <AndroidAppButton className="btn ghost block" />
     </main>
   );
 }

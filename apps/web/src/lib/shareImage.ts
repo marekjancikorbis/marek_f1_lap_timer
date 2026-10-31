@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { shapeGeometry } from '../components/RouteShape';
 import { formatDelta, formatLap, formatSeconds } from './format';
 import type { Route, SectorColourName } from './types';
@@ -116,6 +117,22 @@ function fit(ctx: CanvasRenderingContext2D, text: string, max: number): string {
 export async function shareLap(lap: ShareLap): Promise<void> {
   const blob = await lapImage(lap);
   const file = new File([blob], `${lap.route.name.replace(/[^\w-]+/g, '_')}-${formatLap(lap.totalMs).replace(/[:.]/g, '-')}.png`, { type: 'image/png' });
+  // The Android app's WebView can neither share files nor download: hand the image to Android's share sheet.
+  if (Capacitor.isNativePlatform()) {
+    const [{ Filesystem, Directory }, { Share }] = await Promise.all([import('@capacitor/filesystem'), import('@capacitor/share')]);
+    const data = await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve((r.result as string).split(',')[1]);
+      r.readAsDataURL(blob);
+    });
+    const { uri } = await Filesystem.writeFile({ path: file.name, data, directory: Directory.Cache });
+    try {
+      await Share.share({ files: [uri], title: `${formatLap(lap.totalMs)} on ${lap.route.name}` });
+    } catch (e) {
+      if (!/cancel/i.test((e as Error).message)) throw e;
+    }
+    return;
+  }
   if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: `${formatLap(lap.totalMs)} on ${lap.route.name}` });
