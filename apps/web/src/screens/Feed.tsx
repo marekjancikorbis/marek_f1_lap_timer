@@ -1,12 +1,12 @@
-import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { Bell } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
 import { LapCardSkeleton } from '../components/Skeleton';
 import { LapCard } from '../components/LapCard';
-import { Avatar, Empty, errorMessage, Spinner, UserName, useToast } from '../components/ui';
-import { feedPage, follow, followingIds, forget, getRoute, getRoutes, routeStats, unreadNotices, type FeedPage } from '../lib/data';
+import { Empty, errorMessage, Spinner, useToast } from '../components/ui';
+import { feedPage, followingIds, forget, getRoute, getRoutes, routeStats, unreadNotices, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
@@ -155,7 +155,7 @@ export function Feed() {
           <LapCardSkeleton />
         </div>
       ) : follows && follows.length === 0 ? (
-        <FeedEmpty onFollowed={loadFirst} />
+        <FeedEmpty />
       ) : posts.length === 0 ? (
         <Empty title="No laps yet" action={<Link className="btn" to="/explore">Find more drivers</Link>}>
           The drivers you follow haven't posted a lap yet. New posts show up here, newest first.
@@ -174,85 +174,12 @@ export function Feed() {
   );
 }
 
-/** Not following anyone: offer search and the drivers currently leading public routes. */
-function FeedEmpty({ onFollowed }: { onFollowed: () => void }) {
-  const { profile } = useMe();
-  const toast = useToast();
-  const [suggested, setSuggested] = useState<{ id: string; username: string; hue?: number; note: string }[] | null>(null);
-  const [followed, setFollowed] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    // Leaders: the fastest recent posted lap per route, then their authors.
-    getDocs(query(collection(db, 'posts'), where('hidden', '==', false), orderBy('createdAt', 'desc'), limit(100)))
-      .then((snap) => {
-        const byRoute = new Map<string, Post>();
-        snap.docs.forEach((d) => {
-          const p = { id: d.id, ...d.data() } as Post;
-          const cur = byRoute.get(p.routeId);
-          if (!cur || p.totalMs < cur.totalMs) byRoute.set(p.routeId, p);
-        });
-        const seen = new Set<string>([profile.id]);
-        const out: { id: string; username: string; hue?: number; note: string }[] = [];
-        for (const p of byRoute.values()) {
-          if (seen.has(p.userId)) continue;
-          seen.add(p.userId);
-          out.push({ id: p.userId, username: p.username, hue: p.avatarHue, note: `Leads ${p.routeName}` });
-        }
-        setSuggested(out.slice(0, 8));
-      })
-      .catch(() => setSuggested([]));
-  }, [profile.id]);
-
-  async function doFollow(id: string) {
-    try {
-      await follow(profile, id);
-      setFollowed((s) => new Set(s).add(id));
-    } catch (e) {
-      toast(errorMessage(e), 'error');
-    }
-  }
-
+/** Not following anyone: say what the feed is and send them to search. */
+function FeedEmpty() {
   return (
-    <div>
-      <Empty title="Follow some drivers" action={<Link className="btn primary lg" to="/explore">Find drivers</Link>}>
-        Your feed shows laps posted by people you follow, newest at the top.
-      </Empty>
-      {suggested && suggested.length > 0 && (
-        <>
-          <h2 className="section-title">Leading public routes</h2>
-          <div className="list">
-            {suggested.map((s) => (
-              <div key={s.id} className="list-item">
-                <Link to={`/u/${s.username}`} className="row grow" style={{ textDecoration: 'none', gap: 12 }}>
-                  <Avatar name={s.username} hue={s.hue} uid={s.id} />
-                  <span className="grow">
-                    <strong>
-                      <UserName uid={s.id} fallback={s.username} />
-                    </strong>
-                    <br />
-                    <span className="mute" style={{ fontSize: 14 }}>
-                      {s.note}
-                    </span>
-                  </span>
-                </Link>
-                {followed.has(s.id) ? (
-                  <span className="badge outline">Following</span>
-                ) : (
-                  <button className="btn sm primary" onClick={() => doFollow(s.id)}>
-                    Follow
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          {followed.size > 0 && (
-            <button className="btn block" style={{ marginTop: 16 }} onClick={onFollowed}>
-              Show my feed
-            </button>
-          )}
-        </>
-      )}
-    </div>
+    <Empty title="Follow some drivers" action={<Link className="btn primary lg" to="/explore">Find drivers</Link>}>
+      Their posted laps show up here, ready to race against.
+    </Empty>
   );
 }
 

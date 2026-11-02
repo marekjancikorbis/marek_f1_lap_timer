@@ -8,11 +8,15 @@ export function LimitScreen({ usage }: { usage: UsageState }) {
   const when = usage.resetsAt.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   const time = usage.resetsAt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   return (
-    <main className="limit">
-      <div className="limit-flag" aria-hidden="true" />
+    <main className="limit navy">
+      <span className="livery" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
       <h1>Monthly limit reached</h1>
       <p>
-        Purple Sector has used this month's free map {usage.exhausted === 'directions' ? 'routing' : 'loads'}. To keep the app
+        Your laps and routes are safe. Purple Sector has used this month's free map {usage.exhausted === 'directions' ? 'routing' : 'loads'}. To keep the app
         free, it pauses until the limit resets.
       </p>
       <p className="limit-date">

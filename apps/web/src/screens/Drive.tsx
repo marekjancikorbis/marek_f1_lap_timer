@@ -135,7 +135,7 @@ export default function Drive() {
 
       {s.partial && (
         <section className="drive-center">
-          <h1 className="drive-big-label">Keep this lap?</h1>
+          <h1 className="drive-big-label">{cfg.route.isLoop ? 'Keep this lap?' : 'Keep this run?'}</h1>
           <p className="drive-sub">
             The GPS signal dropped out and the lap stopped before the finish. Save the{' '}
             <span className="num">{formatDistance(s.partial.distanceM)}</span> you drove to view it and compare it with other laps. A partial lap can't

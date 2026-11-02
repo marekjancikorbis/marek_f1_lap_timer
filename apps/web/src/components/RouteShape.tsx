@@ -7,7 +7,7 @@ const COLOUR: Record<SectorColourName | 'none', string> = {
   purple: 'var(--purple)',
   green: 'var(--green)',
   yellow: 'var(--yellow)',
-  none: 'var(--ink-2)',
+  none: 'var(--card)',
 };
 
 interface Props {
@@ -133,7 +133,7 @@ export function RouteShape({ route, colours, height = 150, ticks = true, classNa
     >
       {/* Casing first so sector joins stay clean. */}
       {geom.paths.map((d, i) => (
-        <path key={`c${i}`} d={d} fill="none" stroke="#0c0d0e" strokeWidth={26} strokeLinecap="round" strokeLinejoin="round" />
+        <path key={`c${i}`} d={d} fill="none" stroke="#0e1b3d" strokeWidth={26} strokeLinecap="round" strokeLinejoin="round" />
       ))}
       {geom.paths.map((d, i) => (
         <path
@@ -147,11 +147,11 @@ export function RouteShape({ route, colours, height = 150, ticks = true, classNa
         />
       ))}
       {ticks &&
-        geom.tickPts.map(([x, y], i) => <circle key={`t${i}`} cx={x} cy={y} r={7} fill="#0c0d0e" stroke="var(--ink)" strokeWidth={4} />)}
-      {!route.isLoop && <circle cx={geom.finish[0]} cy={geom.finish[1]} r={16} fill="var(--ink)" stroke="#0c0d0e" strokeWidth={6} />}
+        geom.tickPts.map(([x, y], i) => <circle key={`t${i}`} cx={x} cy={y} r={7} fill="#0e1b3d" stroke="var(--card)" strokeWidth={4} />)}
+      {!route.isLoop && <circle cx={geom.finish[0]} cy={geom.finish[1]} r={16} fill="var(--card)" stroke="#0e1b3d" strokeWidth={6} />}
       <g transform={`translate(${geom.start[0]} ${geom.start[1]})`}>
-        <rect x={-20} y={-20} width={40} height={40} rx={8} fill="var(--ink)" stroke="#0c0d0e" strokeWidth={6} />
-        <path d="M-8 -9v18M-8 -9h14l-4 5 4 5h-14" fill="none" stroke="#0c0d0e" strokeWidth={4} strokeLinejoin="round" />
+        <rect x={-20} y={-20} width={40} height={40} rx={8} fill="var(--card)" stroke="#0e1b3d" strokeWidth={6} />
+        <path d="M-8 -9v18M-8 -9h14l-4 5 4 5h-14" fill="none" stroke="#0e1b3d" strokeWidth={4} strokeLinejoin="round" />
       </g>
     </svg>
   );

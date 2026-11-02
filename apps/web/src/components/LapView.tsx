@@ -1,8 +1,8 @@
 import { compareLaps, fitsBoundaries, sectorColour, sectorTimes, type LapProfile } from '@laptimer/timing';
-import { ChevronDown, Pause, Play } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Pause, Play } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { leaderboardFrom } from '../lib/data';
 import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 import { bigEnds, bigRecords, bigRoute, distanceAt, recordsExcluding, timeAt } from '../lib/laps';
@@ -116,7 +116,12 @@ export function LapView({
         </span>
       </Link>
 
-      <section className="lap-hero">
+      <section className="lap-hero navy">
+        <span className="livery thin" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
         {route && <RouteShape route={bigRoute(route)} colours={table?.map((t) => t.row.colour) ?? []} height={150} label={`${lap.routeName}, sectors coloured by this lap`} />}
         <Link to={`/r/${lap.routeId}`} className="lap-hero-route">
           {lap.routeName}
@@ -284,6 +289,8 @@ export function LapTabs({
   onOpen?: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('sectors');
+  const strip = useRef<HTMLDivElement>(null);
+  const nav = useNavigate();
   // Every map mount counts against the monthly Mapbox cap: keep one alive once shown.
   const [mapSeen, setMapSeen] = useState(false);
   /** Ms into the lap the cars are shown at; null until something moves them. */
@@ -380,7 +387,20 @@ export function LapTabs({
 
   return (
     <>
-      <div className="lap-tabs">
+      {/* On Graphs and Map the tabs become the screen's header: back, driver and time, then the tabs. */}
+      <div ref={strip} className={tab === 'sectors' ? 'lap-tabs' : 'lap-strip'}>
+        {tab !== 'sectors' && (
+          <header className="screen-head">
+            <div className="row grow">
+              <button className="icon-btn back" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))}>
+                <ChevronLeft size={26} />
+              </button>
+              <h1 className="ellipsis">
+                {lap.username} · <span className="num">{formatLap(lap.totalMs)}</span>
+              </h1>
+            </div>
+          </header>
+        )}
         <Segmented
           label="Show"
           value={tab}
@@ -390,6 +410,8 @@ export function LapTabs({
               setMapSeen(true);
               onOpen?.();
             }
+            // Bring the new header to the top of the screen.
+            if (v !== 'sectors') requestAnimationFrame(() => strip.current?.scrollIntoView({ block: 'start' }));
           }}
           options={[
             { value: 'sectors', label: 'Sectors' },

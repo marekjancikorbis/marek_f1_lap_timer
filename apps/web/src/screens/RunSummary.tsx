@@ -64,7 +64,12 @@ export default function RunSummary() {
     [ref, prev, prevFull],
   );
 
-  const session = useMemo(() => (run ? runs.filter((r) => r.sessionId === run.sessionId).sort((a, b) => a.lap - b.lap) : []), [run, runs]);
+  // Sessions of laps exist only on lap routes: a stage is one run start to finish.
+  const session = useMemo(
+    () => (run && route?.isLoop ? runs.filter((r) => r.sessionId === run.sessionId).sort((a, b) => a.lap - b.lap) : []),
+    [run, runs, route],
+  );
+  const stage = route ? !route.isLoop : false;
 
   const traceLayer = useCallback(
     (map: mapboxgl.Map) => {
@@ -72,7 +77,7 @@ export default function RunSummary() {
       const coords: [number, number][] = [];
       for (let i = 0; i + 4 < run.trace.length; i += 5) coords.push([run.trace[i + 4], run.trace[i + 3]]);
       map.addSource('trace', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } } });
-      map.addLayer({ id: 'trace', type: 'line', source: 'trace', paint: { 'line-color': '#eef1f5', 'line-width': 1.5, 'line-dasharray': [1, 2] } });
+      map.addLayer({ id: 'trace', type: 'line', source: 'trace', paint: { 'line-color': '#0e1b3d', 'line-width': 1.5, 'line-dasharray': [1, 2] } });
     },
     [run],
   );
@@ -129,7 +134,7 @@ export default function RunSummary() {
 
   return (
     <main className="screen">
-      <ScreenHead back={`/r/${run.routeId}`} title="Lap" />
+      <ScreenHead back={`/r/${run.routeId}`} title={stage ? 'Stage' : 'Lap'} />
       <LapView
         lap={{ ...run, profile: run.profile ?? null, username: profile.username, userId: profile.id, avatarHue: profile.avatarHue }}
         colours={colours}
@@ -141,8 +146,8 @@ export default function RunSummary() {
         badges={
           <>
             {session.length > 1 && <span className="badge outline">Lap {run.lap + 1}</span>}
-            {run.replay && <span className="badge yellow">Simulated</span>}
-            {run.posted && <span className="badge blue">Posted</span>}
+            {run.replay && <span className="badge outline">Simulated</span>}
+            {run.posted && <span className="badge ink">Posted</span>}
             {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
           </>
         }
@@ -203,6 +208,8 @@ export default function RunSummary() {
         </div>
       </LapView>
 
+      {stage && run.valid && <StageCompare run={run} prev={prev} userId={profile.id} posts={route?.isPublic ? posts : []} />}
+
       {session.length > 1 && (
         <>
           <h2 className="section-title">This session</h2>
@@ -224,5 +231,53 @@ export default function RunSummary() {
 
       {route && <PostSheet open={posting} onClose={() => setPosting(false)} run={run} route={route} myRuns={runs} onPosted={() => setRun({ ...run, posted: true })} />}
     </main>
+  );
+}
+
+/** A stage has no session: one result, read against your earlier best, the route record and the leaderboard. */
+function StageCompare({ run, prev, userId, posts }: { run: Run; prev: Run | null; userId: string; posts: Post[] }) {
+  const others = posts.filter((p) => p.userId !== userId);
+  const record = others.reduce<Post | null>((best, p) => (!best || p.totalMs < best.totalMs ? p : best), null);
+  // Each other driver's best posted time, then where this time would sit among them.
+  const bestBy = new Map<string, number>();
+  for (const p of others) bestBy.set(p.userId, Math.min(bestBy.get(p.userId) ?? Infinity, p.totalMs));
+  const place = [...bestBy.values()].filter((t) => t < run.totalMs).length + 1;
+  if (!prev && !record) return null;
+  return (
+    <>
+      <h2 className="section-title">How it compares</h2>
+      <div className="list">
+        {prev && (
+          <div className="list-item">
+            <span className="grow">
+              <strong>Your best before</strong>
+              <span className="mute small-text">
+                {formatLap(prev.totalMs)} · {formatDate(prev.startedAt)}
+              </span>
+            </span>
+            <strong className={`num ${run.totalMs <= prev.totalMs ? 'faster' : 'slower'}`}>{formatDelta(run.totalMs - prev.totalMs, 3)}</strong>
+          </div>
+        )}
+        {record && (
+          <div className="list-item">
+            <span className="grow">
+              <strong>Route record</strong>
+              <span className="mute small-text">
+                {record.username} · {formatLap(record.totalMs)}
+              </span>
+            </span>
+            <strong className={`num ${run.totalMs <= record.totalMs ? 'fastest' : 'slower'}`}>{formatDelta(run.totalMs - record.totalMs, 3)}</strong>
+          </div>
+        )}
+        {record && !run.replay && (
+          <div className="list-item">
+            <strong className="grow">{run.posted ? 'Leaderboard' : 'Leaderboard if posted'}</strong>
+            <strong>
+              P{place} of {bestBy.size + 1}
+            </strong>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   appId: 'com.marekjancik.purplesector',
   appName: 'Purple Sector',
   webDir: 'dist',
-  backgroundColor: '#0C0E12',
+  backgroundColor: '#0E1B3D',
   // Background GPS: without it Android halts location updates after 5 minutes with the screen off.
   android: { useLegacyBridge: true },
   plugins: {

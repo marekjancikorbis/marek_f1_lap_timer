@@ -22,8 +22,8 @@ export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?
         height: size,
         fontSize: size * 0.38,
         background: photo ? `center / cover url(${photo})` : `oklch(42% 0.09 ${hue})`,
-        // The colour ring is for initials only: over a photo it shows as a coloured fringe.
-        boxShadow: photo ? undefined : `inset 0 0 0 1px oklch(60% 0.1 ${hue} / 0.5)`,
+        // A roundel: an off-white ring inside a hairline, around initials or a photo.
+        boxShadow: `inset 0 0 0 ${size >= 64 ? 4 : 2}px var(--card), 0 0 0 1px var(--hairline-2)`,
       }}
     >
       {!photo && initials}
@@ -77,13 +77,14 @@ export const STRIP_LABEL: Record<SectorColourName, string> = { purple: 'best eve
 
 export function SectorStrip({ colours, height = 8 }: { colours: (SectorColourName | null)[]; height?: number }) {
   return (
+    // The lap's livery: one slanted band per sector; a sector without a time is an empty outline.
     <div
+      className="lap-stripe"
       role="img"
       aria-label={colours.map((c, i) => `Sector ${i + 1} ${c ? STRIP_LABEL[c] : 'no data'}`).join(', ')}
-      style={{ display: 'flex', gap: 3 }}
     >
       {colours.map((c, i) => (
-        <span key={i} style={{ flex: 1, height, borderRadius: 2, background: c ? STRIP[c] : 'var(--hairline-2)' }} />
+        <span key={i} className={c ? undefined : 'empty'} style={{ height, background: c ? STRIP[c] : undefined }} />
       ))}
     </div>
   );
@@ -132,11 +133,10 @@ export function TabBar() {
         {tabs.map(({ to, label, icon: Icon, end }) =>
           to === '/drive' ? (
             // Driving is the main job: a raised button in the middle.
-            <NavLink key={to} to={to} end={end} className="tab-go">
-              <span className="tab-go-btn">
-                <Icon size={26} fill="currentColor" aria-hidden="true" />
+            <NavLink key={to} to={to} end={end} className="tab-go" aria-label={label}>
+              <span className="tab-go-btn" aria-hidden="true">
+                GO
               </span>
-              {label}
             </NavLink>
           ) : (
             <NavLink key={to} to={to} end={end}>

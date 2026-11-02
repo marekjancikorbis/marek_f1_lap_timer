@@ -8,7 +8,8 @@ import { formatDelta, formatDistance } from '../lib/format';
 
 /** Series colours, validated for CVD separation and contrast on the dark surface. */
 // a = the lap you're looking at (blue), b = what it's compared with (chalk).
-export const SERIES = { a: '#2F86FF', b: '#C3C9D2' };
+// This lap navy, the other lap a dashed muted line: they read apart without relying on colour.
+export const SERIES = { a: '#0E1B3D', b: '#7E89A6' };
 
 const W = 640;
 const H = 220;
@@ -403,7 +404,7 @@ export function SpeedGraph({
         <g clipPath={`url(#${id}-reveal)`}>
           <g mask={`url(#${id}-fade)`}>
             <path d={areaA} fill={`url(#${id}-fill)`} />
-            {bLabel && <path d={paths.b} fill="none" stroke={SERIES.b} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" opacity={0.85} />}
+            {bLabel && <path d={paths.b} fill="none" stroke={SERIES.b} strokeWidth={2} strokeDasharray="5 4" strokeLinejoin="round" strokeLinecap="round" />}
             <path d={paths.a} fill="none" stroke={SERIES.a} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
           </g>
         </g>

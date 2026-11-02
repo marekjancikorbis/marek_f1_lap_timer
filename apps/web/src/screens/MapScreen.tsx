@@ -17,7 +17,7 @@ import type { Profile, Route } from '../lib/types';
 /** What a route on the map is, which sets its colour. */
 type Kind = 'official' | 'creator' | 'private';
 
-const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#2f86ff', private: '#1fa64f' };
+const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#0e1b3d', private: '#1fa64f' };
 type Filter = 'all' | Kind | 'drivers';
 const FILTER_LABEL: Record<Filter, string> = { all: 'All routes', official: 'Official', creator: 'Creators', private: 'Mine', drivers: 'Drivers' };
 
@@ -177,7 +177,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
       type: 'line',
       source: 'lines',
       minzoom: 10,
-      paint: { 'line-color': '#0c0d0e', 'line-width': 8 },
+      paint: { 'line-color': '#f7f9fc', 'line-width': 8 },
       layout: { 'line-cap': 'round', 'line-join': 'round' },
     });
     map.addLayer({
@@ -195,8 +195,8 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
       filter: ['has', 'point_count'],
       paint: {
         // Clusters mix kinds, so they stay neutral; zoom in to see colours.
-        'circle-color': '#161a20',
-        'circle-stroke-color': '#c3c9d2',
+        'circle-color': '#f7f9fc',
+        'circle-stroke-color': '#0e1b3d',
         'circle-stroke-width': 3,
         'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
       },
@@ -207,7 +207,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
       source: 'starts',
       filter: ['has', 'point_count'],
       layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 14, 'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'] },
-      paint: { 'text-color': '#eef1f5' },
+      paint: { 'text-color': '#0e1b3d' },
     });
     // Pin size grows with the number of posted laps: busy routes read first.
     map.addLayer({
@@ -217,7 +217,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-color': KIND_PAINT,
-        'circle-stroke-color': '#eef1f5',
+        'circle-stroke-color': '#f7f9fc',
         'circle-stroke-width': 2.5,
         'circle-radius': ['interpolate', ['linear'], ['sqrt', ['get', 'laps']], 0, 7, 3, 11, 10, 18],
       },
@@ -235,7 +235,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
         'text-anchor': 'top',
         'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
       },
-      paint: { 'text-color': '#eef1f5', 'text-halo-color': '#0c0e12', 'text-halo-width': 1.5 },
+      paint: { 'text-color': '#0e1b3d', 'text-halo-color': '#f7f9fc', 'text-halo-width': 1.5 },
     });
     const open = (e: mapboxgl.MapMouseEvent & { features?: mapboxgl.MapboxGeoJSONFeature[] }) => {
       const id = e.features?.[0]?.properties?.id;

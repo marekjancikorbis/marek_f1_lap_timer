@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
 import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
-import { formatDate, formatLap } from '../lib/format';
+import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { historyColours, notCounted } from '../lib/laps';
 import { theoreticalBest } from '@laptimer/timing';
 import { useMe } from '../lib/session';
@@ -107,7 +107,7 @@ export default function RunHistory() {
       ) : (
         <div className="stack" style={{ marginTop: 16, gap: 8 }}>
           {theoretical && counted.length > 1 && (
-            <div className="panel row between">
+            <div className="panel row between navy">
               <span>
                 <strong>Theoretical best</strong>
                 <span className="mute" style={{ display: 'block', fontSize: 13 }}>
@@ -135,13 +135,14 @@ export default function RunHistory() {
               </button>
               <Link to={`/run/${run.id}`} className="grow run-main">
                 <div className="row between">
-                  <strong className="num" style={{ fontSize: 24 }}>
-                    {formatLap(run.totalMs)}
+                  {/* A partial lap has no finish time: show how far it got. */}
+                  <strong className={`num ${run.partial ? 'partial-dist' : ''}`} style={{ fontSize: 24 }}>
+                    {run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}
                   </strong>
                   <span className="row" style={{ gap: 6 }}>
-                    {run.id === pbId && <span className="badge ink">PB</span>}
-                    {run.posted && <span className="badge blue">Posted</span>}
-                    {run.replay && <span className="badge yellow">Sim</span>}
+                    {run.id === pbId && <span className="badge green">PB</span>}
+                    {run.posted && <span className="badge ink">Posted</span>}
+                    {run.replay && <span className="badge outline">Sim</span>}
                     {run.penaltyMs > 0 && <span className="badge red">+5 s</span>}
                     {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
                   </span>

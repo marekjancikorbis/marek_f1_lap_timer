@@ -1,40 +1,46 @@
-@import '@fontsource/barlow/400.css';
-@import '@fontsource/barlow/500.css';
-@import '@fontsource/barlow/600.css';
-@import '@fontsource/barlow-condensed/500.css';
-@import '@fontsource/barlow-condensed/600.css';
-@import '@fontsource/barlow-condensed/700.css';
+@import '@fontsource-variable/saira/wdth.css';
+@import '@fontsource-variable/saira/wdth-italic.css';
 
-/* Blue-black ground, blue for every action, flag colours only where they mean a time:
-   purple = fastest ever, green = faster, yellow = slower, red = jump start / danger. */
+/* Livery (DESIGN.md): the paddock is light bodywork, panels and every drive screen are navy.
+   Flag colours only where they mean a time: purple = fastest ever, green = faster, yellow = slower,
+   red = jump start / danger. Never pure white or pure black. */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --tarmac: #0c0e12;
-  --tarmac-2: #101318;
-  --raised: #161a20;
-  --raised-2: #1c2129;
-  --hairline: #232831;
-  --hairline-2: #323945;
-  --ink: #eef1f5;
-  --ink-2: #c3c9d2;
-  --mute: #8a93a0;
-  --mute-2: #6c7480;
+  --navy: #0e1b3d;
+  --navy-2: #1a2a55;
+  --navy-3: #2a3b6b;
+  --card: #f7f9fc;
+  --on-navy: #f1f3f8;
+
+  --tarmac: #ecf0f5;
+  --tarmac-2: #f7f9fc;
+  --raised: #f7f9fc;
+  --raised-2: #e4e9f0;
+  --hairline: #dfe3ea;
+  --hairline-2: #c9d0dc;
+  --ink: #0e1b3d;
+  --ink-2: #33405f;
+  --mute: #5b6680;
+  --mute-2: #67718b;
 
   --purple: #8b3fe0;
-  --purple-ink: #c9a6f5;
+  --purple-ink: #6f2bc4;
   --green: #1fa64f;
-  --green-ink: #6fd896;
+  --green-ink: #137a3a;
   --yellow: #f5cf19;
-  --yellow-ink: #f5cf19;
+  --yellow-ink: #6e5600;
   --red: #d9262e;
-  --red-ink: #ff7a7f;
-  --blue: #2f86ff;
-  --blue-ink: #8cbcff;
-  --blue-soft: rgba(47, 134, 255, 0.14);
+  --red-ink: #b4141c;
+  /* "blue" is the action colour: navy on the light body, off-white on navy. */
+  --blue: var(--navy);
+  --blue-ink: var(--navy);
+  --on-blue: var(--on-navy);
+  --blue-soft: rgba(14, 27, 61, 0.08);
 
-  --font-ui: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-num: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  --font-ui: 'Saira Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-num: 'Saira Variable', system-ui, sans-serif;
+  --skew: -18deg;
 
   --r-sm: 8px;
   --r-md: 12px;
@@ -54,8 +60,52 @@
   --safe-t: env(safe-area-inset-top, 0px);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --shadow-lift: 0 10px 30px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 1px 2px rgba(14, 27, 61, 0.06), 0 8px 22px -12px rgba(14, 27, 61, 0.3);
 }
+
+/* The navy side of the car: panels, the drive screens, the limit screen. Same token names, dark values. */
+.navy,
+.drive {
+  color-scheme: dark;
+  --tarmac: var(--navy);
+  --tarmac-2: #13224a;
+  --raised: var(--navy-2);
+  --raised-2: #22336a;
+  --hairline: var(--navy-3);
+  --hairline-2: #3a4c80;
+  --ink: var(--on-navy);
+  --ink-2: #c9d1e6;
+  --mute: #a3aecb;
+  --mute-2: #8f9bbd;
+  --purple-ink: #b98af7;
+  --green-ink: #4fe08a;
+  --yellow-ink: var(--yellow);
+  --red-ink: #ff8a8f;
+  --blue: var(--on-navy);
+  --blue-ink: var(--on-navy);
+  --on-blue: var(--navy);
+  --blue-soft: rgba(241, 243, 248, 0.12);
+  background: var(--navy);
+  color: var(--ink);
+}
+
+/* The brand stripe: purple, green, yellow, slanted, only on navy. Decorative, never under data. */
+.livery {
+  position: absolute;
+  top: -10px;
+  bottom: -10px;
+  right: -56px;
+  width: 150px;
+  display: flex;
+  gap: 7px;
+  transform: skewX(var(--skew));
+  pointer-events: none;
+}
+.livery i { flex: 1 }
+.livery i:nth-child(1) { background: var(--purple) }
+.livery i:nth-child(2) { background: var(--green) }
+.livery i:nth-child(3) { background: var(--yellow) }
+.livery.thin { width: 64px; right: -18px; gap: 4px }
 
 *,
 *::before,
@@ -87,12 +137,12 @@ body {
 }
 
 ::selection {
-  background: var(--blue);
-  color: #fff;
+  background: var(--purple);
+  color: var(--on-navy);
 }
 
 :focus-visible {
-  outline: 2px solid var(--blue-ink);
+  outline: 3px solid var(--purple);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -111,14 +161,14 @@ h3 {
 }
 
 h1 {
-  font: 700 2rem/1.05 var(--font-num);
+  font: italic 900 2rem/1.05 var(--font-num);
   letter-spacing: -0.01em;
   text-transform: uppercase;
 }
 
 h2 {
-  font: 600 1.375rem/1.15 var(--font-num);
-  letter-spacing: 0;
+  font: italic 800 1.25rem/1.15 var(--font-num);
+  letter-spacing: 0.01em;
   text-transform: uppercase;
 }
 
@@ -154,6 +204,9 @@ textarea {
 .num {
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
+  font-stretch: 75%;
+  font-style: italic;
+  font-weight: 800;
   letter-spacing: 0;
 }
 
@@ -232,9 +285,9 @@ textarea {
 }
 
 .section-title {
-  font: 600 0.8125rem/1 var(--font-ui);
-  color: var(--mute);
-  letter-spacing: 0.06em;
+  font: italic 800 0.9375rem/1 var(--font-ui);
+  color: var(--ink);
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   margin: var(--s-5) 0 var(--s-3);
 }
@@ -242,14 +295,14 @@ textarea {
 /* ------------------------------------------------------------ surfaces */
 
 .panel {
-  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lift);
   background: var(--raised);
   border-radius: var(--r-lg);
   padding: var(--s-4);
 }
 
 .list {
-  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-lift);
   background: var(--raised);
   border-radius: var(--r-lg);
   overflow: hidden;
@@ -292,18 +345,20 @@ a.list-item:active {
 /* ------------------------------------------------------------ controls */
 
 .btn {
-  box-shadow: inset 0 0 0 1px var(--hairline-2);
+  box-shadow: inset 0 0 0 2px var(--ink);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
   min-height: 44px;
   padding: 0 var(--s-4);
-  border-radius: var(--r-md);
+  border-radius: 999px;
   border: 0;
-  background: var(--raised-2);
+  background: transparent;
   color: var(--ink);
-  font: 600 0.9375rem/1 var(--font-ui);
+  font: italic 800 0.9375rem/1 var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   text-decoration: none;
   cursor: pointer;
   transition: transform 100ms var(--ease-out), background-color 150ms;
@@ -322,13 +377,13 @@ a.list-item:active {
 
 .btn.primary {
   background: var(--blue);
-  color: #fff;
+  color: var(--on-blue);
 }
 
 .btn.danger {
   background: transparent;
   color: var(--red-ink);
-  box-shadow: inset 0 0 0 1px rgba(217, 38, 46, 0.5);
+  box-shadow: inset 0 0 0 2px var(--red-ink);
 }
 
 .btn.primary,
@@ -347,7 +402,6 @@ a.list-item:active {
 .btn.lg {
   min-height: 56px;
   font-size: 1.0625rem;
-  border-radius: var(--r-lg);
 }
 
 .btn.sm {
@@ -393,7 +447,7 @@ a.list-item:active {
   min-height: 48px;
   padding: 0 var(--s-4);
   border-radius: var(--r-md);
-  border: 1px solid var(--hairline-2);
+  border: 1.5px solid var(--hairline-2);
   background: var(--tarmac-2);
   font-size: 1rem;
   width: 100%;
@@ -408,7 +462,8 @@ textarea.input {
 }
 
 .input:focus {
-  border-color: var(--blue);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 4px rgba(139, 63, 224, 0.18);
 }
 
 .input::placeholder {
@@ -429,28 +484,27 @@ textarea.input {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  background: var(--tarmac-2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  padding: 3px;
-  gap: 3px;
+  background: var(--raised-2);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
 }
 
 .segmented button {
-  min-height: 38px;
+  min-height: 36px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 999px;
   background: transparent;
-  color: var(--mute);
-  font-weight: 600;
+  color: var(--ink-2);
+  font-weight: 700;
   font-size: 0.9375rem;
   cursor: pointer;
   transition: background-color 150ms, color 150ms;
 }
 
 .segmented button[aria-pressed='true'] {
-  background: var(--raised-2);
-  color: var(--ink);
+  background: var(--blue);
+  color: var(--on-blue);
 }
 
 /* Switch */
@@ -474,8 +528,8 @@ textarea.input {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--ink);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  background: var(--card);
+  box-shadow: 0 1px 3px rgba(9, 17, 38, 0.3);
   transition: transform 260ms var(--ease-out);
 }
 
@@ -503,46 +557,41 @@ input[type='range'] {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 24px;
+  height: 22px;
   padding: 0 8px;
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--raised-2);
-  color: var(--ink);
-  font: 700 0.8125rem/1 var(--font-num);
-  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  font: 800 0.6875rem/1 var(--font-ui);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .badge.purple {
   background: var(--purple);
-  color: #fff;
+  color: var(--on-navy);
 }
 
-.badge.blue {
-  background: var(--blue-soft);
-  color: var(--blue-ink);
-  box-shadow: inset 0 0 0 1px rgba(47, 134, 255, 0.45);
-}
-
+.badge.blue,
 .badge.ink {
-  background: var(--ink);
-  color: var(--tarmac);
+  background: var(--blue);
+  color: var(--on-blue);
 }
 
 .badge.red {
   background: var(--red);
-  color: #fff;
+  color: var(--on-navy);
 }
 
 .badge.green {
   background: var(--green);
-  color: #fff;
+  color: var(--navy);
 }
 
 .badge.yellow {
   background: var(--yellow);
-  color: #1b1b1b;
+  color: var(--navy);
 }
 
 .badge.outline {
@@ -558,8 +607,8 @@ input[type='range'] {
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
-  font: 600 0.8125rem/1 var(--font-ui);
-  color: #fff;
+  font: italic 900 0.8125rem/1 var(--font-ui);
+  color: var(--on-navy);
   text-transform: uppercase;
   user-select: none;
 }
@@ -573,10 +622,8 @@ input[type='range'] {
   bottom: 0;
   z-index: 20;
   padding-bottom: var(--safe-b);
-  background: rgba(16, 19, 24, 0.9);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  backdrop-filter: blur(18px) saturate(160%);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--card);
+  border-top: 1px solid var(--hairline);
 }
 
 .tabbar nav {
@@ -596,16 +643,15 @@ input[type='range'] {
   justify-content: flex-end;
   padding-bottom: 10px;
   gap: 3px;
-  color: var(--mute-2);
+  color: var(--mute);
   text-decoration: none;
-  font: 600 0.6875rem/1 var(--font-ui);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font: 700 0.6875rem/1 var(--font-ui);
+  letter-spacing: 0.02em;
   transition: color 150ms;
 }
 
 .tabbar a.active {
-  color: var(--blue-ink);
+  color: var(--ink);
 }
 
 /* Drive: the raised blue button in the middle of the bar. */
@@ -616,13 +662,14 @@ input[type='range'] {
   height: 56px;
   margin-top: -26px;
   border-radius: 50%;
-  background: var(--blue);
-  color: #fff;
-  box-shadow: 0 8px 22px -6px rgba(47, 134, 255, 0.6), 0 0 0 5px var(--tarmac);
+  background: var(--navy);
+  color: var(--on-navy);
+  font: italic 900 1.0625rem/1 var(--font-ui);
+  box-shadow: 0 0 0 4px var(--card), 0 0 0 6px var(--hairline);
 }
 
 .tabbar a.tab-go.active .tab-go-btn {
-  box-shadow: 0 8px 22px -6px rgba(47, 134, 255, 0.6), 0 0 0 5px var(--tarmac), 0 0 0 7px rgba(47, 134, 255, 0.45);
+  box-shadow: 0 0 0 4px var(--card), 0 0 0 7px var(--purple);
 }
 
 .tabbar a:active svg {
@@ -635,8 +682,7 @@ input[type='range'] {
 
 @media (prefers-reduced-transparency: reduce) {
   .tabbar {
-    background: var(--tarmac);
-    backdrop-filter: none;
+    background: var(--card);
   }
 }
 
@@ -708,8 +754,8 @@ input[type='range'] {
 }
 
 .notice.warn {
-  background: rgba(245, 207, 25, 0.1);
-  color: #f7e08a;
+  background: rgba(245, 207, 25, 0.18);
+  color: var(--yellow-ink);
 }
 
 .notice.error {
@@ -718,8 +764,8 @@ input[type='range'] {
 }
 
 .notice.info {
-  background: rgba(47, 125, 225, 0.14);
-  color: var(--blue-ink);
+  background: var(--blue-soft);
+  color: var(--ink-2);
 }
 
 /* ------------------------------------------------------------ toast */
@@ -737,8 +783,8 @@ input[type='range'] {
 
 .toast {
   pointer-events: auto;
-  background: var(--ink);
-  color: var(--tarmac);
+  background: var(--navy);
+  color: var(--on-navy);
   padding: 12px 16px;
   border-radius: var(--r-md);
   font-weight: 600;
@@ -750,7 +796,7 @@ input[type='range'] {
 
 .toast.error {
   background: var(--red);
-  color: #fff;
+  color: var(--on-navy);
 }
 
 @keyframes toast-in {
@@ -766,7 +812,7 @@ input[type='range'] {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(14, 27, 61, 0.5);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -776,10 +822,10 @@ input[type='range'] {
 .sheet {
   width: 100%;
   max-width: 560px;
-  background: var(--tarmac-2);
+  background: var(--card);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   padding: var(--s-5) var(--s-4) calc(var(--safe-b) + var(--s-5));
-  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -12px 40px rgba(9, 17, 38, 0.3);
   animation: sheet-in 380ms var(--ease-out);
   max-height: 90dvh;
   overflow: auto;
@@ -834,7 +880,7 @@ input[type='range'] {
   padding: 0 5px;
   border-radius: 9px;
   background: var(--purple);
-  color: #fff;
+  color: var(--on-navy);
   font-size: 11px;
   font-weight: 700;
   line-height: 18px;

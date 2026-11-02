@@ -13,7 +13,7 @@ export const FIREBASE_CONFIG = {
 export const MAPBOX_TOKEN =
   'pk.eyJ1IjoibWFyZWtqYW5jaWsiLCJhIjoiY212NzM2djUzMDA1NDJ5c2gxaXJ5ODVpZCJ9.kmqLJARRI2la9K-hMZ1DVg';
 
-export const MAPBOX_STYLE = 'mapbox://styles/mapbox/dark-v11';
+export const MAPBOX_STYLE = 'mapbox://styles/mapbox/light-v11';
 
 /**
  * Mapbox usage cap, just under the free tier. Keep in sync with

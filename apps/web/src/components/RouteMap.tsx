@@ -4,7 +4,7 @@ import { preparedFor, sectorLines } from '../lib/geo';
 import type { Route, SectorColourName } from '../lib/types';
 import { MapView } from './MapView';
 
-const HEX: Record<SectorColourName | 'none', string> = { purple: '#8b3fe0', green: '#1fa64f', yellow: '#f5cf19', none: '#eef1f5' };
+const HEX: Record<SectorColourName | 'none', string> = { purple: '#8b3fe0', green: '#1fa64f', yellow: '#f5cf19', none: '#f7f9fc' };
 
 /** Route on a Mapbox map, sectors stroked in flag colours, start flagged; optionally a car at a distance. */
 export function RouteMap({
@@ -90,7 +90,7 @@ export function RouteMap({
           })),
         },
       });
-      map.addLayer({ id: 'sec-casing', type: 'line', source: 'sectors', paint: { 'line-color': '#0c0d0e', 'line-width': 9 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+      map.addLayer({ id: 'sec-casing', type: 'line', source: 'sectors', paint: { 'line-color': '#0e1b3d', 'line-width': 9 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
       map.addLayer({ id: 'sec', type: 'line', source: 'sectors', paint: { 'line-color': ['get', 'color'], 'line-width': 5 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
       map.addSource('start', {
         type: 'geojson',
@@ -100,21 +100,21 @@ export function RouteMap({
         id: 'start',
         type: 'circle',
         source: 'start',
-        paint: { 'circle-radius': 8, 'circle-color': '#eef1f5', 'circle-stroke-color': '#0c0d0e', 'circle-stroke-width': 3 },
+        paint: { 'circle-radius': 8, 'circle-color': '#f7f9fc', 'circle-stroke-color': '#0e1b3d', 'circle-stroke-width': 3 },
       });
       map.addSource('ghost', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({
         id: 'ghost',
         type: 'circle',
         source: 'ghost',
-        paint: { 'circle-radius': 8, 'circle-color': '#0c0e12', 'circle-opacity': 0.6, 'circle-stroke-color': '#eef1f5', 'circle-stroke-width': 3 },
+        paint: { 'circle-radius': 8, 'circle-color': '#f7f9fc', 'circle-opacity': 0.85, 'circle-stroke-color': '#0e1b3d', 'circle-stroke-width': 3 },
       });
       map.addSource('car', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({
         id: 'car',
         type: 'circle',
         source: 'car',
-        paint: { 'circle-radius': 9, 'circle-color': '#2f86ff', 'circle-stroke-color': '#eef1f5', 'circle-stroke-width': 3 },
+        paint: { 'circle-radius': 9, 'circle-color': '#0e1b3d', 'circle-stroke-color': '#f7f9fc', 'circle-stroke-width': 3 },
       });
       placeCar(map, carRef.current);
       placeCar(map, ghostRef.current, 'ghost');

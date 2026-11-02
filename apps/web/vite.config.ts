@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Purple Sector',
         short_name: 'Purple Sector',
         description: 'Lap timing with a live sector delta, for track days and rally events.',
-        theme_color: '#0C0E12',
-        background_color: '#0C0E12',
+        theme_color: '#0E1B3D',
+        background_color: '#0E1B3D',
         display: 'standalone',
         // Always upright; the drive screen turns its own content from gravity (Drive.tsx useSideways).
         orientation: 'portrait',
