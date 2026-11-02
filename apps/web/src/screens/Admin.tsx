@@ -23,12 +23,12 @@ import type { AuditEntry, CreatorRequest, Post, Profile, Role, Route } from '../
 type Tab = 'requests' | 'users' | 'routes' | 'posts' | 'log';
 
 export default function Admin() {
-  const { isAdmin } = useMe();
+  const { isAdmin, isOwner } = useMe();
   const [tab, setTab] = useState<Tab>('requests');
   if (!isAdmin) return <Navigate to="/" replace />;
   return (
     <main className="screen">
-      <ScreenHead back title="Admin" />
+      <ScreenHead back title="Admin" right={<span className="badge ink">{isOwner ? 'Owner' : 'Admin'}</span>} />
       <div style={{ overflowX: 'auto', marginBottom: 16 }}>
         <Segmented
           label="Admin section"
@@ -56,8 +56,8 @@ function Requests() {
   const { isOwner } = useMe();
   return (
     <div className="stack-lg">
-      {isOwner && <RequestList kind="admin" />}
       <RequestList kind="creator" />
+      {isOwner && <RequestList kind="admin" />}
     </div>
   );
 }
@@ -86,30 +86,32 @@ function RequestList({ kind }: { kind: RequestKind }) {
   if (!items) return <Loading />;
   if (!items.length)
     return (
-      <Empty title={`No pending ${title.toLowerCase()}`}>
-        {kind === 'admin' ? 'Creators who ask to become admins show up here. Only you can decide them.' : 'Drivers who ask for creator access show up here.'}
-      </Empty>
+      <div className="stack">
+        <h2 className="section-title">{title}</h2>
+        <p className="admin-note">
+          {kind === 'admin' ? 'Creators who ask to become admins show up here. Only you can decide them.' : 'Drivers who ask for creator access show up here.'}
+        </p>
+      </div>
     );
   return (
     <div className="stack">
       <h2 className="section-title">{title}</h2>
       {items.map((r) => (
-        <div key={r.id} className="panel stack">
-          <div className="row between">
-            <Link to={`/u/${r.username}`}>
+        <div key={r.id} className="panel stack" style={{ gap: 10 }}>
+          <Link to={`/u/${r.username}`} className="row" style={{ gap: 12, textDecoration: 'none' }}>
+            <Avatar name={r.username} size={40} uid={r.id} />
+            <span className="grow" style={{ display: 'flex', flexDirection: 'column' }}>
               <strong>{r.username}</strong>
-            </Link>
-            <span className="mute" style={{ fontSize: 14 }}>
-              {timeAgo(r.createdAt?.toDate())}
+              <span className="mute small-text">Asked {timeAgo(r.createdAt?.toDate())}</span>
             </span>
-          </div>
-          {r.note ? <p>“{r.note}”</p> : <p className="mute">No note.</p>}
+          </Link>
+          {r.note ? <p className="admin-note">“{r.note}”</p> : <p className="mute small-text">No note.</p>}
           <div className="row">
-            <button className="btn primary grow" onClick={() => decide(r, true)}>
-              Approve
+            <button className="btn sm grow" onClick={() => decide(r, false)}>
+              Decline
             </button>
-            <button className="btn grow" onClick={() => decide(r, false)}>
-              Reject
+            <button className="btn primary sm grow" onClick={() => decide(r, true)}>
+              Approve
             </button>
           </div>
         </div>

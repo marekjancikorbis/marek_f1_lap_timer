@@ -1,5 +1,5 @@
 import type mapboxgl from 'mapbox-gl';
-import { Maximize2, Minimize2, Play, Star } from 'lucide-react';
+import { ChevronRight, Clock, Home, Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteMap } from '../components/RouteMap';
@@ -152,8 +152,7 @@ export default function RouteDetail() {
     );
 
   const tabs = [
-    ...(route.isPublic ? [{ value: 'board' as const, label: 'Leaderboard' }] : []),
-    { value: 'mine' as const, label: `My laps${runs.length ? ` · ${runs.length}` : ''}` },
+    ...(route.isPublic ? [{ value: 'board' as const, label: 'Leaderboard' }] : [{ value: 'mine' as const, label: 'My laps' }]),
     ...(route.isPublic ? [{ value: 'locals' as const, label: 'Locals' }] : []),
   ];
   const shownTab = tabs.some((t) => t.value === tab) ? tab : tabs[0].value;
@@ -173,8 +172,9 @@ export default function RouteDetail() {
             }
           />
         </div>
-        <div className="route-hero-over">
-          <h1>{route.name}</h1>
+      </section>
+
+      <section className="route-head">
           <p className="row wrap" style={{ gap: 6 }}>
             {route.official ? (
               <span className="badge purple">Official</span>
@@ -188,15 +188,24 @@ export default function RouteDetail() {
             <span className="badge outline">{route.isLoop ? 'Lap' : 'A to B'}</span>
             {!route.isPublic && <span className="badge outline">Private</span>}
           </p>
-        </div>
+          <h1 className="route-title">{route.name}</h1>
+          {route.isPublic && board.length > 0 && (
+            <>
+              <div className="run-stripe route-records" role="img" aria-label={records.map((r, i) => `Sector ${i + 1} record ${r == null ? 'none' : formatLap(r)}`).join(', ')}>
+                {records.map((r, i) => (
+                  <b key={i} className={r == null ? 'empty' : 'flag-purple'}>
+                    <span>
+                      S{i + 1} {r == null ? '–' : formatLap(r)}
+                    </span>
+                  </b>
+                ))}
+              </div>
+              <p className="mute small-text" style={{ marginTop: 6 }}>
+                Sector records, each by the fastest driver in that sector
+              </p>
+            </>
+          )}
       </section>
-
-      {route.isPublic && (
-        <button className={`btn block ${isHome ? '' : 'ghost'} home-toggle`} disabled={homeBusy} onClick={toggleHome} aria-pressed={isHome}>
-          <Star size={17} fill={isHome ? 'currentColor' : 'none'} aria-hidden="true" />
-          {isHome ? 'Your home course · remove' : 'Set as my home course'}
-        </button>
-      )}
 
       {tabs.length > 1 && <Segmented label="Show" value={shownTab} onChange={setTab} options={tabs} />}
 
@@ -205,14 +214,6 @@ export default function RouteDetail() {
           <p className="mute route-empty">No posted laps yet. Drive it and post yours to take P1.</p>
         ) : (
           <>
-            <div className="records" aria-label="Sector records">
-              {records.map((r, i) => (
-                <div key={i} className="record">
-                  <span>S{i + 1} record</span>
-                  <strong className="num">{r == null ? '–' : formatLap(r)}</strong>
-                </div>
-              ))}
-            </div>
             <ol className="list board">
               {board.map(({ rank, post }) => (
                 <li key={post.id} className={`board-row ${post.userId === profile.id ? 'me' : ''}`}>
@@ -294,6 +295,21 @@ export default function RouteDetail() {
           </div>
         ))}
 
+      {route.isPublic && (
+        <div className="list" style={{ marginTop: 10 }}>
+          <Link to={`/r/${route.id}/history`} className="list-item">
+            <Clock size={22} aria-hidden="true" />
+            <span className="grow">
+              <strong>My laps on this route</strong>
+              <span className="mute small-text">
+                {runs.length ? `${runs.length} ${runs.length === 1 ? 'lap' : 'laps'}${myBest ? ` · best ${formatLap(myBest.totalMs)}` : ''}` : 'Not driven yet'}
+              </span>
+            </span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+        </div>
+      )}
+
       {(isOwner || canModChange) && (
         <>
           <h2 className="section-title">Manage</h2>
@@ -324,9 +340,14 @@ export default function RouteDetail() {
         </>
       )}
 
-      <div className="sticky-cta">
-        <Link className="btn primary lg block" to={`/drive/${route.id}`}>
-          <Play size={18} fill="currentColor" aria-hidden="true" /> Drive this route
+      <div className="sticky-cta row">
+        {route.isPublic && (
+          <button className={`btn lg home-btn ${isHome ? 'on' : ''}`} disabled={homeBusy} onClick={toggleHome} aria-pressed={isHome} aria-label={isHome ? 'Your home course, tap to remove' : 'Set as my home course'}>
+            <Home size={20} fill={isHome ? 'currentColor' : 'none'} aria-hidden="true" />
+          </button>
+        )}
+        <Link className="btn primary lg grow" to={`/drive/${route.id}`}>
+          Drive this route
         </Link>
       </div>
     </main>

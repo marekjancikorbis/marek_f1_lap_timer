@@ -14,14 +14,16 @@ export function LimitScreen({ usage }: { usage: UsageState }) {
         <i />
         <i />
       </span>
-      <h1>Monthly limit reached</h1>
-      <p>
-        Your laps and routes are safe. Purple Sector has used this month's free map {usage.exhausted === 'directions' ? 'routing' : 'loads'}. To keep the app
-        free, it pauses until the limit resets.
-      </p>
-      <p className="limit-date">
-        Back on <strong>{when}</strong> at {time}
-      </p>
+      <div className="limit-body">
+        <div className="num limit-day">{usage.resetsAt.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div>
+        <div className="cap">Maps back on · {time}</div>
+        <h1>Monthly limit reached</h1>
+        <p>
+          The map service is shared by everyone and capped to stay free. This month's free map {usage.exhausted === 'directions' ? 'routing' : 'loads'} are used up; it
+          resets on {when}.
+        </p>
+        <p>Your laps and routes are safe.</p>
+      </div>
     </main>
   );
 }

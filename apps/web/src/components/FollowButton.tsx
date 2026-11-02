@@ -5,7 +5,8 @@ import { db } from '../lib/firebase';
 import { useMe } from '../lib/session';
 import { errorMessage, useToast } from './ui';
 
-export function FollowButton({ userId, size = 'sm', onChange }: { userId: string; size?: 'sm' | 'lg'; onChange?: (following: boolean) => void }) {
+/** back: they already follow you, so the offer reads Follow back. */
+export function FollowButton({ userId, size = 'sm', onChange, back }: { userId: string; size?: 'sm' | 'lg'; onChange?: (following: boolean) => void; back?: boolean }) {
   const { profile } = useMe();
   const toast = useToast();
   const [following, setFollowing] = useState<boolean | null>(null);
@@ -45,7 +46,7 @@ export function FollowButton({ userId, size = 'sm', onChange }: { userId: string
       disabled={busy || following === null}
       aria-pressed={!!following}
     >
-      {following ? 'Following' : 'Follow'}
+      {following ? 'Following' : back ? 'Follow back' : 'Follow'}
     </button>
   );
 }

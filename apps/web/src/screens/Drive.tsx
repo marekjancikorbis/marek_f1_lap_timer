@@ -1,10 +1,10 @@
-import { Smartphone, X } from 'lucide-react';
+import { Flag, Smartphone, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { DriveController, type DriveState } from '../drive/controller';
 import { clearPendingDrive, takePendingDrive } from '../drive/store';
 import { STRIP_LABEL } from '../components/ui';
-import { formatDelta, formatDistance, formatLap, formatSpeed } from '../lib/format';
+import { formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 
 export default function Drive() {
   const { routeId = '' } = useParams();
@@ -91,7 +91,7 @@ export default function Drive() {
         <section className="drive-center">
           {standing ? (
             <>
-              <h1 className="drive-big-label">Stop at the start line</h1>
+              <h1 className="cap drive-cap">Stop at the start line</h1>
               <ToStart rel={s.startRel} zoneM={ctl.timer.cfg.th.STANDING_ZONE_M} />
               <p className="drive-sub">The countdown button appears once you've been still at the line for 2 seconds.</p>
             </>
@@ -102,12 +102,16 @@ export default function Drive() {
             </>
           ) : (
             <>
-              <h1 className="drive-big-label">Drive to the start</h1>
+              <h1 className="cap drive-cap">Drive to the start</h1>
               <ToStart rel={s.startRel} zoneM={ctl.timer.cfg.th.STANDING_ZONE_M} />
               <p className="drive-sub">Approach the start line in the route's direction. Timing arms within 50 m.</p>
             </>
           )}
-          <Speed speed={s.speed} />
+          <div className="drive-stripe" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </div>
         </section>
       )}
 
@@ -129,17 +133,21 @@ export default function Drive() {
 
       {jumpBanner && (
         <div className="jump-banner" role="alert">
-          JUMP START +{(s.penaltyMs / 1000).toFixed(1)} s
+          <Flag size={30} aria-hidden="true" />
+          <span>
+            <strong>Jump start · +{formatSeconds(s.penaltyMs, 0)}</strong>
+            <span>Moved before GO. Timed from GO, penalty included.</span>
+          </span>
         </div>
       )}
 
       {s.partial && (
         <section className="drive-center">
-          <h1 className="drive-big-label">{cfg.route.isLoop ? 'Keep this lap?' : 'Keep this run?'}</h1>
-          <p className="drive-sub">
-            The GPS signal dropped out and the lap stopped before the finish. Save the{' '}
-            <span className="num">{formatDistance(s.partial.distanceM)}</span> you drove to view it and compare it with other laps. A partial lap can't
-            be posted or set a best.
+          <h1 className="cap drive-cap">GPS lost before the finish · {cfg.route.name}</h1>
+          <div className="drive-partial-dist num">{formatDistance(s.partial.distanceM)}</div>
+          <p className="drive-note">
+            The GPS signal dropped out before the finish. Keep the distance you drove to view it and compare it. A partial {cfg.route.isLoop ? 'lap' : 'run'}{' '}
+            can't be posted or set a best.
           </p>
           {s.laps.length > 0 && <p className="drive-sub">Your {s.laps.length} completed {s.laps.length === 1 ? 'lap is' : 'laps are'} saved.</p>}
         </section>
@@ -173,12 +181,15 @@ export default function Drive() {
       <footer className="drive-bottom">
         {s.partial ? (
           <div className="stack">
-            <button className="btn primary lg block" onClick={savePartial}>
-              Save partial lap
-            </button>
-            <button className="btn lg block" onClick={() => leave(ctl.state.savedRunIds)}>
-              Discard it
-            </button>
+            <p className="drive-ask">{cfg.route.isLoop ? 'Keep this lap?' : 'Keep this run?'}</p>
+            <div className="row">
+              <button className="btn lg grow" onClick={() => leave(ctl.state.savedRunIds)}>
+                Discard
+              </button>
+              <button className="btn primary lg" style={{ flex: 2 }} onClick={savePartial}>
+                Keep
+              </button>
+            </div>
           </div>
         ) : s.invalidReason || s.phase === 'finished' ? (
           <button className="btn primary lg block" onClick={stop}>
@@ -237,15 +248,6 @@ function GpsDot({ ok, accuracy }: { ok: boolean; accuracy: number | null }) {
       <span className={`gps-dot ${good ? 'good' : fair ? 'fair' : 'bad'}`} />
       {ok && accuracy != null ? `±${Math.round(accuracy)} m` : 'GPS'}
     </span>
-  );
-}
-
-function Speed({ speed }: { speed: number | null }) {
-  return (
-    <div className="drive-speed">
-      <span className="num">{formatSpeed(speed)}</span>
-      <span>km/h</span>
-    </div>
   );
 }
 
@@ -381,6 +383,7 @@ function Countdown({ goT, n, onCancel }: { goT: number; n: number; onCancel: () 
         ))}
       </div>
       <div className="countdown-num num">{seconds}</div>
+      <p className="drive-sub">Timing starts when you move off after GO. Moving more than 10 m early adds 5 s.</p>
       <button className="btn ghost" onClick={onCancel}>
         Cancel countdown
       </button>

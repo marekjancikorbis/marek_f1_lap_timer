@@ -1,8 +1,8 @@
-import { Plus } from 'lucide-react';
+import { Globe, Lock, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RouteShape } from '../components/RouteShape';
-import { Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Switch, useToast } from '../components/ui';
+import { Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, useToast } from '../components/ui';
 import { getMyRequest, getRoutes, myRoutes, publicLimit, requestCreatorAccess, routeStats, setRoutePublic, type RouteStats } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
@@ -18,7 +18,7 @@ export default function MyRoutes() {
   const [request, setRequest] = useState<CreatorRequest | null | undefined>(undefined);
   const [confirm, setConfirm] = useState<Route | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<'laps' | 'built'>('laps');
+  const [tab, setTab] = useState<'laps' | 'built'>('built');
 
   const load = useCallback(async () => {
     try {
@@ -87,11 +87,9 @@ export default function MyRoutes() {
       <ScreenHead
         title="Routes"
         right={
-          tab === 'built' && (
-            <Link to="/routes/new" className="btn primary sm">
-              <Plus size={18} aria-hidden="true" /> New route
-            </Link>
-          )
+          <Link to="/routes/new" className="btn primary sm">
+            <Plus size={18} aria-hidden="true" /> Build
+          </Link>
         }
       />
       <Segmented
@@ -99,8 +97,8 @@ export default function MyRoutes() {
         value={tab}
         onChange={setTab}
         options={[
-          { value: 'laps', label: 'My laps' },
           { value: 'built', label: 'Routes I built' },
+          { value: 'laps', label: 'My laps' },
         ]}
       />
 
@@ -158,40 +156,42 @@ export default function MyRoutes() {
                 </p>
               )}
               {own.map((r) => (
-                <article key={r.id} className="panel route-tile">
-                  <Link to={`/r/${r.id}`} style={{ textDecoration: 'none' }}>
-                    <RouteShape map route={r} height={120} />
-                    <div className="row between" style={{ marginTop: 10 }}>
-                      <h3>{r.name}</h3>
-                      <span className="num" style={{ fontSize: 20 }}>
-                        {pbs.has(r.id) ? formatLap(pbs.get(r.id)) : '—'}
-                      </span>
-                    </div>
-                    <p className="mute" style={{ fontSize: 14 }}>
-                      {formatDistance(r.lengthM)} · {r.isLoop ? 'Lap' : 'Point to point'} ·{' '}
-                      {r.startType === 'standing' ? 'Standing start' : 'Rolling start'}
-                    </p>
+                <article key={r.id} className="panel route-card">
+                  <Link to={`/r/${r.id}`} className="route-card-shape" aria-label={r.name}>
+                    <RouteShape route={r} height={64} ticks={false} />
                   </Link>
-                  {isCreator && (
-                    <>
-                      <hr className="hairline" />
-                      <div className="row between">
-                        <span>
-                          <strong>Public</strong>
-                          <span className="mute" style={{ display: 'block', fontSize: 13 }}>
-                            {r.isPublic ? 'On the map, with a leaderboard' : 'Only you can see it'}
-                          </span>
+                  <div style={{ minWidth: 0 }}>
+                    <Link to={`/r/${r.id}`} className="route-card-name ellipsis">
+                      {r.name}
+                    </Link>
+                    <span className="mute small-text">
+                      {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : 'point to point'} · {r.startType === 'standing' ? 'standing' : 'rolling'}
+                      {pbs.has(r.id) && ` · PB ${formatLap(pbs.get(r.id))}`}
+                    </span>
+                    <span className="row wrap" style={{ gap: 6, marginTop: 8 }}>
+                      {r.isPublic ? (
+                        <span className="badge ink">
+                          <Globe size={12} aria-hidden="true" /> Public
                         </span>
-                        <Switch
-                          label={`Make ${r.name} public`}
-                          checked={r.isPublic}
-                          disabled={busy || r.hidden || (!r.isPublic && limit > 1 && publicCount >= limit)}
-                          onChange={(v) => (v ? setConfirm(r) : void setPublic(r, false))}
-                        />
-                      </div>
-                    </>
-                  )}
-                  {r.hidden && <p className="notice warn" style={{ marginTop: 12 }}>An admin has hidden this route.</p>}
+                      ) : (
+                        <span className="badge outline">
+                          <Lock size={12} aria-hidden="true" /> Private
+                        </span>
+                      )}
+                      {r.hidden && <span className="badge red">Hidden by an admin</span>}
+                      {isCreator &&
+                        !r.hidden &&
+                        (r.isPublic ? (
+                          <button className="btn sm chip-btn" disabled={busy} onClick={() => void setPublic(r, false)}>
+                            Make private
+                          </button>
+                        ) : (
+                          <button className="btn sm chip-btn" disabled={busy || (limit > 1 && publicCount >= limit)} onClick={() => setConfirm(r)}>
+                            Publish
+                          </button>
+                        ))}
+                    </span>
+                  </div>
                 </article>
               ))}
             </div>
@@ -253,18 +253,25 @@ function DriverPanel({ request, onRequested }: { request: CreatorRequest | null 
   }
 
   return (
-    <div className="panel stack">
+    <div className="panel navy stack request-card">
+      <span className="livery thin" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
       <h3>Want to publish a route?</h3>
-      <p className="mute">Your routes are private: only you can see and drive them. Publishing one, with a leaderboard, is for approved creators. Ask the admin, and say which track or event you want to time.</p>
-      {request?.status === 'pending' ? (
-        <button className="btn" disabled>
-          Request pending
-        </button>
-      ) : (
-        <button className="btn primary" onClick={() => setOpen(true)} disabled={request === undefined}>
-          Request creator access
-        </button>
-      )}
+      <p className="mute">Publishing, with a leaderboard, is for approved creators. Ask the admin and say which track or event you want to time.</p>
+      <div>
+        {request?.status === 'pending' ? (
+          <button className="btn sm" disabled>
+            Request pending
+          </button>
+        ) : (
+          <button className="btn primary sm" onClick={() => setOpen(true)} disabled={request === undefined}>
+            Request creator access
+          </button>
+        )}
+      </div>
       <Sheet open={open} onClose={() => setOpen(false)} label="Request creator access">
         <div className="stack">
           <h2>Request creator access</h2>

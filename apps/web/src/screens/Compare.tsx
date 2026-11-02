@@ -1,8 +1,7 @@
 import { compareLaps, type LapComparison } from '@laptimer/timing';
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { SERIES } from '../components/Charts';
 import { LapTabs, SectorList, useSectorTable } from '../components/LapView';
 import { Empty, errorMessage, Loading, ScreenHead, Sheet } from '../components/ui';
 import { getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
@@ -89,30 +88,30 @@ export default function Compare() {
 
   return (
     <main className="screen">
-      <ScreenHead
-        back
-        title="Compare"
-        right={
-          <button className="icon-btn" aria-label="Swap A and B" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
-            <ArrowLeftRight size={22} />
-          </button>
-        }
-      />
-      <p className="mute" style={{ marginTop: -8 }}>
-        {route.name}
-      </p>
+      <ScreenHead back title={`Compare · ${route.name}`} />
 
-      <section className="cmp-head">
-        <LapHead lap={a} label={aLabel} colour={SERIES.a} tag="A" />
-        <div className={`cmp-gap num ${cmp.gapMs < 0 ? 'a' : cmp.gapMs > 0 ? 'b' : ''}`}>
-          {formatDelta(cmp.gapMs, 3)}
-          <small>
-            {cmp.gapMs < 0 ? `${aLabel} faster` : cmp.gapMs > 0 ? `${bLabel} faster` : 'Dead heat'}
-            {cmp.throughM != null && ` at ${formatDistance(cmp.throughM)}`}
-          </small>
-        </div>
-        <LapHead lap={b} label={bLabel} colour={SERIES.b} tag="B" onChange={() => setPicker(true)} />
+      {/* A and B side by side, the swap between them; B is what A is measured against. */}
+      <section className="cmp-cards">
+        <LapHead lap={a} label={a.username || a.label} tag="A" />
+        <button className="icon-btn cmp-swap" aria-label="Swap A and B" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
+          <ArrowLeftRight size={20} />
+        </button>
+        <LapHead lap={b} label={b.username || b.label} tag="B" record={bRef === 'record'} />
       </section>
+      <button className="cmp-with" onClick={() => setPicker(true)}>
+        <span className="mute">Compare with</span>
+        <strong className="grow ellipsis" style={{ textAlign: 'right' }}>
+          {bLabel}
+        </strong>
+        <ChevronRight size={18} aria-hidden="true" />
+      </button>
+      <p className={`cmp-total-line ${cmp.gapMs < 0 ? 'faster' : cmp.gapMs > 0 ? 'slower' : ''}`}>
+        <strong className="num">{formatDelta(cmp.gapMs, 3)}</strong>{' '}
+        <span className="mute">
+          {cmp.gapMs < 0 ? 'A faster' : cmp.gapMs > 0 ? 'A slower' : 'Dead heat'}
+          {cmp.throughM != null && ` at ${formatDistance(cmp.throughM)}`}
+        </span>
+      </p>
 
       <LapTabs
         lap={{ ...a, username: aLabel }}
@@ -138,22 +137,16 @@ export default function Compare() {
   );
 }
 
-function LapHead({ lap, label, colour, tag, onChange }: { lap: ResolvedLap; label: string; colour: string; tag: string; onChange?: () => void }) {
+function LapHead({ lap, label, tag, record }: { lap: ResolvedLap; label: string; tag: string; record?: boolean }) {
   return (
-    <div className="cmp-lap">
-      <span className="cmp-tag" style={{ background: colour }}>
-        {tag}
+    <div className={`panel cmp-card ${record ? 'record' : ''}`}>
+      <span className="cap ellipsis">
+        {tag} · {label}
       </span>
-      <strong className="ellipsis">{label}</strong>
       <span className="num cmp-total">{formatLap(lap.totalMs)}</span>
-      <span className="mute" style={{ fontSize: 12 }}>
-        {lap.partial ? 'partial lap' : lap.penaltyMs > 0 && `incl. +${formatSeconds(lap.penaltyMs)} jump start`}
+      <span className="mute small-text ellipsis">
+        {lap.partial ? 'partial lap' : lap.penaltyMs > 0 ? `incl. +${formatSeconds(lap.penaltyMs)} jump start` : lap.sub}
       </span>
-      {onChange && (
-        <button className="btn sm ghost" onClick={onChange}>
-          Change
-        </button>
-      )}
     </div>
   );
 }

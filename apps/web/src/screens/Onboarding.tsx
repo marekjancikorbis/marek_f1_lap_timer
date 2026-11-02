@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { createProfile, USERNAME_RE, usernameTaken } from '../lib/data';
 import { useSession } from '../lib/session';
-import { errorMessage } from '../components/ui';
+import { Avatar, errorMessage, SectorStrip } from '../components/ui';
 
 export function Onboarding() {
   const { user, signOut } = useSession();
@@ -30,10 +30,20 @@ export function Onboarding() {
 
   return (
     <main className="screen no-tabs onboarding">
+      <span className="onboarding-stripe">
+        <SectorStrip colours={['purple', 'green', 'yellow']} height={10} />
+      </span>
       <h1>Pick a username</h1>
       <p className="mute" style={{ marginTop: 8 }}>
-        Your @username is how other drivers find you, and it can't be changed later. Your display name (in Settings) can.
+        Other drivers find you by it and see it on every lap you post. It can't be changed later; your display name (in Settings) can.
       </p>
+      <div className="row" style={{ gap: 14, marginTop: 20 }}>
+        <Avatar name={username || '?'} size={56} />
+        <span className="grow" style={{ display: 'flex', flexDirection: 'column' }}>
+          <strong style={{ fontSize: 18 }}>{username || 'your_name'}</strong>
+          <span className="mute small-text">Your roundel until you add a photo</span>
+        </span>
+      </div>
       <form className="stack" style={{ marginTop: 24 }} onSubmit={submit} noValidate>
         <label className="field">
           <span>Username</span>

@@ -1,3 +1,4 @@
+import { Camera, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AndroidAppButton, InstallButton } from '../components/InstallButton';
 import { Avatar, errorMessage, ScreenHead, useToast } from '../components/ui';
@@ -24,6 +25,8 @@ export default function Settings() {
   const [logs, setLogs] = useState(listLogs);
   const [name, setName] = useState(nameOf(profile));
   const [savingName, setSavingName] = useState(false);
+  const [editName, setEditName] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   /** Bumped after a photo change so the avatar loads it again. */
@@ -104,50 +107,61 @@ export default function Settings() {
       <ScreenHead back title="Settings" />
 
       <h2 className="section-title">Profile</h2>
-      <div className="panel stack">
-        <div className="row" style={{ gap: 14 }}>
+      <div className="list">
+        <button className="list-item" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
           <Avatar key={photoKey} name={profile.username} hue={profile.avatarHue} size={56} uid={profile.id} />
-          <div className="grow">
-            <strong style={{ fontSize: 18 }}>{nameOf(profile)}</strong>
-            <p className="mute" style={{ fontSize: 14 }}>
-              @{profile.username} · {user.email}
-            </p>
-          </div>
-        </div>
-        <div className="row wrap" style={{ gap: 8 }}>
-          <button className="btn sm" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
-            {photoBusy ? 'Checking photo…' : hasPhoto ? 'Change photo' : 'Add photo'}
+          <span className="grow">
+            <strong>{photoBusy ? 'Checking photo…' : hasPhoto ? 'Change photo' : 'Add photo'}</strong>
+            <span className="mute small-text">{hasPhoto ? `@${profile.username} · ${user.email}` : 'Or keep your roundel'}</span>
+          </span>
+          <Camera size={22} aria-hidden="true" />
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null;
+            e.target.value = '';
+            if (f) void changePhoto(f);
+          }}
+        />
+        {hasPhoto && (
+          <button className="list-item" onClick={() => void changePhoto(null, true)}>
+            <span className="grow">
+              <strong>Remove photo</strong>
+              <span className="mute small-text">Show your roundel instead</span>
+            </span>
           </button>
-          {hasPhoto && (
-            <button className="btn ghost sm" onClick={() => void changePhoto(null, true)}>
-              Remove photo
-            </button>
-          )}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null;
-              e.target.value = '';
-              if (f) void changePhoto(f);
-            }}
-          />
-        </div>
-        <label className="field">
-          <span>Display name</span>
-          <div className="row" style={{ gap: 8 }}>
-            <input className="input grow" value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={profile.username} />
-            <button className="btn sm" disabled={savingName || !name.trim() || name.trim() === nameOf(profile)} onClick={saveName}>
-              {savingName ? 'Saving…' : 'Save'}
-            </button>
+        )}
+        {editName ? (
+          <div className="list-item settings-col">
+            <span className="mute small-text">Display name</span>
+            <div className="row" style={{ gap: 8 }}>
+              <input className="input grow" autoFocus value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={profile.username} aria-label="Display name" />
+              <button
+                className="btn primary sm"
+                disabled={savingName || !name.trim() || name.trim() === nameOf(profile)}
+                onClick={() => void saveName().then(() => setEditName(false))}
+              >
+                {savingName ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+            <span className="mute small-text">Shown on your profile, laps and leaderboards. Your @{profile.username} stays the same.</span>
           </div>
-          <small>Shown on your profile, laps and leaderboards. Your @{profile.username} stays the same.</small>
-        </label>
-        <div>
-          <p style={{ fontWeight: 500, marginBottom: 8 }}>Avatar colour (without a photo)</p>
-          <div className="row wrap" role="radiogroup" aria-label="Avatar colour">
+        ) : (
+          <button className="list-item" onClick={() => setEditName(true)}>
+            <span className="grow">
+              <span className="mute small-text">Display name</span>
+              <strong>{nameOf(profile)}</strong>
+            </span>
+            <Pencil size={20} aria-hidden="true" />
+          </button>
+        )}
+        <div className="list-item settings-col">
+          <span className="mute small-text">Avatar colour (without a photo)</span>
+          <div className="row wrap" role="radiogroup" aria-label="Avatar colour" style={{ gap: 10 }}>
             {HUES.map((h) => (
               <button
                 key={h}
@@ -164,46 +178,64 @@ export default function Settings() {
       </div>
 
       <h2 className="section-title">Driving</h2>
-      <div className="panel stack">
-        <label className="field">
-          <span>
-            Standing-start countdown: <strong className="num" style={{ fontSize: 18 }}>{countdown} s</strong>
+      <div className="list">
+        <div className="list-item">
+          <span className="grow">
+            <strong>Countdown</strong>
+            <span className="mute small-text">Lights go out this long after Start</span>
           </span>
-          <input type="range" min={3} max={10} step={1} value={countdown} onChange={(e) => setCountdown(Number(e.target.value))} />
-          <small>Lights go out exactly this long after you tap Start. The timer starts at GO.</small>
-        </label>
-      </div>
-
-      <h2 className="section-title">GPS logs</h2>
-      <div className="panel stack">
-        <small className="mute">The raw GPS of your last 5 real drives, kept on this phone. Replay them from Drive → Simulate, or send them to the developer to test timing.</small>
-        {logs.length === 0 && <p className="mute">No drives recorded yet.</p>}
-        {logs.map((l) => (
-          <div key={l.recordedAt} className="row" style={{ gap: 8 }}>
-            <span className="grow" style={{ minWidth: 0 }}>
-              <strong className="ellipsis" style={{ display: 'block' }}>{l.route.name}</strong>
-              <span className="mute" style={{ fontSize: 13 }}>
-                {new Date(l.recordedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} · {l.fixes.length} fixes
-              </span>
-            </span>
-            <button className="btn" onClick={() => downloadLog(l)}>
-              Download
+          <span className="stepper" role="group" aria-label="Countdown seconds">
+            <button className="icon-btn" aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
+              <ChevronLeft size={18} />
             </button>
-            <button
-              className="btn danger"
-              onClick={() => {
-                deleteLog(l.recordedAt);
-                setLogs(listLogs());
-              }}
-            >
-              Delete
+            <strong>{countdown} s</strong>
+            <button className="icon-btn" aria-label="Longer" disabled={countdown >= 10} onClick={() => setCountdown(countdown + 1)}>
+              <ChevronRight size={18} />
             </button>
-          </div>
-        ))}
+          </span>
+        </div>
+        <button className="list-item" onClick={() => setShowLogs((v) => !v)} aria-expanded={showLogs}>
+          <span className="grow">
+            <strong>GPS logs</strong>
+            <span className="mute small-text">Your last 5 real drives, kept on this phone</span>
+          </span>
+          <span className="badge outline">{logs.length}</span>
+          <ChevronRight size={18} aria-hidden="true" style={{ transform: showLogs ? 'rotate(90deg)' : undefined }} />
+        </button>
+        {showLogs && (
+          <>
+            {logs.length === 0 && (
+              <p className="list-item mute small-text">No drives recorded yet. Replay them from Drive → Simulate, or send them to the developer to test timing.</p>
+            )}
+            {logs.map((l) => (
+              <div key={l.recordedAt} className="list-item">
+                <span className="grow" style={{ minWidth: 0 }}>
+                  <strong className="ellipsis">{l.route.name}</strong>
+                  <span className="mute small-text">
+                    {new Date(l.recordedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} · {l.fixes.length} fixes
+                  </span>
+                </span>
+                <button className="btn sm" onClick={() => downloadLog(l)}>
+                  Download
+                </button>
+                <button
+                  className="btn sm danger"
+                  onClick={() => {
+                    deleteLog(l.recordedAt);
+                    setLogs(listLogs());
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       <h2 className="section-title">Route creation</h2>
-      <div className="panel stack">
+      <div className="list">
+        <div className="list-item settings-col">
         {role === 'owner' ? (
           <p>
             You're the <strong>owner</strong>. Unlimited public routes, shown as Official. Only you decide admin requests.
@@ -253,21 +285,19 @@ export default function Settings() {
             </button>
           </>
         )}
-      </div>
-
-      {usage && (
-        <>
-          <h2 className="section-title">Map usage this month</h2>
-          <div className="panel stack">
+        </div>
+        {usage && (
+          <div className="list-item settings-col">
+            <span className="mute small-text">
+              Map usage this month · resets {usage.resetsAt.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}
+            </span>
             <UsageBar label="Map loads" value={usage.mapLoads} cap={USAGE_CAP.mapLoads} />
             <UsageBar label="Road snapping" value={usage.directions} cap={USAGE_CAP.directions} />
             <UsageBar label="Route card maps" value={usage.staticMaps} cap={USAGE_CAP.staticMaps} />
-            <small className="mute">
-              Resets {usage.resetsAt.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}. The app pauses at the limit to stay free.
-            </small>
+            <span className="mute small-text">The app pauses at the limit to stay free.</span>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       <InstallButton className="btn block install-cta" />
       <AndroidAppButton className="btn block install-cta" />
@@ -290,7 +320,7 @@ function UsageBar({ label, value, cap }: { label: string; value: number; cap: nu
         </span>
       </div>
       <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={cap} aria-valuenow={value} aria-label={label}>
-        <span style={{ width: `${pct}%`, background: pct > 90 ? 'var(--red)' : pct > 70 ? 'var(--yellow)' : 'var(--green)' }} />
+        <span style={{ width: `${pct}%`, background: pct > 90 ? 'var(--red)' : 'var(--navy)' }} />
       </div>
     </div>
   );

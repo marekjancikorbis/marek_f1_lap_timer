@@ -108,10 +108,6 @@
   color: var(--ink-2);
 }
 
-.limit-date {
-  font-size: 1.125rem;
-  color: var(--ink) !important;
-}
 
 /* ================================================================ feed */
 
@@ -1255,17 +1251,29 @@
 
 .jump-banner {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  top: calc(var(--safe-t) + 56px);
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(var(--safe-t) + 12px) 16px 16px;
   background: var(--red);
   color: var(--on-navy);
-  font: italic 900 clamp(1.75rem, 8vw, 2.5rem) / 1 var(--font-num);
-  text-align: center;
-  padding: 18px 12px;
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-lift);
   animation: toast-in 240ms var(--ease-out);
+}
+
+.jump-banner > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.875rem;
+}
+
+.jump-banner strong {
+  font: italic 900 1.375rem/1 var(--font-ui);
+  text-transform: uppercase;
 }
 
 .drive-laps {
@@ -2818,4 +2826,353 @@
 
 .lap-panel .slower {
   color: var(--yellow);
+}
+
+/* Routes: each built route as a card with its shape in a tile. */
+.route-card {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+}
+
+.route-card-shape {
+  display: grid;
+  place-items: center;
+  height: 64px;
+  border-radius: 10px;
+  background: var(--raised);
+  overflow: hidden;
+}
+
+.route-card-name {
+  display: block;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.route-card .mute {
+  display: block;
+}
+
+.chip-btn {
+  min-height: 26px;
+  padding: 0 10px;
+  font-size: 0.6875rem;
+}
+
+.request-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.request-card > *:not(.livery) {
+  position: relative;
+  max-width: 270px;
+}
+
+/* Route page: chips, name and the sector-record stripe under the map. */
+.route-head {
+  margin-top: 16px;
+}
+
+.route-title {
+  margin-top: 8px;
+  font: italic 900 1.75rem/1.05 var(--font-ui);
+  text-transform: uppercase;
+}
+
+.route-records {
+  max-width: none;
+  margin-top: 12px;
+  padding-left: 6px;
+}
+
+.home-btn {
+  flex: none;
+  width: 56px;
+  padding: 0;
+}
+
+.home-btn.on {
+  color: var(--purple-ink, var(--purple));
+}
+
+.route-card-shape > *,
+.route-card-shape svg {
+  width: 100%;
+  max-width: 76px;
+  height: 64px;
+}
+
+.request-card p {
+  font-size: 0.875rem;
+}
+
+/* Settings: a row that stacks its label over its control. */
+.list-item.settings-col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+button.list-item {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.list-item > span.grow:not(.row) {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-col .hue-dot {
+  width: 34px;
+  height: 34px;
+}
+
+/* Notifications: moderator news on a navy shield roundel. */
+.mod-roundel {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--navy);
+  color: var(--on-navy);
+}
+
+.notice-link {
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.notice-text {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Compare: A and B as two cards with the swap between them. */
+.cmp-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.cmp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.cmp-card .cap {
+  color: var(--mute);
+}
+
+.cmp-card.record {
+  box-shadow: inset 0 0 0 2px var(--purple), var(--shadow-lift);
+}
+
+.cmp-card.record .cap {
+  color: var(--purple-ink, var(--purple));
+}
+
+.cmp-total {
+  font-size: 1.625rem;
+  line-height: 1.05;
+}
+
+.cmp-swap {
+  background: var(--card);
+  box-shadow: var(--shadow-lift);
+}
+
+.cmp-with {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--hairline-2);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.cmp-total-line {
+  margin: 12px 0 4px;
+}
+
+.cmp-total-line .num {
+  font-size: 1.375rem;
+}
+
+.cmp-total-line.faster .num {
+  color: var(--green-ink);
+}
+
+.cmp-total-line.slower .num {
+  color: var(--yellow-ink, var(--ink));
+}
+
+/* Explore, searching: the results replace the map, under the search and its Routes / Drivers tabs. */
+.map-screen.searching .explore-sheet {
+  top: 0;
+  left: 0;
+  right: 0;
+  max-height: none;
+  padding-top: calc(var(--safe-t) + 132px);
+  border: 0;
+  border-radius: 0;
+  background: var(--tarmac);
+  box-shadow: none;
+  transition: none;
+  z-index: 3;
+}
+
+.map-screen.searching .explore-sheet-head {
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.map-screen.searching .explore-sheet-head .grabber {
+  display: none;
+}
+
+.map-screen.searching .explore-sheet-body .explore-list {
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-lift);
+}
+
+.explore-top {
+  z-index: 4;
+}
+
+.explore-top .segmented {
+  margin-top: 12px;
+}
+
+
+/* Before the start and after a dropout: a small label over one big number. */
+.drive-cap {
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.drive-stripe {
+  display: flex;
+  gap: 8px;
+  width: min(100%, 340px);
+  margin-top: 40px;
+  transform: skewX(var(--skew));
+}
+
+.drive-stripe i {
+  flex: 1;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--navy-2);
+}
+
+.drive-partial-dist {
+  font-size: clamp(4rem, 24vw, 6rem);
+  line-height: 1;
+}
+
+.drive-note {
+  max-width: 34ch;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--navy-2);
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  text-align: left;
+}
+
+.drive-ask {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+/* Post sheet: a preview of exactly what goes public and where it places. */
+.sheet-title {
+  font: 700 1.25rem/1.2 var(--font-ui);
+  text-transform: none;
+}
+
+.post-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.post-preview > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.post-preview-time {
+  font-size: 1.625rem;
+}
+
+.post-preview-stripe {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+}
+
+.onboarding-stripe {
+  display: block;
+  width: 120px;
+  margin-bottom: 20px;
+}
+
+.admin-note {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 0.875rem;
+}
+
+.limit-body {
+  position: relative;
+  max-width: 280px;
+}
+
+.limit-day {
+  font-size: 5.5rem;
+  line-height: 1;
+}
+
+.limit-body .cap {
+  margin-top: 6px;
+}
+
+.limit-body h1 {
+  margin-top: 10px;
+}
+
+.limit-body p {
+  margin-top: 12px;
 }

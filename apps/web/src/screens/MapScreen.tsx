@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
 import { MapView } from '../components/MapView';
 import { RouteShape } from '../components/RouteShape';
-import { Avatar, errorMessage, Spinner, useToast, WhoText } from '../components/ui';
+import { Avatar, errorMessage, Segmented, Spinner, useToast, WhoText } from '../components/ui';
 import { myRoutes, publicRoutes, searchUsers, setPostCount } from '../lib/data';
 import { db } from '../lib/firebase';
 import { formatDistance } from '../lib/format';
@@ -17,7 +17,7 @@ import type { Profile, Route } from '../lib/types';
 /** What a route on the map is, which sets its colour. */
 type Kind = 'official' | 'creator' | 'private';
 
-const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#0e1b3d', private: '#1fa64f' };
+const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#0e1b3d', private: '#0e1b3d' };
 type Filter = 'all' | Kind | 'drivers';
 const FILTER_LABEL: Record<Filter, string> = { all: 'All routes', official: 'Official', creator: 'Creators', private: 'Mine', drivers: 'Drivers' };
 
@@ -339,19 +339,21 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
     .filter((r) => r.isPublic || filter === 'private')
     .sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name));
   const filters: Filter[] = ['all', 'official', 'creator', 'private', 'drivers'];
-  const showDrivers = filter === 'drivers' || (!!term && filter === 'all');
+  const showDrivers = filter === 'drivers';
   const showRoutes = filter !== 'drivers';
   // Collapsed, the sheet shows a couple of rows; searching opens it.
   const expanded = open || docked || dragging;
   const title =
     filter === 'drivers'
-      ? 'Drivers'
+      ? term && drivers
+        ? `Drivers · ${drivers.length} found`
+        : 'Drivers'
       : routes === null
         ? 'Loading routes…'
         : `${filter === 'private' ? 'Your routes' : term ? 'Matching routes' : 'Public routes'} · ${listed.length}`;
 
   return (
-    <main className="map-screen" hidden={!visible}>
+    <main className={`map-screen ${term ? 'searching' : ''}`} hidden={!visible}>
       <MapView onReady={onReady} center={camera?.center ?? [15.5, 49.8]} zoom={camera?.zoom ?? 6} height="100%" label="Routes" />
       <div className="explore-top" ref={topRef}>
         <label className="search-box explore-search">
@@ -383,6 +385,17 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
             )
           )}
         </label>
+        {term ? (
+          <Segmented
+            label="Show"
+            value={filter === 'drivers' ? 'drivers' : 'routes'}
+            onChange={(v) => setFilter(v === 'drivers' ? 'drivers' : 'all')}
+            options={[
+              { value: 'routes', label: 'Routes' },
+              { value: 'drivers', label: 'Drivers' },
+            ]}
+          />
+        ) : (
         <div className="chips" role="group" aria-label="Show">
           {filters.map((f) => (
             <button key={f} className="chip" aria-pressed={filter === f} onClick={() => {
@@ -393,12 +406,13 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
             </button>
           ))}
         </div>
+        )}
       </div>
 
       <section
         ref={sheetRef}
         className={`explore-sheet ${expanded ? 'open' : ''} ${docked ? 'docked' : ''}`}
-        style={docked ? { top: dock.top, maxHeight: dock.h } : undefined}
+        style={docked && !term ? { top: dock.top, maxHeight: dock.h } : undefined}
         aria-label="Results"
         // Keeps the search focused (and the list in place) when a result is tapped.
         onMouseDown={(e) => docked && e.preventDefault()}
@@ -455,7 +469,6 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
             ))}
           {showDrivers && (
             <>
-              {filter === 'all' && <h2 className="section-title">Drivers</h2>}
               {!term ? (
                 <p className="mute explore-empty">Type the start of a name or @username to find a driver.</p>
               ) : drivers && drivers.length === 0 && !searching ? (
@@ -468,7 +481,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
                         <Avatar name={p.username} hue={p.avatarHue} size={36} uid={p.id} />
                         <WhoText p={p} />
                       </Link>
-                      <FollowButton userId={p.id} />
+                      {p.id !== profile.id && <FollowButton userId={p.id} />}
                     </li>
                   ))}
                 </ul>
