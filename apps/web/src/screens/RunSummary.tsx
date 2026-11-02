@@ -1,13 +1,14 @@
 import type mapboxgl from 'mapbox-gl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { PostSheet } from '../components/PostSheet';
-import { LapView } from '../components/LapView';
-import { Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
+import { LapView, useSectorTable } from '../components/LapView';
+import { Avatar, Empty, errorMessage, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
 import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from '../lib/data';
-import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
+import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 import { coloursFor, notCounted, pbsBefore, recordsExcluding, resolveLap, runToLap, sameSectors, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
+import { Share2, X } from 'lucide-react';
 import { shareLap } from '../lib/shareImage';
 import type { Post, Route, Run } from '../lib/types';
 
@@ -22,6 +23,9 @@ export default function RunSummary() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [posting, setPosting] = useState(false);
+  // The summary first; the full breakdown (sectors, graphs, map) behind Details.
+  const [params, setParams] = useSearchParams();
+  const details = params.get('view') === 'details';
 
   const load = useCallback(async () => {
     const r = await getRun(profile.id, runId);
@@ -70,6 +74,8 @@ export default function RunSummary() {
     [run, runs, route],
   );
   const stage = route ? !route.isLoop : false;
+  const table = useSectorTable(run ?? null, route, posts, against, colours);
+  const pbBefore = useMemo(() => (run ? runs.filter((r) => r.valid && r.id !== run.id && r.startedAt < run.startedAt && sameSectors(r, run)).reduce<number | null>((m, r) => (m == null || r.totalMs < m ? r.totalMs : m), null) : null), [run, runs]);
 
   const traceLayer = useCallback(
     (map: mapboxgl.Map) => {
@@ -132,9 +138,119 @@ export default function RunSummary() {
 
   const canPost = route?.isPublic && !route.hidden && run.valid && !run.replay;
 
+  const gap = against && !run.partial && !against.partial ? run.totalMs - against.totalMs : null;
+  const newPb = run.valid && !run.replay && (pbBefore == null || run.totalMs < pbBefore);
+  const cap = stage
+    ? `${run.routeName} · stage${route ? ` · ${formatDistance(route.lengthM)}` : ''}`
+    : `${run.routeName} · lap ${run.lap + 1}${session.length > 1 ? ` of ${session.length}` : ''}`;
+
+  if (!details)
+    return (
+      <main className="screen">
+        <section className="top-panel navy run-panel">
+          <span className="livery" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <Link to={`/r/${run.routeId}`} className="icon-btn back" aria-label="Close">
+            <X size={24} />
+          </Link>
+          <div className="run-panel-body">
+            <span className="cap">{cap}</span>
+            <span className="num run-panel-time">{run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}</span>
+            <span className="row wrap" style={{ gap: 8 }}>
+              {gap != null && (
+                <span className={`num run-panel-gap ${gap <= 0 ? 'faster' : 'slower'}`}>
+                  {formatDelta(gap, 2)} vs {against!.label}
+                </span>
+              )}
+              {newPb && <span className="badge green">New PB</span>}
+              {run.replay && <span className="badge outline">Simulated</span>}
+              {run.posted && <span className="badge ink">Posted</span>}
+              {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
+              {run.penaltyMs > 0 && <span className="badge red">+{formatSeconds(run.penaltyMs, 0)}</span>}
+            </span>
+          </div>
+          {table && (
+            <div className="run-stripe" role="img" aria-label={table.map((t) => `${t.row.name} ${t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : formatLap(t.row.ms)}`).join(', ')}>
+              {table.map((t) => (
+                <b key={t.row.name} className={t.row.colour ? `flag-${t.row.colour}` : 'empty'}>
+                  <span>
+                    {t.row.name} {t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : ''}
+                  </span>
+                </b>
+              ))}
+            </div>
+          )}
+          <div className="row run-panel-actions">
+            {canPost && !run.posted && (
+              <button className="btn primary grow" onClick={() => setPosting(true)}>
+                <Share2 size={16} aria-hidden="true" /> {stage ? 'Post time' : 'Post lap'}
+              </button>
+            )}
+            <button className="btn" onClick={() => setParams({ view: 'details' })}>
+              Details
+            </button>
+          </div>
+        </section>
+
+        {run.replay && route?.isPublic && <p className="mute small-text" style={{ marginTop: 12 }}>Simulated laps can't be posted.</p>}
+        {!run.valid && (
+          <p className="mute small-text" style={{ marginTop: 12 }}>
+            {run.partial ? 'The GPS signal dropped out before the finish.' : `No GPS signal for ${formatSeconds(run.gpsGapMs ?? 0, 0)}.`} It can be compared but can't be posted or set a best.
+          </p>
+        )}
+
+        {stage && run.valid && <StageCompare run={run} prev={prev} userId={profile.id} posts={route?.isPublic ? posts : []} />}
+        {stage && (
+          <div className="list" style={{ marginTop: 10 }}>
+            <Link to={`/r/${run.routeId}/history`} className="list-item">
+              <span className="grow">
+                <strong>All your times on this stage</strong>
+                <span className="mute small-text">
+                  {runs.length} {runs.length === 1 ? 'run' : 'runs'} · newest first or fastest
+                </span>
+              </span>
+            </Link>
+          </div>
+        )}
+
+        {session.length > 1 && (
+          <>
+            <h2 className="section-title row between">
+              This session <span className="mute small-text">{session.length} laps</span>
+            </h2>
+            <div className="list">
+              {session.map((r) => (
+                <Link key={r.id} to={`/run/${r.id}`} className={`list-item ${r.id === run.id ? 'current' : ''}`} aria-current={r.id === run.id}>
+                  <span className="pos num">{r.lap + 1}</span>
+                  <span className="grow row" style={{ gap: 6 }}>
+                    <strong className="num lap-row-time">{r.partial ? formatDistance(route?.boundaries[r.splitTimesMs.length - 1] ?? 0) : formatLap(r.totalMs)}</strong>
+                    {r.penaltyMs > 0 && <span className="badge red">+5 s</span>}
+                    {notCounted(r) && <span className="badge outline">{notCounted(r)}</span>}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="row" style={{ marginTop: 14 }}>
+          <Link className="btn primary grow" to={`/drive/${run.routeId}${run.referenceRef ? `?ref=${run.referenceRef}` : ''}`}>
+            {stage ? 'Drive it again' : 'Drive again'}
+          </Link>
+          <button className="btn danger" onClick={discard}>
+            Discard
+          </button>
+        </div>
+
+        {route && <PostSheet open={posting} onClose={() => setPosting(false)} run={run} route={route} myRuns={runs} onPosted={() => setRun({ ...run, posted: true })} />}
+      </main>
+    );
+
   return (
     <main className="screen">
-      <ScreenHead back={`/r/${run.routeId}`} title={stage ? 'Stage' : 'Lap'} />
       <LapView
         lap={{ ...run, profile: run.profile ?? null, username: profile.username, userId: profile.id, avatarHue: profile.avatarHue }}
         colours={colours}
@@ -193,41 +309,14 @@ export default function RunSummary() {
           </div>
         }
       >
-        <div className="row" style={{ marginTop: 24 }}>
-          <Link className="btn primary grow" to={`/r/${run.routeId}`}>
-            Keep
-          </Link>
-          {run.posted && (
+        {run.posted && (
+          <div className="row" style={{ marginTop: 24 }}>
             <button className="btn grow" onClick={unpost}>
               Remove post
             </button>
-          )}
-          <button className="btn danger grow" onClick={discard}>
-            Discard
-          </button>
-        </div>
-      </LapView>
-
-      {stage && run.valid && <StageCompare run={run} prev={prev} userId={profile.id} posts={route?.isPublic ? posts : []} />}
-
-      {session.length > 1 && (
-        <>
-          <h2 className="section-title">This session</h2>
-          <div className="list">
-            {session.map((r) => (
-              <Link key={r.id} to={`/run/${r.id}`} className="list-item" aria-current={r.id === run.id}>
-                <span className="grow">
-                  Lap {r.lap + 1}
-                  {notCounted(r) && <span className="mute"> · {notCounted(r)}</span>}
-                </span>
-                <strong className="num" style={{ fontSize: 20 }}>
-                  {formatLap(r.totalMs)}
-                </strong>
-              </Link>
-            ))}
           </div>
-        </>
-      )}
+        )}
+      </LapView>
 
       {route && <PostSheet open={posting} onClose={() => setPosting(false)} run={run} route={route} myRuns={runs} onPosted={() => setRun({ ...run, posted: true })} />}
     </main>

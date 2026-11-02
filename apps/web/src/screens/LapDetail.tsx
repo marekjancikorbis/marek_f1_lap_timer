@@ -86,7 +86,6 @@ export default function LapDetail() {
 
   return (
     <main className="screen">
-      <ScreenHead back title="Lap" />
       <LapView
         lap={post}
         colours={post.sectorColours}

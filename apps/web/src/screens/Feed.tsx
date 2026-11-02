@@ -2,12 +2,12 @@ import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/f
 import { Bell } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HomeCourse } from '../components/HomeCourse';
 import { LapCardSkeleton } from '../components/Skeleton';
 import { LapCard } from '../components/LapCard';
 import { Empty, errorMessage, Spinner, useToast } from '../components/ui';
 import { feedPage, followingIds, forget, getRoute, getRoutes, routeStats, unreadNotices, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
+import { formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
 
@@ -128,15 +128,58 @@ export function Feed() {
 
   return (
     <main className="screen feed">
-      <header className="screen-head">
-        <h1 className="wordmark small">
-          Purple <span>Sector</span>
-        </h1>
-        <Link to="/notifications" className="icon-btn bell" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
-          <Bell size={24} />
-          {unread > 0 && <span className="bell-count">{unread > 9 ? '9+' : unread}</span>}
-        </Link>
-      </header>
+      {/* The navy panel: wordmark, notifications and the home course, one tap from driving it. */}
+      <section className="feed-panel navy">
+        <span className="livery" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
+        <header className="screen-head">
+          <h1 className="wordmark small">Purple Sector</h1>
+          <Link to="/notifications" className="icon-btn bell" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
+            <Bell size={24} />
+            {unread > 0 && <span className="bell-count">{unread > 9 ? '9+' : unread}</span>}
+          </Link>
+        </header>
+        {home ? (
+          <div className="feed-home">
+            <span className="cap">
+              Your home course · {formatDistance(home.route.lengthM)}
+            </span>
+            <strong className="feed-home-name">{home.route.name}</strong>
+            {home.pb != null ? (
+              <>
+                <span className="num feed-home-time">{formatLap(home.pb)}</span>
+                <span className="mute small-text">Your best</span>
+              </>
+            ) : (
+              <span className="mute small-text">Not driven yet</span>
+            )}
+            <span className="row" style={{ marginTop: 16 }}>
+              <Link className="btn primary" to={`/drive/${home.route.id}`}>
+                Drive
+              </Link>
+              <Link className="btn" to={`/r/${home.route.id}/history`}>
+                Times
+              </Link>
+            </span>
+          </div>
+        ) : (
+          !profile.homeRouteId && (
+            <div className="feed-home">
+              <span className="cap">Your home course</span>
+              <strong className="feed-home-name">Pick the route you drive most</strong>
+              <span className="mute small-text">It stays here with your best time and one tap to drive it.</span>
+              <span className="row" style={{ marginTop: 16 }}>
+                <Link className="btn primary" to="/explore">
+                  Find a route
+                </Link>
+              </span>
+            </div>
+          )
+        )}
+      </section>
 
       {newCount > 0 && (
         <button className="new-pill" onClick={() => void loadFirst(true)}>
@@ -146,8 +189,12 @@ export function Feed() {
 
       {error && <p className="notice error">{error}</p>}
 
-      {home && <HomeCourse route={home.route} pb={home.pb} />}
-      {home && <h2 className="section-title">Following</h2>}
+      {posts.length > 0 && (
+        <h2 className="section-title row between">
+          Following
+          {newCount > 0 && <span className="section-link">{newCount} new</span>}
+        </h2>
+      )}
 
       {loading ? (
         <div className="stack-lg">
@@ -161,7 +208,7 @@ export function Feed() {
           The drivers you follow haven't posted a lap yet. New posts show up here, newest first.
         </Empty>
       ) : (
-        <div className="stack-lg">
+        <div className="stack">
           {posts.map((p) => (
             <LapCard key={p.id} post={p} route={routes.get(p.routeId)} canCompare={driven.has(p.routeId)} />
           ))}

@@ -98,6 +98,7 @@ export function LapView({
   const board = useMemo(() => leaderboardFrom(posts), [posts]);
   const rank = board.find((r) => r.post.id === lap.id)?.rank;
   const ref = sameRouteRef(lap, reference, route);
+  const nav = useNavigate();
 
   const table = useSectorTable(lap, route, posts, ref, colours);
 
@@ -106,48 +107,49 @@ export function LapView({
 
   return (
     <>
-      <Link to={`/u/${lap.username}`} className="row" style={{ gap: 10, textDecoration: 'none' }}>
-        <Avatar name={lap.username} hue={lap.avatarHue} size={40} uid={lap.userId} />
-        <span className="grow">
-          <strong>{lap.userId ? <UserName uid={lap.userId} fallback={lap.username} /> : lap.username}</strong>
-          <span className="mute" style={{ display: 'block', fontSize: 14 }}>
-            {formatDate(lap.startedAt)}
-          </span>
-        </span>
-      </Link>
-
-      <section className="lap-hero navy">
+      {/* The navy panel: back, who drove it, the time, what it raced, and the actions. */}
+      <section className="top-panel navy lap-panel">
         <span className="livery thin" aria-hidden="true">
           <i />
           <i />
           <i />
         </span>
-        {route && <RouteShape route={bigRoute(route)} colours={table?.map((t) => t.row.colour) ?? []} height={150} label={`${lap.routeName}, sectors coloured by this lap`} />}
-        <Link to={`/r/${lap.routeId}`} className="lap-hero-route">
-          {lap.routeName}
-        </Link>
-        <div className={`lap-hero-time num ${rank === 1 ? 'fastest' : ''}`}>{formatLap(lap.totalMs)}</div>
-        <div className="row wrap" style={{ gap: 6, justifyContent: 'center' }}>
-          {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>P{rank} now</span>}
-          {badges}
-          {lap.penaltyMs > 0 && <span className="badge red">incl. +{formatSeconds(lap.penaltyMs, 3)} jump start</span>}
+        <button className="icon-btn back" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))}>
+          <ChevronLeft size={26} />
+        </button>
+        <div className="lap-panel-body">
+          <Link to={`/u/${lap.username}`} className="row" style={{ gap: 12, textDecoration: 'none' }}>
+            <Avatar name={lap.username} hue={lap.avatarHue} size={44} uid={lap.userId} />
+            <span className="grow" style={{ minWidth: 0 }}>
+              <strong>{lap.userId ? <UserName uid={lap.userId} fallback={lap.username} /> : lap.username}</strong>
+              <span className="mute small-text ellipsis">
+                {lap.routeName} · {formatDate(lap.startedAt)}
+              </span>
+            </span>
+          </Link>
+          <div className="row wrap" style={{ gap: 10, alignItems: 'baseline', marginTop: 12 }}>
+            <span className={`num lap-panel-time ${rank === 1 ? 'fastest' : ''}`}>{formatLap(lap.totalMs)}</span>
+            {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>{rank === 1 ? 'Route record' : `P${rank} now`}</span>}
+            {badges}
+            {lap.penaltyMs > 0 && <span className="badge red">incl. +{formatSeconds(lap.penaltyMs, 3)}</span>}
+          </div>
+          {ref && (
+            <p className="mute small-text" style={{ marginTop: 4 }}>
+              vs {ref.label} <span className="num">{formatLap(ref.totalMs)}</span>
+              {!lap.partial && !ref.partial && (
+                <>
+                  {' · '}
+                  <strong className={lap.totalMs <= ref.totalMs ? 'faster' : 'slower'}>
+                    {formatDelta(Math.abs(lap.totalMs - ref.totalMs), 2).replace(/^[+−-]/, '')} {lap.totalMs <= ref.totalMs ? 'faster' : 'slower'}
+                  </strong>
+                </>
+              )}
+            </p>
+          )}
+          {caption}
+          {actions}
         </div>
-        {caption}
       </section>
-
-      {ref && (
-        <p className="lap-against">
-          <span className="mute">
-            Raced against <strong>{ref.label}</strong>
-          </span>
-          <span className="num">
-            {formatLap(ref.totalMs)}{' '}
-            {!lap.partial && !ref.partial && <span className={lap.totalMs <= ref.totalMs ? 'faster' : 'slower'}>{formatDelta(lap.totalMs - ref.totalMs, 3)}</span>}
-          </span>
-        </p>
-      )}
-
-      {actions}
 
       <LapTabs lap={lap} reference={ref} route={route} colours={miniColours} sectors={sectors} mapExtra={mapExtra} onOpen={onOpen} />
 

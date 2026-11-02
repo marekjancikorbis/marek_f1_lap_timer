@@ -1,73 +1,68 @@
-import { BarChart3, Flag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatLap, formatSeconds, timeAgo } from '../lib/format';
-import { bigRoute, postBigColours } from '../lib/laps';
+import { postBigColours } from '../lib/laps';
 import type { Post, Route } from '../lib/types';
-import { RouteShape } from './RouteShape';
-import { Avatar, UserName, SectorStrip } from './ui';
+import { Avatar, SectorStrip } from './ui';
 
 interface Props {
   post: Post;
   route: Route | null | undefined;
-  canCompare: boolean;
+  /** Kept for callers; comparing lives on the lap's own page. */
+  canCompare?: boolean;
   showAuthor?: boolean;
 }
 
-/** A posted lap in the feed: the time first, the route shape beside it, one action to race it. */
-export function LapCard({ post, route, canCompare, showAuthor = true }: Props) {
+/** A posted lap: who, the time first, the lap's sector stripe, and one action to race it. */
+export function LapCard({ post, route, showAuthor = true }: Props) {
   const created = post.createdAt?.toDate() ?? null;
   const colours = postBigColours(post, route);
   const p1 = post.positionAtPost === 1;
-  // Without the author row (on their own profile) the date moves here.
-  const meta = [post.car, showAuthor ? null : timeAgo(created)].filter(Boolean).join(' · ');
-  return (
-    <article className="lap-card">
-      {showAuthor && (
-        <Link to={`/u/${post.username}`} className="row lap-card-who">
-          <Avatar name={post.username} hue={post.avatarHue} size={34} uid={post.userId} />
-          <span className="grow">
-            <strong>
-              <UserName uid={post.userId} fallback={post.username} />
-            </strong>
-            <span className="mute"> · {timeAgo(created)}</span>
+  const chip = p1 ? <span className="badge purple">Record</span> : post.isPB ? <span className="badge green">New PB</span> : null;
+
+  // On a driver's own profile: a row with the route, when and where it placed, and the time on the right.
+  if (!showAuthor)
+    return (
+      <Link to={`/lap/${post.id}`} className="list-item lap-row" aria-label={`${post.routeName}, ${formatLap(post.totalMs)}, lap details`}>
+        <span className="grow">
+          <strong className="ellipsis">{post.routeName}</strong>
+          <span className="mute small-text">
+            Posted {timeAgo(created)}
+            {post.positionAtPost != null && ` · P${post.positionAtPost}`}
+            {post.penaltyMs > 0 && ` · +${formatSeconds(post.penaltyMs, 0)}`}
           </span>
-        </Link>
-      )}
-      <Link to={`/lap/${post.id}`} className="lap-card-body" aria-label={`${post.routeName}, ${formatLap(post.totalMs)}, lap details`}>
-        <span className="lap-card-main">
-          <span className="lap-card-route">{post.routeName}</span>
-          <span className={`lap-card-time num ${p1 ? 'fastest' : ''}`}>{formatLap(post.totalMs)}</span>
-          <span className="row wrap" style={{ gap: 6 }}>
-            {post.positionAtPost != null && <span className={`badge ${p1 ? 'purple' : ''}`}>P{post.positionAtPost}</span>}
-            {post.isPB && <span className="badge ink">New PB</span>}
-            {post.penaltyMs > 0 && <span className="badge red">+{formatSeconds(post.penaltyMs, 0)} jump start</span>}
-          </span>
-        </span>
-        <span className="lap-card-shape">
-          {route ? (
-            <RouteShape route={bigRoute(route)} colours={colours} height={120} label={`${post.routeName}, sectors coloured by this lap`} />
-          ) : (
-            <span className="skeleton" style={{ display: 'block', height: 96 }} />
+          {colours.length > 0 && (
+            <span className="lap-row-stripe">
+              <SectorStrip colours={colours} />
+            </span>
           )}
         </span>
+        <strong className={`num lap-row-time ${p1 ? 'fastest' : ''}`}>{formatLap(post.totalMs)}</strong>
       </Link>
-      {colours.length > 0 && <SectorStrip colours={colours} height={6} />}
-      {(post.caption || meta) && (
-        <p className="lap-card-caption">
-          {post.caption}
-          {meta && <span className="mute">{post.caption ? ' · ' : ''}{meta}</span>}
-        </p>
-      )}
-      <div className="lap-card-actions">
-        <Link className="btn primary grow" to={`/drive/${post.routeId}?ref=post:${post.id}`}>
-          <Flag size={17} aria-hidden="true" /> Race this lap
-        </Link>
-        {canCompare && (
-          <Link className="btn grow" to={`/compare/${post.routeId}?a=best&b=post:${post.id}`}>
-            <BarChart3 size={17} aria-hidden="true" /> Compare
-          </Link>
+    );
+
+  return (
+    <article className="lap-card">
+      <Link to={`/u/${post.username}`} aria-label={post.username}>
+        <Avatar name={post.username} hue={post.avatarHue} size={44} uid={post.userId} />
+      </Link>
+      <Link to={`/lap/${post.id}`} className="lap-card-main" aria-label={`${post.routeName}, ${formatLap(post.totalMs)}, lap details`}>
+        <span className="lap-card-meta ellipsis">
+          {post.username} · {post.routeName} · {timeAgo(created)}
+        </span>
+        <span className="row" style={{ gap: 8 }}>
+          <span className={`lap-card-time num ${p1 ? 'fastest' : ''}`}>{formatLap(post.totalMs)}</span>
+          {chip}
+          {post.penaltyMs > 0 && <span className="badge red">+{formatSeconds(post.penaltyMs, 0)}</span>}
+        </span>
+        {colours.length > 0 && (
+          <span className="lap-card-stripe">
+            <SectorStrip colours={colours} />
+          </span>
         )}
-      </div>
+      </Link>
+      <Link className="btn sm" to={`/drive/${post.routeId}?ref=post:${post.id}`}>
+        Race
+      </Link>
     </article>
   );
 }

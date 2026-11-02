@@ -48,30 +48,17 @@ export function SkeletonRows({ count = 6, h = 66, pic = 40, square, end, rank }:
   );
 }
 
-/** A feed card: who, route and time beside the shape, sector strip, the two actions. */
+/** A feed card: roundel, who and where, the time, the stripe, and Race. */
 export function LapCardSkeleton({ author = true }: { author?: boolean }) {
   return (
     <div className="lap-card sk-card" aria-hidden="true">
-      {author && (
-        <div className="row lap-card-who">
-          <B w={34} h={34} r="50%" />
-          <B w={130} h={14} r={4} />
-        </div>
-      )}
-      <div className="lap-card-body">
-        <span className="lap-card-main">
-          <B w={80} h={17} r={4} />
-          <B w={170} h={44} r={8} />
-          <B w={30} h={24} r={6} />
-        </span>
-        <B h={120} r={12} />
-      </div>
-      <B h={6} r={3} />
-      <B w="40%" h={22} r={4} />
-      <div className="lap-card-actions">
-        <B h={44} r={12} />
-        <B h={44} r={12} />
-      </div>
+      {author ? <B w={44} h={44} r="50%" /> : <span />}
+      <span className="lap-card-main">
+        <B w={170} h={13} r={4} />
+        <B w={120} h={30} r={6} />
+        <B w={150} h={8} r={3} />
+      </span>
+      <B w={64} h={36} r={18} />
     </div>
   );
 }

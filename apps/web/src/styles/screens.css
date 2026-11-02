@@ -2462,3 +2462,360 @@
 .lap-hero.navy .lap-hero-route {
   color: var(--ink-2);
 }
+
+/* ================================================================ livery layouts (design/livery) */
+
+.cap {
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-stretch: 112%;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* Full-bleed navy panel at the top of a screen, under the status bar. */
+.feed-panel,
+.top-panel {
+  position: relative;
+  overflow: hidden;
+  margin: calc((var(--safe-t) + var(--s-4)) * -1) calc(var(--s-4) * -1) 0;
+  padding: calc(var(--safe-t) + 8px) var(--s-4) 22px;
+}
+
+.feed-panel > *:not(.livery),
+.top-panel > *:not(.livery) {
+  position: relative;
+}
+
+.feed-panel .screen-head {
+  margin-bottom: 10px;
+  padding-right: 64px;
+}
+
+.feed-home {
+  display: flex;
+  flex-direction: column;
+  max-width: 250px;
+}
+
+.feed-home-name {
+  margin-top: 2px;
+  font: 700 1.1875rem/1.2 var(--font-ui);
+}
+
+.feed-home-time {
+  margin-top: 10px;
+  font-size: 4rem;
+  line-height: 1;
+}
+
+/* A posted lap in the feed: roundel, who and where, the time, the stripe, and Race. */
+.lap-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.lap-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.lap-card-meta {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.lap-card-time {
+  font-size: 1.875rem;
+  line-height: 1;
+}
+
+.lap-card-stripe,
+.lap-row-stripe {
+  display: block;
+  width: 150px;
+  margin-top: 4px;
+}
+
+.lap-row-stripe {
+  width: 120px;
+  margin-top: 6px;
+}
+
+.lap-row .grow {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lap-row-time {
+  font-size: 1.875rem;
+  line-height: 1;
+}
+
+/* Profile: the navy panel with the roundel, counts and the home course strip. */
+.profile-panel-bar {
+  min-height: 44px;
+  margin-bottom: 4px;
+  padding-right: 40px;
+}
+
+.profile-panel-bar .screen-head {
+  margin: 0;
+}
+
+.profile-panel .profile-name {
+  font: 800 1.5rem/1.1 var(--font-ui);
+  text-transform: none;
+}
+
+.profile-panel .profile-counts {
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 0.875rem;
+  display: flex;
+  text-align: left;
+}
+
+.profile-panel .profile-counts a {
+  flex-direction: row;
+  display: inline;
+  color: var(--mute);
+}
+
+.profile-panel .profile-counts strong {
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.profile-panel .profile-home {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--navy-2);
+  color: var(--ink);
+  text-decoration: none;
+  gap: 10px;
+}
+
+.profile-panel .profile-home .grow {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.profile-panel .profile-home .num {
+  font-size: 1.25rem;
+}
+
+.heat {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-lift);
+}
+
+/* App bar title on screens with a back button, as in the mockups. */
+.bar-title {
+  font: 700 1.0625rem/1.2 var(--font-ui);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.btn.xl {
+  min-height: 60px;
+  font-size: 1.1875rem;
+}
+
+/* Pre-drive: who to race, as rows with the radio on the right. */
+.ref-row {
+  cursor: pointer;
+  color: inherit;
+}
+
+.ref-row.on {
+  background: var(--blue-soft);
+}
+
+.ref-row .grow {
+  display: flex;
+  flex-direction: column;
+}
+
+.ref-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  flex: none;
+  color: var(--ink);
+}
+
+.ref-row .radio {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--hairline-2);
+}
+
+.ref-row.on .radio {
+  box-shadow: inset 0 0 0 6px var(--raised), inset 0 0 0 12px var(--navy), 0 0 0 2px var(--navy);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--raised-2);
+}
+
+.stepper .icon-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--card);
+}
+
+.stepper strong {
+  min-width: 44px;
+  text-align: center;
+}
+
+.predrive-screen {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.predrive-screen .segmented {
+  width: 100%;
+}
+
+.terms-title {
+  font: 800 2rem/1.1 var(--font-ui);
+  text-transform: none;
+}
+
+.terms-lead {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.terms-row {
+  align-items: flex-start;
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+}
+
+.terms-row svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--ink);
+}
+
+/* Run summary: the result owns the navy panel, its big stripe carries each sector's gap. */
+.run-panel .back {
+  margin-left: -10px;
+}
+
+.run-panel-body {
+  display: flex;
+  flex-direction: column;
+  max-width: 260px;
+  gap: 8px;
+}
+
+.run-panel-time {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.run-panel-gap {
+  font-size: 1.25rem;
+}
+
+.run-panel .faster {
+  color: var(--green-ink);
+}
+
+.run-panel .slower {
+  color: var(--yellow);
+}
+
+.run-stripe {
+  display: flex;
+  gap: 4px;
+  max-width: 300px;
+  margin-top: 16px;
+  padding-left: 4px;
+}
+
+.run-stripe b {
+  flex: 1;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 2px;
+  background: var(--flag, transparent);
+  color: var(--flag-ink, var(--ink));
+  transform: skewX(var(--skew));
+  font: italic 800 0.75rem/1 var(--font-ui);
+  white-space: nowrap;
+}
+
+.run-stripe b.empty {
+  box-shadow: inset 0 0 0 1.5px var(--hairline-2);
+}
+
+.run-stripe b span {
+  transform: skewX(18deg);
+}
+
+.run-panel-actions {
+  margin-top: 16px;
+  max-width: 300px;
+}
+
+.pos {
+  width: 28px;
+  flex: none;
+  text-align: center;
+  font-size: 1.25rem;
+}
+
+.list-item.current {
+  background: var(--blue-soft);
+}
+
+/* Lap detail: who, the time and what it raced in the navy panel. */
+.lap-panel .back {
+  margin: 0 0 4px -10px;
+}
+
+.lap-panel-body {
+  max-width: 280px;
+}
+
+.lap-panel-time {
+  font-size: 3.25rem;
+  line-height: 1;
+}
+
+.lap-panel .faster {
+  color: var(--green-ink);
+}
+
+.lap-panel .slower {
+  color: var(--yellow);
+}

@@ -1,8 +1,8 @@
 import { serverTimestamp } from 'firebase/firestore';
-import { Play } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, Clock, Flag, Shield, User as UserIcon, Volume2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, SectorStrip, Switch, useToast } from '../components/ui';
+import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Switch, useToast } from '../components/ui';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getPost, getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom, updateMyProfile } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
@@ -169,16 +169,28 @@ export default function PreDrive() {
       </main>
     );
 
+  const icon = (o: Option) =>
+    o.who ? (
+      <Avatar name={o.who.name} hue={o.who.hue} size={32} />
+    ) : o.ref === 'record' ? (
+      <BarChart3 size={22} className="fastest" aria-hidden="true" />
+    ) : o.ref === 'best' ? (
+      <Clock size={22} aria-hidden="true" />
+    ) : o.ref === '' ? (
+      <X size={22} aria-hidden="true" />
+    ) : (
+      <UserIcon size={22} aria-hidden="true" />
+    );
   const renderOption = (o: Option) => (
-    <button key={o.ref} className={`ref-option ${ref === o.ref ? 'on' : ''}`} onClick={() => setRef(o.ref)} aria-pressed={ref === o.ref}>
-      <span className="radio" aria-hidden="true" />
-      {o.who ? <Avatar name={o.who.name} hue={o.who.hue} size={30} /> : o.fastest ? <span className="ref-dot purple" /> : null}
+    <button key={o.ref} className={`list-item ref-row ${ref === o.ref ? 'on' : ''}`} onClick={() => setRef(o.ref)} aria-pressed={ref === o.ref}>
+      <span className="ref-icon">{icon(o)}</span>
       <span className="grow" style={{ minWidth: 0 }}>
         <strong className="ellipsis">{o.title}</strong>
-        <span className="mute ellipsis small-text">{o.sub}</span>
-        {o.colours && o.colours.length > 0 && <SectorStrip colours={o.colours} height={4} />}
+        <span className="mute ellipsis small-text">
+          {o.totalMs != null ? `${formatLap(o.totalMs)} · ${o.sub}` : o.sub}
+        </span>
       </span>
-      {o.totalMs != null && <span className={`num ref-time ${o.fastest ? 'fastest' : ''}`}>{formatLap(o.totalMs)}</span>}
+      <span className="radio" aria-hidden="true" />
     </button>
   );
 
@@ -199,15 +211,14 @@ export default function PreDrive() {
     <main className="screen predrive with-cta">
       <ScreenHead back title={route.name} />
       <p className="mute predrive-sub">
-        3 sectors · {route.startType === 'standing' ? 'standing start' : 'rolling start'} · {formatDistance(route.lengthM)}
+        {route.startType === 'standing' ? 'Standing start' : 'Rolling start'} · {formatDistance(route.lengthM)}
       </p>
 
       <h2 className="section-title">Race against</h2>
-      <div className="stack" style={{ gap: 8 }}>
+      <div className="list">
         {options.mine.slice(0, 6).map(renderOption)}
         {options.mine.length > 1 && renderOption({ ref: 'best', title: 'Theoretical best', sub: 'Your best time in each sector', totalMs: null, splits: null, fastest: false })}
         {posts.length > 0 && renderOption({ ref: 'record', title: 'Route record', sub: 'The fastest time in every sector added up', totalMs: null, splits: null, fastest: true })}
-        {options.theirs.length > 0 && <p className="mute small-text" style={{ marginTop: 8 }}>Posted laps</p>}
         {options.theirs.map(renderOption)}
         {renderOption({ ref: '', title: 'No reference', sub: 'Just the clock and sector colours', totalMs: null, splits: null })}
       </div>
@@ -215,20 +226,24 @@ export default function PreDrive() {
       <h2 className="section-title">Setup</h2>
       <div className="list">
         {route.startType === 'standing' && (
-          <label className="list-item predrive-countdown">
+          <div className="list-item">
             <span className="grow">
               <strong>Countdown</strong>
-              <span className="mute small-text">Timing starts when you move off after GO. Moving more than 10 m before GO adds 5 s.</span>
-              <input type="range" min={3} max={10} step={1} value={countdown} onChange={(e) => setCountdown(Number(e.target.value))} aria-label="Countdown seconds" />
+              <span className="mute small-text">Lights go out this long after Start</span>
             </span>
-            <strong className="num ref-time">{countdown} s</strong>
-          </label>
+            <span className="stepper" role="group" aria-label="Countdown seconds">
+              <button className="icon-btn" aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
+                <ChevronLeft size={18} />
+              </button>
+              <strong>{countdown} s</strong>
+              <button className="icon-btn" aria-label="Longer" disabled={countdown >= 10} onClick={() => setCountdown(countdown + 1)}>
+                <ChevronRight size={18} />
+              </button>
+            </span>
+          </div>
         )}
-        <div className="list-item">
-          <span className="grow">
-            <strong>Screen</strong>
-            <span className="mute small-text">Turn sideways for delta only</span>
-          </span>
+        <div className="list-item predrive-screen">
+          <strong>Screen</strong>
           <Segmented
             label="Drive screen"
             value={mode}
@@ -240,6 +255,7 @@ export default function PreDrive() {
           />
         </div>
         <div className="list-item">
+          <Volume2 size={22} aria-hidden="true" />
           <span className="grow">
             <strong>Voice callouts</strong>
             <span className="mute small-text">“Sector 2, minus zero point four”</span>
@@ -269,30 +285,30 @@ export default function PreDrive() {
       )}
 
       <div className="sticky-cta predrive-cta">
-        <p className="predrive-summary">
-          Racing <strong>{chosen}</strong>
-        </p>
-        <button className="btn primary lg block" disabled={starting} onClick={go}>
-          <Play size={18} fill="currentColor" aria-hidden="true" /> {starting ? 'Getting GPS…' : 'Start'}
+        <button className="btn primary xl block" disabled={starting} onClick={go} aria-label={`Start, racing ${chosen}`}>
+          {starting ? 'Getting GPS…' : 'Start'}
         </button>
-        <p className="mute small-text" style={{ textAlign: 'center' }}>
-          Mount the phone first. No taps needed while driving.
-        </p>
       </div>
 
       <Sheet open={terms} onClose={() => setTerms(false)} label="Before your first drive">
         <div className="stack">
-          <h2>Before your first drive</h2>
-          <p>Purple Sector is for track days and rally events.</p>
-          <ul className="terms">
-            <li>Only time yourself where timed driving is allowed and the road is closed to traffic.</li>
-            <li>Mount the phone. Don't touch it while moving; the app needs no taps.</li>
-            <li>You drive at your own risk and are responsible for following the rules of the venue and the law.</li>
-          </ul>
+          <h2 className="terms-title">Before your first drive</h2>
+          <p className="terms-lead">Purple Sector is for track days and rally events.</p>
+          <div className="list">
+            <p className="list-item terms-row">
+              <Flag size={22} aria-hidden="true" /> Only time yourself where timed driving is allowed and the road is closed to traffic.
+            </p>
+            <p className="list-item terms-row">
+              <Shield size={22} aria-hidden="true" /> You drive at your own risk and are responsible for following the rules of the venue and the law.
+            </p>
+            <p className="list-item terms-row">
+              <Clock size={22} aria-hidden="true" /> Timing starts when you move off after GO. Moving more than 10 m before GO adds 5 s.
+            </p>
+          </div>
           <button className="btn primary lg block" onClick={acceptTerms}>
             I agree
           </button>
-          <button className="btn block" onClick={() => setTerms(false)}>
+          <button className="btn lg block" onClick={() => setTerms(false)}>
             Not now
           </button>
         </div>

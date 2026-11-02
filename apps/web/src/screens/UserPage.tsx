@@ -1,4 +1,4 @@
-import { Check, ChevronRight, Flag, LayoutGrid, Lock, Route as RouteIcon, Settings as SettingsIcon, Shield } from 'lucide-react';
+import { Check, ChevronRight, Home, LayoutGrid, Lock, Route as RouteIcon, Settings as SettingsIcon, Shield } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ActivityHeatmap } from '../components/ActivityHeatmap';
@@ -6,7 +6,7 @@ import { FollowButton } from '../components/FollowButton';
 import { LapCard } from '../components/LapCard';
 import { RouteShape } from '../components/RouteShape';
 import { SkeletonRows } from '../components/Skeleton';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
+import { Avatar, Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
 import {
   allMyRuns,
   backfillActivity,
@@ -145,6 +145,8 @@ export default function UserPage() {
       .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
   }, [posts, ranks]);
 
+  const homeBest = home ? best.find((b) => b.pb.routeId === home.id)?.pb : undefined;
+
   const newest = useMemo(() => [...posts].sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)), [posts]);
 
   if (user === undefined || (user && !ready)) return <Loading />;
@@ -165,11 +167,16 @@ export default function UserPage() {
 
   return (
     <main className="screen">
-      <ScreenHead
-        back={!isMe}
-        title={<h1 className="profile-handle">{user.username}</h1>}
-        right={
-          isMe && (
+      {/* The navy panel: roundel, name, counts and home course. Settings for you, Follow for anyone else. */}
+      <section className="top-panel navy profile-panel">
+        <span className="livery thin" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
+        <div className="row between profile-panel-bar">
+          {!isMe ? <ScreenHead back /> : <span />}
+          {isMe ? (
             <div className="row" style={{ gap: 0 }}>
               {isAdmin && (
                 <Link to="/admin" className="icon-btn" aria-label="Admin">
@@ -180,73 +187,67 @@ export default function UserPage() {
                 <SettingsIcon size={22} />
               </Link>
             </div>
-          )
-        }
-      />
-
-      <section className="profile-top">
-        <Avatar name={user.username} hue={user.avatarHue} size={86} uid={user.id} />
-        <div className="profile-counts">
-          <span>
-            <strong className="num">{posts.length}</strong> {posts.length === 1 ? 'post' : 'posts'}
-          </span>
-          <Link to={`/u/${user.username}/followers`}>
-            <strong className="num">{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
-          </Link>
-          <Link to={`/u/${user.username}/following`}>
-            <strong className="num">{counts?.following ?? '–'}</strong> following
-          </Link>
+          ) : (
+            <FollowButton userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />
+          )}
         </div>
-      </section>
-
-      <section className="profile-bio">
-        <p className="row" style={{ gap: 8 }}>
-          <strong className="profile-name">{name}</strong>
-          {role !== 'driver' && <span className="badge blue">{ROLE_LABEL[role]}</span>}
-        </p>
+        <div className="row" style={{ gap: 16 }}>
+          <Avatar name={user.username} hue={user.avatarHue} size={84} uid={user.id} />
+          <div className="grow">
+            <h1 className="profile-name">{name}</h1>
+            <span className="mute small-text">
+              @{user.username}
+              {role !== 'driver' && ` · ${ROLE_LABEL[role].toLowerCase()}`}
+              {wins > 0 && ` · ${wins}× P1`}
+            </span>
+            <span className="row profile-counts">
+              <Link to={`/u/${user.username}/following`}>
+                <strong className="num">{counts?.following ?? '–'}</strong> following
+              </Link>
+              <Link to={`/u/${user.username}/followers`}>
+                <strong className="num">{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
+              </Link>
+            </span>
+          </div>
+        </div>
         {home?.isPublic ? (
-          <p className="profile-home">
-            <Flag size={14} aria-hidden="true" /> Home course <Link to={`/r/${home.id}`}>{home.name}</Link>
-          </p>
+          <Link to={`/r/${home.id}`} className="profile-home">
+            <Home size={20} aria-hidden="true" />
+            <span className="grow">
+              <span className="cap">Home course</span>
+              <strong className="ellipsis">{home.name}</strong>
+            </span>
+            {homeBest && <strong className="num">{formatLap(homeBest.totalMs)}</strong>}
+          </Link>
         ) : (
           isMe && (
-            <p className="mute">
+            <p className="mute small-text" style={{ marginTop: 14 }}>
               No home course yet. Pick one on a route's page in <Link to="/explore">Explore</Link>.
             </p>
           )
         )}
-        <p className="mute">
-          {wins > 0 && (
-            <>
-              <strong className="num fastest">{wins}× P1</strong> ·{' '}
-            </>
-          )}
-          Driving since {formatDate(user.createdAt?.toDate())}
-        </p>
       </section>
 
-      {!isMe && <FollowButtonBlock userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />}
-
-      {activity && <ActivityHeatmap days={activity} weeks={26} />}
-
-      <div className="profile-tabs" role="tablist" aria-label="Profile">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button key={id} role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`panel-${id}`} onClick={() => setTab(id)}>
-            <Icon size={16} aria-hidden="true" /> {label}
-          </button>
-        ))}
+      <div style={{ marginTop: 14 }}>
+        <Segmented label="Profile" value={tab} onChange={setTab} options={tabs.map(({ id, label }) => ({ value: id, label }))} />
       </div>
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === 'posts' &&
           (newest.length === 0 ? (
-            <p className="mute profile-empty">{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn't posted a lap yet.`}</p>
+            <>
+              {activity && <ActivityHeatmap days={activity} weeks={26} />}
+              <p className="mute profile-empty">{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn't posted a lap yet.`}</p>
+            </>
           ) : (
-            <div className="stack-lg">
-              {newest.map((p) => (
-                <LapCard key={p.id} post={p} route={routes.get(p.routeId)} canCompare={driven.has(p.routeId)} showAuthor={false} />
-              ))}
-            </div>
+            <>
+              {activity && <ActivityHeatmap days={activity} weeks={26} />}
+              <div className="list" style={{ marginTop: 10 }}>
+                {newest.map((p) => (
+                  <LapCard key={p.id} post={p} route={routes.get(p.routeId)} showAuthor={false} />
+                ))}
+              </div>
+            </>
           ))}
 
         {tab === 'routes' && (
@@ -329,14 +330,6 @@ export default function UserPage() {
         )}
       </div>
     </main>
-  );
-}
-
-function FollowButtonBlock(props: { userId: string; onChange: (f: boolean) => void }) {
-  return (
-    <div className="follow-block">
-      <FollowButton userId={props.userId} size="lg" onChange={props.onChange} />
-    </div>
   );
 }
 

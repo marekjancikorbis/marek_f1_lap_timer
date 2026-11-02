@@ -108,7 +108,7 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
             <ChevronLeft size={26} />
           </button>
         )}
-        {title && (typeof title === 'string' ? <h1 style={{ fontSize: back ? '1.5rem' : undefined }}>{title}</h1> : title)}
+        {title && (typeof title === 'string' ? <h1 className={back ? 'bar-title ellipsis' : undefined}>{title}</h1> : title)}
       </div>
       {right}
     </header>
