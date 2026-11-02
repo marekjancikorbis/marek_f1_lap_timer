@@ -87,7 +87,6 @@ export default function MyRoutes() {
       <ScreenHead
         title="Routes"
         right={
-          isCreator &&
           tab === 'built' && (
             <Link to="/routes/new" className="btn primary sm">
               <Plus size={18} aria-hidden="true" /> New route
@@ -101,7 +100,7 @@ export default function MyRoutes() {
         onChange={setTab}
         options={[
           { value: 'laps', label: 'My laps' },
-          { value: 'built', label: isCreator ? 'Routes I built' : 'Build routes' },
+          { value: 'built', label: 'Routes I built' },
         ]}
       />
 
@@ -145,7 +144,7 @@ export default function MyRoutes() {
             </div>
           </>
         )
-      ) : isCreator ? (
+      ) : (
         <div style={{ marginTop: 16 }}>
           {own.length === 0 ? (
             <Empty title="No routes yet" action={<Link to="/routes/new" className="btn primary lg">Build a route</Link>}>
@@ -173,30 +172,35 @@ export default function MyRoutes() {
                       {r.startType === 'standing' ? 'Standing start' : 'Rolling start'}
                     </p>
                   </Link>
-                  <hr className="hairline" />
-                  <div className="row between">
-                    <span>
-                      <strong>Public</strong>
-                      <span className="mute" style={{ display: 'block', fontSize: 13 }}>
-                        {r.isPublic ? 'On the map, with a leaderboard' : 'Only you can see it'}
-                      </span>
-                    </span>
-                    <Switch
-                      label={`Make ${r.name} public`}
-                      checked={r.isPublic}
-                      disabled={busy || r.hidden || (!r.isPublic && limit > 1 && publicCount >= limit)}
-                      onChange={(v) => (v ? setConfirm(r) : void setPublic(r, false))}
-                    />
-                  </div>
+                  {isCreator && (
+                    <>
+                      <hr className="hairline" />
+                      <div className="row between">
+                        <span>
+                          <strong>Public</strong>
+                          <span className="mute" style={{ display: 'block', fontSize: 13 }}>
+                            {r.isPublic ? 'On the map, with a leaderboard' : 'Only you can see it'}
+                          </span>
+                        </span>
+                        <Switch
+                          label={`Make ${r.name} public`}
+                          checked={r.isPublic}
+                          disabled={busy || r.hidden || (!r.isPublic && limit > 1 && publicCount >= limit)}
+                          onChange={(v) => (v ? setConfirm(r) : void setPublic(r, false))}
+                        />
+                      </div>
+                    </>
+                  )}
                   {r.hidden && <p className="notice warn" style={{ marginTop: 12 }}>An admin has hidden this route.</p>}
                 </article>
               ))}
             </div>
           )}
-        </div>
-      ) : (
-        <div style={{ marginTop: 16 }}>
-          <DriverPanel request={request} onRequested={setRequest} />
+          {!isCreator && (
+            <div style={{ marginTop: 16 }}>
+              <DriverPanel request={request} onRequested={setRequest} />
+            </div>
+          )}
         </div>
       )}
 
@@ -250,8 +254,8 @@ function DriverPanel({ request, onRequested }: { request: CreatorRequest | null 
 
   return (
     <div className="panel stack">
-      <h3>Want to build your own routes?</h3>
-      <p className="mute">Route building is for approved creators. Ask the admin, and say which track or event you want to time.</p>
+      <h3>Want to publish a route?</h3>
+      <p className="mute">Your routes are private: only you can see and drive them. Publishing one, with a leaderboard, is for approved creators. Ask the admin, and say which track or event you want to time.</p>
       {request?.status === 'pending' ? (
         <button className="btn" disabled>
           Request pending

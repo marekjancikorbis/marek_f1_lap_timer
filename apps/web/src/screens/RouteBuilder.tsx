@@ -2,7 +2,7 @@ import { computeSectorBoundaries, polylineLengthM, PreparedRoute, type LatLon } 
 import mapboxgl from 'mapbox-gl';
 import { Crosshair, Trash2, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MapView, setSource } from '../components/MapView';
 import { errorMessage, Loading, ScreenHead, Segmented, Switch, useToast } from '../components/ui';
 import { createRoute, getRoute, updateRoute } from '../lib/data';
@@ -16,7 +16,7 @@ import { UsageLimitError } from '../lib/usage';
 /** Builds a new route, or edits one at /r/:routeId/edit (the rules decide who may save). */
 export default function RouteBuilder() {
   const { routeId } = useParams();
-  const { profile, isCreator, isAdmin } = useMe();
+  const { profile, isAdmin } = useMe();
   const nav = useNavigate();
   const toast = useToast();
   const [waypoints, setWaypoints] = useState<LatLon[]>([]);
@@ -210,7 +210,6 @@ export default function RouteBuilder() {
     }
   }
 
-  if (!isCreator) return <Navigate to="/routes" replace />;
   if (routeId && !orig) return <Loading />;
 
   return (

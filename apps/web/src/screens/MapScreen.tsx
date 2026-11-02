@@ -43,7 +43,7 @@ function savedCamera(): { center: [number, number]; zoom: number } | null {
 export default function MapScreen({ visible = true }: { visible?: boolean }) {
   const nav = useNavigate();
   const toast = useToast();
-  const { profile, isCreator, isAdmin } = useMe();
+  const { profile, isAdmin } = useMe();
   const [routes, setRoutes] = useState<Route[] | null>(null);
   /** Counted here for routes from before counts were kept on the route. */
   const [oldCounts, setOldCounts] = useState<Record<string, number>>({});
@@ -106,7 +106,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
   useEffect(() => {
     if (!routesDue) return;
     // Public routes for everyone, plus your own private ones (only you can read those).
-    Promise.all([publicRoutes(), isCreator ? myRoutes(profile.id).catch(() => []) : []])
+    Promise.all([publicRoutes(), myRoutes(profile.id).catch(() => [])])
       .then(async ([pub, mine]) => {
         setRoutes([...pub, ...mine.filter((r) => !r.isPublic && !r.hidden)]);
         // Routes from before counts were kept: count them once here; a moderator's visit stores it.
@@ -125,7 +125,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
         toast(errorMessage(e), 'error');
         setRoutes([]);
       });
-  }, [routesDue, visit, toast, isCreator, isAdmin, profile.id]);
+  }, [routesDue, visit, toast, isAdmin, profile.id]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -338,7 +338,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
   const listed = (shown ?? [])
     .filter((r) => r.isPublic || filter === 'private')
     .sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name));
-  const filters: Filter[] = ['all', 'official', 'creator', ...(isCreator ? (['private'] as const) : []), 'drivers'];
+  const filters: Filter[] = ['all', 'official', 'creator', 'private', 'drivers'];
   const showDrivers = filter === 'drivers' || (!!term && filter === 'all');
   const showRoutes = filter !== 'drivers';
   // Collapsed, the sheet shows a couple of rows; searching opens it.

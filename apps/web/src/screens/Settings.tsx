@@ -243,7 +243,7 @@ export default function Settings() {
         ) : (
           <>
             {request?.status === 'rejected' && <p className="notice warn">Your last request was declined. You can ask again.</p>}
-            <p className="mute">Only approved creators can build routes. Everyone can drive public routes.</p>
+            <p className="mute">You can build private routes that only you see. Publishing a route, with a leaderboard, is for approved creators.</p>
             <label className="field">
               <span>Note for the admin (optional)</span>
               <textarea className="input" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Which track or event do you want to time?" />

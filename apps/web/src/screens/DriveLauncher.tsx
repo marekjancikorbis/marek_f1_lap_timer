@@ -11,7 +11,7 @@ import type { Route } from '../lib/types';
 
 /** The Drive tab: the routes you can drive right now, one tap from pre-drive. */
 export default function DriveLauncher() {
-  const { profile, isCreator } = useMe();
+  const { profile } = useMe();
   const toast = useToast();
   const [stats, setStats] = useState<RouteStats | null>(null);
   const [routes, setRoutes] = useState<Map<string, Route>>(new Map());
@@ -19,7 +19,7 @@ export default function DriveLauncher() {
 
   useEffect(() => {
     (async () => {
-      const [mine, built] = await Promise.all([routeStats(profile.id), isCreator ? myRoutes(profile.id) : Promise.resolve([])]);
+      const [mine, built] = await Promise.all([routeStats(profile.id), myRoutes(profile.id)]);
       const ids = [...new Set([...Object.keys(mine), ...(profile.homeRouteId ? [profile.homeRouteId] : [])])];
       setRoutes(await getRoutes(ids));
       setOwn(built.filter((r) => !r.hidden));
@@ -28,7 +28,7 @@ export default function DriveLauncher() {
       toast(errorMessage(e), 'error');
       setStats({});
     });
-  }, [profile.id, profile.homeRouteId, isCreator, toast]);
+  }, [profile.id, profile.homeRouteId, toast]);
 
   const recent = useMemo(() => new Map(Object.entries(stats ?? {})), [stats]);
 
@@ -80,17 +80,13 @@ export default function DriveLauncher() {
         </>
       )}
 
-      {isCreator && (
-        <>
-          <h2 className="section-title row between">
-            Your routes
-            <Link to="/routes/new" className="section-link">
-              New route
-            </Link>
-          </h2>
-          {builtRoutes.length > 0 ? <div className="list">{builtRoutes.map(row)}</div> : <p className="mute">Routes you build show up here.</p>}
-        </>
-      )}
+      <h2 className="section-title row between">
+        Your routes
+        <Link to="/routes/new" className="section-link">
+          New route
+        </Link>
+      </h2>
+      {builtRoutes.length > 0 ? <div className="list">{builtRoutes.map(row)}</div> : <p className="mute">Routes you build show up here.</p>}
 
       {!home && recentRoutes.length === 0 && builtRoutes.length === 0 ? (
         <Empty title="No routes yet" action={<Link to="/explore" className="btn primary lg">Find a route on the map</Link>}>

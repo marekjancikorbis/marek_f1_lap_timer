@@ -82,11 +82,40 @@ const post = (extra: object = {}) => ({
   ...extra,
 });
 
-describe('route creation needs creator access (plan phase 2 exit criterion)', () => {
+describe('route creation: anyone builds private routes, publishing needs creator access', () => {
   beforeEach(() => seed({ 'roles/creator': { role: 'creator' }, 'roles/admin': { role: 'admin' } }));
 
-  it('rejects a direct insert from a driver', async () => {
-    await assertFails(setDoc(doc(db('driver'), 'routes/r1'), route('driver')));
+  it('lets a driver build and edit a private route, but never publish it', async () => {
+    const d = db('driver');
+    await assertSucceeds(setDoc(doc(d, 'routes/r1'), route('driver')));
+    await assertSucceeds(updateDoc(doc(d, 'routes/r1'), { name: 'Stage 2' }));
+    await assertFails(setDoc(doc(d, 'routes/r2'), route('driver', { isPublic: true })));
+    const publish = writeBatch(d);
+    publish.update(doc(d, 'routes/r1'), { isPublic: true, publishedAt: new Date() });
+    publish.update(doc(d, 'users/driver'), { publicRouteIds: ['r1'] });
+    await assertFails(publish.commit());
+    await assertSucceeds(deleteDoc(doc(d, 'routes/r1')));
+  });
+
+  it('locks a revoked creator out of their published routes, not their private ones', async () => {
+    // 'driver' has no role: a creator whose access was taken away.
+    await seed({
+      'routes/pub': route('driver', { isPublic: true, publishedAt: new Date() }),
+      'routes/was': route('driver', { publishedAt: new Date() }),
+      'routes/priv': route('driver'),
+    });
+    const d = db('driver');
+    await assertFails(updateDoc(doc(d, 'routes/pub'), { name: 'Renamed' }));
+    await assertFails(updateDoc(doc(d, 'routes/pub'), { isPublic: false }));
+    await assertFails(updateDoc(doc(d, 'routes/was'), { name: 'Renamed' }));
+    await assertFails(deleteDoc(doc(d, 'routes/pub')));
+    await assertFails(deleteDoc(doc(d, 'routes/was')));
+    await assertSucceeds(updateDoc(doc(d, 'routes/pub'), { hasRuns: true }));
+    await assertSucceeds(updateDoc(doc(d, 'routes/priv'), { name: 'Renamed' }));
+    await assertSucceeds(deleteDoc(doc(d, 'routes/priv')));
+    // A creator still renames their published route.
+    await seed({ 'routes/cpub': route('creator', { isPublic: true, publishedAt: new Date() }), 'users/creator': { username: 'creator', publicRouteIds: ['cpub'] } });
+    await assertSucceeds(updateDoc(doc(db('creator'), 'routes/cpub'), { name: 'Renamed' }));
   });
 
   it('accepts a creator and an admin', async () => {

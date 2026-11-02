@@ -12,7 +12,7 @@ import type { Post, Profile, Role, Route, Run } from '../lib/types';
 
 export default function RouteDetail() {
   const { routeId = '' } = useParams();
-  const { profile, isAdmin, isOwner: amSiteOwner } = useMe();
+  const { profile, isCreator, isAdmin, isOwner: amSiteOwner } = useMe();
   const toast = useToast();
   const nav = useNavigate();
   const [route, setRoute] = useState<Route | null | undefined>(undefined);
@@ -88,6 +88,8 @@ export default function RouteDetail() {
   const isOwner = route?.ownerId === profile.id;
   // Mirrors the rules: owners edit and delete routes that were never published.
   const canOwnChange = isOwner && !!route && !route.isPublic && !route.publishedAt;
+  // A published route can be renamed only while its owner may publish; losing creator access locks it.
+  const canRename = canOwnChange || (isOwner && isCreator);
   // Mirrors the moderation rules: admins reach driver and creator routes, the site owner reaches all.
   const canModChange = isAdmin && (amSiteOwner || (ownerRole !== null && ownerRole !== 'admin' && ownerRole !== 'owner'));
 
@@ -296,7 +298,7 @@ export default function RouteDetail() {
         <>
           <h2 className="section-title">Manage</h2>
           <div className="row wrap">
-            {isOwner && (
+            {canRename && (
               <button className="btn" onClick={rename}>
                 Rename
               </button>
@@ -314,7 +316,9 @@ export default function RouteDetail() {
           </div>
           {isOwner && !canOwnChange && !canModChange && (
             <p className="mute" style={{ fontSize: 14, marginTop: 8 }}>
-              The shape and sectors are locked because this route has been published, so other drivers may have laps on it.
+              {canRename
+                ? 'The shape and sectors are locked because this route has been published, so other drivers may have laps on it.'
+                : "This route has been published and you no longer have creator access, so it's locked."}
             </p>
           )}
         </>

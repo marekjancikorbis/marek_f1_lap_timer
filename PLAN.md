@@ -12,9 +12,9 @@ installable web app (PWA) and as an Android app built from the same code.
 
 | Area | What it does |
 |---|---|
-| **Roles and permissions** | Four roles. A **driver** (every new account) can drive public routes, race their own times and appear on leaderboards. A **creator** can also build routes and publish one; an admin grants this. An **admin** grants and revokes creator access, moderates public routes and posts, and can publish up to 5 routes. The **owner** is an admin who also grants and revokes admin. |
+| **Roles and permissions** | Four roles. A **driver** (every new account) can drive public routes, build private routes only they see, race their own times and appear on leaderboards. A **creator** can also publish one route; an admin grants this. An **admin** grants and revokes creator access, moderates public routes and posts, and can publish up to 5 routes. The **owner** is an admin who also grants and revokes admin. |
 | **Route builder** | *Creators and up.* Draw a route on a map, snapped to roads. It can be point-to-point or a **lap** (loop, where start = finish). Choose a **sector length** (50–1000 m) and a **standing** or **rolling** start. |
-| **Routes tab** | **My laps**: the routes you've driven, with your PB. **Routes I built**: your routes, each private unless you make it public (creators get one public route). Drivers can request creator access there. |
+| **Routes tab** | **My laps**: the routes you've driven, with your PB. **Routes I built**: your routes, each private unless you make it public (creators get one public route). Drivers build private routes there too, and can request creator access to publish. |
 | **Drive** | Pick a route and a lap to race against (the reference), then drive. Times are taken from GPS crossings of the start, sector and finish gates. |
 | **Drive screen** | **Full HUD**: three big sectors over a line of minisectors, the delta and the running time. **Delta only**: the delta fills the screen and the background shows how the last minisector went. Turning the phone sideways switches to delta only. |
 | **Delta logic** | The delta updates only when you **cross the end of a sector**: your elapsed time at that sector boundary minus the reference lap's elapsed time at the same boundary. |
@@ -73,13 +73,13 @@ firestore.rules      security rules (tests in tests/)
 | Role | How you get it | What it allows |
 |---|---|---|
 | `driver` | Every new account | Follow people, see the feed, browse Explore. Drive **public** routes, keep your own laps and post them. |
-| `creator` | An **admin grants it**, usually after a request | Everything a driver can do, plus build private routes and publish **one**. |
+| `creator` | An **admin grants it**, usually after a request | Everything a driver can do, plus publish **one** route. |
 | `admin` | The **owner grants it**; creators can request it | Grant and revoke `creator`, decide creator requests, hide or unpublish any public route, remove posts. Up to 5 public routes, shown as Official. |
 | `owner` | Set once **directly in the database** | Everything an admin can do, plus grant and revoke `admin`. No public-route limit. |
 
-- **The server enforces everything**, not just the app UI. The Firestore security rules refuse a route from anyone who isn't a creator, even if someone calls the API directly.
+- **The server enforces everything**, not just the app UI. The Firestore security rules refuse to make a route public for anyone who isn't a creator, even if someone calls the API directly.
 - **Users can never change their own role.** Roles live in a separate `roles` collection that only admins can write to, and every grant must come with a `roleAudit` entry.
-- **Revoking creator access**: the user can no longer create or publish routes. Their existing routes and runs stay, so other people's leaderboard times are not lost.
+- **Revoking creator access**: the user can no longer publish routes, and every route of theirs that is public or was ever published locks: no rename, edit, unpublish or delete (only admins can still act on it). Never-published private routes stay theirs to edit, and they can still build new private ones. Their existing routes and runs stay, so other people's leaderboard times are not lost.
 - **Requesting access**: a driver taps "Request creator access" (Routes tab) with an optional note; the admin approves or rejects it in the admin screen, and the driver gets a notification.
 
 Who can read and write what is enforced by `firestore.rules` (tests: `npm run test:rules`).
@@ -190,9 +190,9 @@ Admin is a shield icon on your own profile, shown only to admins.
 5. **Drive tab**: your home course and recent routes, to start a drive in one tap.
 6. **Routes tab**:
    - **My laps**: the routes you've driven, with lap count and PB, linking to run history.
-   - **Routes I built** (creators and up): your routes with a "Make public" toggle. A creator with a public route who makes another public gets a dialog to replace it, which also warns that the start and end become visible to everyone. Admins see "N of 5 public".
-   - Drivers see **Build routes** with a **Request creator access** button (or "Request pending").
-7. **Route builder** (*creators and up*; the server refuses saves from anyone else): tap waypoints that snap to roads (Mapbox Directions), drag and undo, a **Loop** toggle, a sector-length slider with a live preview of the boundaries, standing/rolling, name, Save.
+   - **Routes I built**: your routes; creators and up get a "Make public" toggle. A creator with a public route who makes another public gets a dialog to replace it, which also warns that the start and end become visible to everyone. Admins see "N of 5 public".
+   - Drivers see their private routes with a **Request creator access** button below (or "Request pending").
+7. **Route builder** (everyone; new routes are private): tap waypoints that snap to roads (Mapbox Directions), drag and undo, a **Loop** toggle, a sector-length slider with a live preview of the boundaries, standing/rolling, name, Save.
 8. **Pre-drive**: first **who to race**: your laps (PB at the top) and, on a public route, any posted lap, each with its big-sector strip. Then a folded setup: display mode (Full HUD or Delta only), voice callouts, the **countdown length (3–10 s)** on standing-start routes, and *Simulate* (a desk test that replays a synthetic or recorded drive). A pinned Start with a summary. The first drive asks you to accept the terms (closed roads and tracks only).
 9. **Drive screen**: the screen stays awake (and in the Android app, timing carries on with it off). No controls while moving except **hold to stop**.
    - **Standing start**: "Stop at the start line", then a big **Start countdown** button once stopped there, the full-screen countdown and GO. A jump start shows the red banner while the run continues.
@@ -256,7 +256,7 @@ Admin is a shield icon on your own profile, shown only to admins.
 ## 9. Decisions made
 - **Standing start**: countdown of 3–10 s (user-set), exact even timing with no random hold. The lap is timed from when the car moves off after GO; no reaction time.
 - **Jump start**: +5 s penalty, only for confirmed forward movement of more than 10 m before GO (section 4.3.1). The lap is then timed from GO. The run stays valid.
-- **Route creation needs permission**: only creators (admin-granted) and up can build and publish routes. The owner role is set in the database; the owner grants admin.
+- **Anyone can build private routes; publishing needs permission** (decided 2026-11-02, replacing "route creation needs permission"): every signed-in user can build, edit and drive their own private routes; only creators (admin-granted) and up can publish. The owner role is set in the database; the owner grants admin.
 - **Public routes per role**: creator 1, admin 5, owner unlimited. Admin and owner routes show as Official.
 
 - **Lap comparison**: any two laps on the same route, either your own or against other people's posted laps (section 4.6). Any posted lap can be used as a drive reference.

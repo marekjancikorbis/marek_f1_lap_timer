@@ -30,12 +30,12 @@ service cloud.firestore {
       return signedIn() && roleOf(uid()) in ['admin', 'owner'];
     }
 
-    // Creators, admins and the owner may build routes.
+    // Anyone signed in may build private routes; publishing depends on the role (publicLimit).
     function canCreate() {
-      return signedIn() && roleOf(uid()) in ['creator', 'admin', 'owner'];
+      return signedIn();
     }
 
-    // Public routes allowed at once: creator 1, admin 5, owner unlimited.
+    // Public routes allowed at once: driver 0, creator 1, admin 5, owner unlimited.
     function publicLimit() {
       let r = roleOf(uid());
       return r == 'owner' ? 1000 : r == 'admin' ? 5 : r == 'creator' ? 1 : 0;
@@ -292,8 +292,11 @@ service cloud.firestore {
         && shapeOk(request.resource.data);
 
       // Owner edits. Geometry and sectors freeze once anyone else could have
-      // driven the route (it has ever been published).
+      // driven the route (it has ever been published). A published route stays
+      // the owner's to rename or unpublish only while they may publish: losing
+      // creator access locks it.
       allow update: if canCreate() && resource.data.ownerId == uid()
+        && (neverPublished() || publicLimit() > 0)
         && request.resource.data.ownerId == uid()
         && request.resource.data.ownerName == resource.data.ownerName
         && request.resource.data.hidden == resource.data.hidden
@@ -320,7 +323,7 @@ service cloud.firestore {
       allow update: if canModerate() && onlyChanges(['postCount', 'postCountV'])
         && request.resource.data.postCount is int && request.resource.data.postCount >= 0;
 
-      // Revoked creators keep their routes; they can still mark runs on them.
+      // Revoked creators keep their routes (locked once published); they can still mark runs on them.
       allow update: if signedIn() && resource.data.ownerId == uid()
         && onlyChanges(['hasRuns']) && request.resource.data.hasRuns == true;
 
