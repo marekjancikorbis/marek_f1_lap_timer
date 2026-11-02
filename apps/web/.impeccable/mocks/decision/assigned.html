@@ -1,49 +1,96 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Marshal Post</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=390">
+<title>Trackside: Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
 <style>
-:root{--tar:#16181A;--tar2:#202326;--line:#2E3236;--ink:#F2F1EC;--mute:#9AA0A6;--kerbR:#D9262E;--y:#F5CF19;--g:#1FA64F;--p:#8B3FE0}
+:root{--concrete:#E3E7EA;--board:#fff;--ink:#141619;--ink2:#4A5058;--mute:#7D848C;--line:#C9CFD4;--blue:#1F5BFF;--purple:#8B3FE0;--green:#1FA64F;--yellow:#F5CF19;--red:#D9262E}
 *{box-sizing:border-box;margin:0;padding:0}
-body{width:390px;height:844px;overflow:hidden;background:var(--tar);color:var(--ink);font:400 15px/1.4 Barlow,system-ui,sans-serif}
-.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line)}
-.brand{font:700 20px/1 "Barlow Condensed";letter-spacing:.02em;text-transform:uppercase}
-.brand b{color:var(--p)}
-.kerb{height:6px;background:repeating-linear-gradient(90deg,var(--kerbR) 0 18px,var(--ink) 18px 36px)}
-.pill{margin:12px auto 0;width:max-content;background:var(--ink);color:var(--tar);font:600 13px Barlow;padding:6px 12px;border-radius:999px}
-.card{margin:12px 16px 0;padding:14px 16px 16px;background:var(--tar2);border-radius:14px}
-.who{display:flex;align-items:center;gap:10px;font-size:14px}
-.av{width:32px;height:32px;border-radius:50%;background:#3A3F44;display:grid;place-items:center;font:600 13px Barlow}
-.who span{color:var(--mute)}
-.route{margin-top:10px;font:600 13px Barlow;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
-.time{font:600 56px/1 "Barlow Condensed";font-variant-numeric:tabular-nums;letter-spacing:-.01em;margin-top:4px;display:flex;align-items:baseline;gap:10px}
-.badge{font:700 13px Barlow;padding:3px 8px;border-radius:6px;background:var(--p);color:#fff}
-.badge.pb{background:var(--ink);color:var(--tar)}
-.strip{display:flex;gap:3px;margin-top:12px}
-.strip i{flex:1;height:10px;border-radius:2px}
-.cap{margin-top:10px;font-size:14px}
-.cap em{color:var(--mute);font-style:normal}
-.act{display:flex;gap:8px;margin-top:14px}
-.act a{flex:1;text-align:center;font:600 14px Barlow;padding:10px 0;border-radius:10px;background:#2B2F33}
-.act a.go{background:var(--ink);color:var(--tar)}
-.tabs{position:absolute;bottom:0;left:0;right:0;height:78px;background:rgba(22,24,26,.86);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:10px;font:600 11px Barlow;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
-.tabs .on{color:var(--ink)}
+html,body{width:390px;height:844px;overflow:hidden;background:var(--concrete);color:var(--ink);font-family:Archivo,system-ui,sans-serif;font-stretch:100%}
+.num{font-stretch:125%;font-weight:850;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.top{display:flex;align-items:center;justify-content:space-between;padding:52px 16px 12px}
+.mark{font-stretch:125%;font-weight:900;font-size:20px;letter-spacing:-.02em;text-transform:uppercase}
+.mark i{font-style:normal;color:var(--purple)}
+.av{width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
+.tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+/* home course board */
+.home{margin:4px 16px 0;background:var(--board);border:2px solid var(--ink);border-radius:4px;position:relative;overflow:hidden}
+.home .hd{display:flex;justify-content:space-between;align-items:baseline;padding:14px 14px 0}
+.home h2{font-stretch:112%;font-weight:800;font-size:19px;margin-top:2px}
+.corner{position:absolute;top:12px;right:12px;width:44px;height:44px;background:var(--ink);color:#fff;display:grid;place-items:center;border-radius:3px;font-stretch:125%;font-weight:900;font-size:22px}
+.best{padding:6px 14px 0;display:flex;align-items:flex-end;gap:10px}
+.best .num{font-size:52px;line-height:1}
+.best .d{font-size:13px;font-weight:700;color:var(--ink2);padding-bottom:7px}
+.sectors{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:12px 14px 0}
+.sec{border-top:6px solid var(--green);padding-top:5px}
+.sec.p{border-top:6px double var(--purple);border-top-width:9px}
+.sec.y{border-top:6px dashed var(--yellow)}
+.sec b{display:block;font-size:10px;letter-spacing:.08em;color:var(--mute)}
+.sec .num{font-size:17px}
+.home .act{display:flex;gap:8px;padding:14px}
+.btn{flex:1;height:48px;border-radius:4px;border:0;font:inherit;font-weight:800;font-size:15px;letter-spacing:.02em;text-transform:uppercase;display:grid;place-items:center}
+.btn.go{background:var(--blue);color:#fff;font-stretch:115%}
+.btn.ghost{background:transparent;border:2px solid var(--ink);color:var(--ink);flex:.7}
+.kerb{height:8px;background:repeating-linear-gradient(90deg,var(--blue) 0 18px,#fff 18px 36px)}
+/* section label */
+.sl{display:flex;justify-content:space-between;align-items:baseline;padding:20px 16px 8px}
+.sl h3{font-stretch:118%;font-weight:850;font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+/* lap boards */
+.lap{margin:0 16px 8px;background:var(--board);border-radius:4px;display:grid;grid-template-columns:62px 1fr 76px;align-items:center;min-height:86px;border-left:8px solid var(--ink)}
+.lap.p{border-left:8px double var(--purple)}
+.pos{display:grid;place-items:center;font-stretch:125%;font-weight:900;font-size:28px}
+.lap .who{font-size:13px;font-weight:600;color:var(--ink2)}
+.lap .num{font-size:30px;line-height:1.05}
+.lap .rt{font-size:12px;color:var(--mute);margin-top:2px}
+.shape{width:64px;height:52px}
+.pb{display:inline-block;background:var(--purple);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:2px 5px;border-radius:2px;margin-left:6px;vertical-align:2px}
+/* tab bar */
+.tabs{position:absolute;left:0;right:0;bottom:0;height:84px;background:var(--ink);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:24px}
+.tab{color:#9AA1A9;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+.tab.on{color:#fff}
+.tab.on:after{content:"";position:absolute;top:0;left:14px;right:14px;height:5px;background:repeating-linear-gradient(90deg,var(--blue) 0 8px,#fff 8px 16px)}
+.drive{margin-top:-18px;width:58px;height:58px;border-radius:4px;background:var(--blue);color:#fff;display:grid;place-items:center;font-stretch:125%;font-weight:900;font-size:13px;border:3px solid var(--ink)}
+.sample{position:absolute;top:18px;left:16px;font-size:10px;color:var(--mute);letter-spacing:.06em}
 </style></head><body>
-<div class="top"><div class="brand">Purple <b>Sector</b></div><div class="av">MJ</div></div>
-<div class="kerb"></div>
-<div class="pill">3 new laps ↑</div>
-<div class="card">
- <div class="who"><div class="av">TK</div><div>tomas_k <span>· 12 min ago</span></div></div>
- <div class="route">Brno Circuit · Lap 5.4 km</div>
- <div class="time">2:08.412 <span class="badge">P1</span> <span class="badge pb">New PB</span></div>
- <div class="strip"><i style="background:var(--p)"></i><i style="background:var(--g)"></i><i style="background:var(--g)"></i><i style="background:var(--y)"></i><i style="background:var(--p)"></i><i style="background:var(--g)"></i></div>
- <div class="cap">Finally under 2:09. <em>· E46 M3</em></div>
- <div class="act"><a>Compare with my best</a><a class="go">Race against</a></div>
-</div>
-<div class="card">
- <div class="who"><div class="av">LS</div><div>lucie.s <span>· 2 h ago</span></div></div>
- <div class="route">Ecce Homo hill-climb · 3.1 km</div>
- <div class="time">1:52.907 <span class="badge" style="background:#3A3F44">P4</span></div>
- <div class="strip"><i style="background:var(--y)"></i><i style="background:var(--g)"></i><i style="background:var(--y)"></i><i style="background:var(--g)"></i></div>
-</div>
-<div class="tabs"><span class="on">Feed</span><span>Map</span><span>Search</span><span>Routes</span><span>Profile</span></div>
+<div class="sample">SAMPLE DATA</div>
+<header class="top"><div class="mark">Purple <i>Sector</i></div><div class="av">MK</div></header>
+
+<section class="home">
+  <div class="corner">7</div>
+  <div class="hd"><div><div class="tag">Home course · 3.42 km · 7 corners</div><h2>Ecce Homo hill-climb</h2></div></div>
+  <div class="best"><div class="num">2:14.83</div><div class="d">your best</div></div>
+  <div class="sectors">
+    <div class="sec p"><b>S1 · BEST EVER</b><span class="num">0:41.20</span></div>
+    <div class="sec"><b>S2 · FASTER</b><span class="num">0:52.08</span></div>
+    <div class="sec y"><b>S3 · SLOWER</b><span class="num">0:41.55</span></div>
+  </div>
+  <div class="act"><div class="btn go">Drive</div><div class="btn ghost">Times</div></div>
+  <div class="kerb"></div>
+</section>
+
+<div class="sl"><h3>Following</h3><span class="tag">3 new laps</span></div>
+
+<article class="lap p">
+  <div class="pos">1</div>
+  <div><div class="who">petra_r <span class="pb">ROUTE RECORD</span></div><div class="num">2:11.47</div><div class="rt">Ecce Homo · today</div></div>
+  <svg class="shape" viewBox="0 0 64 52"><path d="M6 44 C14 40 12 28 22 26 S30 10 40 12 S56 8 58 6" stroke="#8B3FE0" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M6 44 C14 40 12 28 22 26" stroke="#1FA64F" stroke-width="4" fill="none" stroke-linecap="round"/></svg>
+</article>
+<article class="lap">
+  <div class="pos">4</div>
+  <div><div class="who">jan.k</div><div class="num">1:38.902</div><div class="rt">Autodrom Most · yesterday</div></div>
+  <svg class="shape" viewBox="0 0 64 52"><path d="M10 40 L10 14 Q10 8 18 8 L48 8 Q56 8 54 16 L46 30 Q42 36 50 40 L52 44 L14 44 Q10 44 10 40Z" stroke="#141619" stroke-width="4" fill="none" stroke-linejoin="round"/></svg>
+</article>
+<article class="lap">
+  <div class="pos">2</div>
+  <div><div class="who">ondra_m</div><div class="num">0:48.115</div><div class="rt">Kart Vysoké Mýto · Sat</div></div>
+  <svg class="shape" viewBox="0 0 64 52"><path d="M8 26 Q8 8 24 10 Q34 12 36 22 Q38 32 48 30 Q58 28 56 40 Q54 46 40 44 L16 42 Q8 40 8 26Z" stroke="#141619" stroke-width="4" fill="none"/></svg>
+</article>
+
+<nav class="tabs">
+  <div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Feed</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Explore</div>
+  <div class="tab"><div class="drive">GO</div></div>
+  <div class="tab"><svg viewBox="0 0 24 24"><path d="M5 19c3-8 6 0 9-7s5-6 5-6"/></svg>Routes</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></svg>Profile</div>
+</nav>
 </body></html>

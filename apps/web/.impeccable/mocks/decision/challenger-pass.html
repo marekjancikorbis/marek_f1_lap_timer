@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=390">
+<title>Paddock Pass: Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@500;700&family=Red+Hat+Text:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#2A2D31;--pass:#F7F7F5;--ink:#141414;--mute:#6E6E6A;--rule:#D4D4CE;--blue:#2F7BFF;--purple:#8B3FE0;--green:#1FA64F;--yellow:#F5CF19}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:390px;height:844px;overflow:hidden;background:var(--ground);color:var(--pass);font-family:'Red Hat Text',system-ui,sans-serif}
+.mono{font-family:'Red Hat Mono',monospace;font-variant-numeric:tabular-nums}
+.top{padding:52px 16px 14px;display:flex;justify-content:space-between;align-items:center}
+.mark{font-weight:700;font-size:18px;letter-spacing:.02em}
+.mark span{color:#B48AF0}
+.av{width:34px;height:34px;border-radius:50%;background:#45494F;display:grid;place-items:center;font-size:13px;font-weight:700}
+.board{margin:0 16px;border:1px solid #42464C;border-radius:8px;overflow:hidden}
+.bh{display:grid;grid-template-columns:28px 1fr 98px;padding:8px 12px;font-size:10px;letter-spacing:.12em;color:#9A9EA4;background:#24272B}
+.row{display:grid;grid-template-columns:28px 1fr 98px;padding:10px 12px;border-top:1px solid #383C42;align-items:center;font-size:14px}
+.row .mono{font-size:15px;text-align:right}
+.row.lit{background:rgba(47,123,255,.16);box-shadow:inset 3px 0 var(--blue)}
+.row small{display:block;font-size:11px;color:#9A9EA4}
+.new{font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.1em;margin-left:6px}
+.sl{padding:18px 16px 8px;font-size:11px;letter-spacing:.14em;color:#9A9EA4}
+.pass{margin:0 16px 10px;background:var(--pass);color:var(--ink);border-radius:10px;display:grid;grid-template-columns:1fr 92px;position:relative}
+.pass:before,.pass:after{content:"";position:absolute;right:84px;width:16px;height:16px;border-radius:50%;background:var(--ground)}
+.pass:before{top:-8px}.pass:after{bottom:-8px}
+.main{padding:12px 14px;border-right:2px dashed var(--rule)}
+.lbl{font-size:9px;letter-spacing:.14em;color:var(--mute);font-weight:700}
+.route{font-weight:700;font-size:15px;margin-top:1px}
+.time{font-size:30px;font-weight:700;line-height:1.1;margin-top:4px}
+.segs{display:flex;gap:10px;margin-top:6px;font-size:12px}
+.segs span{display:flex;align-items:center;gap:4px}
+.segs i{width:10px;height:10px;display:inline-block}
+.p{background:var(--purple)}.g{background:var(--green)}.y{background:var(--yellow)}
+.stub{padding:12px 10px;display:flex;flex-direction:column;justify-content:space-between}
+.stub .mono{font-size:13px;font-weight:700}
+.go{background:var(--blue);color:#fff;border-radius:6px;text-align:center;font-size:12px;font-weight:700;padding:8px 0}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:84px;background:#1F2225;border-top:1px solid #383C42;display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:24px}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;color:#9A9EA4}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+.tab.on{color:#fff}
+.drive{width:56px;height:40px;border-radius:8px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.sample{position:absolute;top:18px;left:16px;font-size:10px;color:#8A8E94;letter-spacing:.06em}
+</style></head><body>
+<div class="sample">SAMPLE DATA</div>
+<header class="top"><div class="mark">Purple <span>Sector</span></div><div class="av">MK</div></header>
+<div class="board">
+  <div class="bh"><span>POS</span><span>ECCE HOMO · HOME COURSE</span><span style="text-align:right">TIME</span></div>
+  <div class="row"><span class="mono">1</span><span>petra_r<small>today</small></span><span class="mono" style="color:#C9A6F5">2:11.47</span></div>
+  <div class="row lit"><span class="mono">2</span><span>you<span class="new">NEW PB</span><small>moved up from 5</small></span><span class="mono">2:14.83</span></div>
+  <div class="row"><span class="mono">3</span><span>jan.k<small>2 days ago</small></span><span class="mono">2:15.02</span></div>
+</div>
+<div class="sl">FOLLOWING · 3 NEW LAPS</div>
+<article class="pass">
+  <div class="main"><div class="lbl">DRIVER · ROUTE</div><div class="route">petra_r · Ecce Homo</div><div class="time mono">2:11.47</div>
+    <div class="segs"><span><i class="p"></i>S1</span><span><i class="p"></i>S2</span><span><i class="g"></i>S3</span></div></div>
+  <div class="stub"><div><div class="lbl">DATE</div><div class="mono">02 NOV</div></div><div class="go">Race</div></div>
+</article>
+<article class="pass">
+  <div class="main"><div class="lbl">DRIVER · ROUTE</div><div class="route">jan.k · Autodrom Most</div><div class="time mono">1:38.902</div>
+    <div class="segs"><span><i class="g"></i>S1</span><span><i class="y"></i>S2</span><span><i class="g"></i>S3</span></div></div>
+  <div class="stub"><div><div class="lbl">DATE</div><div class="mono">01 NOV</div></div><div class="go">Race</div></div>
+</article>
+<nav class="tabs">
+  <div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Feed</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Explore</div>
+  <div class="tab"><div class="drive">Drive</div></div>
+  <div class="tab"><svg viewBox="0 0 24 24"><path d="M5 19c3-8 6 0 9-7s5-6 5-6"/></svg>Routes</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></svg>Profile</div>
+</nav>
+</body></html>

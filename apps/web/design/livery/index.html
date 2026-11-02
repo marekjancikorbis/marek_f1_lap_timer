@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purple Sector Livery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:ital,wdth,wght@0,50..125,100..900;1,50..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="livery.css">
+<style>
+  html { background: #d9dee7; color: #0e1b3d; font-family: 'Saira', system-ui, sans-serif }
+  .g-head { background: #0e1b3d; color: #f7f9fc; position: relative; overflow: hidden; padding: 56px max(16px, 6vw) 48px }
+  .g-head .livery { width: 300px; right: -40px }
+  .g-head h1 { font-size: clamp(40px, 6vw, 76px); font-weight: 900; font-style: italic; font-stretch: 100%; line-height: .95; text-transform: uppercase; position: relative; max-width: 14ch }
+  .g-head p { position: relative; max-width: 62ch; margin-top: 18px; font-size: 17px; color: #c9d1e6 }
+  .g-head nav { position: relative; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px }
+  .g-head nav a { color: #f7f9fc; text-decoration: none; font-weight: 700; font-size: 14px; padding: 8px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(247, 249, 252,.4) }
+  .g-head nav a:hover { background: #f7f9fc; color: #0e1b3d }
+  .g-sec { padding: 64px max(16px, 6vw) 8px }
+  .g-sec > h2 { font-size: 30px; font-weight: 900; font-style: italic; text-transform: uppercase; line-height: 1 }
+  .g-sec > p { max-width: 66ch; margin-top: 10px; color: #33405f; font-size: 16px }
+  .shots { display: flex; flex-wrap: wrap; gap: 56px 36px; margin-top: 36px; padding: 10px 0 }
+  .shot { display: grid; gap: 22px; align-content: start; width: 390px }
+  .shot.wide { width: 844px }
+  .shot figcaption { font-size: 14px; color: #33405f; max-width: 390px }
+  .shot figcaption b { display: block; font-size: 17px; color: #0e1b3d; font-weight: 800 }
+  .sys { background: #f7f9fc; border-radius: 18px; padding: 32px; margin-top: 32px; display: grid; gap: 36px; max-width: 1240px }
+  .sys h3 { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #5b6680; margin-bottom: 14px }
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px }
+  .sw div { border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 1px #dfe3ea; font-size: 13px }
+  .sw div i { display: block; height: 64px }
+  .sw div span { display: block; padding: 8px 10px; color: #33405f } .sw div b { display: block; color: #0e1b3d }
+  .spec { display: grid; gap: 14px }
+  .spec > div { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; border-top: 1px solid #dfe3ea; padding-top: 12px }
+  .spec small { width: 170px; font-size: 13px; color: #5b6680 }
+  .comps { display: flex; flex-wrap: wrap; gap: 18px; align-items: center }
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px }
+  .rules div { background: #f4f6f9; border-radius: 12px; padding: 16px; font-size: 14px; color: #33405f }
+  .rules div b { display: block; color: #0e1b3d; font-size: 15px; margin-bottom: 4px }
+  .g-foot { padding: 64px max(16px, 6vw); color: #33405f; font-size: 14px }
+  @media (max-width: 520px) { .shot, .shot.wide { width: 100%; overflow-x: auto; overflow-y: hidden; padding: 12px } .shot .phone { zoom: .82 } .shot.wide .phone { zoom: .4 } .g-head .livery { width: 120px; right: -70px } .g-head p { max-width: 30ch } .sys { padding: 18px } .sw { grid-template-columns: 1fr 1fr } .spec small { width: 100% } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-feed" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-routes" viewBox="0 0 24 24"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h7a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h7"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4.5 14.8-4.5 16 0"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M7 4 4 7M17 20V4M17 4l3 3M17 20l3-3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6h14v-6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2 4 2 4H5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9h-5v-5h-6v5H4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 7V4h4v3M6 7l1 13h10l1-13"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-voice" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><rect x="3" y="8" width="14" height="9" rx="2"/><path d="M17 4a4 4 0 0 1 4 4M21 8l-2-1M21 8l1-2"/></symbol>
+  <symbol id="i-gps" viewBox="0 0 24 24"><path d="M4 20h2v-3H4zM9 20h2v-6H9zM14 20h2v-9h-2zM19 20h2V8h-2z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.5 7.8 8 9 4.5-1.2 8-4.5 8-9V6z"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-podium" viewBox="0 0 24 24"><path d="M9 20V8h6v12M3 20v-7h6M15 20v-9h6v9M2 20h20"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+  <symbol id="i-roads" viewBox="0 0 390 420" preserveAspectRatio="xMidYMid slice">
+    <rect width="390" height="420" fill="#e9edf1"/>
+    <path d="M250 0c-10 60 40 90 30 150s-80 70-60 140 80 70 90 130" fill="none" stroke="#bfd9ea" stroke-width="16"/>
+    <path d="M0 80 C120 70 160 130 390 110" fill="none" stroke="#f7f9fc" stroke-width="9"/>
+    <path d="M60 0 C80 120 40 220 110 420" fill="none" stroke="#f7f9fc" stroke-width="7"/>
+    <path d="M0 300 C140 260 220 340 390 290" fill="none" stroke="#f7f9fc" stroke-width="7"/>
+    <path d="M150 0v420M0 200h390M320 0c-20 140 30 260 0 420" fill="none" stroke="#f7f9fc" stroke-width="4"/>
+    <rect x="170" y="215" width="70" height="50" rx="6" fill="#d7e6d2"/><rect x="18" y="130" width="34" height="60" rx="6" fill="#d7e6d2"/>
+  </symbol>
+</svg>
+
+<header class="g-head">
+  <div class="livery"><i></i><i></i><i></i></div>
+  <h1>Purple Sector, painted as a livery</h1>
+  <p>A redesign proposal for every screen of the app. Paddock screens sit on the light bodywork; the drive screens are the navy panel. Every lap wears its own stripe: its three sector results as slanted bands, from the feed card up to the full-screen HUD. These are design pages only. Nothing in the app has changed, and all drivers, times and routes shown are sample data.</p>
+  <nav><a href="#system">System</a><a href="#start">Sign in</a><a href="#paddock">Paddock</a><a href="#routes">Routes</a><a href="#drive">Drive</a><a href="#review">Review</a><a href="#account">Account</a></nav>
+</header>
+
+<section class="g-sec" id="system">
+  <h2>The system</h2>
+  <p>Saira for everything: times in its condensed italic, interface text at normal width. Navy is the colour you press on #f7f9fc; white is the colour you press on navy. Purple, green and yellow keep their timing meanings and always appear with a label.</p>
+  <div class="sys">
+    <div>
+      <h3>Palette</h3>
+      <div class="sw">
+        <div><i style="background:#ecf0f5"></i><span><b>Body #ECF0F5</b>Paddock ground</span></div>
+        <div><i style="background:#f7f9fc"></i><span><b>Card #f7f9fc</b>Lists, cards, sheets</span></div>
+        <div><i style="background:#0e1b3d"></i><span><b>Navy #0E1B3D</b>Panels, HUD, actions</span></div>
+        <div><i style="background:#5b6680"></i><span><b>Mute #5B6680</b>Secondary text</span></div>
+        <div><i style="background:#8b3fe0"></i><span><b>Purple #8B3FE0</b>Fastest: record, best ever</span></div>
+        <div><i style="background:#1fa64f"></i><span><b>Green #1FA64F</b>Faster than the reference</span></div>
+        <div><i style="background:#f5cf19"></i><span><b>Yellow #F5CF19</b>Slower than the reference</span></div>
+        <div><i style="background:#d9262e"></i><span><b>Red #D9262E</b>Jump start, delete</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Type</h3>
+      <div class="spec">
+        <div><small>Time XL · 64 / condensed italic 800</small><span class="t t-xl">2:14.83</span></div>
+        <div><small>Time M · 30</small><span class="t t-m">1:38.902</span><span class="t t-m ink-g">−0.412</span><span class="t t-m ink-y">+0.207</span></div>
+        <div><small>Heading · 26 / 800</small><span class="h1">Ecce Homo hill-climb</span></div>
+        <div><small>Section · 15 / italic caps</small><span class="sec-h" style="padding:0"><h3>Following</h3></span></div>
+        <div><small>Body · 15 / 400</small><span>Timing starts when you move off after GO.</span></div>
+        <div><small>Label · 12 / caps 700</small><span class="cap">Home course · 3.42 km</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Components</h3>
+      <div class="comps">
+        <button class="btn primary">Drive</button><button class="btn ghost">Times</button><button class="btn danger sm">Delete</button><button class="btn" disabled>Post lap</button>
+        <div class="seg" style="width:220px"><span class="on">Sectors</span><span>Graphs</span><span>Map</span></div>
+        <span class="switch on"></span><span class="switch"></span>
+        <span class="chip p">Route record</span><span class="chip g">New PB</span><span class="chip">Private</span><span class="chip n">Official</span><span class="chip r">+5 s</span>
+        <span class="rd c1">PR</span><span class="rd c2">JK</span><span class="rd c3 s">OM</span>
+        <div style="width:200px"><div class="ls lg"><b class="p"><span>S1</span></b><b class="g"><span>S2</span></b><b class="y"><span>S3</span></b></div></div>
+        <div style="width:120px"><div class="ls"><b class="p"></b><b class="g"></b><b class="y"></b></div></div>
+      </div>
+    </div>
+    <div class="rules">
+      <div><b>Every lap wears its stripe</b>Three slanted bands, one per sector, coloured by result. Big bands carry S1/S2/S3 or the gap so colour is never the only signal.</div>
+      <div><b>Two sides of the car</b>Paddock screens on the light grey-white body for daylight reading; drive screens fully navy with off-white numerals at glance size.</div>
+      <div><b>The brand stripe</b>Purple, green, yellow, slanted, always in that order and only on navy panels. Data never sits on it.</div>
+      <div><b>Drivers are roundels</b>Initials in the driver's avatar colour inside an off-white ring, or their photo. No invented race numbers.</div>
+    </div>
+  </div>
+</section>
+
+<section class="g-sec" id="start">
+  <h2>Sign in</h2>
+  <p>The first three screens a new driver sees. The car's navy panel introduces the brand once, then the app gets out of the way.</p>
+  <div class="shots">
+
+    <figure class="shot">
+      <div class="phone">
+        <div class="panel on-panel" style="height:420px;padding-top:0">
+          <div class="livery" style="width:160px;right:-80px"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div style="position:absolute;left:24px;bottom:34px;right:150px">
+            <div class="wordmark" style="font-size:44px;line-height:.95">Purple<br>Sector</div>
+            <p class="sub" style="margin-top:14px;font-size:15px">Time your drives on tracks and closed roads, and race the lap you want to beat.</p>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:22px;display:grid;gap:14px">
+          <div class="seg"><span class="on">Sign in</span><span>Create account</span></div>
+          <div class="field"><label>Email</label><div class="input">tomas@example.com</div></div>
+          <div class="field"><label>Password</label><div class="input focus">••••••••<span style="flex:1"></span><svg class="i sm" style="color:var(--mute)"><use href="#i-eye"/></svg></div></div>
+          <button class="btn primary block">Sign in</button>
+          <div style="text-align:center;font-size:14px;font-weight:700;color:var(--navy);text-decoration:underline;text-underline-offset:3px">Forgot password</div>
+        </div>
+      </div>
+      <figcaption><b>Sign in</b>The brand panel takes the top half once; the form sits low enough for a thumb. Create account swaps the button label and adds the 6-character hint.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="pad" style="padding-top:40px;display:grid;gap:20px">
+          <div class="ls" style="width:120px"><b class="p"></b><b class="g"></b><b class="y"></b></div>
+          <h1 class="h1" style="font-size:34px">Pick a username</h1>
+          <p class="body-s">Other drivers find you by it and see it on every lap you post.</p>
+          <div style="display:flex;gap:14px;align-items:center">
+            <span class="rd l c1">TK</span>
+            <div style="display:grid;gap:4px"><b style="font-size:18px">tomas_k</b><span class="sub">Your roundel until you add a photo</span></div>
+          </div>
+          <div class="field"><label>Username</label><div class="input focus"><span style="color:var(--mute)">@</span>tomas_k<span style="flex:1"></span><svg class="i sm ink-g"><use href="#i-check"/></svg></div>
+            <span class="hint">3–20 characters: letters, numbers, _ and .</span></div>
+        </div>
+        <div class="pad" style="position:absolute;left:0;right:0;bottom:40px"><button class="btn primary block">Continue</button></div>
+      </div>
+      <figcaption><b>Pick a username</b>The roundel previews how this driver will appear everywhere. The check mark means the name is free.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-close"/></svg></span><span class="title"></span></div>
+        <div class="pad" style="display:grid;gap:18px;padding-top:4px">
+          <h1 class="h1" style="font-size:32px">Before your first drive</h1>
+          <p style="font-size:17px;font-weight:600">Purple Sector is for track days and rally events.</p>
+          <div class="list">
+            <div class="row" style="align-items:flex-start"><svg class="i" style="margin-top:2px"><use href="#i-flag"/></svg><div class="grow body-s">Only time yourself where timed driving is allowed and the road is closed to traffic.</div></div>
+            <div class="row" style="align-items:flex-start"><svg class="i" style="margin-top:2px"><use href="#i-shield"/></svg><div class="grow body-s">You drive at your own risk and are responsible for following the rules of the venue and the law.</div></div>
+            <div class="row" style="align-items:flex-start"><svg class="i" style="margin-top:2px"><use href="#i-clock"/></svg><div class="grow body-s">Timing starts when you move off after GO. Moving more than 10 m before GO adds 5 s.</div></div>
+          </div>
+        </div>
+        <div class="pad" style="position:absolute;left:0;right:0;bottom:40px;display:grid;gap:10px">
+          <button class="btn primary block">I agree</button>
+          <button class="btn ghost block">Not now</button>
+        </div>
+      </div>
+      <figcaption><b>Terms before the first drive</b>Shown once, before the first Start. Three short rows instead of a wall of text.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section class="g-sec" id="paddock">
+  <h2>Paddock</h2>
+  <p>Where drivers spend the time between runs: the feed of people they follow, the map of routes, and profiles. Every lap card wears its stripe, so a scroll through the feed reads like a pit wall.</p>
+  <div class="shots">
+
+    <!-- FEED -->
+    <figure class="shot">
+      <div class="phone">
+        <span class="sample">Sample data</span>
+        <div class="panel on-panel" style="padding-top:0">
+          <div class="livery"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:4px">
+            <span class="wordmark">Purple Sector</span>
+            <span style="display:flex;gap:4px;margin-right:72px"><span class="ib"><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span></span></span>
+          </div>
+          <div style="margin-top:18px;max-width:250px">
+            <div class="cap" style="color:var(--on-navy-2)">Your home course · 3.42 km</div>
+            <div class="h2" style="margin-top:2px">Ecce Homo hill-climb</div>
+            <div class="t t-xl" style="margin-top:10px">2:14.83</div>
+            <div class="sub" style="margin-top:4px">Your best · 0.36 off the route record</div>
+          </div>
+          <div class="btns" style="margin-top:16px"><button class="btn inverse">Drive</button><button class="btn ghost-inv">Times</button></div>
+        </div>
+        <div class="sec-h"><h3>Following</h3><span class="sub">3 new laps</span></div>
+        <div class="pad" style="display:grid;gap:10px">
+          <article class="card" style="padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center">
+            <span class="rd c1">PR</span>
+            <div style="min-width:0"><div class="sub" style="color:var(--ink-2);font-weight:600">petra_r · Ecce Homo · 2 h</div>
+              <div style="display:flex;align-items:center;gap:8px;margin:3px 0 7px"><span class="t t-m">2:11.47</span><span class="chip p">Record</span></div>
+              <div class="ls" style="width:150px"><b class="p"></b><b class="p"></b><b class="g"></b></div></div>
+            <button class="btn ghost sm">Race</button>
+          </article>
+          <article class="card" style="padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center">
+            <span class="rd c2">JK</span>
+            <div style="min-width:0"><div class="sub" style="color:var(--ink-2);font-weight:600">jan.k · Autodrom Most · 1 d</div>
+              <div style="display:flex;align-items:center;gap:8px;margin:3px 0 7px"><span class="t t-m">1:38.902</span><span class="chip g">New PB</span></div>
+              <div class="ls" style="width:150px"><b class="g"></b><b class="y"></b><b class="g"></b></div></div>
+            <button class="btn ghost sm">Race</button>
+          </article>
+          <article class="card" style="padding:12px 14px;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center">
+            <span class="rd c3">OM</span>
+            <div style="min-width:0"><div class="sub" style="color:var(--ink-2);font-weight:600">ondra_m · Kart Vysoké Mýto · Sat</div>
+              <div style="margin:3px 0 7px"><span class="t t-m">0:48.115</span></div>
+              <div class="ls" style="width:150px"><b class="y"></b><b class="g"></b><b class="y"></b></div></div>
+            <button class="btn ghost sm">Race</button>
+          </article>
+        </div>
+        <nav class="tabs"><span class="tab on"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Feed</b>The home course sits in the navy panel with one tap to drive it. Each followed lap shows the time first, its sector stripe, and Race to load it as the reference.</figcaption>
+    </figure>
+
+    <!-- FEED EMPTY -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="panel on-panel" style="padding-top:0">
+          <div class="livery"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:4px"><span class="wordmark">Purple Sector</span><span class="ib" style="margin-right:72px"><svg class="i"><use href="#i-bell"/></svg></span></div>
+          <div style="margin-top:18px;max-width:240px">
+            <div class="cap" style="color:var(--on-navy-2)">Your home course</div>
+            <div class="h2" style="margin-top:4px">Pick the route you drive most</div>
+            <div class="sub" style="margin-top:6px">It stays here with your best time and one tap to drive it.</div>
+          </div>
+          <div class="btns" style="margin-top:16px"><button class="btn inverse">Find a route</button></div>
+        </div>
+        <div class="empty" style="margin-top:20px">
+          <div class="glyph"><svg class="i"><use href="#i-user"/></svg></div>
+          <div class="h2">Follow some drivers</div>
+          <p>Their posted laps show up here, ready to race against.</p>
+          <button class="btn primary" style="margin-top:6px">Find drivers</button>
+        </div>
+        <span class="sample">Sample data</span>
+        <nav class="tabs"><span class="tab on"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Feed, first day</b>No home course and nobody followed yet: each empty spot says what to do next.</figcaption>
+    </figure>
+
+    <!-- EXPLORE -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="map" style="position:absolute;inset:0">
+          <svg><use href="#i-roads"/></svg>
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none"><path d="M70 520 C110 470 90 420 150 400 S210 330 250 300" stroke="#0e1b3d" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M230 250 q40 -40 80 0 q20 40 -20 60 q-50 10 -60 -60z" stroke="#0e1b3d" stroke-width="5" fill="none"/></svg>
+          <span class="pin p" style="left:70px;top:512px">2:11.47</span>
+          <span class="pin" style="left:270px;top:226px">1:38.902</span>
+          <span class="fab" style="right:16px;top:190px"><svg class="i"><use href="#i-locate"/></svg></span>
+        </div>
+        <div class="sb" style="position:relative">9:41</div>
+        <div class="pad" style="position:relative;display:grid;gap:10px">
+          <div class="input" style="box-shadow:var(--lift)"><svg class="i sm" style="color:var(--mute)"><use href="#i-search"/></svg><span class="ph">Search routes and drivers</span></div>
+          <div style="display:flex;gap:6px"><span class="chip n" style="height:32px;padding:0 12px;font-size:12px">All routes</span><span class="chip" style="height:32px;padding:0 12px;font-size:12px;background:#f7f9fc">Official</span><span class="chip" style="height:32px;padding:0 12px;font-size:12px;background:#f7f9fc">Your routes</span></div>
+        </div>
+        <div class="sheet" style="bottom:84px;padding-bottom:12px;z-index:15">
+          <div class="grab"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><b>Public routes</b><span class="sub">2 in view</span></div>
+          <div class="row" style="padding:10px 0"><div class="grow"><div class="name">Ecce Homo hill-climb <span class="chip n">Official</span></div><div class="sub">3.42 km · point to point · standing start</div></div><div style="text-align:right"><div class="t t-s">2:11.47</div><div class="sub">P1 petra_r</div></div></div>
+          <div class="row" style="padding:10px 0"><div class="grow"><div class="name">Autodrom Most, full lap</div><div class="sub">4.21 km · lap · rolling start</div></div><div style="text-align:right"><div class="t t-s">1:38.902</div><div class="sub">P1 jan.k</div></div></div>
+        </div>
+        <span class="sample">Sample data</span>
+        <nav class="tabs"><span class="tab"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab on"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Explore</b>A light map with routes drawn in navy and the route record pinned at each start. The sheet lists what is in view; drag it up for the full list.</figcaption>
+    </figure>
+
+    <!-- EXPLORE SEARCH -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="pad" style="display:grid;gap:12px;padding-top:6px">
+          <div class="input focus"><svg class="i sm" style="color:var(--mute)"><use href="#i-search"/></svg>pe<span style="flex:1"></span><svg class="i sm" style="color:var(--mute)"><use href="#i-close"/></svg></div>
+          <div class="seg"><span>Routes</span><span class="on">Drivers</span></div>
+        </div>
+        <div class="sec-h"><h3>Drivers</h3><span class="sub">3 found</span></div>
+        <div class="pad"><div class="list">
+          <div class="row"><span class="rd c1">PR</span><div class="grow"><div class="name">Petra Růžičková</div><div class="sub">@petra_r · home course Ecce Homo</div></div><button class="btn primary sm">Follow</button></div>
+          <div class="row"><span class="rd c4">PN</span><div class="grow"><div class="name">Pavel Novák</div><div class="sub">@pavel.n</div></div><button class="btn ghost sm">Following</button></div>
+          <div class="row"><span class="rd c5">PS</span><div class="grow"><div class="name">Peter Szabo</div><div class="sub">@pete_sz</div></div><button class="btn primary sm">Follow</button></div>
+        </div></div>
+        <p class="hint" style="padding:14px 16px">Type the start of a name or @username to find a driver.</p>
+        <span class="sample">Sample data</span>
+        <nav class="tabs"><span class="tab"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab on"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Explore, searching</b>Typing swaps the map for results, split into Routes and Drivers. Follow is the only filled button on each row.</figcaption>
+    </figure>
+
+    <!-- PROFILE -->
+    <figure class="shot">
+      <div class="phone">
+        <span class="sample">Sample data</span>
+        <div class="panel on-panel" style="padding-top:0;padding-bottom:18px">
+          <div class="livery thin"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div style="display:flex;justify-content:flex-end;gap:2px;margin-right:46px"><span class="ib"><svg class="i"><use href="#i-shield"/></svg></span><span class="ib"><svg class="i"><use href="#i-gear"/></svg></span></div>
+          <div style="display:flex;gap:16px;align-items:center;margin-top:2px">
+            <span class="rd l c6" style="--c:#c2410c">TK</span>
+            <div><div class="h1" style="font-size:24px">Tomáš Kolář</div><div class="sub">@tomas_k · creator</div>
+              <div style="display:flex;gap:16px;margin-top:8px;font-size:14px"><span><b>12</b> <span class="sub">following</span></span><span><b>31</b> <span class="sub">followers</span></span></div></div>
+          </div>
+          <div style="margin-top:16px;display:flex;align-items:center;gap:10px;background:var(--navy-2);border-radius:12px;padding:10px 12px">
+            <svg class="i"><use href="#i-home"/></svg><div style="flex:1"><div class="cap" style="color:var(--on-navy-2)">Home course</div><b>Ecce Homo hill-climb</b></div><span class="t t-s">2:14.83</span>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:14px"><div class="seg"><span class="on">Posts</span><span>Routes</span><span>Laps</span></div></div>
+        <div class="pad" style="padding-top:12px">
+          <div class="card" style="padding:14px">
+            <div class="cap" style="color:var(--mute)">Driving days · last 12 weeks</div>
+            <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:10px">
+              <i style="height:14px;border-radius:3px;background:#e8ecf2"></i><i style="height:14px;border-radius:3px;background:#e8ecf2"></i><i style="height:14px;border-radius:3px;background:#8fa0c7"></i><i style="height:14px;border-radius:3px;background:#e8ecf2"></i><i style="height:14px;border-radius:3px;background:#0e1b3d"></i><i style="height:14px;border-radius:3px;background:#e8ecf2"></i><i style="height:14px;border-radius:3px;background:#8fa0c7"></i><i style="height:14px;border-radius:3px;background:#8fa0c7"></i><i style="height:14px;border-radius:3px;background:#e8ecf2"></i><i style="height:14px;border-radius:3px;background:#0e1b3d"></i><i style="height:14px;border-radius:3px;background:#0e1b3d"></i><i style="height:14px;border-radius:3px;background:#8fa0c7"></i>
+            </div>
+          </div>
+          <div class="list" style="margin-top:10px">
+            <div class="row"><div class="grow"><div class="name">Ecce Homo hill-climb</div><div class="sub">Posted 2 Nov · P4 of 9</div><div class="ls" style="width:120px;margin-top:6px"><b class="g"></b><b class="g"></b><b class="y"></b></div></div><span class="t t-m">2:14.83</span></div>
+            <div class="row"><div class="grow"><div class="name">Autodrom Most, full lap</div><div class="sub">Posted 26 Oct · P7 of 14</div><div class="ls" style="width:120px;margin-top:6px"><b class="y"></b><b class="g"></b><b class="y"></b></div></div><span class="t t-m">1:44.310</span></div>
+          </div>
+        </div>
+        <nav class="tabs"><span class="tab"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab on"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Profile</b>The driver's roundel and home course live in the navy panel. Posts, Routes and Laps are tabs below; another driver's profile shows Follow where the settings icons are.</figcaption>
+    </figure>
+
+    <!-- FOLLOW LIST -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">@tomas_k</span></div>
+        <div class="pad"><div class="seg"><span class="on">Followers 31</span><span>Following 12</span></div></div>
+        <div class="pad" style="padding-top:14px"><div class="list">
+          <div class="row"><span class="rd c1">PR</span><div class="grow"><div class="name">Petra Růžičková</div><div class="sub">@petra_r</div></div><button class="btn ghost sm">Following</button></div>
+          <div class="row"><span class="rd c2">JK</span><div class="grow"><div class="name">Jan Kovář</div><div class="sub">@jan.k</div></div><button class="btn primary sm">Follow back</button></div>
+          <div class="row"><span class="rd c3">OM</span><div class="grow"><div class="name">Ondřej Malý</div><div class="sub">@ondra_m</div></div><button class="btn ghost sm">Following</button></div>
+          <div class="row"><span class="rd c4">LB</span><div class="grow"><div class="name">Lucie Benešová</div><div class="sub">@lucie.b</div></div><button class="btn primary sm">Follow back</button></div>
+          <div class="row"><span class="rd c5">VH</span><div class="grow"><div class="name">Vojta Horák</div><div class="sub">@vojta</div></div><button class="btn primary sm">Follow back</button></div>
+        </div></div>
+        <span class="sample">Sample data</span>
+        <nav class="tabs"><span class="tab"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab on"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Followers and following</b>One list, two tabs with counts. Follow back is filled; an existing follow is the outlined state.</figcaption>
+    </figure>
+
+    <!-- NOTIFICATIONS -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">Notifications</span></div>
+        <div class="sec-h" style="padding-top:6px"><h3>New</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row" style="align-items:flex-start"><span class="rd c1">PR</span><div class="grow"><div><b>petra_r</b> beat your time on Ecce Homo</div><div style="display:flex;gap:10px;align-items:center;margin-top:6px"><span class="t t-s">2:11.47</span><span class="t t-xs ink-p">−3.36</span><span class="sub">· 2 h</span></div></div><button class="btn primary sm">Race</button></div>
+          <div class="row"><span class="rd c2">JK</span><div class="grow"><b>jan.k</b> started following you<div class="sub">5 h</div></div><button class="btn primary sm">Follow back</button></div>
+        </div></div>
+        <div class="sec-h"><h3>Earlier</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><span class="rd s c6" style="--c:#0e1b3d;width:44px;height:44px"><svg class="i sm" style="color:#f7f9fc"><use href="#i-shield"/></svg></span><div class="grow">Your creator access request was approved. You can publish a route now.<div class="sub">Mon</div></div></div>
+          <div class="row"><span class="rd c3">OM</span><div class="grow"><b>ondra_m</b> started following you<div class="sub">Sat</div></div></div>
+        </div></div>
+        <span class="sample">Sample data</span>
+        <nav class="tabs"><span class="tab on"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Notifications</b>A beaten time shows the new time and the gap, with Race to answer it straight away. Moderator news uses the navy shield roundel.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section class="g-sec" id="routes">
+  <h2>Routes</h2>
+  <p>Drivers build their own private routes; approved creators publish them with a leaderboard. Route shapes are always drawn at the same scale and orientation, so laps on one route line up when compared.</p>
+  <div class="shots">
+
+    <!-- MY ROUTES -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar" style="padding-left:16px"><span class="title" style="font-size:24px;font-weight:900;font-style:italic;text-transform:uppercase">Routes</span><button class="btn primary sm" style="margin-right:8px"><svg class="i sm"><use href="#i-plus"/></svg>Build</button></div>
+        <div class="pad"><div class="seg"><span class="on">Routes I built</span><span>My laps</span></div></div>
+        <div class="pad" style="padding-top:14px;display:grid;gap:10px">
+          <article class="card" style="padding:14px;display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:center">
+            <svg viewBox="0 0 76 64" style="width:76px;height:64px;background:#f4f6f9;border-radius:10px"><path d="M10 54 C20 46 16 34 28 32 S38 14 50 16 S64 10 68 8" stroke="#0e1b3d" stroke-width="3.5" fill="none" stroke-linecap="round"/><circle cx="10" cy="54" r="4" fill="#0e1b3d"/></svg>
+            <div><div style="display:flex;gap:6px;align-items:center"><b>Ecce Homo hill-climb</b></div><div class="sub">3.42 km · point to point · standing</div>
+              <div style="display:flex;gap:6px;margin-top:8px"><span class="chip n"><svg class="i sm" style="width:12px;height:12px"><use href="#i-globe"/></svg>Public</span><span class="chip">9 drivers</span></div></div>
+          </article>
+          <article class="card" style="padding:14px;display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:center">
+            <svg viewBox="0 0 76 64" style="width:76px;height:64px;background:#f4f6f9;border-radius:10px"><path d="M14 50 L14 18 Q14 10 24 10 L56 10 Q66 10 62 20 L52 34 Q48 40 58 46 L60 52 L20 54 Q14 54 14 50Z" stroke="#0e1b3d" stroke-width="3.5" fill="none" stroke-linejoin="round"/></svg>
+            <div><b>Club sprint, Saturday loop</b><div class="sub">2.10 km · lap · rolling</div>
+              <div style="display:flex;gap:6px;margin-top:8px"><span class="chip"><svg class="i sm" style="width:12px;height:12px"><use href="#i-lock"/></svg>Private</span><button class="btn ghost sm" style="height:26px;font-size:11px;padding:0 10px">Publish</button></div></div>
+          </article>
+        </div>
+        <div class="pad" style="padding-top:14px">
+          <div class="card on-panel" style="padding:16px;display:grid;gap:10px;background:var(--navy);color:#f7f9fc;position:relative;overflow:hidden">
+            <div class="livery thin" style="width:60px"><i></i><i></i><i></i></div>
+            <b style="font-size:17px;position:relative;max-width:260px">Want to publish a route?</b>
+            <p style="font-size:14px;color:var(--on-navy-2);position:relative;max-width:270px">Publishing, with a leaderboard, is for approved creators. Ask the admin and say which track or event you want to time.</p>
+            <div style="position:relative"><button class="btn inverse sm">Request creator access</button></div>
+          </div>
+        </div>
+        <span class="sample">Sample data</span>
+        <nav class="tabs"><span class="tab"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab"><span class="go">GO</span></span><span class="tab on"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Routes</b>Each built route shows its shape, length, start type and whether it is public. Publish sits on private routes for creators; drivers see the request card instead.</figcaption>
+    </figure>
+
+    <!-- ROUTE BUILDER -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="map" style="position:absolute;inset:0">
+          <svg><use href="#i-roads"/></svg>
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none">
+            <path d="M60 470 C100 440 120 400 150 390 S200 360 210 330 S240 270 290 250 S330 210 340 180" stroke="#0e1b3d" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <path d="M138 384l14 14M214 318l14 10" stroke="#f7f9fc" stroke-width="4"/>
+            <circle cx="60" cy="470" r="11" fill="#1fa64f" stroke="#f7f9fc" stroke-width="3"/><circle cx="150" cy="390" r="6" fill="#f7f9fc" stroke="#0e1b3d" stroke-width="3"/><circle cx="210" cy="330" r="6" fill="#f7f9fc" stroke="#0e1b3d" stroke-width="3"/><circle cx="290" cy="250" r="6" fill="#f7f9fc" stroke="#0e1b3d" stroke-width="3"/><circle cx="340" cy="180" r="11" fill="#0e1b3d" stroke="#f7f9fc" stroke-width="3"/>
+          </svg>
+          <span class="pin" style="left:60px;top:455px;background:var(--green-ink)">Start</span>
+          <span class="fab" style="right:16px;top:110px"><svg class="i"><use href="#i-locate"/></svg></span>
+          <span class="fab" style="right:16px;top:164px"><svg class="i"><use href="#i-undo"/></svg></span>
+          <span class="fab" style="right:16px;top:218px"><svg class="i"><use href="#i-trash"/></svg></span>
+        </div>
+        <div class="sb" style="position:relative">9:41</div>
+        <div class="bar" style="position:relative"><span class="ib" style="background:#f7f9fc;box-shadow:var(--lift)"><svg class="i"><use href="#i-close"/></svg></span><span class="title" style="background:#f7f9fc;border-radius:999px;padding:10px 14px;box-shadow:var(--lift);font-size:15px;flex:none">New route · tap to add the next point</span></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="t t-m">3.42 km</span><span class="sub">3 sectors · 21 minisectors</span></div>
+          <div class="field" style="margin-top:12px"><label>Name</label><div class="input"><span class="ph">e.g. Brno Circuit, full lap</span></div></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:12px">
+            <div class="seg"><span class="on">Standing</span><span>Rolling</span></div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700">Lap <span class="switch"></span></div>
+          </div>
+          <p class="hint" style="margin-top:10px">Stop at the start, then a 3–10 s countdown. Moving more than 10 m early costs +5 s. White ticks show where each sector ends.</p>
+          <button class="btn primary block" style="margin-top:12px">Save route</button>
+        </div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Build a route</b>Tap the map to place the start, then each point; the line snaps to roads. Undo and clear sit with locate on the map edge. The sheet holds the name, start type and Lap switch.</figcaption>
+    </figure>
+
+    <!-- ROUTE DETAIL -->
+    <figure class="shot">
+      <div class="phone">
+        <span class="sample">Sample data</span>
+        <div class="map" style="height:250px">
+          <svg><use href="#i-roads"/></svg>
+          <svg viewBox="0 0 390 250"><path d="M50 210 C90 180 80 150 140 140" stroke="#8b3fe0" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M140 140 S200 90 250 80" stroke="#1fa64f" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M250 80 S320 60 340 40" stroke="#f5cf19" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M134 132l12 14M244 72l10 14" stroke="#f7f9fc" stroke-width="4"/></svg>
+          <div class="sb" style="position:relative">9:41</div>
+          <div class="bar" style="position:relative"><span class="ib" style="background:#f7f9fc;box-shadow:var(--lift)"><svg class="i"><use href="#i-back"/></svg></span><span class="title"></span><span class="ib" style="background:#f7f9fc;box-shadow:var(--lift)"><svg class="i"><use href="#i-more"/></svg></span></div>
+        </div>
+        <div class="pad" style="padding-top:16px">
+          <div style="display:flex;gap:6px"><span class="chip n">Official</span><span class="chip">Standing start</span><span class="chip">3.42 km</span></div>
+          <h1 class="h1" style="margin-top:8px">Ecce Homo hill-climb</h1>
+          <div class="ls lg" style="margin-top:12px"><b class="p"><span>S1 0:40.92</span></b><b class="p"><span>S2 0:51.33</span></b><b class="p"><span>S3 0:39.22</span></b></div>
+          <div class="sub" style="margin-top:6px">Sector records, each by the fastest driver in that sector</div>
+        </div>
+        <div class="pad" style="padding-top:14px"><div class="seg"><span class="on">Leaderboard</span><span>Locals</span></div></div>
+        <div class="pad" style="padding-top:10px"><div class="list">
+          <div class="row"><span class="pos p1">1</span><span class="rd s c1">PR</span><div class="grow"><div class="name">petra_r</div></div><span class="t t-s ink-p">2:11.47</span></div>
+          <div class="row"><span class="pos">2</span><span class="rd s c2">JK</span><div class="grow"><div class="name">jan.k</div></div><span class="t t-s">2:13.90</span></div>
+          <div class="row" style="background:#eef1f7"><span class="pos">4</span><span class="rd s c6" style="--c:#c2410c">TK</span><div class="grow"><div class="name">You</div></div><span class="t t-s">2:14.83</span></div>
+        </div></div>
+        <div class="pad" style="padding-top:10px"><div class="list"><div class="row"><svg class="i"><use href="#i-clock"/></svg><div class="grow"><div class="name">My laps on this route</div><div class="sub">5 laps · theoretical best 2:13.91</div></div><svg class="i chev"><use href="#i-next"/></svg></div></div></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 30px;background:linear-gradient(transparent,var(--body) 30%);display:flex;gap:8px">
+          <button class="btn ghost" style="flex:none;width:52px;padding:0"><svg class="i"><use href="#i-home"/></svg></button>
+          <button class="btn primary" style="flex:1">Drive this route</button>
+        </div>
+      </div>
+      <figcaption><b>Route detail</b>The map draws each sector in its record colour. Sector records sit in one big stripe, then the leaderboard with your row highlighted. Drive is pinned at the bottom; the house sets it as your home course.</figcaption>
+    </figure>
+
+    <!-- RUN HISTORY -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">My laps · Ecce Homo</span><span class="ib"><svg class="i"><use href="#i-sort"/></svg></span></div>
+        <div class="pad">
+          <div class="card on-panel" style="padding:14px 16px;background:var(--navy);color:#f7f9fc;position:relative;overflow:hidden">
+            <div class="livery thin" style="width:56px"><i></i><i></i><i></i></div>
+            <div class="cap" style="color:var(--on-navy-2);position:relative">Theoretical best</div>
+            <div class="t t-l" style="margin-top:4px;position:relative">2:13.91</div>
+            <div class="sub" style="position:relative;color:var(--on-navy-2);max-width:250px">Your best time in each sector added up · 0.92 under your best</div>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:12px"><div class="seg"><span class="on">Fastest</span><span>Newest</span></div></div>
+        <div class="pad" style="padding-top:10px"><div class="list">
+          <div class="row"><div class="grow"><div style="display:flex;gap:6px;align-items:center"><span class="t t-m">2:14.83</span><span class="chip g">PB</span><span class="chip n">Posted</span></div><div class="sub" style="margin-top:4px">2 Nov · 14:32</div></div><div class="ls" style="width:96px"><b class="g"></b><b class="g"></b><b class="y"></b></div></div>
+          <div class="row"><div class="grow"><div style="display:flex;gap:6px;align-items:center"><span class="t t-m">2:15.40</span></div><div class="sub" style="margin-top:4px">2 Nov · 14:18</div></div><div class="ls" style="width:96px"><b class="p"></b><b class="y"></b><b class="y"></b></div></div>
+          <div class="row"><div class="grow"><div style="display:flex;gap:6px;align-items:center"><span class="t t-m">2:21.06</span><span class="chip r">+5 s</span></div><div class="sub" style="margin-top:4px">26 Oct · 15:04</div></div><div class="ls" style="width:96px"><b class="y"></b><b class="g"></b><b class="y"></b></div></div>
+          <div class="row"><div class="grow"><div style="display:flex;gap:6px;align-items:center"><span class="t t-m">2:18.77</span><span class="chip out">Sim</span></div><div class="sub" style="margin-top:4px">25 Oct · 18:22</div></div><div class="ls" style="width:96px"><b class="n"></b><b class="n"></b><b class="n"></b></div></div>
+          <div class="row" style="opacity:1"><div class="grow"><div style="display:flex;gap:6px;align-items:center"><span class="t t-m" style="color:var(--mute)">2.32 km</span><span class="chip out" style="color:var(--ink-2)">Partial</span></div><div class="sub" style="margin-top:4px">24 Oct · 16:47 · GPS lost in S3</div></div><div class="ls" style="width:96px"><b class="g"></b><b class="y"></b><b class="n"></b></div></div>
+        </div></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>My laps on a route</b>The theoretical best leads in navy. Every lap row carries its stripe; penalties, posted, simulated and partial laps are labelled chips, never just colour. A partial lap shows how far it got instead of a time, its unreached sectors left empty, and sorts last.</figcaption>
+    </figure>
+
+    <!-- COMPARE -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">Compare · Ecce Homo</span></div>
+        <div class="pad" style="display:grid;grid-template-columns:1fr 44px 1fr;gap:8px;align-items:center">
+          <div class="card" style="padding:12px"><div class="cap" style="color:var(--mute)">A · Your lap</div><div class="t t-m" style="margin-top:4px">2:14.83</div><div class="sub">2 Nov</div></div>
+          <span class="ib" style="background:#f7f9fc;box-shadow:var(--lift)"><svg class="i"><use href="#i-swap"/></svg></span>
+          <div class="card" style="padding:12px;box-shadow:inset 0 0 0 2px var(--purple),var(--lift)"><div class="cap" style="color:var(--purple-ink)">B · Route record</div><div class="t t-m" style="margin-top:4px">2:11.47</div><div class="sub">petra_r</div></div>
+        </div>
+        <div class="pad" style="padding-top:10px"><div class="input" style="height:44px;font-size:14px"><span class="sub" style="font-size:14px">Compare with</span><span style="flex:1"></span><b>Route record</b><svg class="i sm"><use href="#i-next"/></svg></div></div>
+        <div class="sec-h"><h3>Sectors</h3><span class="sub">A against B</span></div>
+        <div class="pad"><div class="list">
+          <div class="row"><b style="width:28px">S1</b><div class="grow"><div class="dbar"><div class="l"></div><div class="axis"></div><div class="r"><i style="width:30%;background:var(--yellow)"></i></div></div></div><span class="t t-s ink-y" style="width:64px;text-align:right">+0.28</span></div>
+          <div class="row"><b style="width:28px">S2</b><div class="grow"><div class="dbar"><div class="l"></div><div class="axis"></div><div class="r"><i style="width:78%;background:var(--yellow)"></i></div></div></div><span class="t t-s ink-y" style="width:64px;text-align:right">+0.75</span></div>
+          <div class="row"><b style="width:28px">S3</b><div class="grow"><div class="dbar"><div class="l"><i style="width:22%;background:var(--green)"></i></div><div class="axis"></div><div class="r"></div></div></div><span class="t t-s ink-g" style="width:64px;text-align:right">−0.20</span></div>
+          <div class="row" style="background:#f4f6f9"><b class="grow">Total</b><span class="t t-m ink-y">+3.36</span></div>
+        </div></div>
+        <div class="pad" style="display:flex;justify-content:space-between;padding-top:8px;font-size:12px;font-weight:700;color:var(--mute)"><span>← A faster</span><span>A slower →</span></div>
+        <div class="pad" style="padding-top:14px"><div class="card" style="padding:14px"><div class="cap" style="color:var(--mute)">Gap over the lap</div>
+          <svg viewBox="0 0 330 90" style="width:100%;height:90px;margin-top:6px"><path d="M0 45h330" stroke="#c9d0dc" stroke-dasharray="3 4"/><path d="M0 45 C40 44 60 40 90 38 S150 30 190 22 S260 18 300 24 L330 26" stroke="#0e1b3d" stroke-width="2.5" fill="none"/><path d="M110 0v90M220 0v90" stroke="#dfe3ea"/></svg>
+        </div></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Compare</b>Two laps side by side with a swap button. Bars grow from the centre line: left is A faster, right is A slower, and every bar carries its number.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section class="g-sec" id="drive">
+  <h2>Drive</h2>
+  <p>From the light paddock into the navy car. Once Start is pressed, every screen is navy with off-white numerals sized for a glance in a windscreen mount, and nothing needs a tap until the car has stopped.</p>
+  <div class="shots">
+
+    <!-- LAUNCHER -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="pad" style="padding-top:18px"><h1 class="h1" style="font-size:32px;font-style:italic;text-transform:uppercase;font-weight:900">Where are you driving?</h1></div>
+        <div class="pad" style="padding-top:16px">
+          <article class="card on-panel" style="background:var(--navy);color:#f7f9fc;padding:16px;position:relative;overflow:hidden">
+            <div class="livery thin" style="width:72px"><i></i><i></i><i></i></div>
+            <div style="position:relative;max-width:260px">
+              <div class="cap" style="color:var(--on-navy-2)">Home course</div>
+              <div class="h2" style="margin-top:4px">Ecce Homo hill-climb</div>
+              <div style="display:flex;gap:10px;align-items:baseline;margin-top:8px"><span class="t t-l">2:14.83</span><span class="sub">your best</span></div>
+              <button class="btn inverse" style="margin-top:14px">Drive</button>
+            </div>
+          </article>
+        </div>
+        <div class="sec-h"><h3>Recently driven</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><svg viewBox="0 0 44 36" style="width:44px;height:36px;flex:none"><path d="M8 28 L8 10 Q8 4 14 4 L32 4 Q38 4 36 10 L30 18 Q28 22 34 26 L35 30 L11 31 Q8 31 8 28Z" stroke="#0e1b3d" stroke-width="2.5" fill="none"/></svg><div class="grow"><div class="name">Autodrom Most, full lap</div><div class="sub">Public · last driven 26 Oct</div></div><svg class="i chev"><use href="#i-next"/></svg></div>
+          <div class="row"><svg viewBox="0 0 44 36" style="width:44px;height:36px;flex:none"><path d="M6 20 Q6 4 18 6 Q26 8 27 16 Q28 24 36 22 Q42 20 40 30 L12 30 Q6 28 6 20Z" stroke="#0e1b3d" stroke-width="2.5" fill="none"/></svg><div class="grow"><div class="name">Club sprint, Saturday loop</div><div class="sub">Private · last driven 19 Oct</div></div><svg class="i chev"><use href="#i-next"/></svg></div>
+        </div></div>
+        <div class="pad" style="padding-top:14px"><button class="btn ghost block"><svg class="i sm"><use href="#i-search"/></svg>Find a route on the map</button></div>
+        <span class="sample">Sample data</span>
+        <nav class="tabs"><span class="tab"><svg class="i"><use href="#i-feed"/></svg>Feed</span><span class="tab"><svg class="i"><use href="#i-search"/></svg>Explore</span><span class="tab on"><span class="go">GO</span></span><span class="tab"><svg class="i"><use href="#i-routes"/></svg>Routes</span><span class="tab"><svg class="i"><use href="#i-user"/></svg>Profile</span></nav>
+      </div>
+      <figcaption><b>Drive tab</b>One question, the home course first, then recent routes. The GO roundel wears the purple ring while this tab is open.</figcaption>
+    </figure>
+
+    <!-- PRE-DRIVE -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">Ecce Homo hill-climb</span><span class="chip" style="margin-right:8px"><svg class="i sm" style="width:12px;height:12px"><use href="#i-gps"/></svg>GPS good</span></div>
+        <div class="sec-h" style="padding-top:4px"><h3>Race against</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><svg class="i ink-p"><use href="#i-podium"/></svg><div class="grow"><div class="name">Route record</div><div class="sub">petra_r · 2:11.47</div></div><span style="width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--rule-2)"></span></div>
+          <div class="row" style="background:#eef1f7"><svg class="i"><use href="#i-user"/></svg><div class="grow"><div class="name">Your best</div><div class="sub">2:14.83 · 2 Nov</div></div><span style="width:24px;height:24px;border-radius:50%;background:var(--navy);box-shadow:inset 0 0 0 6px #eef1f7, 0 0 0 2px var(--navy)"></span></div>
+          <div class="row"><svg class="i"><use href="#i-clock"/></svg><div class="grow"><div class="name">Theoretical best</div><div class="sub">Your best time in each sector · 2:13.91</div></div><span style="width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--rule-2)"></span></div>
+          <div class="row"><svg class="i"><use href="#i-close"/></svg><div class="grow"><div class="name">No reference</div><div class="sub">Just the clock</div></div><span style="width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--rule-2)"></span></div>
+        </div></div>
+        <div class="sec-h"><h3>Setup</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><div class="grow"><div class="name">Countdown</div><div class="sub">Lights go out this long after Start</div></div><div class="stepper"><span class="ib"><svg class="i sm"><use href="#i-back"/></svg></span><b>5 s</b><span class="ib"><svg class="i sm"><use href="#i-next"/></svg></span></div></div>
+          <div class="row"><div class="grow"><div class="name">Screen</div><div class="seg" style="margin-top:8px"><span class="on">Full HUD</span><span>Delta only</span></div></div></div>
+          <div class="row"><svg class="i"><use href="#i-voice"/></svg><div class="grow"><div class="name">Voice callouts</div><div class="sub">“Sector 2, minus zero point four”</div></div><span class="switch on"></span></div>
+        </div></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 30px;background:linear-gradient(transparent,var(--body) 26%)"><button class="btn primary xl block">Start</button></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Before the drive</b>Pick who to race, set the countdown, screen and voice, then one big Start pinned at the thumb. Posted laps from other drivers appear in the same list.</figcaption>
+    </figure>
+
+    <!-- DRIVE TO START -->
+    <figure class="shot">
+      <div class="phone navy">
+        <div class="sb">9:41</div>
+        <div class="pad" style="display:flex;justify-content:space-between;align-items:center"><span class="chip" style="background:var(--navy-2);color:var(--on-navy-2)"><svg class="i sm" style="width:12px;height:12px"><use href="#i-gps"/></svg>GPS ±4 m</span><span class="sub">vs Your best</span></div>
+        <div style="text-align:center;padding-top:70px">
+          <div class="cap" style="color:var(--on-navy-2)">Drive to the start</div>
+          <div class="t t-xxl" style="margin-top:12px">340<span style="font-size:40px"> m</span></div>
+          <p class="sub" style="font-size:16px;max-width:280px;margin:16px auto 0">Approach the start line in the route's direction. Timing arms within 50 m.</p>
+        </div>
+        <div style="position:absolute;left:24px;right:24px;bottom:150px;display:flex;gap:8px;transform:skewX(var(--skew))"><i style="flex:1;height:10px;background:var(--navy-2);border-radius:3px"></i><i style="flex:1;height:10px;background:var(--navy-2);border-radius:3px"></i><i style="flex:1;height:10px;background:var(--navy-2);border-radius:3px"></i></div>
+        <div class="pad" style="position:absolute;left:0;right:0;bottom:40px"><button class="btn ghost-inv block">Hold to exit</button></div>
+      </div>
+      <figcaption><b>Drive to the start</b>Only one number on screen: the distance to the line. The empty stripe waits for its first sector.</figcaption>
+    </figure>
+
+    <!-- LIGHTS -->
+    <figure class="shot">
+      <div class="phone navy">
+        <div class="sb">9:41</div>
+        <div class="pad" style="display:flex;justify-content:space-between;align-items:center"><span class="chip" style="background:var(--navy-2);color:var(--on-navy-2)"><svg class="i sm" style="width:12px;height:12px"><use href="#i-gps"/></svg>GPS ±3 m</span><span class="sub">Armed · standing start</span></div>
+        <div style="padding-top:120px;display:grid;gap:30px;justify-items:center">
+          <div class="lights"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+          <div class="t t-xxl">3</div>
+          <p class="sub" style="font-size:16px;text-align:center;max-width:260px">Timing starts when you move off after GO. Moving more than 10 m early adds 5 s.</p>
+        </div>
+        <div class="pad" style="position:absolute;left:0;right:0;bottom:40px"><button class="btn ghost-inv block">Hold to stop</button></div>
+      </div>
+      <figcaption><b>Countdown lights</b>Five lights fill, then go out at GO, with beeps. Before this, a Start button appears once the car has been still at the line for 2 seconds.</figcaption>
+    </figure>
+
+    <!-- HUD -->
+    <figure class="shot">
+      <div class="phone navy">
+        <div class="sb">9:41</div>
+        <div class="pad" style="display:flex;justify-content:space-between;align-items:center"><span class="chip" style="background:var(--navy-2);color:var(--on-navy-2)"><svg class="i sm" style="width:12px;height:12px"><use href="#i-gps"/></svg>GPS ±3 m</span><span class="t t-s">118<span class="sub" style="font-style:normal;font-weight:600;font-size:13px"> km/h</span></span></div>
+        <div style="text-align:center;padding-top:26px">
+          <div class="t t-l" style="color:var(--on-navy-2)">1:38.4</div>
+          <div class="t hi-g" style="font-size:136px;margin-top:6px">−0.41</div>
+          <div class="sub" style="font-size:15px;margin-top:2px">vs Your best · faster</div>
+        </div>
+        <div style="display:flex;gap:10px;height:180px;padding:28px 44px 0">
+          <div class="hud-band p"><div><div class="cap">S1</div><div class="t t-m">−0.28</div></div></div>
+          <div class="hud-band g"><div><div class="cap">S2</div><div class="t t-m">−0.20</div></div></div>
+          <div class="hud-band live"><div><div class="cap">S3</div><div class="t t-m">S3.4</div></div></div>
+        </div>
+        <div class="pad" style="padding-top:18px"><div class="minis"><i class="p"></i><i class="g"></i><i class="p"></i><i class="g"></i><i class="g"></i><i class="y"></i><i class="g"></i><i class="g"></i><i class="y"></i><i class="g"></i><i class="g"></i><i class="p"></i><i class="g"></i><i class="y"></i><i class="g"></i><i class="g"></i><i class="now"></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="pad" style="position:absolute;left:0;right:0;bottom:40px"><button class="btn ghost-inv block">Hold to stop</button></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Drive HUD</b>The gap to the reference is the biggest thing on screen. The lap's own stripe builds below it: finished sectors fill with their colour and gap, the live one is outlined with the minisector the car is in. This is a stage, so the button reads Hold to stop; on a lap route it reads Hold to finish session.</figcaption>
+    </figure>
+
+    <!-- DELTA ONLY, SIDEWAYS -->
+    <figure class="shot wide">
+      <div class="phone land" style="background:var(--green);color:var(--navy)">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:16px 28px 18px">
+          <header style="display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:700">
+            <span>Ecce Homo hill-climb</span>
+            <span style="display:flex;align-items:center;gap:6px"><svg class="i sm"><use href="#i-gps"/></svg>GPS ±3 m</span>
+          </header>
+          <section style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+            <div class="t" style="font-size:212px;line-height:.85;color:var(--card)">−0.41</div>
+            <div style="font-size:19px;font-weight:600">vs Your best</div>
+          </section>
+          <footer style="display:flex;justify-content:space-between;align-items:center">
+            <span style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600"><svg class="i sm"><use href="#i-rotate"/></svg>Turn upright for full HUD</span>
+            <button class="btn sm" style="background:transparent;color:var(--navy);box-shadow:inset 0 0 0 2px var(--navy)">Hold to exit</button>
+          </footer>
+        </div>
+        <span class="sample" style="background:var(--navy);color:var(--on-navy);border-color:var(--navy)">Sample data</span>
+      </div>
+      <figcaption><b>Delta only (phone sideways)</b>As in today's app: the whole screen is the flag colour of the last minisector, with the gap in huge off-white numerals and nothing beside it. Route and GPS sit along the top; turn-upright hint and a small Hold to exit along the bottom. On purple the ink turns off-white.</figcaption>
+    </figure>
+
+    <!-- JUMP START -->
+    <figure class="shot">
+      <div class="phone navy">
+        <div style="background:var(--red);color:#f7f9fc;padding:52px 16px 16px;display:flex;gap:12px;align-items:center">
+          <svg class="i" style="width:30px;height:30px"><use href="#i-flag"/></svg>
+          <div><div style="font-weight:900;font-style:italic;text-transform:uppercase;font-size:22px;line-height:1">Jump start · +5 s</div><div style="font-size:14px;margin-top:4px">Moved 14 m before GO. Timed from GO.</div></div>
+        </div>
+        <div style="text-align:center;padding-top:40px">
+          <div class="t t-l" style="color:var(--on-navy-2)">0:12.6</div>
+          <div class="t hi-y" style="font-size:136px;margin-top:6px">+4.12</div>
+          <div class="sub" style="font-size:15px">vs Your best · penalty included</div>
+        </div>
+        <div style="display:flex;gap:10px;height:150px;padding:28px 40px 0">
+          <div class="hud-band live"><div><div class="cap">S1</div><div class="t t-m">S1.3</div></div></div>
+          <div class="hud-band"><div><div class="cap">S2</div></div></div>
+          <div class="hud-band"><div><div class="cap">S3</div></div></div>
+        </div>
+        <div class="pad" style="position:absolute;left:0;right:0;bottom:40px"><button class="btn ghost-inv block">Hold to stop</button></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Jump start</b>The red banner is the only red in the drive. The penalty is in the numbers and in words, never hidden.</figcaption>
+    </figure>
+
+    <!-- PARTIAL RUN -->
+    <figure class="shot">
+      <div class="phone navy">
+        <div class="sb">9:41</div>
+        <div style="text-align:center;padding-top:40px">
+          <div class="cap" style="color:var(--on-navy-2)">GPS lost before the finish · Ecce Homo</div>
+          <div class="t" style="font-size:96px;margin-top:10px">1:31.88</div>
+          <div class="sub" style="font-size:15px;margin-top:6px">2 of 3 sectors timed</div>
+        </div>
+        <div style="display:flex;gap:10px;height:120px;padding:30px 36px 0">
+          <div class="hud-band p"><div><div class="cap">S1</div><div class="t t-s">−0.28</div></div></div>
+          <div class="hud-band g"><div><div class="cap">S2</div><div class="t t-s">−0.20</div></div></div>
+          <div class="hud-band" style="background:transparent;box-shadow:inset 0 0 0 2px var(--navy-3)"><div><div class="cap">S3</div><div style="font-size:12px">not reached</div></div></div>
+        </div>
+        <div class="pad" style="padding-top:34px"><div style="background:var(--navy-2);border-radius:14px;padding:14px 16px;font-size:15px;color:var(--on-navy-2)">The GPS signal dropped out 1.1 km from the finish. Keep the 2.32 km you drove to view it and compare it. A partial run can't be posted or set a best.</div></div>
+        <div class="pad" style="position:absolute;left:0;right:0;bottom:40px;display:grid;gap:12px">
+          <div style="text-align:center;font-size:20px;font-weight:800">Keep this run?</div>
+          <div class="btns"><button class="btn ghost-inv" style="flex:1">Discard</button><button class="btn inverse" style="flex:2">Keep</button></div>
+        </div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Partial run</b>Only when GPS drops out before the finish line. A finished stage goes straight to its run summary; on a lap route, finished laps keep the session going until Hold to finish session.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section class="g-sec" id="review">
+  <h2>Review</h2>
+  <p>After the drive: a stage gets one result, a lap route gets its session of laps; then the post, and the lap read against the lap it raced. A finished lap gets the whole first screen; the detail is one scroll or one tab away.</p>
+  <div class="shots">
+
+    <!-- RUN SUMMARY: STAGE ROUTE -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="panel on-panel" style="padding-top:0;padding-bottom:20px">
+          <div class="livery"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div class="bar" style="padding:0;margin-left:-8px"><span class="ib"><svg class="i"><use href="#i-close"/></svg></span><span class="title"></span></div>
+          <div style="max-width:250px">
+            <div class="cap" style="color:var(--on-navy-2)">Ecce Homo · stage · 3.42 km</div>
+            <div class="t t-xl" style="margin-top:8px">2:14.42</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="t t-s hi-g">−0.41 vs your best</span><span class="chip g">New PB</span></div>
+          </div>
+          <div class="ls lg" style="margin-top:16px;max-width:300px"><b class="p"><span>S1 −0.28</span></b><b class="g"><span>S2 −0.20</span></b><b class="y"><span>S3 +0.07</span></b></div>
+          <div class="btns" style="margin-top:16px;max-width:290px"><button class="btn inverse" style="flex:1"><svg class="i sm"><use href="#i-share"/></svg>Post time</button><button class="btn ghost-inv">Details</button></div>
+        </div>
+        <div class="sec-h"><h3>How it compares</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><svg class="i"><use href="#i-user"/></svg><div class="grow"><div class="name">Your best before today</div><div class="sub">2:14.83 · 26 Oct</div></div><span class="t t-s ink-g">−0.41</span></div>
+          <div class="row"><svg class="i ink-p"><use href="#i-podium"/></svg><div class="grow"><div class="name">Route record</div><div class="sub">petra_r · 2:11.47</div></div><span class="t t-s ink-y">+2.95</span></div>
+          <div class="row"><svg class="i"><use href="#i-flag"/></svg><div class="grow"><div class="name">Leaderboard if posted</div><div class="sub">Up from P4</div></div><b style="font-size:17px">P3 of 10</b></div>
+        </div></div>
+        <div class="pad" style="padding-top:10px"><div class="list"><div class="row"><svg class="i"><use href="#i-clock"/></svg><div class="grow"><div class="name">All your times on this stage</div><div class="sub">6 runs · newest first or fastest</div></div><svg class="i chev"><use href="#i-next"/></svg></div></div></div>
+        <div class="pad" style="padding-top:12px;display:flex;gap:8px"><button class="btn primary" style="flex:1">Drive it again</button><button class="btn danger">Discard</button></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Run summary: stage route</b>A stage runs start to finish once, so there is no session and no lap list. The one time owns the screen, then how it compares with your best, the route record and the leaderboard. Earlier times live in your history, not grouped as a session. Drive it again takes you back to the start.</figcaption>
+    </figure>
+
+    <!-- RUN SUMMARY: LAP ROUTE -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="panel on-panel" style="padding-top:0;padding-bottom:20px">
+          <div class="livery"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div class="bar" style="padding:0;margin-left:-8px"><span class="ib"><svg class="i"><use href="#i-close"/></svg></span><span class="title"></span></div>
+          <div style="max-width:250px">
+            <div class="cap" style="color:var(--on-navy-2)">Autodrom Most · lap 3 of 3</div>
+            <div class="t t-xl" style="margin-top:8px">1:38.47</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="t t-s hi-g">−0.41 vs your best</span><span class="chip g">New PB</span></div>
+          </div>
+          <div class="ls lg" style="margin-top:16px;max-width:300px"><b class="p"><span>S1 −0.28</span></b><b class="g"><span>S2 −0.20</span></b><b class="y"><span>S3 +0.07</span></b></div>
+          <div class="btns" style="margin-top:16px;max-width:290px"><button class="btn inverse" style="flex:1"><svg class="i sm"><use href="#i-share"/></svg>Post lap</button><button class="btn ghost-inv">Details</button></div>
+        </div>
+        <div class="sec-h"><h3>This session</h3><span class="sub">3 laps</span></div>
+        <div class="pad"><div class="list">
+          <div class="row" style="background:#eef1f7"><span class="pos">3</span><div class="grow"><div style="display:flex;gap:6px;align-items:center"><span class="t t-m">1:38.47</span><span class="chip g">PB</span></div></div><div class="ls" style="width:90px"><b class="p"></b><b class="g"></b><b class="y"></b></div></div>
+          <div class="row"><span class="pos">2</span><div class="grow"><span class="t t-m">1:39.12</span></div><div class="ls" style="width:90px"><b class="g"></b><b class="y"></b><b class="y"></b></div></div>
+          <div class="row"><span class="pos">1</span><div class="grow"><div style="display:flex;gap:6px;align-items:center"><span class="t t-m">1:41.80</span><span class="chip r">+5 s</span></div></div><div class="ls" style="width:90px"><b class="y"></b><b class="g"></b><b class="y"></b></div></div>
+        </div></div>
+        <div class="pad" style="padding-top:12px;display:flex;gap:8px"><button class="btn primary" style="flex:1">Drive again</button><button class="btn danger">Discard</button></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Run summary: lap route</b>Only for routes that are a lap. Every lap driven without stopping belongs to one session: the last lap takes the navy panel, the whole session sits below with the best lap highlighted. Drive again starts a new session against the same reference.</figcaption>
+    </figure>
+
+    <!-- POST SHEET -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="panel on-panel" style="padding-top:0;height:300px">
+          <div class="livery"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div style="max-width:250px;margin-top:40px"><div class="t t-xl">2:14.42</div></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:20px">Post time</b><span class="ib"><svg class="i"><use href="#i-close"/></svg></span></div>
+          <div class="card" style="box-shadow:inset 0 0 0 1px var(--rule);padding:14px;margin-top:10px;display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center">
+            <div><div class="sub">Ecce Homo hill-climb</div><span class="t t-m">2:14.42</span></div>
+            <div style="text-align:right"><div class="sub">Leaderboard</div><b style="font-size:18px">P3 of 10</b></div>
+            <div class="ls" style="grid-column:1/-1;margin-top:6px"><b class="p"></b><b class="g"></b><b class="y"></b></div>
+          </div>
+          <div class="field" style="margin-top:14px"><label>Car (optional)</label><div class="input">Škoda Fabia R5</div></div>
+          <div class="field" style="margin-top:12px"><label>About this run (optional)</label><div class="input area"><span class="ph">Wet first sector, dry at the top</span></div></div>
+          <p class="hint" style="margin-top:10px">Followers and this route's leaderboard see the time, sectors and car. The raw GPS trace is never shared.</p>
+          <button class="btn primary block" style="margin-top:14px">Post time</button>
+        </div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Post a time</b>Shown here for the stage above; on a lap route it reads Post lap. The sheet previews exactly what goes public and where it would place. Posting is only offered on public routes.</figcaption>
+    </figure>
+
+    <!-- LAP DETAIL: SECTORS -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="panel on-panel" style="padding-top:0;padding-bottom:18px">
+          <div class="livery thin"><i></i><i></i><i></i></div>
+          <div class="sb">9:41</div>
+          <div class="bar" style="padding:0;margin-left:-8px"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title"></span><span class="ib" style="margin-right:40px"><svg class="i"><use href="#i-more"/></svg></span></div>
+          <div style="display:flex;gap:12px;align-items:center"><span class="rd c1">PR</span><div><b>petra_r</b><div class="sub">Ecce Homo · 2 Nov · Škoda Fabia R5</div></div></div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-top:12px;flex-wrap:wrap;max-width:300px"><span class="t t-xl">2:11.47</span><span class="chip p">Route record</span></div>
+          <div class="sub" style="margin-top:4px">vs your best 2:14.83 · <span class="hi-g" style="font-weight:700">3.36 faster</span></div>
+          <div class="btns" style="margin-top:14px;max-width:300px"><button class="btn inverse" style="flex:1">Race this lap</button></div>
+        </div>
+        <div class="tabstrip"><div class="seg"><span class="on">Sectors</span><span>Graphs</span><span>Map</span></div></div>
+        <div class="pad" style="padding-top:12px"><div class="list">
+          <div class="row" style="flex-wrap:wrap"><b style="width:28px">S1</b><div class="grow"><div class="dbar"><div class="l"><i style="width:44%;background:var(--purple)"></i></div><div class="axis"></div><div class="r"></div></div></div><span class="t t-s ink-p" style="width:64px;text-align:right">−0.89</span>
+            <div style="width:100%;padding:8px 0 0 40px;display:flex;gap:3px"><i style="flex:1;height:8px;border-radius:2px;background:var(--purple)"></i><i style="flex:1;height:8px;border-radius:2px;background:var(--green)"></i><i style="flex:1;height:8px;border-radius:2px;background:var(--purple)"></i><i style="flex:1;height:8px;border-radius:2px;background:var(--green)"></i><i style="flex:1;height:8px;border-radius:2px;background:var(--green)"></i><i style="flex:1;height:8px;border-radius:2px;background:var(--yellow)"></i><i style="flex:1;height:8px;border-radius:2px;background:var(--green)"></i></div>
+            <div class="sub" style="width:100%;padding:6px 0 0 40px">Fastest ever · 7 minisectors</div></div>
+          <div class="row"><b style="width:28px">S2</b><div class="grow"><div class="dbar"><div class="l"><i style="width:84%;background:var(--purple)"></i></div><div class="axis"></div><div class="r"></div></div></div><span class="t t-s ink-p" style="width:64px;text-align:right">−1.68</span></div>
+          <div class="row"><b style="width:28px">S3</b><div class="grow"><div class="dbar"><div class="l"><i style="width:40%;background:var(--green)"></i></div><div class="axis"></div><div class="r"></div></div></div><span class="t t-s ink-g" style="width:64px;text-align:right">−0.79</span></div>
+        </div></div>
+        <div class="pad" style="display:flex;justify-content:space-between;padding-top:8px;font-size:12px;font-weight:700;color:var(--mute)"><span>← Faster</span><span>Slower →</span></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Lap detail: sectors</b>The lap and who drove it own the top. Each sector is a centre-out bar against the chosen reference; tap a sector to open its minisectors, as S1 is here.</figcaption>
+    </figure>
+
+    <!-- LAP DETAIL: GRAPHS -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="tabstrip head">
+          <div class="sb">9:41</div>
+          <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">petra_r · 2:11.47</span></div>
+          <div class="seg"><span>Sectors</span><span class="on">Graphs</span><span>Map</span></div>
+        </div>
+        <div class="pad" style="padding-top:14px;display:grid;gap:10px">
+          <div class="card" style="padding:14px">
+            <div style="display:flex;justify-content:space-between"><span class="cap" style="color:var(--mute)">Gap</span><span style="font-size:13px"><b class="ink-p">● petra_r</b> vs <b>● your best</b></span></div>
+            <svg viewBox="0 0 330 120" style="width:100%;height:120px;margin-top:8px"><rect x="0" y="0" width="110" height="120" fill="#f4f6f9"/><rect x="220" y="0" width="110" height="120" fill="#f4f6f9"/><path d="M0 20h330" stroke="#c9d0dc" stroke-dasharray="3 4"/><path d="M0 20 C40 30 70 40 110 46 S170 70 200 82 S270 96 330 104" stroke="#6f2bc4" stroke-width="2.5" fill="none"/><path d="M196 0v120" stroke="#0e1b3d" stroke-width="1.5"/><circle cx="196" cy="80" r="5" fill="#0e1b3d"/><text x="22" y="112" font-size="11" fill="#5b6680" font-family="Saira">S1</text><text x="132" y="112" font-size="11" fill="#5b6680" font-family="Saira">S2</text><text x="242" y="112" font-size="11" fill="#5b6680" font-family="Saira">S3</text></svg>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:4px"><span class="sub">At 1:22.6 into the lap</span><b class="ink-p">2.04 s ahead</b></div>
+          </div>
+          <div class="card" style="padding:14px">
+            <span class="cap" style="color:var(--mute)">Speed km/h</span>
+            <svg viewBox="0 0 330 120" style="width:100%;height:120px;margin-top:8px"><path d="M0 110 C20 60 40 40 60 50 S90 90 110 70 S150 20 180 40 S210 90 230 60 S280 20 330 30" stroke="#6f2bc4" stroke-width="2.5" fill="none"/><path d="M0 110 C20 66 40 48 60 58 S90 96 110 80 S150 30 180 50 S210 96 230 70 S280 30 330 38" stroke="#0e1b3d" stroke-width="2" stroke-dasharray="5 4" fill="none"/><path d="M196 0v120" stroke="#0e1b3d" stroke-width="1.5"/></svg>
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:4px"><span style="white-space:nowrap"><b class="ink-p">131</b> <span class="sub">vs</span> <b>124</b></span><span class="sub" style="text-align:right">Slide along a graph to see that spot on the map.</span></div>
+          </div>
+        </div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Lap detail: graphs</b>The header strip runs from the top of the screen and holds the driver, the time and the tabs. Gap and speed share one scrubber; sectors are banded behind the gap line. The reference is a dashed navy line, so the two read apart without relying on colour.</figcaption>
+    </figure>
+
+    <!-- LAP DETAIL: MAP -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="map" style="position:absolute;inset:0">
+          <svg><use href="#i-roads"/></svg>
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none"><path d="M50 600 C90 560 80 520 130 500" stroke="#8b3fe0" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M130 500 S170 460 190 420" stroke="#1fa64f" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M190 420 S220 360 260 330" stroke="#8b3fe0" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M260 330 S300 290 310 250" stroke="#f5cf19" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M310 250 S330 200 350 170" stroke="#1fa64f" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="230" cy="352" r="10" fill="#0e1b3d" stroke="#f7f9fc" stroke-width="3"/><circle cx="214" cy="378" r="8" fill="#f7f9fc" stroke="#0e1b3d" stroke-width="3"/></svg>
+        </div>
+        <div class="tabstrip head">
+          <div class="sb">9:41</div>
+          <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">petra_r · 2:11.47</span></div>
+          <div class="seg"><span>Sectors</span><span>Graphs</span><span class="on">Map</span></div>
+        </div>
+        <div class="pad" style="position:relative;padding-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span class="chip" style="background:#f7f9fc;height:28px"><i style="width:10px;height:10px;background:var(--purple);border-radius:2px"></i>Fastest ever</span><span class="chip" style="background:#f7f9fc;height:28px"><i style="width:10px;height:10px;background:var(--green);border-radius:2px"></i>Faster</span><span class="chip" style="background:#f7f9fc;height:28px"><i style="width:10px;height:10px;background:var(--yellow);border-radius:2px"></i>Slower</span></div>
+        <div class="sheet" style="padding-bottom:30px">
+          <div class="grab"></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn primary" style="width:52px;padding:0"><svg class="i"><use href="#i-play"/></svg></button>
+            <div class="grow" style="flex:1"><div style="display:flex;justify-content:space-between"><span class="t t-s">1:22.6</span><b class="ink-p">−2.04</b></div>
+              <div style="height:6px;background:#e8ecf2;border-radius:3px;margin-top:8px;position:relative"><i style="position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--navy);border-radius:3px"></i><i style="position:absolute;left:62%;top:-6px;width:18px;height:18px;border-radius:50%;background:#f7f9fc;box-shadow:0 0 0 2px var(--navy);transform:translateX(-50%)"></i></div></div>
+            <span class="chip out">4×</span>
+          </div>
+          <div class="sub" style="margin-top:10px">Navy dot: petra_r · light dot: your best</div>
+        </div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Lap detail: map</b>Same header as Graphs: driver, time and tabs on one strip from the top of the screen. The route coloured minisector by minisector with a key. Play the lap moves both cars along it; the scrubber shows the gap at that moment.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section class="g-sec" id="account">
+  <h2>Account</h2>
+  <p>Settings, moderation and the one screen nobody wants to see. Same light bodywork, same row grammar, so these pages need no explanation.</p>
+  <div class="shots">
+
+    <!-- SETTINGS -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">Settings</span></div>
+        <div class="sec-h" style="padding-top:2px"><h3>Profile</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><span class="rd l c1" style="width:56px;height:56px;font-size:20px;box-shadow:inset 0 0 0 3px #f7f9fc,0 0 0 1.5px var(--rule-2)">TK</span><div class="grow"><div class="name">Add photo</div><div class="sub">Or keep your roundel</div></div><svg class="i" style="color:var(--navy)"><use href="#i-camera"/></svg></div>
+          <div class="row"><div class="grow"><div class="sub">Display name</div><div class="name">Tomáš Kolář</div></div><svg class="i chev"><use href="#i-pen"/></svg></div>
+          <div class="row"><div class="grow"><div class="sub" style="margin-bottom:8px">Avatar colour (without a photo)</div><div style="display:flex;gap:10px">
+            <span class="rd s c1" style="box-shadow:inset 0 0 0 2px #f7f9fc,0 0 0 2px var(--navy)"></span><span class="rd s c2"></span><span class="rd s c3"></span><span class="rd s c4"></span><span class="rd s c5"></span><span class="rd s c6"></span></div></div></div>
+        </div></div>
+        <div class="sec-h"><h3>Driving</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><div class="grow"><div class="name">Countdown</div><div class="sub">Lights go out this long after Start</div></div><div class="stepper"><span class="ib"><svg class="i sm"><use href="#i-back"/></svg></span><b>5 s</b><span class="ib"><svg class="i sm"><use href="#i-next"/></svg></span></div></div>
+          <div class="row"><div class="grow"><div class="name">GPS logs</div><div class="sub">Your last 5 real drives, kept on this phone</div></div><span class="chip">3</span><svg class="i chev"><use href="#i-next"/></svg></div>
+        </div></div>
+        <div class="sec-h"><h3>Route creation</h3></div>
+        <div class="pad"><div class="list">
+          <div class="row"><div class="grow"><div class="name">Creator</div><div class="sub">You can publish one route with a leaderboard.</div></div><span class="chip n">Creator</span></div>
+          <div class="row"><div class="grow"><div class="sub">Map usage this month</div><div style="height:8px;border-radius:4px;background:#e8ecf2;margin-top:8px;position:relative"><i style="position:absolute;inset:0 auto 0 0;width:34%;background:var(--navy);border-radius:4px"></i></div></div><b style="font-size:14px">34%</b></div>
+        </div></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Settings</b>Grouped rows: profile, driving, route creation. The roundel colour picker previews the real roundel; role badges reuse the same chips as the rest of the app.</figcaption>
+    </figure>
+
+    <!-- ADMIN -->
+    <figure class="shot">
+      <div class="phone">
+        <div class="sb">9:41</div>
+        <div class="bar"><span class="ib"><svg class="i"><use href="#i-back"/></svg></span><span class="title">Admin</span><span class="chip n" style="margin-right:8px">Owner</span></div>
+        <div class="pad"><div class="seg"><span class="on">Requests 2</span><span>Routes</span><span>Users</span><span>Log</span></div></div>
+        <div class="sec-h"><h3>Creator requests</h3></div>
+        <div class="pad" style="display:grid;gap:10px">
+          <div class="card" style="padding:14px">
+            <div style="display:flex;gap:12px;align-items:center"><span class="rd c2">JK</span><div class="grow" style="flex:1"><b>jan.k</b><div class="sub">Asked 2 days ago</div></div></div>
+            <p class="body-s" style="margin-top:10px;padding:10px 12px;background:#f4f6f9;border-radius:10px">“I run our club's rally sprint stages at Most.”</p>
+            <div class="btns" style="margin-top:12px"><button class="btn ghost sm" style="flex:1">Decline</button><button class="btn primary sm" style="flex:1">Approve</button></div>
+          </div>
+          <div class="card" style="padding:14px">
+            <div style="display:flex;gap:12px;align-items:center"><span class="rd c4">LB</span><div class="grow" style="flex:1"><b>lucie.b</b><div class="sub">Asked today</div></div></div>
+            <p class="body-s" style="margin-top:10px">No note.</p>
+            <div class="btns" style="margin-top:12px"><button class="btn ghost sm" style="flex:1">Decline</button><button class="btn primary sm" style="flex:1">Approve</button></div>
+          </div>
+        </div>
+        <div class="sec-h"><h3>Admin requests</h3></div>
+        <div class="pad"><div class="note">Creators who ask to become admins show up here. Only you can decide them.</div></div>
+        <span class="sample">Sample data</span>
+      </div>
+      <figcaption><b>Admin</b>Four tabs: requests, routes (hide, unpublish, make Official), users with roles, and the log of every grant and revoke. Decisions are two equal buttons; Approve is the filled one.</figcaption>
+    </figure>
+
+    <!-- LIMIT -->
+    <figure class="shot">
+      <div class="phone navy">
+        <div class="livery" style="width:170px;right:-120px"><i></i><i></i><i></i></div>
+        <div class="sb" style="position:relative">9:41</div>
+        <div class="pad" style="position:relative;padding-top:180px;max-width:270px">
+          <div class="t" style="font-size:88px">1 Dec</div><div class="cap" style="color:var(--on-navy-2);margin-top:6px">Maps back on</div>
+          <h1 class="h1" style="margin-top:10px;font-size:30px">Monthly limit reached</h1>
+          <p class="sub" style="font-size:16px;margin-top:12px">The map service is shared by everyone and capped to stay free. It resets on 1 December.</p>
+          <p class="sub" style="font-size:16px;margin-top:12px">Your laps and routes are safe.</p>
+        </div>
+      </div>
+      <figcaption><b>Monthly limit reached</b>The one full-screen message in the app. It says when it ends and that nothing is lost.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<footer class="g-foot">Purple Sector · Livery redesign proposal. Design pages only: the shipped app is unchanged. All drivers, times, cars and routes are sample data.</footer>
+</body>
+</html>

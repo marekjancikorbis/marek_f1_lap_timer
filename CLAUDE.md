@@ -11,6 +11,8 @@ Read before changing behaviour:
 - `apps/web/PRODUCT.md`: users, the in-car vs paddock moments, design rules.
 - `PERFORMANCE_PLAN.md`: performance work done and measured.
 - `RACING_PLAN.md`: planned in-person racing (live gap between two cars); not built yet.
+- `apps/web/DESIGN.md`: the Livery visual design (rules and tokens). Mockups of every screen are in
+  `apps/web/design/livery/index.html`; the previous blue design is git tag `design-blue-v1`.
 
 Commands (repo root): `npm test` (timing engine), `npm run test:rules` (Firestore rules, needs
 Java 11+), `npm run build`, `npm run dev`. Typecheck: `npx tsc --noEmit -p apps/web`.

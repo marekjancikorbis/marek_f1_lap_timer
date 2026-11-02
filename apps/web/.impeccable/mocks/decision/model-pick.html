@@ -1,24 +1,79 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Timing Tower</title>
-<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=390">
+<title>Livery: Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
 <style>
+:root{--body:#F4F6F9;--white:#fff;--navy:#0E1B3D;--navy2:#22305A;--ink:#0E1B3D;--mute:#6B7590;--purple:#8B3FE0;--green:#1FA64F;--yellow:#F5CF19}
 *{box-sizing:border-box;margin:0;padding:0}
-body{width:390px;height:844px;overflow:hidden;background:#0B0B0D;color:#fff;font:400 15px/1.3 "Titillium Web",system-ui}
-.top{height:56px;display:flex;align-items:center;padding:0 16px;font:700 20px "Titillium Web";text-transform:uppercase;border-bottom:3px solid #E10600}
-h2{font:700 12px "Titillium Web";letter-spacing:.14em;color:#8A8A93;padding:16px 16px 8px;text-transform:uppercase}
-.row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #1E1E24}
-.pos{font:700 18px "Titillium Web";text-align:center;background:#1A1A1F;border-radius:4px;padding:2px 0}
-.n{font-weight:600}.n small{display:block;color:#8A8A93;font-size:12px}
-.t{font:700 22px "Titillium Web";font-variant-numeric:tabular-nums;text-align:right}
-.s{display:flex;gap:2px;justify-content:flex-end;margin-top:4px}
-.s i{width:26px;height:6px}
-.tabs{position:absolute;bottom:0;left:0;right:0;height:78px;background:#111114;display:flex;justify-content:space-around;padding-top:12px;font:600 11px "Titillium Web";color:#8A8A93;text-transform:uppercase}
+html,body{width:390px;height:844px;overflow:hidden;background:var(--body);color:var(--ink);font-family:Saira,system-ui,sans-serif}
+.num{font-stretch:85%;font-weight:800;font-variant-numeric:tabular-nums;font-style:italic}
+.panel{background:var(--navy);color:#fff;padding:52px 16px 26px;position:relative;overflow:hidden}
+.stripe{position:absolute;right:-40px;top:0;width:150px;height:100%;transform:skewX(-22deg);display:flex;gap:6px}
+.stripe i{flex:1}.stripe i:nth-child(1){background:var(--purple)}.stripe i:nth-child(2){background:var(--green)}.stripe i:nth-child(3){background:var(--yellow)}
+.top{display:flex;justify-content:space-between;align-items:center;position:relative}
+.mark{font-weight:900;font-style:italic;font-stretch:110%;font-size:21px;text-transform:uppercase;letter-spacing:.01em}
+.round{width:40px;height:40px;border-radius:50%;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:900;font-style:italic;font-size:18px;border:3px solid var(--navy2)}
+.home{position:relative;margin-top:22px}
+.tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.75}
+.home h2{font-size:20px;font-weight:700;margin-top:2px}
+.home .num{font-size:58px;line-height:1;margin-top:8px}
+.home .sub{font-size:13px;opacity:.8}
+.cta{margin-top:16px;display:flex;gap:8px}
+.btn{height:48px;padding:0 22px;border-radius:24px;display:grid;place-items:center;font-weight:800;font-size:15px;text-transform:uppercase;font-style:italic;letter-spacing:.03em}
+.btn.go{background:#fff;color:var(--navy)}
+.btn.out{border:2px solid rgba(255,255,255,.5);color:#fff}
+.sl{padding:20px 16px 10px;display:flex;justify-content:space-between;align-items:baseline}
+.sl h3{font-weight:800;font-style:italic;text-transform:uppercase;font-size:15px}
+.sl span{font-size:12px;color:var(--mute)}
+.card{background:#fff;margin:0 16px 10px;border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;box-shadow:0 1px 0 #E2E6EE}
+.r{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-style:italic;font-size:20px;color:#fff}
+.who{font-size:13px;font-weight:600;color:var(--mute)}
+.card .num{font-size:30px;line-height:1.05}
+.rt{font-size:12px;color:var(--mute)}
+.chips{display:flex;gap:3px;margin-top:6px}
+.chips b{width:22px;height:6px;border-radius:3px}
+.p{background:var(--purple)}.g{background:var(--green)}.y{background:var(--yellow)}
+.race{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;font-style:italic;border:2px solid var(--navy);border-radius:16px;padding:6px 10px}
+.tabs{position:absolute;bottom:0;left:0;right:0;height:84px;background:#fff;border-top:1px solid #E2E6EE;display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:24px}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;color:var(--mute)}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+.tab.on{color:var(--navy)}
+.drive{margin-top:-24px;width:60px;height:60px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900;font-style:italic;border:4px solid #fff;box-shadow:0 0 0 2px var(--purple)}
+.sample{position:absolute;top:18px;left:16px;font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.06em;z-index:2}
 </style></head><body>
-<div class="top">Purple Sector</div>
-<h2>Following · latest laps</h2>
-<div class="row"><div class="pos">1</div><div class="n">tomas_k<small>Brno Circuit · 12 min</small></div><div><div class="t">2:08.412</div><div class="s"><i style="background:#8B3FE0"></i><i style="background:#1FA64F"></i><i style="background:#F5CF19"></i></div></div></div>
-<div class="row"><div class="pos">4</div><div class="n">lucie.s<small>Ecce Homo · 2 h</small></div><div><div class="t">1:52.907</div><div class="s"><i style="background:#F5CF19"></i><i style="background:#1FA64F"></i><i style="background:#F5CF19"></i></div></div></div>
-<div class="row"><div class="pos">2</div><div class="n">petr_v<small>Most · 5 h</small></div><div><div class="t">1:44.030</div><div class="s"><i style="background:#1FA64F"></i><i style="background:#1FA64F"></i><i style="background:#8B3FE0"></i></div></div></div>
-<div class="row"><div class="pos">7</div><div class="n">jana.h<small>Brno Circuit · 1 d</small></div><div><div class="t">2:14.660</div><div class="s"><i style="background:#F5CF19"></i><i style="background:#F5CF19"></i><i style="background:#1FA64F"></i></div></div></div>
-<div class="tabs"><span style="color:#fff">Feed</span><span>Map</span><span>Search</span><span>Routes</span><span>Profile</span></div>
+<div class="sample">SAMPLE DATA</div>
+<section class="panel">
+  <div class="stripe"><i></i><i></i><i></i></div>
+  <div class="top"><div class="mark">Purple Sector</div><div class="round">27</div></div>
+  <div class="home">
+    <div class="tag">Home course · 3.42 km</div>
+    <h2>Ecce Homo hill-climb</h2>
+    <div class="num">2:14.83</div>
+    <div class="sub">Your best · 0.36 off the route record</div>
+    <div class="cta"><div class="btn go">Drive</div><div class="btn out">Times</div></div>
+  </div>
+</section>
+<div class="sl"><h3>Following</h3><span>3 new laps</span></div>
+<article class="card">
+  <div class="r" style="background:#C2410C">11</div>
+  <div><div class="who">petra_r · Ecce Homo</div><div class="num">2:11.47</div><div class="chips"><b class="p"></b><b class="p"></b><b class="g"></b></div></div>
+  <div class="race">Race</div>
+</article>
+<article class="card">
+  <div class="r" style="background:#0F766E">4</div>
+  <div><div class="who">jan.k · Autodrom Most</div><div class="num">1:38.902</div><div class="chips"><b class="g"></b><b class="y"></b><b class="g"></b></div></div>
+  <div class="race">Race</div>
+</article>
+<article class="card">
+  <div class="r" style="background:#1D4ED8">88</div>
+  <div><div class="who">ondra_m · Kart Vysoké Mýto</div><div class="num">0:48.115</div><div class="chips"><b class="y"></b><b class="g"></b><b class="y"></b></div></div>
+  <div class="race">Race</div>
+</article>
+<nav class="tabs">
+  <div class="tab on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Feed</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Explore</div>
+  <div class="tab"><div class="drive">GO</div></div>
+  <div class="tab"><svg viewBox="0 0 24 24"><path d="M5 19c3-8 6 0 9-7s5-6 5-6"/></svg>Routes</div>
+  <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 15-5 16 0"/></svg>Profile</div>
+</nav>
 </body></html>

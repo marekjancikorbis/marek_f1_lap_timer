@@ -49,6 +49,7 @@ The live delta updates at every sector boundary against any chosen reference lap
 
 - Name: **Purple Sector**. All interface text in **English**.
 - Sector colour semantics are fixed: purple / green / yellow as defined above, and the red jump-start banner.
+- Visual design is **Livery** (`DESIGN.md`, mockups in `design/livery/index.html`): light paddock screens, navy drive screens, each lap shown as its three-sector stripe. Never pure white or pure black.
 
 ## Evidence on Hand
 

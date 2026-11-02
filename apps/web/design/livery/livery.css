@@ -1,0 +1,203 @@
+/* Purple Sector · Livery. Design mockups only; the shipped app does not load this file. */
+:root {
+  --body: #ecf0f5;          /* paint-white bodywork */
+  --card: #f7f9fc;  /* never pure white */
+  --rule: #dfe3ea;
+  --rule-2: #c9d0dc;
+  --navy: #0e1b3d;          /* panels, HUD, primary action on white */
+  --navy-2: #1a2a55;
+  --navy-3: #2a3b6b;
+  --ink: #0e1b3d;
+  --ink-2: #33405f;
+  --mute: #5b6680;
+  --on-navy: #f1f3f8;
+  --on-navy-2: #b9c2d9;
+
+  --purple: #8b3fe0;  --purple-ink: #6f2bc4;  --purple-hi: #b98af7;
+  --green: #1fa64f;   --green-ink: #137a3a;   --green-hi: #4fe08a;
+  --yellow: #f5cf19;  --yellow-ink: #6e5600;
+  --red: #d9262e;     --red-ink: #b4141c;     --red-hi: #ff8a8f;
+
+  --font: 'Saira', system-ui, sans-serif;
+  --r-sm: 8px; --r-md: 12px; --r-lg: 18px; --r-pill: 999px;
+  --skew: -18deg;
+  --lift: 0 1px 2px rgba(14, 27, 61, .06), 0 6px 18px -10px rgba(14, 27, 61, .25);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0 }
+::selection { background: var(--purple); color: #f7f9fc }
+:focus-visible { outline: 3px solid var(--purple); outline-offset: 2px }
+svg { fill: var(--ink) }  /* SVG default fill is pure black */
+svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none }
+svg.i.sm { width: 18px; height: 18px }
+
+/* ---------- phone frame ---------- */
+.phone { width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--body); color: var(--ink);
+  font-family: var(--font); font-size: 15px; line-height: 1.4; font-variant-numeric: tabular-nums;
+  border-radius: 34px; box-shadow: 0 0 0 10px #151a24, 0 30px 60px -20px rgba(9, 17, 38,.45) }
+.phone.land { width: 844px; height: 390px }
+.phone.navy { background: var(--navy); color: var(--on-navy) }
+.sb { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 26px 0 30px; font-size: 14px; font-weight: 600 }
+.sb::after { content: ""; width: 62px; height: 12px; border-radius: 3px;
+  background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 22px, currentColor 22px 40px, transparent 40px 44px, currentColor 44px) }
+.scroll { position: absolute; inset: 44px 0 0; overflow: hidden }
+.pad { padding: 0 16px }
+.sample { position: absolute; top: 13px; left: 50%; transform: translateX(-50%); z-index: 30; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--mute); background: var(--card); border: 1px solid var(--rule); padding: 1px 7px; border-radius: var(--r-pill) }
+.phone.navy .sample, .on-panel .sample { color: var(--on-navy-2); background: var(--navy-2); border-color: var(--navy-3) }
+
+/* ---------- type ---------- */
+.t { font-stretch: 72%; font-style: italic; font-weight: 800; letter-spacing: -.01em; line-height: 1 }
+.t-xxl { font-size: 112px } .t-xl { font-size: 64px } .t-l { font-size: 44px } .t-m { font-size: 30px } .t-s { font-size: 20px } .t-xs { font-size: 16px }
+.h1 { font-size: 26px; font-weight: 800; font-stretch: 100%; line-height: 1.1; letter-spacing: -.01em }
+.h2 { font-size: 19px; font-weight: 700; line-height: 1.2 }
+.cap { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-stretch: 112% }
+.sub { font-size: 13px; color: var(--mute) }
+.on-panel .sub, .phone.navy .sub { color: var(--on-navy-2) }
+.body-s { font-size: 14px; color: var(--ink-2) }
+.ink-p { color: var(--purple-ink) } .ink-g { color: var(--green-ink) } .ink-y { color: var(--yellow-ink) } .ink-r { color: var(--red-ink) }
+.hi-p { color: var(--purple-hi) } .hi-g { color: var(--green-hi) } .hi-y { color: var(--yellow) } .hi-r { color: var(--red-hi) }
+
+/* ---------- navy panel with livery stripe ---------- */
+.panel { background: var(--navy); color: var(--on-navy); position: relative; overflow: hidden; padding: 8px 16px 22px }
+.livery { position: absolute; top: -10px; bottom: -10px; right: -56px; width: 150px; display: flex; gap: 7px; transform: skewX(var(--skew)); pointer-events: none }
+.livery i { flex: 1 } .livery i:nth-child(1) { background: var(--purple) } .livery i:nth-child(2) { background: var(--green) } .livery i:nth-child(3) { background: var(--yellow) }
+.livery.thin { width: 70px; right: -20px; gap: 4px }
+.panel > *:not(.livery) { position: relative }
+.wordmark { font-weight: 900; font-style: italic; font-stretch: 112%; font-size: 21px; text-transform: uppercase; letter-spacing: .01em; line-height: 1 }
+
+/* ---------- app bar ---------- */
+.bar { height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 8px }
+.bar .title { flex: 1; font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.ib { width: 44px; height: 44px; border-radius: var(--r-pill); display: grid; place-items: center; color: inherit; background: none; border: 0; position: relative }
+.ib .dot { position: absolute; top: 9px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 0 2px var(--navy) }
+
+/* ---------- tab bar ---------- */
+.tabs { position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background: var(--card); border-top: 1px solid var(--rule);
+  display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: 26px; z-index: 20 }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 700; color: var(--mute) }
+.tab.on { color: var(--navy) }
+.tab.on svg.i { stroke-width: 2.6 }
+.tab .go { margin-top: -26px; width: 62px; height: 62px; border-radius: 50%; background: var(--navy); color: #f7f9fc; display: grid; place-items: center;
+  font-weight: 900; font-style: italic; font-stretch: 100%; font-size: 17px; box-shadow: 0 0 0 4px var(--card), 0 0 0 6px var(--rule) }
+.tab.on .go { box-shadow: 0 0 0 4px var(--card), 0 0 0 7px var(--purple) }
+
+/* ---------- buttons & controls ---------- */
+.btn { height: 48px; padding: 0 20px; border-radius: var(--r-pill); border: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font: inherit; font-weight: 800; font-style: italic; font-size: 15px; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap }
+.btn.primary { background: var(--navy); color: #f7f9fc }
+.btn.inverse { background: #f7f9fc; color: var(--navy) }
+.btn.ghost { background: transparent; color: var(--navy); box-shadow: inset 0 0 0 2px var(--navy) }
+.btn.ghost-inv { background: transparent; color: #f7f9fc; box-shadow: inset 0 0 0 2px rgba(247, 249, 252,.55) }
+.btn.danger { background: transparent; color: var(--red-ink); box-shadow: inset 0 0 0 2px var(--red-ink) }
+.btn.sm { height: 36px; padding: 0 14px; font-size: 13px }
+.btn.xl { height: 60px; font-size: 19px }
+.btn.block { width: 100% }
+.btn[disabled] { background: var(--rule); color: var(--mute); box-shadow: none }
+.btns { display: flex; gap: 8px }
+
+.seg { display: flex; background: #e8ecf2; border-radius: var(--r-pill); padding: 4px; gap: 2px }
+.seg span { flex: 1; height: 36px; border-radius: var(--r-pill); display: grid; place-items: center; font-size: 14px; font-weight: 700; color: var(--ink-2) }
+.seg span.on { background: var(--navy); color: #f7f9fc }
+.on-panel .seg { background: var(--navy-2) } .on-panel .seg span { color: var(--on-navy-2) } .on-panel .seg span.on { background: #f7f9fc; color: var(--navy) }
+
+.field { display: grid; gap: 6px }
+.field label { font-size: 13px; font-weight: 700; color: var(--ink-2) }
+.input { height: 50px; border-radius: var(--r-md); background: var(--card); box-shadow: inset 0 0 0 1.5px var(--rule-2); display: flex; align-items: center; gap: 8px;
+  padding: 0 14px; font-size: 16px; color: var(--ink) }
+.input.focus { box-shadow: inset 0 0 0 2px var(--navy), 0 0 0 4px rgba(139, 63, 224, .18) }
+.input.err { box-shadow: inset 0 0 0 2px var(--red-ink) }
+.input .ph { color: var(--mute) }
+.input.area { height: 84px; align-items: flex-start; padding-top: 12px }
+.hint { font-size: 13px; color: var(--mute) } .hint.err { color: var(--red-ink); font-weight: 600 }
+
+.switch { width: 48px; height: 28px; border-radius: var(--r-pill); background: var(--rule-2); position: relative; flex: none }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #f7f9fc; box-shadow: 0 1px 3px rgba(9, 17, 38,.25) }
+.switch.on { background: var(--navy) } .switch.on::after { left: 23px }
+
+.stepper { display: flex; align-items: center; gap: 4px; background: #e8ecf2; border-radius: var(--r-pill); padding: 4px }
+.stepper b { min-width: 44px; text-align: center }
+.stepper .ib { width: 36px; height: 36px; background: var(--card) }
+
+/* ---------- chips ---------- */
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: var(--r-pill); font-size: 11px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; background: #e8ecf2; color: var(--ink-2); vertical-align: middle; white-space: nowrap }
+.chip.p { background: var(--purple); color: #f7f9fc } .chip.g { background: var(--green); color: var(--navy) } .chip.y { background: var(--yellow); color: var(--navy) }
+.chip.r { background: var(--red); color: #f7f9fc } .chip.n { background: var(--navy); color: #f7f9fc } .chip.out { background: transparent; box-shadow: inset 0 0 0 1.5px var(--rule-2) }
+.on-panel .chip { background: var(--navy-2); color: var(--on-navy-2) }
+
+/* ---------- roundel (driver) ---------- */
+.rd { --c: #2563eb; width: 44px; height: 44px; border-radius: 50%; background: var(--c); color: #f7f9fc; display: grid; place-items: center; flex: none;
+  font-weight: 900; font-style: italic; font-stretch: 90%; font-size: 16px; box-shadow: inset 0 0 0 3px #f7f9fc, 0 0 0 1.5px var(--rule-2) }
+.rd.s { width: 32px; height: 32px; font-size: 12px; box-shadow: inset 0 0 0 2px #f7f9fc, 0 0 0 1px var(--rule-2) }
+.rd.l { width: 84px; height: 84px; font-size: 30px; box-shadow: inset 0 0 0 5px #f7f9fc, 0 0 0 2px var(--rule-2) }
+.c1 { --c: #c2410c } .c2 { --c: #0f766e } .c3 { --c: #1d4ed8 } .c4 { --c: #be185d } .c5 { --c: #4d7c0f } .c6 { --c: #0e1b3d }
+
+/* ---------- lap stripe: the signature. three skewed bands coloured by sector result ---------- */
+.ls { display: flex; gap: 4px; padding-left: 4px }
+.ls b { flex: 1; height: 10px; transform: skewX(var(--skew)); border-radius: 2px; background: #d5dbe5 }
+.ls.lg b { height: 34px; display: grid; place-items: center; font-size: 12px; font-weight: 800; font-style: italic }
+.ls.lg b > span { transform: skewX(18deg) }
+.ls b.p { background: var(--purple); color: #f7f9fc } .ls b.g { background: var(--green); color: var(--navy) } .ls b.y { background: var(--yellow); color: var(--navy) }
+.ls b.n { background: transparent; box-shadow: inset 0 0 0 1.5px var(--rule-2); color: var(--mute) }
+
+/* ---------- surfaces ---------- */
+.card { background: var(--card); border-radius: var(--r-lg); box-shadow: var(--lift) }
+.list { background: var(--card); border-radius: var(--r-lg); box-shadow: var(--lift); overflow: hidden }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 56px }
+.row + .row { border-top: 1px solid var(--rule) }
+.row .grow { flex: 1; min-width: 0 }
+.row .name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.row .chev { color: var(--rule-2) }
+.sec-h { display: flex; justify-content: space-between; align-items: baseline; padding: 22px 16px 10px }
+.sec-h h3 { font-size: 15px; font-weight: 800; font-style: italic; text-transform: uppercase; letter-spacing: .02em }
+.sec-h a { font-size: 13px; font-weight: 700; color: var(--navy); text-decoration: underline; text-underline-offset: 3px }
+.pos { width: 30px; text-align: center; font-weight: 900; font-style: italic; font-size: 20px; font-stretch: 80% }
+.pos.p1 { color: var(--purple-ink) }
+.divider { height: 1px; background: var(--rule) }
+.empty { text-align: center; padding: 28px 24px; display: grid; gap: 10px; justify-items: center }
+.empty .glyph { width: 64px; height: 64px; border-radius: 50%; background: #e8ecf2; display: grid; place-items: center; color: var(--mute) }
+.empty p { font-size: 14px; color: var(--mute); max-width: 280px }
+.note { display: flex; gap: 10px; padding: 12px 14px; border-radius: var(--r-md); background: #e8ecf2; font-size: 13px; color: var(--ink-2) }
+.note.warn { background: #fff6d1; color: var(--yellow-ink) }
+.note.bad { background: #fde3e4; color: var(--red-ink) }
+
+/* ---------- sheet & toast ---------- */
+.scrim { position: absolute; inset: 0; background: rgba(14, 27, 61, .5); z-index: 40 }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 24px 24px 0 0; z-index: 41; padding: 10px 16px 34px; box-shadow: 0 -10px 40px rgba(9, 17, 38,.25) }
+.sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--rule-2); margin: 0 auto 14px }
+.toast { position: absolute; left: 16px; right: 16px; bottom: 100px; z-index: 35; background: var(--navy); color: #f7f9fc; border-radius: var(--r-md); padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 30px -10px rgba(9, 17, 38,.5) }
+.toast a { margin-left: auto; color: var(--purple-hi); font-weight: 800; text-transform: uppercase; font-size: 13px }
+
+/* ---------- map ---------- */
+.map { position: relative; background: #e9edf1; overflow: hidden }
+.map > svg { position: absolute; inset: 0; width: 100%; height: 100% }
+.map .fab { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: var(--card); box-shadow: var(--lift); display: grid; place-items: center; color: var(--navy) }
+.pin { position: absolute; transform: translate(-50%, -100%); background: var(--navy); color: #f7f9fc; font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: var(--r-pill); white-space: nowrap; box-shadow: var(--lift) }
+.pin.p { background: var(--purple) }
+.pin::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: inherit; transform: translateX(-50%) rotate(45deg); z-index: -1 }
+
+/* ---------- drive (navy) ---------- */
+.hud-band { flex: 1; transform: skewX(var(--skew)); border-radius: 6px; display: grid; place-items: center; background: var(--navy-2); color: var(--on-navy-2) }
+.hud-band > div { transform: skewX(18deg); text-align: center }
+.hud-band.p { background: var(--purple); color: #f7f9fc } .hud-band.g { background: var(--green); color: var(--navy) } .hud-band.y { background: var(--yellow); color: var(--navy) }
+.hud-band.live { background: transparent; box-shadow: inset 0 0 0 3px #f7f9fc; color: #f7f9fc }
+.minis { display: flex; gap: 3px }
+.minis i { flex: 1; height: 12px; border-radius: 2px; background: var(--navy-3) }
+.minis i.p { background: var(--purple) } .minis i.g { background: var(--green) } .minis i.y { background: var(--yellow) } .minis i.now { background: #f7f9fc }
+.lights { display: flex; gap: 10px; justify-content: center }
+.lights i { width: 52px; height: 52px; border-radius: 50%; background: var(--navy-2); box-shadow: inset 0 0 0 3px var(--navy-3) }
+.lights i.on { background: var(--red); box-shadow: 0 0 0 3px #ff5a61 }
+
+/* ---------- delta bars (lap detail) ---------- */
+.dbar { display: grid; grid-template-columns: 1fr 2px 1fr; align-items: center; height: 14px }
+.dbar .l, .dbar .r { height: 14px; position: relative }
+.dbar .axis { height: 22px; background: var(--ink) }
+.dbar .l i { position: absolute; right: 0; top: 0; bottom: 0; border-radius: 3px 0 0 3px }
+.dbar .r i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 3px 3px 0 }
+
+/* lap detail: the Sectors / Graphs / Map selector sits on its own full-width strip */
+.tabstrip { background: var(--card); padding: 10px 16px; border-bottom: 1px solid var(--rule); box-shadow: 0 6px 14px -12px rgba(9, 17, 38, .35) }
+.tabstrip.head { position: relative; z-index: 2; padding: 0 0 10px }
+.tabstrip.head .seg { margin: 0 16px }

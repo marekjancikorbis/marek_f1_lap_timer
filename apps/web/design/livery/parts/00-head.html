@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purple Sector Livery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira:ital,wdth,wght@0,50..125,100..900;1,50..125,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="livery.css">
+<style>
+  html { background: #d9dee7; color: #0e1b3d; font-family: 'Saira', system-ui, sans-serif }
+  .g-head { background: #0e1b3d; color: #f7f9fc; position: relative; overflow: hidden; padding: 56px max(16px, 6vw) 48px }
+  .g-head .livery { width: 300px; right: -40px }
+  .g-head h1 { font-size: clamp(40px, 6vw, 76px); font-weight: 900; font-style: italic; font-stretch: 100%; line-height: .95; text-transform: uppercase; position: relative; max-width: 14ch }
+  .g-head p { position: relative; max-width: 62ch; margin-top: 18px; font-size: 17px; color: #c9d1e6 }
+  .g-head nav { position: relative; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px }
+  .g-head nav a { color: #f7f9fc; text-decoration: none; font-weight: 700; font-size: 14px; padding: 8px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px rgba(247, 249, 252,.4) }
+  .g-head nav a:hover { background: #f7f9fc; color: #0e1b3d }
+  .g-sec { padding: 64px max(16px, 6vw) 8px }
+  .g-sec > h2 { font-size: 30px; font-weight: 900; font-style: italic; text-transform: uppercase; line-height: 1 }
+  .g-sec > p { max-width: 66ch; margin-top: 10px; color: #33405f; font-size: 16px }
+  .shots { display: flex; flex-wrap: wrap; gap: 56px 36px; margin-top: 36px; padding: 10px 0 }
+  .shot { display: grid; gap: 22px; align-content: start; width: 390px }
+  .shot.wide { width: 844px }
+  .shot figcaption { font-size: 14px; color: #33405f; max-width: 390px }
+  .shot figcaption b { display: block; font-size: 17px; color: #0e1b3d; font-weight: 800 }
+  .sys { background: #f7f9fc; border-radius: 18px; padding: 32px; margin-top: 32px; display: grid; gap: 36px; max-width: 1240px }
+  .sys h3 { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #5b6680; margin-bottom: 14px }
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px }
+  .sw div { border-radius: 12px; overflow: hidden; box-shadow: inset 0 0 0 1px #dfe3ea; font-size: 13px }
+  .sw div i { display: block; height: 64px }
+  .sw div span { display: block; padding: 8px 10px; color: #33405f } .sw div b { display: block; color: #0e1b3d }
+  .spec { display: grid; gap: 14px }
+  .spec > div { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; border-top: 1px solid #dfe3ea; padding-top: 12px }
+  .spec small { width: 170px; font-size: 13px; color: #5b6680 }
+  .comps { display: flex; flex-wrap: wrap; gap: 18px; align-items: center }
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px }
+  .rules div { background: #f4f6f9; border-radius: 12px; padding: 16px; font-size: 14px; color: #33405f }
+  .rules div b { display: block; color: #0e1b3d; font-size: 15px; margin-bottom: 4px }
+  .g-foot { padding: 64px max(16px, 6vw); color: #33405f; font-size: 14px }
+  @media (max-width: 520px) { .shot, .shot.wide { width: 100%; overflow-x: auto; overflow-y: hidden; padding: 12px } .shot .phone { zoom: .82 } .shot.wide .phone { zoom: .4 } .g-head .livery { width: 120px; right: -70px } .g-head p { max-width: 30ch } .sys { padding: 18px } .sw { grid-template-columns: 1fr 1fr } .spec small { width: 100% } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-feed" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-routes" viewBox="0 0 24 24"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h7a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h7"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4.5 14.8-4.5 16 0"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M7 4 4 7M17 20V4M17 4l3 3M17 20l3-3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6h14v-6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2 4 2 4H5"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9h-5v-5h-6v5H4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 7V4h4v3M6 7l1 13h10l1-13"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-voice" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><rect x="3" y="8" width="14" height="9" rx="2"/><path d="M17 4a4 4 0 0 1 4 4M21 8l-2-1M21 8l1-2"/></symbol>
+  <symbol id="i-gps" viewBox="0 0 24 24"><path d="M4 20h2v-3H4zM9 20h2v-6H9zM14 20h2v-9h-2zM19 20h2V8h-2z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.5 7.8 8 9 4.5-1.2 8-4.5 8-9V6z"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-podium" viewBox="0 0 24 24"><path d="M9 20V8h6v12M3 20v-7h6M15 20v-9h6v9M2 20h20"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+  <symbol id="i-roads" viewBox="0 0 390 420" preserveAspectRatio="xMidYMid slice">
+    <rect width="390" height="420" fill="#e9edf1"/>
+    <path d="M250 0c-10 60 40 90 30 150s-80 70-60 140 80 70 90 130" fill="none" stroke="#bfd9ea" stroke-width="16"/>
+    <path d="M0 80 C120 70 160 130 390 110" fill="none" stroke="#f7f9fc" stroke-width="9"/>
+    <path d="M60 0 C80 120 40 220 110 420" fill="none" stroke="#f7f9fc" stroke-width="7"/>
+    <path d="M0 300 C140 260 220 340 390 290" fill="none" stroke="#f7f9fc" stroke-width="7"/>
+    <path d="M150 0v420M0 200h390M320 0c-20 140 30 260 0 420" fill="none" stroke="#f7f9fc" stroke-width="4"/>
+    <rect x="170" y="215" width="70" height="50" rx="6" fill="#d7e6d2"/><rect x="18" y="130" width="34" height="60" rx="6" fill="#d7e6d2"/>
+  </symbol>
+</svg>
+
+<header class="g-head">
+  <div class="livery"><i></i><i></i><i></i></div>
+  <h1>Purple Sector, painted as a livery</h1>
+  <p>A redesign proposal for every screen of the app. Paddock screens sit on the light bodywork; the drive screens are the navy panel. Every lap wears its own stripe: its three sector results as slanted bands, from the feed card up to the full-screen HUD. These are design pages only. Nothing in the app has changed, and all drivers, times and routes shown are sample data.</p>
+  <nav><a href="#system">System</a><a href="#start">Sign in</a><a href="#paddock">Paddock</a><a href="#routes">Routes</a><a href="#drive">Drive</a><a href="#review">Review</a><a href="#account">Account</a></nav>
+</header>
+
+<section class="g-sec" id="system">
+  <h2>The system</h2>
+  <p>Saira for everything: times in its condensed italic, interface text at normal width. Navy is the colour you press on #f7f9fc; white is the colour you press on navy. Purple, green and yellow keep their timing meanings and always appear with a label.</p>
+  <div class="sys">
+    <div>
+      <h3>Palette</h3>
+      <div class="sw">
+        <div><i style="background:#ecf0f5"></i><span><b>Body #ECF0F5</b>Paddock ground</span></div>
+        <div><i style="background:#f7f9fc"></i><span><b>Card #f7f9fc</b>Lists, cards, sheets</span></div>
+        <div><i style="background:#0e1b3d"></i><span><b>Navy #0E1B3D</b>Panels, HUD, actions</span></div>
+        <div><i style="background:#5b6680"></i><span><b>Mute #5B6680</b>Secondary text</span></div>
+        <div><i style="background:#8b3fe0"></i><span><b>Purple #8B3FE0</b>Fastest: record, best ever</span></div>
+        <div><i style="background:#1fa64f"></i><span><b>Green #1FA64F</b>Faster than the reference</span></div>
+        <div><i style="background:#f5cf19"></i><span><b>Yellow #F5CF19</b>Slower than the reference</span></div>
+        <div><i style="background:#d9262e"></i><span><b>Red #D9262E</b>Jump start, delete</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Type</h3>
+      <div class="spec">
+        <div><small>Time XL · 64 / condensed italic 800</small><span class="t t-xl">2:14.83</span></div>
+        <div><small>Time M · 30</small><span class="t t-m">1:38.902</span><span class="t t-m ink-g">−0.412</span><span class="t t-m ink-y">+0.207</span></div>
+        <div><small>Heading · 26 / 800</small><span class="h1">Ecce Homo hill-climb</span></div>
+        <div><small>Section · 15 / italic caps</small><span class="sec-h" style="padding:0"><h3>Following</h3></span></div>
+        <div><small>Body · 15 / 400</small><span>Timing starts when you move off after GO.</span></div>
+        <div><small>Label · 12 / caps 700</small><span class="cap">Home course · 3.42 km</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Components</h3>
+      <div class="comps">
+        <button class="btn primary">Drive</button><button class="btn ghost">Times</button><button class="btn danger sm">Delete</button><button class="btn" disabled>Post lap</button>
+        <div class="seg" style="width:220px"><span class="on">Sectors</span><span>Graphs</span><span>Map</span></div>
+        <span class="switch on"></span><span class="switch"></span>
+        <span class="chip p">Route record</span><span class="chip g">New PB</span><span class="chip">Private</span><span class="chip n">Official</span><span class="chip r">+5 s</span>
+        <span class="rd c1">PR</span><span class="rd c2">JK</span><span class="rd c3 s">OM</span>
+        <div style="width:200px"><div class="ls lg"><b class="p"><span>S1</span></b><b class="g"><span>S2</span></b><b class="y"><span>S3</span></b></div></div>
+        <div style="width:120px"><div class="ls"><b class="p"></b><b class="g"></b><b class="y"></b></div></div>
+      </div>
+    </div>
+    <div class="rules">
+      <div><b>Every lap wears its stripe</b>Three slanted bands, one per sector, coloured by result. Big bands carry S1/S2/S3 or the gap so colour is never the only signal.</div>
+      <div><b>Two sides of the car</b>Paddock screens on the light grey-white body for daylight reading; drive screens fully navy with off-white numerals at glance size.</div>
+      <div><b>The brand stripe</b>Purple, green, yellow, slanted, always in that order and only on navy panels. Data never sits on it.</div>
+      <div><b>Drivers are roundels</b>Initials in the driver's avatar colour inside an off-white ring, or their photo. No invented race numbers.</div>
+    </div>
+  </div>
+</section>
