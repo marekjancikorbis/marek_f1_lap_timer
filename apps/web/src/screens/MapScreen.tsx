@@ -5,11 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } 
 import { Link, useNavigate } from 'react-router-dom';
 import { FollowButton } from '../components/FollowButton';
 import { MapView } from '../components/MapView';
-import { RouteShape } from '../components/RouteShape';
 import { Avatar, errorMessage, Segmented, Spinner, useToast, WhoText } from '../components/ui';
-import { myRoutes, publicRoutes, searchUsers, setPostCount } from '../lib/data';
+import { myRoutes, publicRoutes, routePosts, searchUsers, setPostCount } from '../lib/data';
 import { db } from '../lib/firebase';
-import { formatDistance } from '../lib/format';
+import { formatDistance, formatLap } from '../lib/format';
 import { lngLatPairs } from '../lib/geo';
 import { useMe } from '../lib/session';
 import type { Profile, Route } from '../lib/types';
@@ -19,7 +18,7 @@ type Kind = 'official' | 'creator' | 'private';
 
 const KIND_COLOUR: Record<Kind, string> = { official: '#8b3fe0', creator: '#0e1b3d', private: '#0e1b3d' };
 type Filter = 'all' | Kind | 'drivers';
-const FILTER_LABEL: Record<Filter, string> = { all: 'All routes', official: 'Official', creator: 'Creators', private: 'Mine', drivers: 'Drivers' };
+const FILTER_LABEL: Record<Filter, string> = { all: 'All routes', official: 'Official', creator: 'Creators', private: 'Your routes', drivers: 'Drivers' };
 
 const kindOf = (r: Route): Kind => (!r.isPublic ? 'private' : r.official ? 'official' : 'creator');
 
@@ -338,19 +337,22 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
   const listed = (shown ?? [])
     .filter((r) => r.isPublic || filter === 'private')
     .sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name));
-  const filters: Filter[] = ['all', 'official', 'creator', 'private', 'drivers'];
+  // Drivers are found by typing a name; the chips only filter routes.
+  const filters: Filter[] = ['all', 'official', 'private'];
   const showDrivers = filter === 'drivers';
   const showRoutes = filter !== 'drivers';
   // Collapsed, the sheet shows a couple of rows; searching opens it.
   const expanded = open || docked || dragging;
   const title =
+    filter === 'drivers' ? 'Drivers' : routes === null ? 'Loading routes…' : filter === 'private' ? 'Your routes' : term ? 'Matching routes' : 'Public routes';
+  const count =
     filter === 'drivers'
       ? term && drivers
-        ? `Drivers · ${drivers.length} found`
-        : 'Drivers'
+        ? `${drivers.length} found`
+        : ''
       : routes === null
-        ? 'Loading routes…'
-        : `${filter === 'private' ? 'Your routes' : term ? 'Matching routes' : 'Public routes'} · ${listed.length}`;
+        ? ''
+        : `${listed.length} ${listed.length === 1 ? 'route' : 'routes'}`;
 
   return (
     <main className={`map-screen ${term ? 'searching' : ''}`} hidden={!visible}>
@@ -430,7 +432,10 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           onPointerCancel={onPullEnd}
         >
           {!docked && <span className="grabber" aria-hidden="true" />}
-          <strong className="explore-sheet-title">{title}</strong>
+          <span className="explore-sheet-title">
+            <strong>{title}</strong>
+            <span className="mute">{count}</span>
+          </span>
         </button>
         <div className="explore-sheet-body">
           {showRoutes &&
@@ -447,21 +452,16 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
                 {(expanded ? listed : listed.slice(0, 2)).map((r) => (
                   <li key={r.id}>
                     <Link to={`/r/${r.id}`} className="explore-row">
-                      <span className="explore-shape" aria-hidden="true">
-                        <RouteShape route={r} height={40} ticks={false} />
-                      </span>
                       <span className="grow">
-                        <strong className="ellipsis">{r.name}</strong>
+                        <strong className="explore-name">
+                          <span className="ellipsis">{r.name}</span>
+                          {r.official && <span className="badge ink">Official</span>}
+                        </strong>
                         <span className="mute ellipsis small-text">
-                          {r.official ? 'Official' : r.isPublic ? `by ${r.ownerName}` : 'Private'} · {formatDistance(r.lengthM)}
+                          {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : 'point to point'} · {r.startType === 'standing' ? 'standing' : 'rolling'} start
                         </span>
                       </span>
-                      {r.isPublic && (
-                        <span className="explore-laps">
-                          <strong className="num">{counts[r.id] ?? '–'}</strong>
-                          <span className="mute small-text">{counts[r.id] === 1 ? 'lap' : 'laps'}</span>
-                        </span>
-                      )}
+                      {r.isPublic && <RecordCell routeId={r.id} />}
                     </Link>
                   </li>
                 ))}
@@ -478,7 +478,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
                   {(drivers ?? []).map((p) => (
                     <li key={p.id} className="explore-row">
                       <Link to={`/u/${p.username}`} className="row grow" style={{ gap: 12, textDecoration: 'none' }}>
-                        <Avatar name={p.username} hue={p.avatarHue} size={36} uid={p.id} />
+                        <Avatar name={p.username} hue={p.avatarHue} size={44} uid={p.id} />
                         <WhoText p={p} />
                       </Link>
                       {p.id !== profile.id && <FollowButton userId={p.id} />}
@@ -491,6 +491,27 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
         </div>
       </section>
     </main>
+  );
+}
+
+/** The route record and who holds it, as on the leaderboard's first row. */
+function RecordCell({ routeId }: { routeId: string }) {
+  const [top, setTop] = useState<{ ms: number; who: string } | null>(null);
+  useEffect(() => {
+    let live = true;
+    routePosts(routeId, 1)
+      .then((p) => live && p[0] && setTop({ ms: p[0].totalMs, who: p[0].username }))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [routeId]);
+  if (!top) return null;
+  return (
+    <span className="explore-laps">
+      <strong className="num">{formatLap(top.ms)}</strong>
+      <span className="mute small-text">P1 {top.who}</span>
+    </span>
   );
 }
 

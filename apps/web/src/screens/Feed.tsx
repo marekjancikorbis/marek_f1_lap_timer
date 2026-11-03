@@ -1,11 +1,11 @@
 import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
-import { Bell } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LapCardSkeleton } from '../components/Skeleton';
 import { LapCard } from '../components/LapCard';
 import { Empty, errorMessage, Spinner, useToast } from '../components/ui';
-import { feedPage, followingIds, forget, getRoute, getRoutes, routeStats, unreadNotices, type FeedPage } from '../lib/data';
+import { feedPage, followingIds, forget, getRoute, getRoutes, routePosts, routeStats, unreadNotices, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
 import { formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
@@ -27,7 +27,7 @@ export function Feed() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [routes, setRoutes] = useState<Map<string, Route>>(new Map());
   const [driven, setDriven] = useState<Set<string>>(new Set());
-  const [home, setHome] = useState<{ route: Route; pb: number | null } | null>(null);
+  const [home, setHome] = useState<{ route: Route; pb: number | null; record: number | null } | null>(null);
   const [newCount, setNewCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
@@ -66,10 +66,14 @@ export function Feed() {
       void loadFirst().then(() => loadFirst(true));
     }
     const homeId = profile.homeRouteId;
-    Promise.all([routeStats(profile.id), homeId ? getRoute(homeId) : null])
-      .then(([stats, route]) => {
+    Promise.all([routeStats(profile.id), homeId ? getRoute(homeId) : null, homeId ? routePosts(homeId, 1).catch(() => []) : []])
+      .then(([stats, route, top]) => {
         setDriven(new Set(Object.keys(stats)));
-        setHome(route && route.isPublic && !route.hidden ? { route, pb: homeId ? (stats[homeId]?.pb ?? null) : null } : null);
+        setHome(
+          route && route.isPublic && !route.hidden
+            ? { route, pb: homeId ? (stats[homeId]?.pb ?? null) : null, record: top[0]?.totalMs ?? null }
+            : null,
+        );
       })
       .catch(() => undefined);
   }, [loadFirst, profile.id, profile.homeRouteId]);
@@ -138,8 +142,8 @@ export function Feed() {
         <header className="screen-head">
           <h1 className="wordmark small">Purple Sector</h1>
           <Link to="/notifications" className="icon-btn bell" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
-            <Bell size={24} />
-            {unread > 0 && <span className="bell-count">{unread > 9 ? '9+' : unread}</span>}
+            <Bell size={22} />
+            {unread > 0 && <span className="bell-dot" />}
           </Link>
         </header>
         {home ? (
@@ -151,12 +155,16 @@ export function Feed() {
             {home.pb != null ? (
               <>
                 <span className="num feed-home-time">{formatLap(home.pb)}</span>
-                <span className="mute small-text">Your best</span>
+                <span className="mute feed-home-sub">
+                  Your best
+                  {home.record != null &&
+                    (home.pb <= home.record ? ' · the route record' : ` · ${((home.pb - home.record) / 1000).toFixed(2)} off the route record`)}
+                </span>
               </>
             ) : (
-              <span className="mute small-text">Not driven yet</span>
+              <span className="mute feed-home-sub">Not driven yet</span>
             )}
-            <span className="row" style={{ marginTop: 16 }}>
+            <span className="btns">
               <Link className="btn primary" to={`/drive/${home.route.id}`}>
                 Drive
               </Link>
@@ -170,8 +178,8 @@ export function Feed() {
             <div className="feed-home">
               <span className="cap">Your home course</span>
               <strong className="feed-home-name">Pick the route you drive most</strong>
-              <span className="mute small-text">It stays here with your best time and one tap to drive it.</span>
-              <span className="row" style={{ marginTop: 16 }}>
+              <span className="mute feed-home-sub">It stays here with your best time and one tap to drive it.</span>
+              <span className="btns">
                 <Link className="btn primary" to="/explore">
                   Find a route
                 </Link>
@@ -192,7 +200,7 @@ export function Feed() {
       {posts.length > 0 && (
         <h2 className="section-title row between">
           Following
-          {newCount > 0 && <span className="section-link">{newCount} new</span>}
+          {newCount > 0 && <span className="section-sub">{newCount} new {newCount === 1 ? 'lap' : 'laps'}</span>}
         </h2>
       )}
 
@@ -208,7 +216,7 @@ export function Feed() {
           The drivers you follow haven't posted a lap yet. New posts show up here, newest first.
         </Empty>
       ) : (
-        <div className="stack">
+        <div className="feed-list">
           {posts.map((p) => (
             <LapCard key={p.id} post={p} route={routes.get(p.routeId)} canCompare={driven.has(p.routeId)} />
           ))}
@@ -224,7 +232,7 @@ export function Feed() {
 /** Not following anyone: say what the feed is and send them to search. */
 function FeedEmpty() {
   return (
-    <Empty title="Follow some drivers" action={<Link className="btn primary lg" to="/explore">Find drivers</Link>}>
+    <Empty title="Follow some drivers" icon={<User size={22} />} action={<Link className="btn primary" to="/explore">Find drivers</Link>}>
       Their posted laps show up here, ready to race against.
     </Empty>
   );

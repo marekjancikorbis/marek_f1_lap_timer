@@ -192,7 +192,7 @@ export default function UserPage() {
           )}
         </div>
         <div className="row" style={{ gap: 16 }}>
-          <Avatar name={user.username} hue={user.avatarHue} size={84} uid={user.id} />
+          <Avatar name={name} hue={user.avatarHue} size={84} uid={user.id} />
           <div className="grow">
             <h1 className="profile-name">{name}</h1>
             <span className="mute small-text">
@@ -202,10 +202,10 @@ export default function UserPage() {
             </span>
             <span className="row profile-counts">
               <Link to={`/u/${user.username}/following`}>
-                <strong className="num">{counts?.following ?? '–'}</strong> following
+                <strong>{counts?.following ?? '–'}</strong> following
               </Link>
               <Link to={`/u/${user.username}/followers`}>
-                <strong className="num">{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
+                <strong>{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
               </Link>
             </span>
           </div>
@@ -236,12 +236,12 @@ export default function UserPage() {
         {tab === 'posts' &&
           (newest.length === 0 ? (
             <>
-              {activity && <ActivityHeatmap days={activity} weeks={26} />}
+              {activity && <ActivityHeatmap days={activity} />}
               <p className="mute profile-empty">{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn't posted a lap yet.`}</p>
             </>
           ) : (
             <>
-              {activity && <ActivityHeatmap days={activity} weeks={26} />}
+              {activity && <ActivityHeatmap days={activity} />}
               <div className="list" style={{ marginTop: 10 }}>
                 {newest.map((p) => (
                   <LapCard key={p.id} post={p} route={routes.get(p.routeId)} showAuthor={false} />

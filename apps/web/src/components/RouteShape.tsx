@@ -163,3 +163,19 @@ export function RouteShape({ route, colours, height = 150, ticks = true, classNa
     </div>
   );
 }
+
+/** The route's outline in a small tile, as on the Routes cards: a navy line and a dot at the start. */
+export function RouteThumb({ route }: { route: Props['route'] }) {
+  // Drawn at 10x the 76 x 64 tile, so 35 units of stroke is 3.5 px.
+  const g = useMemo(() => shapeGeometry(route, 760, 640, 100), [route]);
+  if (!g) return null;
+  const paths = g.lines.map((line) => line.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(''));
+  return (
+    <svg className="route-thumb" viewBox={`0 0 ${g.W} ${g.H}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      {paths.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke="#0e1b3d" strokeWidth={35} strokeLinecap="round" strokeLinejoin="round" />
+      ))}
+      {!route.isLoop && <circle cx={g.start[0]} cy={g.start[1]} r={40} fill="#0e1b3d" />}
+    </svg>
+  );
+}

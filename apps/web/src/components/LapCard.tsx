@@ -26,7 +26,7 @@ export function LapCard({ post, route, showAuthor = true }: Props) {
         <span className="grow">
           <strong className="ellipsis">{post.routeName}</strong>
           <span className="mute small-text">
-            Posted {timeAgo(created)}
+            Posted {created ? created.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'just now'}
             {post.positionAtPost != null && ` · P${post.positionAtPost}`}
             {post.penaltyMs > 0 && ` · +${formatSeconds(post.penaltyMs, 0)}`}
           </span>
@@ -36,7 +36,7 @@ export function LapCard({ post, route, showAuthor = true }: Props) {
             </span>
           )}
         </span>
-        <strong className={`num lap-row-time ${p1 ? 'fastest' : ''}`}>{formatLap(post.totalMs)}</strong>
+        <strong className="num lap-row-time">{formatLap(post.totalMs)}</strong>
       </Link>
     );
 
@@ -46,11 +46,11 @@ export function LapCard({ post, route, showAuthor = true }: Props) {
         <Avatar name={post.username} hue={post.avatarHue} size={44} uid={post.userId} />
       </Link>
       <Link to={`/lap/${post.id}`} className="lap-card-main" aria-label={`${post.routeName}, ${formatLap(post.totalMs)}, lap details`}>
-        <span className="lap-card-meta ellipsis">
-          {post.username} · {post.routeName} · {timeAgo(created)}
+        <span className="lap-card-meta">
+          {post.username} · {post.routeName} · {timeAgo(created).replace(' ago', '')}
         </span>
-        <span className="row" style={{ gap: 8 }}>
-          <span className={`lap-card-time num ${p1 ? 'fastest' : ''}`}>{formatLap(post.totalMs)}</span>
+        <span className="lap-card-line">
+          <span className="lap-card-time num">{formatLap(post.totalMs)}</span>
           {chip}
           {post.penaltyMs > 0 && <span className="badge red">+{formatSeconds(post.penaltyMs, 0)}</span>}
         </span>

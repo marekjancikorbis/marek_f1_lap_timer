@@ -99,7 +99,7 @@ function RequestList({ kind }: { kind: RequestKind }) {
       {items.map((r) => (
         <div key={r.id} className="panel stack" style={{ gap: 10 }}>
           <Link to={`/u/${r.username}`} className="row" style={{ gap: 12, textDecoration: 'none' }}>
-            <Avatar name={r.username} size={40} uid={r.id} />
+            <Avatar name={r.username} size={44} uid={r.id} />
             <span className="grow" style={{ display: 'flex', flexDirection: 'column' }}>
               <strong>{r.username}</strong>
               <span className="mute small-text">Asked {timeAgo(r.createdAt?.toDate())}</span>

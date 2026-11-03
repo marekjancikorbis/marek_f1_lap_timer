@@ -34,7 +34,7 @@ function describe(n: Notice): { text: ReactNode; to?: string } {
       return {
         text: (
           <>
-            {who} beat your time on <strong>{n.routeName}</strong>
+            {who} beat your time on {n.routeName}
           </>
         ),
         to: `/lap/${n.postId}`,
@@ -92,18 +92,18 @@ export default function Notifications() {
                       <span className="grow notice-text">
                         <span>{text}</span>
                         {n.type === 'beaten' ? (
-                          <span className="row" style={{ gap: 10, marginTop: 6 }}>
+                          <span className="notice-time">
                             <strong className="num">{formatLap(n.totalMs)}</strong>
-                            <strong className="num fastest small-text">{formatDelta(n.totalMs - n.theirMs, 2)}</strong>
-                            <span className="mute small-text">· {timeAgo(n.createdAt?.toDate())}</span>
+                            <strong className="num fastest">{formatDelta(n.totalMs - n.theirMs, 2)}</strong>
+                            <span className="mute">· {timeAgo(n.createdAt?.toDate()).replace(' ago', '')}</span>
                           </span>
                         ) : (
-                          <span className="mute small-text">{timeAgo(n.createdAt?.toDate())}</span>
+                          <span className="mute small-text">{timeAgo(n.createdAt?.toDate()).replace(' ago', '')}</span>
                         )}
                       </span>
                     );
                     return (
-                      <div key={n.id} className={`list-item${group === 'New' ? ' unread' : ''}`} style={n.type === 'beaten' ? { alignItems: 'flex-start' } : undefined}>
+                      <div key={n.id} className="list-item" style={n.type === 'beaten' ? { alignItems: 'flex-start' } : undefined}>
                         {n.type === 'follow' || n.type === 'beaten' ? (
                           <Link to={`/u/${n.fromName}`} aria-label={n.fromName}>
                             <Avatar name={n.fromName} size={44} uid={n.fromId} />

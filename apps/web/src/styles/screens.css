@@ -19,8 +19,9 @@
 }
 
 .wordmark.small {
-  font-size: 1.625rem;
+  font-size: 21px;
   line-height: 1;
+  letter-spacing: 0.01em;
 }
 
 .flag-purple {
@@ -677,21 +678,22 @@
 
 .board-row {
   display: grid;
-  grid-template-columns: 34px 1fr auto;
+  grid-template-columns: 30px 1fr auto;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  min-height: 56px;
   padding: 12px 14px;
 }
 
 .board-row.me {
-  background: var(--blue-soft);
+  background: #eef1f7;
 }
 
 .board-pos {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font: italic 900 20px/1 var(--font-ui);
+  font-stretch: 80%;
   text-align: center;
-  color: var(--mute);
+  color: var(--ink);
 }
 
 .board-pos.p1 {
@@ -699,7 +701,7 @@
 }
 
 .board-time {
-  font-size: 1.375rem;
+  font-size: 20px;
   text-align: right;
   text-decoration: none;
   display: flex;
@@ -2017,7 +2019,7 @@
 
 .chips {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 2px;
@@ -2025,16 +2027,15 @@
 
 .chip {
   flex: none;
-  min-height: 34px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 0;
   border-radius: 999px;
-  background: var(--raised);
+  background: var(--card);
   color: var(--ink-2);
-  font: 800 0.75rem/1 var(--font-ui);
+  font: 800 12px/1 var(--font-ui);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  box-shadow: var(--shadow-lift);
   cursor: pointer;
   transition: background-color 150ms, color 150ms;
 }
@@ -2075,8 +2076,8 @@
 .explore-top {
   position: absolute;
   top: calc(var(--safe-t) + 12px);
-  left: 12px;
-  right: 12px;
+  left: 16px;
+  right: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2086,6 +2087,7 @@
   background: var(--card);
   border-color: transparent;
   box-shadow: var(--shadow-lift);
+  padding-left: 40px;
   padding-right: 44px;
 }
 
@@ -2107,8 +2109,8 @@
   display: flex;
   flex-direction: column;
   background: var(--card);
-  border-radius: 22px 22px 0 0;
-  box-shadow: 0 -10px 30px -14px rgba(9, 17, 38, 0.3);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 40px rgba(9, 17, 38, 0.25);
   transition: max-height 320ms var(--ease-out);
 }
 
@@ -2129,8 +2131,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px 6px;
+  gap: 14px;
+  padding: 10px 16px 6px;
   border: 0;
   background: none;
   cursor: grab;
@@ -2145,13 +2147,27 @@
 
 .explore-sheet-head .grabber {
   width: 40px;
-  height: 4px;
-  border-radius: 2px;
+  height: 5px;
+  border-radius: 3px;
   background: var(--hairline-2);
 }
 
 .explore-sheet-title {
-  font: 700 1.0625rem/1 var(--font-ui);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 15px;
+}
+
+.explore-sheet-title .mute {
+  font-size: 13px;
+}
+
+.explore-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .explore-sheet-body {
@@ -2204,7 +2220,8 @@
 .explore-laps strong,
 .logbook-pb strong,
 .logbook-time {
-  font-size: 1.1875rem;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .explore-empty {
@@ -2269,114 +2286,6 @@
 
 /* ================================================================ activity heatmap */
 
-.heat {
-  margin-top: var(--s-5);
-}
-
-/* The heading's own top margin would double the gap above the heatmap. */
-.heat .section-title {
-  margin: 0 0 var(--s-2);
-}
-
-.heat-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 0.8125rem;
-}
-
-.heat-scroll {
-  overflow-x: auto;
-  padding: 2px 0 6px;
-  scrollbar-width: none;
-}
-
-.heat-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.heat-months,
-.heat-grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 12px;
-  gap: 3px;
-  width: max-content;
-}
-
-.heat-months {
-  height: 16px;
-  font-size: 0.6875rem;
-  color: var(--mute);
-}
-
-.heat-months span {
-  white-space: nowrap;
-  overflow: visible;
-}
-
-.heat-grid {
-  grid-template-rows: repeat(7, 12px);
-}
-
-.heat-grid i,
-.heat-legend i {
-  display: block;
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-}
-
-.heat-grid i {
-  cursor: pointer;
-}
-
-.heat-grid i.sel {
-  outline: 2px solid var(--ink);
-  outline-offset: 1px;
-}
-
-.heat-grid i.future {
-  visibility: hidden;
-}
-
-.l0 {
-  background: var(--raised-2);
-}
-
-.l1 {
-  background: rgba(14, 27, 61, 0.25);
-}
-
-.l2 {
-  background: rgba(14, 27, 61, 0.45);
-}
-
-.l3 {
-  background: rgba(14, 27, 61, 0.7);
-}
-
-.l4 {
-  background: var(--blue);
-}
-
-.heat-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.8125rem;
-}
-
-.heat-legend {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.75rem;
-  color: var(--mute);
-}
-
 /* The explore search has its own clear button. */
 .explore-search input::-webkit-search-cancel-button {
   -webkit-appearance: none;
@@ -2410,7 +2319,11 @@
 .lap-stripe {
   display: flex;
   gap: 4px;
-  padding-left: 3px;
+  padding-left: 4px;
+}
+
+.lap-stripe > span:not(.empty):not([style*='background']) {
+  background: #d5dbe5;
 }
 
 .lap-stripe > span {
@@ -2497,25 +2410,71 @@
 }
 
 .feed-panel .screen-head {
-  margin-bottom: 10px;
-  padding-right: 64px;
+  margin: 0;
+  padding-top: 4px;
+  padding-right: 72px;
 }
 
 .feed-home {
   display: flex;
   flex-direction: column;
   max-width: 250px;
+  margin-top: 18px;
 }
 
 .feed-home-name {
   margin-top: 2px;
-  font: 700 1.1875rem/1.2 var(--font-ui);
+  font: 700 19px/1.2 var(--font-ui);
+}
+
+.feed-home .cap + .feed-home-name:has(+ .feed-home-sub) {
+  margin-top: 4px;
 }
 
 .feed-home-time {
   margin-top: 10px;
-  font-size: 4rem;
+  font-size: 64px;
   line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.feed-home-sub {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.feed-home-name + .feed-home-sub {
+  margin-top: 6px;
+}
+
+.btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-sub {
+  font: 400 13px/1 var(--font-ui);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--mute);
+}
+
+.bell-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 0 2px var(--navy);
 }
 
 /* A posted lap in the feed: roundel, who and where, the time, the stripe, and Race. */
@@ -2530,28 +2489,34 @@
 .lap-card-main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   min-width: 0;
   color: inherit;
   text-decoration: none;
 }
 
 .lap-card-meta {
-  font-size: 0.8125rem;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink-2);
 }
 
+.lap-card-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0 7px;
+}
+
 .lap-card-time {
-  font-size: 1.875rem;
+  font-size: 30px;
   line-height: 1;
+  letter-spacing: -0.01em;
 }
 
 .lap-card-stripe,
 .lap-row-stripe {
   display: block;
   width: 150px;
-  margin-top: 4px;
 }
 
 .lap-row-stripe {
@@ -2597,11 +2562,13 @@
 .profile-panel .profile-counts a {
   flex-direction: row;
   display: inline;
+  font-size: 13px;
   color: var(--mute);
 }
 
 .profile-panel .profile-counts strong {
-  font-size: 0.9375rem;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--ink);
 }
 
@@ -2628,9 +2595,31 @@
 .heat {
   margin-top: 12px;
   padding: 14px;
-  border-radius: var(--r-lg);
-  background: var(--card);
-  box-shadow: var(--shadow-lift);
+}
+
+.heat .cap {
+  color: var(--mute);
+}
+
+.heat-weeks {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.heat-weeks i {
+  height: 14px;
+  border-radius: 3px;
+  background: var(--raised-2);
+}
+
+.heat-weeks i.l1 {
+  background: #8fa0c7;
+}
+
+.heat-weeks i.l2 {
+  background: var(--navy);
 }
 
 /* App bar title on screens with a back button, as in the mockups. */
@@ -2842,7 +2831,7 @@
   place-items: center;
   height: 64px;
   border-radius: 10px;
-  background: var(--raised);
+  background: #f4f6f9;
   overflow: hidden;
 }
 
@@ -2860,7 +2849,7 @@
 .chip-btn {
   min-height: 26px;
   padding: 0 10px;
-  font-size: 0.6875rem;
+  font-size: 11px;
 }
 
 .request-card {
@@ -2880,8 +2869,9 @@
 
 .route-title {
   margin-top: 8px;
-  font: italic 900 1.75rem/1.05 var(--font-ui);
-  text-transform: uppercase;
+  font: 800 26px/1.1 var(--font-ui);
+  letter-spacing: -0.01em;
+  text-transform: none;
 }
 
 .route-records {
@@ -2902,8 +2892,7 @@
 
 .route-card-shape > *,
 .route-card-shape svg {
-  width: 100%;
-  max-width: 76px;
+  width: 76px;
   height: 64px;
 }
 
@@ -2957,6 +2946,26 @@ button.list-item {
 .notice-text {
   display: flex;
   flex-direction: column;
+}
+
+.notice-time {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.notice-time .num {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.notice-time .num.fastest {
+  font-size: 15px;
+}
+
+.notice-time .mute {
+  font-size: 13px;
 }
 
 /* Compare: A and B as two cards with the swap between them. */
@@ -3033,6 +3042,7 @@ button.list-item {
 /* Explore, searching: the results replace the map, under the search and its Routes / Drivers tabs. */
 .map-screen.searching .explore-sheet {
   top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
   max-height: none;
@@ -3052,6 +3062,13 @@ button.list-item {
 
 .map-screen.searching .explore-sheet-head .grabber {
   display: none;
+}
+
+/* The results title reads like a section heading, as in the mockups. */
+.map-screen.searching .explore-sheet-title strong {
+  font: italic 800 15px/1 var(--font-ui);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .map-screen.searching .explore-sheet-body .explore-list {
@@ -3175,4 +3192,104 @@ button.list-item {
 
 .limit-body p {
   margin-top: 12px;
+}
+
+/* Route page spacing, as in the mockup: 14 above the tabs, 10 above the list. */
+.route-head + .segmented {
+  margin-top: 14px;
+}
+
+.route-head ~ .segmented + .list,
+.route-head ~ .segmented + .route-empty {
+  margin-top: 10px;
+}
+
+.list-item > svg.lucide-chevron-right {
+  color: var(--hairline-2);
+}
+
+/* My laps: the theoretical best in navy, then one list of laps, each with its stripe on the right. */
+.history-best {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  background: var(--navy);
+}
+
+.history-best .livery.thin {
+  width: 56px;
+}
+
+.history-best > *:not(.livery) {
+  position: relative;
+}
+
+.history-best .cap {
+  color: var(--ink-2);
+}
+
+.history-best-time {
+  margin-top: 4px;
+  font-size: 44px;
+  line-height: 1;
+}
+
+.history-best .mute {
+  max-width: 250px;
+  font-size: 13px;
+}
+
+.history-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 4px;
+  padding-left: 0;
+}
+
+.history-row .run-select {
+  padding-left: 12px;
+}
+
+.history-row.selected {
+  background: #eef1f7;
+}
+
+.history-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.history-main > .grow {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-time {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.history-stripe {
+  width: 96px;
+  flex: none;
+}
+
+.history-row .run-actions {
+  padding: 0 14px 12px;
 }

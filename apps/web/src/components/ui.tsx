@@ -1,4 +1,4 @@
-import { ChevronLeft, Map, Play, Route as RouteIcon, Rss, User } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { getPhoto, getProfile } from '../lib/data';
@@ -12,7 +12,10 @@ import type { SectorColourName } from '../lib/types';
 /** Initials on the driver's colour, or their photo once it loads (pass uid). */
 export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?: number; size?: number; uid?: string }) {
   const photo = useLoaded(uid, getPhoto);
-  const initials = name.replace(/[^A-Za-z0-9]/g, '').slice(0, 2) || '?';
+  // petra_r -> PR, Tomáš Kolář -> TK, perf -> PE
+  const parts = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const initials = (parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] ?? '').slice(0, 2)) || '?';
+  const ring = size >= 64 ? 5 : size >= 40 ? 3 : 2;
   return (
     <span
       className="avatar"
@@ -20,10 +23,10 @@ export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?
       style={{
         width: size,
         height: size,
-        fontSize: size * 0.38,
-        background: photo ? `center / cover url(${photo})` : `oklch(42% 0.09 ${hue})`,
+        fontSize: size * 0.36,
+        background: photo ? `center / cover url(${photo})` : `oklch(50% 0.15 ${hue})`,
         // A roundel: an off-white ring inside a hairline, around initials or a photo.
-        boxShadow: `inset 0 0 0 ${size >= 64 ? 4 : 2}px var(--card), 0 0 0 1px var(--hairline-2)`,
+        boxShadow: `inset 0 0 0 ${ring}px var(--card), 0 0 0 ${ring > 2 ? 1.5 : 1}px var(--hairline-2)`,
       }}
     >
       {!photo && initials}
@@ -75,7 +78,7 @@ function useLoaded<T>(id: string | undefined, load: (id: string) => Promise<T | 
 const STRIP: Record<SectorColourName, string> = { purple: 'var(--purple)', green: 'var(--green)', yellow: 'var(--yellow)' };
 export const STRIP_LABEL: Record<SectorColourName, string> = { purple: 'best ever', green: 'faster', yellow: 'slower' };
 
-export function SectorStrip({ colours, height = 8 }: { colours: (SectorColourName | null)[]; height?: number }) {
+export function SectorStrip({ colours, height = 10 }: { colours: (SectorColourName | null)[]; height?: number }) {
   return (
     // The lap's livery: one slanted band per sector; a sector without a time is an empty outline.
     <div
@@ -120,17 +123,17 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
 export function TabBar() {
   const { profile } = useMe();
   const tabs = [
-    { to: '/', label: 'Feed', icon: Rss, end: true },
-    { to: '/explore', label: 'Explore', icon: Map },
-    { to: '/drive', label: 'Drive', icon: Play, end: true },
-    { to: '/routes', label: 'Routes', icon: RouteIcon },
+    { to: '/', label: 'Feed', icon: 'M4 6h16M4 12h16M4 18h10', end: true },
+    { to: '/explore', label: 'Explore', icon: 'M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0zM20 20l-4-4' },
+    { to: '/drive', label: 'Drive', icon: '', end: true },
+    { to: '/routes', label: 'Routes', icon: 'M5 16a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM19 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 18h7a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h7' },
     // Your profile's own address, not /me (a redirect), so the tab lights up there.
-    { to: `/u/${profile.username}`, label: 'Profile', icon: User },
+    { to: `/u/${profile.username}`, label: 'Profile', icon: 'M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM4 21c1.2-4.5 14.8-4.5 16 0' },
   ];
   return (
     <div className="tabbar">
       <nav aria-label="Main">
-        {tabs.map(({ to, label, icon: Icon, end }) =>
+        {tabs.map(({ to, label, icon, end }) =>
           to === '/drive' ? (
             // Driving is the main job: a raised button in the middle.
             <NavLink key={to} to={to} end={end} className="tab-go" aria-label={label}>
@@ -140,13 +143,22 @@ export function TabBar() {
             </NavLink>
           ) : (
             <NavLink key={to} to={to} end={end}>
-              <Icon size={22} strokeWidth={2} aria-hidden="true" />
+              <TabIcon d={icon} />
               {label}
             </NavLink>
           ),
         )}
       </nav>
     </div>
+  );
+}
+
+/** The tab bar's own glyphs, drawn as in the mockups. */
+function TabIcon({ d }: { d: string }) {
+  return (
+    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
   );
 }
 
@@ -161,9 +173,10 @@ export function Loading() {
   return <PageSkeleton path={useLocation().pathname} />;
 }
 
-export function Empty({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
+export function Empty({ title, children, action, icon }: { title: string; children?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
     <div className="empty">
+      {icon && <div className="empty-glyph">{icon}</div>}
       <h2>{title}</h2>
       {children && <p>{children}</p>}
       {action}

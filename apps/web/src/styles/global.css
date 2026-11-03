@@ -16,7 +16,7 @@
   --tarmac: #ecf0f5;
   --tarmac-2: #f7f9fc;
   --raised: #f7f9fc;
-  --raised-2: #e4e9f0;
+  --raised-2: #e8ecf2;
   --hairline: #dfe3ea;
   --hairline-2: #c9d0dc;
   --ink: #0e1b3d;
@@ -55,7 +55,7 @@
   --s-6: 32px;
   --s-7: 48px;
 
-  --tabbar-h: 64px;
+  --tabbar-h: 58px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
 
@@ -74,8 +74,8 @@
   --hairline: var(--navy-3);
   --hairline-2: #3a4c80;
   --ink: var(--on-navy);
-  --ink-2: #c9d1e6;
-  --mute: #a3aecb;
+  --ink-2: #b9c2d9;
+  --mute: #b9c2d9;
   --mute-2: #8f9bbd;
   --purple-ink: #b98af7;
   --green-ink: #4fe08a;
@@ -126,6 +126,9 @@ body {
 }
 
 body {
+  /* The mockups' body text: 15px at 1.4. rem sizes still count from 16px. */
+  font-size: 15px;
+  line-height: 1.4;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
   /* No pinch or double-tap zoom of the page, like a native app. Maps and graphs handle their own touches. */
@@ -177,6 +180,13 @@ h3 {
   line-height: 1.3;
 }
 
+/* .h2 in the mockups: sentence case, bold, upright. */
+h2 {
+  font: 700 19px/1.2 var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 p {
   margin: 0;
 }
@@ -204,10 +214,10 @@ textarea {
 .num {
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
-  font-stretch: 75%;
+  font-stretch: 72%;
   font-style: italic;
   font-weight: 800;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
 }
 
 .mute {
@@ -289,7 +299,7 @@ textarea {
   color: var(--ink);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  margin: var(--s-5) 0 var(--s-3);
+  margin: 22px 0 10px;
 }
 
 /* ------------------------------------------------------------ surfaces */
@@ -316,7 +326,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  padding: var(--s-3) var(--s-4);
+  padding: 12px 14px;
   min-height: 56px;
   text-decoration: none;
   width: 100%;
@@ -350,13 +360,14 @@ a.list-item:active {
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  min-height: 44px;
-  padding: 0 var(--s-4);
+  min-height: 48px;
+  padding: 0 20px;
   border-radius: 999px;
   border: 0;
   background: transparent;
   color: var(--ink);
-  font: italic 800 0.9375rem/1 var(--font-ui);
+  font: italic 800 15px/1 var(--font-ui);
+  white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   text-decoration: none;
@@ -371,7 +382,9 @@ a.list-item:active {
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  background: var(--hairline);
+  color: var(--mute);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -391,6 +404,12 @@ a.list-item:active {
   box-shadow: none;
 }
 
+/* ghost-inv: the outline button on navy. */
+.navy .btn:not(.primary):not(.ghost):not(.danger),
+.drive .btn:not(.primary):not(.ghost):not(.danger) {
+  box-shadow: inset 0 0 0 2px rgba(247, 249, 252, 0.55);
+}
+
 .btn.ghost {
   background: transparent;
 }
@@ -400,14 +419,13 @@ a.list-item:active {
 }
 
 .btn.lg {
-  min-height: 56px;
-  font-size: 1.0625rem;
+  min-height: 48px;
 }
 
 .btn.sm {
   min-height: 36px;
-  padding: 0 var(--s-3);
-  font-size: 0.875rem;
+  padding: 0 14px;
+  font-size: 13px;
 }
 
 .icon-btn {
@@ -433,8 +451,8 @@ a.list-item:active {
 }
 
 .field > span {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--ink-2);
 }
 
@@ -444,11 +462,11 @@ a.list-item:active {
 }
 
 .input {
-  min-height: 48px;
-  padding: 0 var(--s-4);
+  min-height: 50px;
+  padding: 0 14px;
   border-radius: var(--r-md);
   border: 1.5px solid var(--hairline-2);
-  background: var(--tarmac-2);
+  background: var(--card);
   font-size: 1rem;
   width: 100%;
   outline: none;
@@ -497,7 +515,7 @@ textarea.input {
   background: transparent;
   color: var(--ink-2);
   font-weight: 700;
-  font-size: 0.9375rem;
+  font-size: 14px;
   cursor: pointer;
   transition: background-color 150ms, color 150ms;
 }
@@ -510,8 +528,8 @@ textarea.input {
 /* Switch */
 .switch {
   position: relative;
-  width: 52px;
-  height: 32px;
+  width: 48px;
+  height: 28px;
   flex: none;
   border-radius: 999px;
   border: 0;
@@ -525,11 +543,11 @@ textarea.input {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--card);
-  box-shadow: 0 1px 3px rgba(9, 17, 38, 0.3);
+  box-shadow: 0 1px 3px rgba(9, 17, 38, 0.25);
   transition: transform 260ms var(--ease-out);
 }
 
@@ -596,7 +614,7 @@ input[type='range'] {
 
 .badge.outline {
   background: transparent;
-  box-shadow: inset 0 0 0 1px var(--hairline-2);
+  box-shadow: inset 0 0 0 1.5px var(--hairline-2);
   color: var(--ink-2);
 }
 
@@ -608,7 +626,8 @@ input[type='range'] {
   place-items: center;
   border-radius: 50%;
   font: italic 900 0.8125rem/1 var(--font-ui);
-  color: var(--on-navy);
+  font-stretch: 90%;
+  color: var(--card);
   text-transform: uppercase;
   user-select: none;
 }
@@ -626,6 +645,14 @@ input[type='range'] {
   border-top: 1px solid var(--hairline);
 }
 
+.app.no-tabs {
+  --tabbar-h: 0px;
+}
+
+.app.no-tabs .tabbar {
+  display: none;
+}
+
 .tabbar nav {
   max-width: 560px;
   margin: 0 auto;
@@ -640,8 +667,7 @@ input[type='range'] {
   flex-direction: column;
   align-items: center;
   /* Bottom-aligned so every label sits on one line beside the raised Drive button. */
-  justify-content: flex-end;
-  padding-bottom: 10px;
+  justify-content: center;
   gap: 3px;
   color: var(--mute);
   text-decoration: none;
@@ -654,12 +680,16 @@ input[type='range'] {
   color: var(--ink);
 }
 
+.tabbar a.active svg {
+  stroke-width: 2.6;
+}
+
 /* Drive: the raised blue button in the middle of the bar. */
 .tab-go-btn {
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 62px;
+  height: 62px;
   margin-top: -26px;
   border-radius: 50%;
   background: var(--navy);
@@ -690,20 +720,31 @@ input[type='range'] {
 
 .empty {
   text-align: center;
-  padding: var(--s-7) var(--s-4);
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-3);
+  gap: 10px;
 }
 
-.empty h2 {
-  font-size: 1.5rem;
+.empty-glyph {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--raised-2);
+  display: grid;
+  place-items: center;
+  color: var(--mute);
 }
 
 .empty p {
+  font-size: 14px;
   color: var(--mute);
-  max-width: 34ch;
+  max-width: 280px;
+}
+
+.empty .btn {
+  margin-top: 6px;
 }
 
 .spinner {
@@ -785,10 +826,10 @@ input[type='range'] {
   pointer-events: auto;
   background: var(--navy);
   color: var(--on-navy);
-  padding: 12px 16px;
+  padding: 12px 14px;
   border-radius: var(--r-md);
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: 14px;
   box-shadow: var(--shadow-lift);
   animation: toast-in 320ms var(--ease-out);
   max-width: calc(100vw - 32px);
@@ -824,7 +865,7 @@ input[type='range'] {
   max-width: 560px;
   background: var(--card);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
-  padding: var(--s-5) var(--s-4) calc(var(--safe-b) + var(--s-5));
+  padding: 10px 16px calc(var(--safe-b) + 34px);
   box-shadow: 0 -12px 40px rgba(9, 17, 38, 0.3);
   animation: sheet-in 380ms var(--ease-out);
   max-height: 90dvh;
@@ -832,11 +873,11 @@ input[type='range'] {
 }
 
 .sheet .grabber {
-  width: 36px;
+  width: 40px;
   height: 5px;
   border-radius: 3px;
   background: var(--hairline-2);
-  margin: -10px auto var(--s-4);
+  margin: 0 auto 14px;
 }
 
 @keyframes sheet-in {
@@ -885,10 +926,6 @@ input[type='range'] {
   font-weight: 700;
   line-height: 18px;
   text-align: center;
-}
-
-.list-item.unread {
-  box-shadow: inset 3px 0 0 var(--purple);
 }
 
 /* A sentence with bold names, not a title row. */

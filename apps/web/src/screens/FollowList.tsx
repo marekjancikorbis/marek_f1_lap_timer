@@ -56,7 +56,7 @@ export default function FollowList() {
           {people.map((p) => (
             <div className="list-item" key={p.id}>
               <Link to={`/u/${p.username}`} className="row grow" style={{ gap: 12, textDecoration: 'none' }}>
-                <Avatar name={p.username} hue={p.avatarHue} size={40} uid={p.id} />
+                <Avatar name={p.username} hue={p.avatarHue} size={44} uid={p.id} />
                 <WhoText p={p} />
               </Link>
               <FollowButton userId={p.id} back={followers && username === me.username} />

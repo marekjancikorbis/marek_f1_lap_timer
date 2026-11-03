@@ -161,7 +161,7 @@ export default function RouteDetail() {
   return (
     <main className="screen with-cta">
       <section className="route-hero">
-        <RouteMap route={bigRoute(route)} height={bigMap ? '70dvh' : 270} extra={keepMap} />
+        <RouteMap route={bigRoute(route)} height={bigMap ? '70dvh' : 250} extra={keepMap} />
         <div className="route-hero-top">
           <ScreenHead
             back
@@ -177,16 +177,15 @@ export default function RouteDetail() {
       <section className="route-head">
           <p className="row wrap" style={{ gap: 6 }}>
             {route.official ? (
-              <span className="badge purple">Official</span>
+              <span className="badge ink">Official</span>
             ) : (
-              <Link to={`/u/${route.ownerName}`} className="badge outline route-hero-by">
+              <Link to={`/u/${route.ownerName}`} className="badge route-hero-by">
                 by {route.ownerName}
               </Link>
             )}
-            <span className="badge outline">{formatDistance(route.lengthM)}</span>
-            <span className="badge outline">{route.startType === 'standing' ? 'Standing start' : 'Rolling start'}</span>
-            <span className="badge outline">{route.isLoop ? 'Lap' : 'A to B'}</span>
-            {!route.isPublic && <span className="badge outline">Private</span>}
+            <span className="badge">{route.startType === 'standing' ? 'Standing start' : 'Rolling start'}</span>
+            <span className="badge">{formatDistance(route.lengthM)}</span>
+            {!route.isPublic && <span className="badge">Private</span>}
           </p>
           <h1 className="route-title">{route.name}</h1>
           {route.isPublic && board.length > 0 && (
@@ -225,22 +224,10 @@ export default function RouteDetail() {
                       {post.car && <span className="mute ellipsis small-text">{post.car}</span>}
                     </span>
                   </Link>
+                  {/* Race and Compare are on the lap's own page. */}
                   <Link to={`/lap/${post.id}`} className={`board-time num ${rank === 1 ? 'fastest' : ''}`}>
                     {formatLap(post.totalMs)}
-                    {rank > 1 && <small>+{((post.totalMs - board[0].post.totalMs) / 1000).toFixed(3)}</small>}
                   </Link>
-                  {post.userId !== profile.id && (
-                    <div className="board-actions">
-                      {runs.length > 0 && (
-                        <Link className="btn sm" to={`/compare/${route.id}?a=best&b=post:${post.id}`}>
-                          Compare
-                        </Link>
-                      )}
-                      <Link className="btn sm primary" to={`/drive/${route.id}?ref=post:${post.id}`}>
-                        Race
-                      </Link>
-                    </div>
-                  )}
                 </li>
               ))}
             </ol>

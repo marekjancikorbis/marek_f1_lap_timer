@@ -38,7 +38,7 @@ export function Onboarding() {
         Other drivers find you by it and see it on every lap you post. It can't be changed later; your display name (in Settings) can.
       </p>
       <div className="row" style={{ gap: 14, marginTop: 20 }}>
-        <Avatar name={username || '?'} size={56} />
+        <Avatar name={username || '?'} size={84} />
         <span className="grow" style={{ display: 'flex', flexDirection: 'column' }}>
           <strong style={{ fontSize: 18 }}>{username || 'your_name'}</strong>
           <span className="mute small-text">Your roundel until you add a photo</span>

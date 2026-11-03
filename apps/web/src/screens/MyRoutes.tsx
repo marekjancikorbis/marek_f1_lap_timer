@@ -1,7 +1,7 @@
 import { Globe, Lock, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RouteShape } from '../components/RouteShape';
+import { RouteShape, RouteThumb } from '../components/RouteShape';
 import { Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, useToast } from '../components/ui';
 import { getMyRequest, getRoutes, myRoutes, publicLimit, requestCreatorAccess, routeStats, setRoutePublic, type RouteStats } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
@@ -158,7 +158,7 @@ export default function MyRoutes() {
               {own.map((r) => (
                 <article key={r.id} className="panel route-card">
                   <Link to={`/r/${r.id}`} className="route-card-shape" aria-label={r.name}>
-                    <RouteShape route={r} height={64} ticks={false} />
+                    <RouteThumb route={r} />
                   </Link>
                   <div style={{ minWidth: 0 }}>
                     <Link to={`/r/${r.id}`} className="route-card-name ellipsis">
@@ -166,7 +166,6 @@ export default function MyRoutes() {
                     </Link>
                     <span className="mute small-text">
                       {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : 'point to point'} · {r.startType === 'standing' ? 'standing' : 'rolling'}
-                      {pbs.has(r.id) && ` · PB ${formatLap(pbs.get(r.id))}`}
                     </span>
                     <span className="row wrap" style={{ gap: 6, marginTop: 8 }}>
                       {r.isPublic ? (
@@ -174,7 +173,7 @@ export default function MyRoutes() {
                           <Globe size={12} aria-hidden="true" /> Public
                         </span>
                       ) : (
-                        <span className="badge outline">
+                        <span className="badge">
                           <Lock size={12} aria-hidden="true" /> Private
                         </span>
                       )}

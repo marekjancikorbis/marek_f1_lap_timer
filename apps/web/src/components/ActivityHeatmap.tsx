@@ -1,77 +1,32 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { dayKey } from '../lib/data';
-import { formatDate } from '../lib/format';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKS = 12;
 
-/** GitHub-style grid of laps driven per day: weeks as columns, Monday on top. */
-export function ActivityHeatmap({ days, weeks: WEEKS = 53 }: { days: Record<string, number>; weeks?: number }) {
-  const scroller = useRef<HTMLDivElement>(null);
-  const [sel, setSel] = useState<number | null>(null);
-  // Newest weeks are on the right: start scrolled there.
-  useEffect(() => {
-    const el = scroller.current;
-    if (el) el.scrollLeft = el.scrollWidth;
-  }, []);
-
+/** Driving days over the last 12 weeks: one cell per week, darker the more days driven. */
+export function ActivityHeatmap({ days }: { days: Record<string, number> }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const start = new Date(today);
   start.setDate(today.getDate() - ((today.getDay() + 6) % 7) - (WEEKS - 1) * 7);
-  const cells: { date: Date; n: number; future: boolean }[] = [];
-  for (let i = 0; i < WEEKS * 7; i++) {
-    const date = new Date(start);
-    date.setDate(start.getDate() + i);
-    const future = date > today;
-    // Deletes before the first count could leave a day below zero.
-    cells.push({ date, future, n: future ? 0 : Math.max(0, days[dayKey(date.getTime())] ?? 0) });
-  }
-  const total = cells.reduce((s, c) => s + c.n, 0);
-  const max = Math.max(1, ...cells.map((c) => c.n));
-  const level = (n: number) => (n === 0 ? 0 : Math.min(4, Math.ceil((n / max) * 4)));
-  const months = Array.from({ length: WEEKS }, (_, w) => {
-    const first = cells[w * 7].date;
-    const prev = w ? cells[(w - 1) * 7].date : null;
-    return !prev || prev.getMonth() !== first.getMonth() ? MONTHS[first.getMonth()] : '';
+  const weeks = Array.from({ length: WEEKS }, (_, w) => {
+    let driven = 0;
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + w * 7 + d);
+      // Deletes before the first count could leave a day below zero.
+      if (date <= today && (days[dayKey(date.getTime())] ?? 0) > 0) driven++;
+    }
+    return driven;
   });
-  const pick = (e: MouseEvent<HTMLDivElement>) => {
-    const i = (e.target as HTMLElement).dataset.i;
-    if (i != null) setSel(Number(i));
-  };
-  const picked = sel != null ? cells[sel] : null;
-  const span = WEEKS >= 52 ? 'the last year' : `${Math.round(WEEKS / 4.35)} months`;
+  const total = weeks.reduce((s, n) => s + n, 0);
 
   return (
-    <section className="heat">
-      <div className="heat-head">
-        <h2 className="section-title">Activity</h2>
-        <span className="mute num">
-          {total} {total === 1 ? 'lap' : 'laps'} in {span}
-        </span>
-      </div>
-      <div className="heat-scroll" ref={scroller}>
-        <div className="heat-months" aria-hidden="true">
-          {months.map((m, w) => (
-            <span key={w}>{m}</span>
-          ))}
-        </div>
-        <div className="heat-grid" role="img" aria-label={`${total} laps driven in ${span}`} onClick={pick}>
-          {cells.map((c, i) => (
-            <i key={i} data-i={c.future ? undefined : i} className={c.future ? 'future' : `l${level(c.n)} ${i === sel ? 'sel' : ''}`} title={c.future ? undefined : `${c.n} on ${formatDate(c.date)}`} />
-          ))}
-        </div>
-      </div>
-      <div className="heat-foot">
-        <span className="mute num" aria-live="polite">
-          {picked ? `${picked.n} ${picked.n === 1 ? 'lap' : 'laps'} on ${formatDate(picked.date)}` : 'Tap a day'}
-        </span>
-        <span className="heat-legend" aria-hidden="true">
-          Less <i className="l0" />
-          <i className="l1" />
-          <i className="l2" />
-          <i className="l3" />
-          <i className="l4" /> More
-        </span>
+    <section className="panel heat">
+      <span className="cap">Driving days · last 12 weeks</span>
+      <div className="heat-weeks" role="img" aria-label={`${total} driving ${total === 1 ? 'day' : 'days'} in the last 12 weeks`}>
+        {weeks.map((n, i) => (
+          <i key={i} className={`l${Math.min(2, n)}`} />
+        ))}
       </div>
     </section>
   );

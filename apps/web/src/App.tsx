@@ -135,8 +135,10 @@ function Shell() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+  // Detail screens take the whole height, as in the mockups; the five tab screens keep the bar.
+  const deep = /^\/(r\/|routes\/new|drive\/|run\/|lap\/|compare\/|settings|admin)/.test(pathname);
   return (
-    <div className="app">
+    <div className={`app ${deep ? 'no-tabs' : ''}`}>
       <Suspense fallback={<Loading />}>
         <Outlet />
       </Suspense>
