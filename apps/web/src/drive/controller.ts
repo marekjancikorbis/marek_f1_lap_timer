@@ -75,6 +75,8 @@ export interface DriveState {
   startRel: { a: number; c: number } | null;
   nextSector: number;
   jumpBannerUntil: number;
+  /** How far the car moved before GO, for the jump start banner. */
+  jumpDistanceM: number | null;
   gpsOk: boolean;
   gpsError: string | null;
   invalidReason: string | null;
@@ -82,7 +84,7 @@ export interface DriveState {
   finished: boolean;
   laps: LapResult[];
   /** Stopped mid-lap after the signal dropped out: the lap so far, offered to keep (savePartial). */
-  partial: { distanceM: number } | null;
+  partial: { distanceM: number; lastSplitMs: number | null } | null;
 }
 
 /** Compact trace for storage: t, s, v, lat, lon per point. */
@@ -178,6 +180,7 @@ export class DriveController {
       startRel: null,
       nextSector: 0,
       jumpBannerUntil: 0,
+      jumpDistanceM: null,
       gpsOk: false,
       gpsError: null,
       invalidReason: null,
@@ -491,7 +494,7 @@ export class DriveController {
     const lap = this.timer.partialLap();
     if (lap && (lap.gpsGapMs > GPS_LOST_MS || !this.state.gpsOk)) {
       this.partial = lap;
-      this.emit({ partial: { distanceM: lastS(lap) } });
+      this.emit({ partial: { distanceM: lastS(lap), lastSplitMs: lap.splitTimesMs.length ? lap.splitTimesMs[lap.splitTimesMs.length - 1] : null } });
     }
     this.handle(this.timer.stop());
     this.emit({ finished: true });
@@ -518,7 +521,7 @@ export class DriveController {
         case 'jumpStart':
           this.sounds.alarm();
           navigator.vibrate?.([200, 100, 200]);
-          this.emit({ penaltyMs: ev.penaltyMs, jumpBannerUntil: Date.now() + 4000 });
+          this.emit({ penaltyMs: ev.penaltyMs, jumpBannerUntil: Date.now() + 4000, jumpDistanceM: ev.distanceM });
           break;
         case 'sector': {
           const info: SectorInfo = { k: ev.k, count: ev.count, splitMs: ev.splitMs, sectorMs: ev.sectorMs, deltaMs: ev.deltaMs, colour: ev.colour };

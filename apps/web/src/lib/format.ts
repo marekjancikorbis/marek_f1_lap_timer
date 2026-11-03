@@ -50,7 +50,8 @@ export function timeAgo(date: Date | null | undefined, now = new Date()): string
 export function formatDate(date: Date | number | null | undefined): string {
   if (date == null) return '';
   const d = typeof date === 'number' ? new Date(date) : date;
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  // The year only when it isn't this one: 2 Nov, 26 Oct 2025.
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
 }
 
 /** Who a route is credited to: Official for admin and owner routes, else the creator's username. */

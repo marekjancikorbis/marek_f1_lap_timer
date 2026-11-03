@@ -1,11 +1,11 @@
-import { Map as MapIcon } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeCourse } from '../components/HomeCourse';
-import { RouteShape } from '../components/RouteShape';
+import { RouteThumb } from '../components/RouteShape';
 import { Empty, errorMessage, Loading, useToast } from '../components/ui';
 import { getRoutes, myRoutes, routeStats, type RouteStats } from '../lib/data';
-import { formatDate, formatDistance, formatLap } from '../lib/format';
+import { formatDistance } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { Route } from '../lib/types';
 
@@ -49,16 +49,17 @@ export default function DriveLauncher() {
     const stats = recent.get(r.id);
     return (
       <Link key={r.id} to={`/drive/${r.id}`} className="list-item">
-        <span className="logbook-shape" aria-hidden="true">
-          <RouteShape route={r} height={44} ticks={false} />
+        <span className="launch-shape" aria-hidden="true">
+          <RouteThumb route={r} />
         </span>
         <span className="grow">
           <strong className="ellipsis">{r.name}</strong>
           <span className="mute ellipsis small-text">
-            {stats ? `${formatDate(stats.last)} · ${stats.laps} ${stats.laps === 1 ? 'lap' : 'laps'}` : `${r.isPublic ? 'Public' : 'Private'} · ${formatDistance(r.lengthM)} · not driven yet`}
+            {r.isPublic ? 'Public' : 'Private'} ·{' '}
+            {stats ? `last driven ${new Date(stats.last).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : `${formatDistance(r.lengthM)} · not driven yet`}
           </span>
         </span>
-        <strong className="num logbook-time">{stats?.pb != null ? formatLap(stats.pb) : '—'}</strong>
+        <ChevronRight size={22} aria-hidden="true" />
       </Link>
     );
   };
@@ -80,21 +81,20 @@ export default function DriveLauncher() {
         </>
       )}
 
-      <h2 className="section-title row between">
-        Your routes
-        <Link to="/routes/new" className="section-link">
-          New route
-        </Link>
-      </h2>
-      {builtRoutes.length > 0 ? <div className="list">{builtRoutes.map(row)}</div> : <p className="mute">Routes you build show up here.</p>}
+      {builtRoutes.length > 0 && (
+        <>
+          <h2 className="section-title">Your routes</h2>
+          <div className="list">{builtRoutes.map(row)}</div>
+        </>
+      )}
 
       {!home && recentRoutes.length === 0 && builtRoutes.length === 0 ? (
         <Empty title="No routes yet" action={<Link to="/explore" className="btn primary lg">Find a route on the map</Link>}>
           Pick a public route on the map and drive it. After that it's one tap from here.
         </Empty>
       ) : (
-        <Link to="/explore" className="btn block" style={{ marginTop: 16 }}>
-          <MapIcon size={18} aria-hidden="true" /> Find a route on the map
+        <Link to="/explore" className="btn block" style={{ marginTop: 14 }}>
+          <Search size={18} aria-hidden="true" /> Find a route on the map
         </Link>
       )}
     </main>

@@ -9,6 +9,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
 } from 'firebase/auth';
+import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { auth } from '../lib/firebase';
 import { errorMessage } from '../components/ui';
@@ -20,6 +21,7 @@ export function AuthScreen() {
   const [mode, setMode] = useState<'in' | 'up'>('in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -112,15 +114,20 @@ export function AuthScreen() {
         </label>
         <label className="field">
           <span>Password</span>
-          <input
-            className="input"
-            type="password"
-            autoComplete={mode === 'in' ? 'current-password' : 'new-password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={6}
-            required
-          />
+          <span className="input-wrap">
+            <input
+              className="input"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete={mode === 'in' ? 'current-password' : 'new-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+            <button type="button" className="icon-btn input-eye" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword((v) => !v)}>
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </span>
           {mode === 'up' && <small>At least 6 characters.</small>}
         </label>
         {error && (
@@ -129,10 +136,10 @@ export function AuthScreen() {
           </p>
         )}
         {info && <p className="notice info">{info}</p>}
-        <button className="btn primary lg block" disabled={busy || !email || password.length < 6}>
+        <button className="btn primary block" disabled={busy || !email || password.length < 6}>
           {busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : 'Create account'}
         </button>
-        <button type="button" className="btn lg block" onClick={google} disabled={busy}>
+        <button type="button" className="btn block" onClick={google} disabled={busy}>
           <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
             <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
             <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
@@ -142,7 +149,7 @@ export function AuthScreen() {
           Continue with Google
         </button>
         {mode === 'in' && (
-          <button type="button" className="btn ghost sm" onClick={reset} style={{ alignSelf: 'center' }}>
+          <button type="button" className="text-link" onClick={reset}>
             Forgot password
           </button>
         )}

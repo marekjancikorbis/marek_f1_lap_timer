@@ -43,22 +43,72 @@
   max-width: 440px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: calc(var(--safe-t) + 24px) 20px calc(var(--safe-b) + 32px);
+  padding: 0 16px calc(var(--safe-b) + 32px);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 22px;
 }
 
+/* The brand panel takes the top half; the form sits low enough for a thumb. */
 .hero {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  height: calc(var(--safe-t) + 376px);
+  margin: 0 -16px;
+}
+
+.hero-body {
+  position: absolute;
+  left: 24px;
+  right: 150px;
+  bottom: 34px;
+}
+
+.hero .livery {
+  width: 160px;
+  right: -80px;
+}
+
+.hero .wordmark {
+  font-size: 44px;
+  line-height: 0.95;
+}
+
+.hero .hero-sub {
+  margin-top: 14px;
+  font-size: 15px;
+  color: var(--mute);
+}
+
+.auth-form {
   gap: 14px;
 }
 
-.hero-track {
-  width: 100%;
-  height: auto;
-  margin: 0 -8px;
+.input-wrap {
+  position: relative;
+  display: block;
+}
+
+.input-wrap .input {
+  padding-right: 48px;
+}
+
+.input-eye {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  color: var(--mute);
+}
+
+.text-link {
+  align-self: center;
+  border: 0;
+  background: none;
+  font: 700 14px var(--font-ui);
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 .hero-purple {
@@ -71,15 +121,17 @@
   }
 }
 
-.hero-sub {
-  color: var(--ink-2);
-  font-size: 1.0625rem;
-  max-width: 32ch;
-}
 
 .onboarding {
   max-width: 440px;
   margin: 0 auto;
+  padding-top: calc(var(--safe-t) + 40px);
+}
+
+.onboarding h1 {
+  font: 800 34px/1.1 var(--font-ui);
+  letter-spacing: -0.01em;
+  text-transform: none;
 }
 
 /* ================================================================ limit screen */
@@ -2245,47 +2297,58 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px 18px;
+  margin-top: 16px;
+  padding: 16px;
   border-radius: var(--r-lg);
   text-decoration: none;
+}
+
+.home-course .livery.thin {
+  width: 72px;
 }
 
 .home-course .grow {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.home-course-k {
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  max-width: 260px;
 }
 
 .home-course-name {
-  font: 700 1.25rem/1.15 var(--font-ui);
-  padding-right: 90px;
+  margin-top: 4px;
+  font: 700 19px/1.2 var(--font-ui);
 }
 
 .home-course-pb {
-  font-size: 0.875rem;
-  color: var(--ink-2);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .home-course-pb .num {
-  display: block;
-  margin: 6px 0 2px;
-  font-size: 3.5rem;
+  font-size: 44px;
   line-height: 1;
-  color: var(--ink);
+}
+
+.home-course-pb .mute {
+  font-size: 13px;
 }
 
 .home-course-go {
   align-self: flex-start;
-  margin-top: 12px;
+  margin-top: 14px;
+}
+
+.launch-shape {
+  width: 44px;
+  height: 36px;
+  flex: none;
+}
+
+.launch-shape svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* ================================================================ activity heatmap */
@@ -2392,6 +2455,7 @@
 
 .cap {
   font-size: 0.75rem;
+  font-style: normal;
   font-weight: 800;
   font-stretch: 112%;
   letter-spacing: 0.1em;
@@ -2645,7 +2709,13 @@
 }
 
 .ref-row.on {
-  background: var(--blue-soft);
+  background: #eef1f7;
+}
+
+.ref-more {
+  cursor: pointer;
+  color: inherit;
+  min-height: 48px;
 }
 
 .ref-row .grow {
@@ -2656,7 +2726,7 @@
 .ref-icon {
   display: grid;
   place-items: center;
-  width: 32px;
+  min-width: 22px;
   flex: none;
   color: var(--ink);
 }
@@ -2937,8 +3007,17 @@ button.list-item {
 }
 
 .settings-col .hue-dot {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
+  box-shadow: inset 0 0 0 2px var(--card), 0 0 0 1px var(--hairline-2);
+}
+
+.settings-col .hue-dot[aria-checked='true'] {
+  box-shadow: inset 0 0 0 2px var(--card), 0 0 0 2px var(--navy);
+}
+
+.list-item > svg.lucide-pencil {
+  color: var(--hairline-2);
 }
 
 /* Notifications: moderator news on a navy shield roundel. */
@@ -3203,21 +3282,79 @@ button.list-item {
   margin-bottom: 20px;
 }
 
+.admin-requests {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-requests > .section-title {
+  margin-bottom: 0;
+}
+
+.admin-card {
+  padding: 14px;
+}
+
+.admin-card .btns {
+  margin-top: 12px;
+}
+
+.admin-card .btns .btn {
+  flex: 1;
+}
+
+.admin-note,
+.admin-no-note {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
 .admin-note {
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--raised);
-  font-size: 0.875rem;
+  background: #f4f6f9;
+}
+
+.note-box {
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--raised-2);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.limit {
+  justify-content: flex-start;
+  padding: calc(var(--safe-t) + 180px) 16px 40px;
+  max-width: 560px;
+}
+
+.limit > .livery {
+  width: 170px;
+  right: -120px;
 }
 
 .limit-body {
   position: relative;
-  max-width: 280px;
+  max-width: 270px;
 }
 
 .limit-day {
-  font-size: 5.5rem;
+  font-size: 88px;
   line-height: 1;
+}
+
+.limit-body h1 {
+  font: 800 30px/1.1 var(--font-ui);
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.limit-body p {
+  font-size: 16px;
+  color: var(--mute);
 }
 
 .limit-body .cap {
@@ -3484,4 +3621,260 @@ button.list-item {
 .lap-map-full .mapboxgl-ctrl-bottom-left,
 .lap-map-full .mapboxgl-ctrl-bottom-right {
   bottom: calc(var(--safe-b) + 196px);
+}
+
+/* ================================================================ drive, as in the mockups */
+
+.drive {
+  padding-bottom: max(40px, calc(var(--safe-b) + 16px));
+}
+
+.drive-top .badge.gps {
+  height: 22px;
+  background: var(--navy-2);
+  color: var(--ink-2);
+}
+
+.drive-top .badge.gps.fair {
+  color: var(--yellow);
+}
+
+.drive-top .badge.gps.bad {
+  color: #ff8a8f;
+}
+
+.drive-context {
+  font-size: 13px;
+}
+
+.drive-speed-top {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+
+.drive-speed-top .num {
+  font-size: 20px;
+  color: var(--ink);
+}
+
+/* Before the start: the label and one big number, high on the screen. */
+.drive-approach {
+  justify-content: flex-start;
+  gap: 0;
+  padding-top: 70px;
+}
+
+.drive-approach .drive-to-start {
+  margin-top: 12px;
+}
+
+.drive-to-start strong {
+  font-size: 112px;
+}
+
+.drive-to-start strong small {
+  font-size: 40px;
+}
+
+.drive-approach .drive-sub {
+  margin-top: 16px;
+  max-width: 280px;
+  font-size: 16px;
+  color: var(--mute);
+}
+
+.drive > .drive-stripe {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 150px;
+  width: auto;
+  margin: 0;
+}
+
+/* Lights: five round lamps in a row, red with a ring when lit. */
+.countdown {
+  justify-content: flex-start;
+  gap: 30px;
+  padding-top: 120px;
+}
+
+.lights {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: auto;
+  padding: 0;
+  background: none;
+}
+
+.lights span {
+  flex: 0 1 52px;
+  min-width: 0;
+  width: 52px;
+}
+
+.lights span.on {
+  background: var(--red);
+  box-shadow: 0 0 0 3px #ff5a61;
+}
+
+.countdown-num {
+  font-size: 112px;
+  line-height: 1;
+}
+
+.countdown .drive-sub {
+  max-width: 260px;
+  font-size: 16px;
+  text-align: center;
+  color: var(--mute);
+}
+
+/* HUD: elapsed, the gap as the biggest thing, then the lap's stripe in three tall bands. */
+.hud {
+  justify-content: flex-start;
+  gap: 0;
+  padding-top: 26px;
+}
+
+.hud-time {
+  font-size: 44px;
+  line-height: 1;
+  color: var(--mute);
+}
+
+.hud-delta {
+  margin-top: 6px;
+  font-size: 136px;
+  line-height: 1;
+}
+
+.hud-delta.ahead {
+  color: #4fe08a;
+}
+
+.hud-delta small {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.hud-grid {
+  height: 180px;
+  padding: 28px 44px 0;
+  gap: 10px;
+}
+
+.hud-cell {
+  min-height: 0;
+  padding: 0 6px;
+  background: var(--navy-2);
+  color: var(--mute);
+}
+
+.hud-cell.current {
+  color: var(--ink);
+}
+
+.hud-cell span {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+.hud-cell strong {
+  font-size: 30px;
+}
+
+.hud-minis {
+  gap: 3px;
+  margin-top: 18px;
+}
+
+.hud-minis > span {
+  gap: 3px;
+}
+
+/* Hold buttons read like the mockups' outline buttons. */
+.hold-stop {
+  min-height: 48px;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+}
+
+/* Partial run: the time when the signal went, the sectors it got through, then the note. */
+.drive-partial {
+  justify-content: flex-start;
+  gap: 0;
+  padding-top: 40px;
+}
+
+.drive-partial .drive-partial-dist {
+  margin-top: 10px;
+  font-size: 96px;
+}
+
+.drive-partial .drive-sub {
+  margin-top: 6px;
+  font-size: 15px;
+  color: var(--mute);
+}
+
+.partial-bands {
+  width: 100%;
+  height: 120px;
+  padding: 30px 20px 0;
+}
+
+.partial-bands .hud-cell strong {
+  font-size: 20px;
+}
+
+.hud-cell.unreached {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--navy-3);
+}
+
+.hud-cell em {
+  font-size: 12px;
+  font-style: normal;
+}
+
+.drive-partial .drive-note {
+  max-width: none;
+  margin-top: 34px;
+}
+
+/* Run summary: How it compares. */
+.compare-delta {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.compare-delta.faster {
+  color: var(--green-ink);
+}
+
+.compare-delta.slower {
+  color: var(--yellow-ink);
+}
+
+.compare-place {
+  font-size: 17px;
+}
+
+/* Delta only: route and GPS as plain ink along the top, as in the mockup. */
+.drive.delta-mode .drive-top .badge.gps {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: 700 15px var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.drive.delta-mode .drive-route {
+  font-size: 15px;
+  opacity: 1;
 }

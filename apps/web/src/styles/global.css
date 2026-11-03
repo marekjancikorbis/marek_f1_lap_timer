@@ -160,7 +160,6 @@ h2,
 h3 {
   margin: 0;
   font-weight: 600;
-  text-wrap: balance;
 }
 
 h1 {
@@ -318,7 +317,8 @@ textarea {
   overflow: hidden;
 }
 
-.list > * + * {
+/* :not() lifts this above .list-item's border reset. */
+.list > :not(:first-child) {
   border-top: 1px solid var(--hairline);
 }
 

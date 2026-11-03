@@ -8,7 +8,7 @@ import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from
 import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 import { coloursFor, notCounted, pbsBefore, recordsExcluding, resolveLap, runToLap, sameSectors, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
-import { Share2, X } from 'lucide-react';
+import { ChevronRight, Clock, Flag, Share2, User, X } from 'lucide-react';
 import { shareLap } from '../lib/shareImage';
 import type { Post, Route, Run } from '../lib/types';
 
@@ -206,12 +206,14 @@ export default function RunSummary() {
         {stage && (
           <div className="list" style={{ marginTop: 10 }}>
             <Link to={`/r/${run.routeId}/history`} className="list-item">
+              <Clock size={22} aria-hidden="true" />
               <span className="grow">
                 <strong>All your times on this stage</strong>
                 <span className="mute small-text">
                   {runs.length} {runs.length === 1 ? 'run' : 'runs'} · newest first or fastest
                 </span>
               </span>
+              <ChevronRight size={22} aria-hidden="true" />
             </Link>
           </div>
         )}
@@ -338,30 +340,35 @@ function StageCompare({ run, prev, userId, posts }: { run: Run; prev: Run | null
       <div className="list">
         {prev && (
           <div className="list-item">
+            <User size={22} aria-hidden="true" />
             <span className="grow">
               <strong>Your best before</strong>
               <span className="mute small-text">
                 {formatLap(prev.totalMs)} · {formatDate(prev.startedAt)}
               </span>
             </span>
-            <strong className={`num ${run.totalMs <= prev.totalMs ? 'faster' : 'slower'}`}>{formatDelta(run.totalMs - prev.totalMs, 3)}</strong>
+            <strong className={`num compare-delta ${run.totalMs <= prev.totalMs ? 'faster' : 'slower'}`}>{formatDelta(run.totalMs - prev.totalMs, 2)}</strong>
           </div>
         )}
         {record && (
           <div className="list-item">
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="fastest" aria-hidden="true">
+              <path d="M9 20V8h6v12M3 20v-7h6M15 20v-9h6v9M2 20h20" />
+            </svg>
             <span className="grow">
               <strong>Route record</strong>
               <span className="mute small-text">
                 {record.username} · {formatLap(record.totalMs)}
               </span>
             </span>
-            <strong className={`num ${run.totalMs <= record.totalMs ? 'fastest' : 'slower'}`}>{formatDelta(run.totalMs - record.totalMs, 3)}</strong>
+            <strong className={`num compare-delta ${run.totalMs <= record.totalMs ? 'fastest' : 'slower'}`}>{formatDelta(run.totalMs - record.totalMs, 2)}</strong>
           </div>
         )}
         {record && !run.replay && (
           <div className="list-item">
+            <Flag size={22} aria-hidden="true" />
             <strong className="grow">{run.posted ? 'Leaderboard' : 'Leaderboard if posted'}</strong>
-            <strong>
+            <strong className="compare-place">
               P{place} of {bestBy.size + 1}
             </strong>
           </div>

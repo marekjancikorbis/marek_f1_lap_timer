@@ -92,6 +92,10 @@ await env.withSecurityRulesDisabled(async (ctx) => {
   n('follow_petra', { type: 'follow', fromId: 'petra', fromName: 'petra_r' }, 3 * H);
   n('follow_jan', { type: 'follow', fromId: 'jan', fromName: 'jan.k' }, 40 * H);
   b.set(doc(db, 'notifications', me), { seenAt: Timestamp.fromMillis(now - 20 * H) });
+  // The Admin screen: perf owns the app, with two creator requests waiting.
+  b.set(doc(db, 'roles', me), { role: 'owner', grantedBy: me, grantedAt: serverTimestamp(), auditId: null });
+  b.set(doc(db, 'creatorRequests', 'jan'), { username: 'jan.k', note: "I run our club's rally sprint stages at Most.", status: 'pending', createdAt: Timestamp.fromMillis(now - 48 * H), decidedBy: null, decidedAt: null });
+  b.set(doc(db, 'creatorRequests', 'ondra'), { username: 'ondra_m', note: '', status: 'pending', createdAt: Timestamp.fromMillis(now - 3 * H), decidedBy: null, decidedAt: null });
   await b.commit();
 });
 console.log('seeded the Livery sample data for perf@test.dev');

@@ -77,18 +77,37 @@ export default function Drive() {
   return (
     <div className={`drive ${turn && !landscape ? `turn-${turn}` : ''} ${mode === 'delta' && running ? `delta-mode ${colourClass}` : ''}`}>
       <header className="drive-top">
-        <span className="drive-route ellipsis">{cfg.route.name}</span>
-        <span className="row" style={{ gap: 10 }}>
-          {cfg.replay && <span className="badge yellow">Simulated</span>}
+        {running && mode === 'delta' ? (
+          // Delta only: the route on the left, GPS on the right, both in the flag's ink.
+          <span className="drive-route ellipsis">{cfg.route.name}</span>
+        ) : (
+          <span className="row" style={{ gap: 6 }}>
+            <GpsDot ok={s.gpsOk} accuracy={s.accuracy} />
+            {cfg.replay && <span className="badge yellow">Simulated</span>}
+          </span>
+        )}
+        {running && mode === 'delta' ? (
           <GpsDot ok={s.gpsOk} accuracy={s.accuracy} />
-        </span>
+        ) : running && mode === 'hud' ? (
+          <span className="drive-speed-top">
+            <span className="num">{s.speed != null ? Math.round(s.speed * 3.6) : '–'}</span> km/h
+          </span>
+        ) : (
+          <span className="mute drive-context">
+            {s.phase === 'ready' || s.phase === 'countdown'
+              ? `Armed · ${standing ? 'standing' : 'rolling'} start`
+              : cfg.reference
+                ? `vs ${cfg.reference.label}`
+                : 'No reference'}
+          </span>
+        )}
       </header>
 
       {s.gpsError && !s.gpsOk && <p className="drive-gps-error">{s.gpsError}</p>}
 
       {/* ---------------- before the start ---------------- */}
       {(s.phase === 'waiting' || s.phase === 'armed') && !s.invalidReason && (
-        <section className="drive-center">
+        <section className="drive-center drive-approach">
           {standing ? (
             <>
               <h1 className="cap drive-cap">Stop at the start line</h1>
@@ -107,12 +126,14 @@ export default function Drive() {
               <p className="drive-sub">Approach the start line in the route's direction. Timing arms within 50 m.</p>
             </>
           )}
-          <div className="drive-stripe" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </div>
         </section>
+      )}
+      {(s.phase === 'waiting' || s.phase === 'armed') && !s.invalidReason && (
+        <div className="drive-stripe" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
       )}
 
       {s.phase === 'ready' && (
@@ -136,18 +157,34 @@ export default function Drive() {
           <Flag size={30} aria-hidden="true" />
           <span>
             <strong>Jump start · +{formatSeconds(s.penaltyMs, 0)}</strong>
-            <span>Moved before GO. Timed from GO, penalty included.</span>
+            <span>
+              Moved {s.jumpDistanceM != null ? `${Math.round(s.jumpDistanceM)} m ` : ''}before GO. Timed from GO.
+            </span>
           </span>
         </div>
       )}
 
       {s.partial && (
-        <section className="drive-center">
+        <section className="drive-center drive-partial">
           <h1 className="cap drive-cap">GPS lost before the finish · {cfg.route.name}</h1>
-          <div className="drive-partial-dist num">{formatDistance(s.partial.distanceM)}</div>
+          <div className="drive-partial-dist num">{s.partial.lastSplitMs != null ? formatLap(s.partial.lastSplitMs) : formatDistance(s.partial.distanceM)}</div>
+          <p className="drive-sub">
+            {s.bigThisLap.length} of {ctl.bigEnds.length} sectors timed
+          </p>
+          <div className="hud-grid partial-bands">
+            {ctl.bigEnds.map((_, b) => {
+              const big = s.bigThisLap.find((x) => x.k === b);
+              return (
+                <div key={b} className={`hud-cell ${big ? `flag-${big.colour}` : 'unreached'}`}>
+                  <span>S{b + 1}</span>
+                  {big ? <strong className="num">{big.deltaMs != null ? formatDelta(big.deltaMs) : formatLap(big.sectorMs)}</strong> : <em>not reached</em>}
+                </div>
+              );
+            })}
+          </div>
           <p className="drive-note">
-            The GPS signal dropped out before the finish. Keep the distance you drove to view it and compare it. A partial {cfg.route.isLoop ? 'lap' : 'run'}{' '}
-            can't be posted or set a best.
+            The GPS signal dropped out {formatDistance(Math.max(0, cfg.route.lengthM - s.partial.distanceM))} from the finish. Keep the{' '}
+            {formatDistance(s.partial.distanceM)} you drove to view it and compare it. A partial {cfg.route.isLoop ? 'lap' : 'run'} can't be posted or set a best.
           </p>
           {s.laps.length > 0 && <p className="drive-sub">Your {s.laps.length} completed {s.laps.length === 1 ? 'lap is' : 'laps are'} saved.</p>}
         </section>
@@ -183,10 +220,10 @@ export default function Drive() {
           <div className="stack">
             <p className="drive-ask">{cfg.route.isLoop ? 'Keep this lap?' : 'Keep this run?'}</p>
             <div className="row">
-              <button className="btn lg grow" onClick={() => leave(ctl.state.savedRunIds)}>
+              <button className="btn grow" onClick={() => leave(ctl.state.savedRunIds)}>
                 Discard
               </button>
-              <button className="btn primary lg" style={{ flex: 2 }} onClick={savePartial}>
+              <button className="btn primary" style={{ flex: 2 }} onClick={savePartial}>
                 Keep
               </button>
             </div>
@@ -204,17 +241,10 @@ export default function Drive() {
           </div>
         ) : running || s.phase === 'countdown' ? (
           <>
-            {running && (
-              <p className="rotate-hint">
-                <Smartphone size={16} aria-hidden="true" style={{ transform: 'rotate(90deg)' }} /> Turn sideways for delta only
-              </p>
-            )}
             <HoldToStop onStop={stop} label={cfg.route.isLoop && s.laps.length ? 'Hold to finish session' : 'Hold to stop'} />
           </>
         ) : (
-          <button className="btn lg block drive-exit" onClick={stop}>
-            <X size={20} aria-hidden="true" /> Exit
-          </button>
+          <HoldToStop onStop={stop} label="Hold to exit" />
         )}
       </footer>
     </div>
@@ -234,8 +264,15 @@ function ToStart({ rel, zoneM }: { rel: { a: number; c: number } | null; zoneM: 
         : 'to the start line';
   return (
     <div className={`drive-to-start ${atLine ? 'at-line' : ''}`}>
-      <strong className="num">{atLine ? 'At the line' : formatDistance(Math.hypot(rel.a, rel.c))}</strong>
-      {!atLine && <span>{hint}</span>}
+      {atLine ? (
+        <strong className="num">At the line</strong>
+      ) : (
+        <strong className="num">
+          {formatDistance(Math.hypot(rel.a, rel.c)).split(' ')[0]}
+          <small> {formatDistance(Math.hypot(rel.a, rel.c)).split(' ')[1]}</small>
+        </strong>
+      )}
+      {!atLine && hint !== 'to the start line' && <span>{hint}</span>}
     </div>
   );
 }
@@ -244,9 +281,11 @@ function GpsDot({ ok, accuracy }: { ok: boolean; accuracy: number | null }) {
   const good = ok && accuracy != null && accuracy <= 10;
   const fair = ok && accuracy != null && accuracy <= 20;
   return (
-    <span className="gps" aria-label={ok ? `GPS accuracy ${Math.round(accuracy ?? 0)} metres` : 'No GPS'}>
-      <span className={`gps-dot ${good ? 'good' : fair ? 'fair' : 'bad'}`} />
-      {ok && accuracy != null ? `±${Math.round(accuracy)} m` : 'GPS'}
+    <span className={`badge gps ${good ? 'good' : fair ? 'fair' : 'bad'}`} aria-label={ok ? `GPS accuracy ${Math.round(accuracy ?? 0)} metres` : 'No GPS'}>
+      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path d="M4 20h2v-3H4zM9 20h2v-6H9zM14 20h2v-9h-2zM19 20h2V8h-2z" />
+      </svg>
+      {ok && accuracy != null ? `GPS ±${Math.round(accuracy)} m` : 'No GPS'}
     </span>
   );
 }
@@ -281,7 +320,10 @@ function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; refer
       </div>
       <div className={`hud-delta num ${last?.deltaMs == null ? '' : last.deltaMs <= 0 ? 'ahead' : 'behind'}`}>
         {last?.deltaMs != null ? formatDelta(last.deltaMs) : reference ? '±0.00' : '—'}
-        <small>{reference ? `vs ${reference}` : 'no reference'}</small>
+        <small>
+          {reference ? `vs ${reference}` : 'no reference'}
+          {last?.deltaMs != null && (last.deltaMs <= 0 ? ' · faster' : ' · slower')}
+        </small>
       </div>
       <div className="hud-grid">
         {ends.map((_, b) => {
@@ -289,8 +331,16 @@ function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; refer
           return (
             <div key={b} className={`hud-cell ${big ? `flag-${big.colour}` : b === current ? 'current' : ''}`}>
               <span>S{b + 1}</span>
-              <strong className="num">{big ? formatLap(big.sectorMs) : '—'}</strong>
-              {big && <em className="num">{big.deltaMs != null ? formatDelta(big.deltaMs) : STRIP_LABEL[big.colour]}</em>}
+              <strong className="num">
+                {big
+                  ? big.deltaMs != null
+                    ? formatDelta(big.deltaMs)
+                    : formatLap(big.sectorMs)
+                  : b === current
+                    ? `S${b + 1}.${s.nextSector - (b === 0 ? 0 : ends[b - 1] + 1) + 1}`
+                    : '—'}
+              </strong>
+              {big && <span className="visually-hidden">{STRIP_LABEL[big.colour]}</span>}
             </div>
           );
         })}

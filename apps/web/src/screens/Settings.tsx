@@ -11,7 +11,7 @@ import { readUsage, type UsageState } from '../lib/usage';
 import { USAGE_CAP } from '../lib/config';
 import { deleteLog, downloadLog, listLogs } from '../drive/gpslogs';
 
-const HUES = [210, 265, 145, 30, 0, 330, 185, 55];
+const HUES = [30, 185, 265, 330, 145, 210];
 
 export default function Settings() {
   const { profile, role, user } = useMe();
@@ -169,7 +169,7 @@ export default function Settings() {
                 aria-checked={profile.avatarHue === h}
                 aria-label={`Hue ${h}`}
                 className="hue-dot"
-                style={{ background: `oklch(42% 0.09 ${h})` }}
+                style={{ background: `oklch(50% 0.15 ${h})` }}
                 onClick={() => setHue(h)}
               />
             ))}
@@ -199,7 +199,7 @@ export default function Settings() {
             <strong>GPS logs</strong>
             <span className="mute small-text">Your last 5 real drives, kept on this phone</span>
           </span>
-          <span className="badge outline">{logs.length}</span>
+          <span className="badge">{logs.length}</span>
           <ChevronRight size={18} aria-hidden="true" style={{ transform: showLogs ? 'rotate(90deg)' : undefined }} />
         </button>
         {showLogs && (

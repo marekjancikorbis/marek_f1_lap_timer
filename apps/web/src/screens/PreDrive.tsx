@@ -1,11 +1,11 @@
 import { serverTimestamp } from 'firebase/firestore';
-import { BarChart3, ChevronLeft, ChevronRight, Clock, Flag, Shield, User as UserIcon, Volume2, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Clock, Flag, Shield, User as UserIcon, Volume2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Switch, useToast } from '../components/ui';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getPost, getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom, updateMyProfile } from '../lib/data';
-import { formatDate, formatDistance, formatLap } from '../lib/format';
+import { formatLap } from '../lib/format';
 import { bigColoursFor, bigRecords, postBigColours, racedSplits, resolveLap, toBig, type ResolvedLap } from '../lib/laps';
 import { bestSectors } from '@laptimer/timing';
 import { useMe } from '../lib/session';
@@ -25,6 +25,8 @@ interface Option {
   /** P1 or the route record: shown in purple. */
   fastest?: boolean;
 }
+
+const shortDate = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 export default function PreDrive() {
   const { routeId = '' } = useParams();
@@ -47,6 +49,7 @@ export default function PreDrive() {
   const [countdown, setCountdown] = useState(profile.countdownS ?? DEFAULT_COUNTDOWN_S);
   const [terms, setTerms] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [moreLaps, setMoreLaps] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -81,7 +84,7 @@ export default function PreDrive() {
       .map((r, i) => ({
         ref: `run:${r.id}`,
         title: i === 0 ? 'Your best' : 'Your lap',
-        sub: `${formatDate(r.startedAt)}${r.replay ? ' · simulated' : ''}`,
+        sub: `${shortDate(r.startedAt)}${r.replay ? ' · simulated' : ''}`,
         totalMs: r.totalMs,
         splits: r.splitTimesMs,
         colours: route ? bigColoursFor(r.splitTimesMs, route, runs.filter((x) => x.startedAt < r.startedAt), bigRecs, racedSplits(r, runs)) : [],
@@ -93,7 +96,7 @@ export default function PreDrive() {
       .map(({ rank, post }) => ({
         ref: `post:${post.id}`,
         title: post.username,
-        sub: [`P${rank}`, formatDate(post.startedAt), post.car].filter(Boolean).join(' · '),
+        sub: [`P${rank}`, shortDate(post.startedAt), post.car].filter(Boolean).join(' · '),
         totalMs: post.totalMs,
         splits: post.splitTimesMs,
         colours: postBigColours(post, route),
@@ -104,7 +107,7 @@ export default function PreDrive() {
       theirs.unshift({
         ref: `post:${extraPost.id}`,
         title: extraPost.username,
-        sub: [formatDate(extraPost.startedAt), extraPost.car].filter(Boolean).join(' · '),
+        sub: [shortDate(extraPost.startedAt), extraPost.car].filter(Boolean).join(' · '),
         totalMs: extraPost.totalMs,
         splits: extraPost.splitTimesMs,
         colours: postBigColours(extraPost, route),
@@ -170,10 +173,14 @@ export default function PreDrive() {
     );
 
   const icon = (o: Option) =>
-    o.who ? (
+    o.ref.startsWith('run:') ? (
+      <UserIcon size={22} aria-hidden="true" />
+    ) : o.who ? (
       <Avatar name={o.who.name} hue={o.who.hue} size={32} />
     ) : o.ref === 'record' ? (
-      <BarChart3 size={22} className="fastest" aria-hidden="true" />
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="fastest" aria-hidden="true">
+        <path d="M9 20V8h6v12M3 20v-7h6M15 20v-9h6v9M2 20h20" />
+      </svg>
     ) : o.ref === 'best' ? (
       <Clock size={22} aria-hidden="true" />
     ) : o.ref === '' ? (
@@ -210,17 +217,22 @@ export default function PreDrive() {
   return (
     <main className="screen predrive with-cta">
       <ScreenHead back title={route.name} />
-      <p className="mute predrive-sub">
-        {route.startType === 'standing' ? 'Standing start' : 'Rolling start'} · {formatDistance(route.lengthM)}
-      </p>
 
       <h2 className="section-title">Race against</h2>
       <div className="list">
-        {options.mine.slice(0, 6).map(renderOption)}
+        {posts.length > 0 && renderOption({ ref: 'record', title: 'Route record', sub: 'Fastest in every sector', totalMs: null, splits: null, fastest: true })}
+        {options.mine.slice(0, 1).map(renderOption)}
+        {/* A lap picked elsewhere (Race on a feed card) stays in view. */}
+        {[...options.mine.slice(1), ...options.theirs].filter((o) => o.ref === ref).map(renderOption)}
         {options.mine.length > 1 && renderOption({ ref: 'best', title: 'Theoretical best', sub: 'Your best time in each sector', totalMs: null, splits: null, fastest: false })}
-        {posts.length > 0 && renderOption({ ref: 'record', title: 'Route record', sub: 'The fastest time in every sector added up', totalMs: null, splits: null, fastest: true })}
-        {options.theirs.map(renderOption)}
-        {renderOption({ ref: '', title: 'No reference', sub: 'Just the clock and sector colours', totalMs: null, splits: null })}
+        {renderOption({ ref: '', title: 'No reference', sub: 'Just the clock', totalMs: null, splits: null })}
+        {moreLaps && [...options.mine.slice(1, 6), ...options.theirs].filter((o) => o.ref !== ref).map(renderOption)}
+        {!moreLaps && options.mine.length + options.theirs.length > 1 && (
+          <button className="list-item ref-more" onClick={() => setMoreLaps(true)}>
+            <span className="grow mute">Other laps and drivers</span>
+            <ChevronDown size={18} aria-hidden="true" />
+          </button>
+        )}
       </div>
 
       <h2 className="section-title">Setup</h2>

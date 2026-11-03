@@ -29,17 +29,17 @@ export default function Admin() {
   return (
     <main className="screen">
       <ScreenHead back title="Admin" right={<span className="badge ink">{isOwner ? 'Owner' : 'Admin'}</span>} />
-      <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+      <div style={{ overflowX: 'auto' }}>
         <Segmented
           label="Admin section"
           value={tab}
           onChange={setTab}
           options={[
             { value: 'requests', label: 'Requests' },
-            { value: 'users', label: 'Users' },
             { value: 'routes', label: 'Routes' },
-            { value: 'posts', label: 'Posts' },
+            { value: 'users', label: 'Users' },
             { value: 'log', label: 'Log' },
+            { value: 'posts', label: 'Posts' },
           ]}
         />
       </div>
@@ -55,7 +55,7 @@ export default function Admin() {
 function Requests() {
   const { isOwner } = useMe();
   return (
-    <div className="stack-lg">
+    <div>
       <RequestList kind="creator" />
       {isOwner && <RequestList kind="admin" />}
     </div>
@@ -86,18 +86,18 @@ function RequestList({ kind }: { kind: RequestKind }) {
   if (!items) return <Loading />;
   if (!items.length)
     return (
-      <div className="stack">
+      <div className="admin-requests">
         <h2 className="section-title">{title}</h2>
-        <p className="admin-note">
+        <p className="note-box">
           {kind === 'admin' ? 'Creators who ask to become admins show up here. Only you can decide them.' : 'Drivers who ask for creator access show up here.'}
         </p>
       </div>
     );
   return (
-    <div className="stack">
+    <div className="admin-requests">
       <h2 className="section-title">{title}</h2>
       {items.map((r) => (
-        <div key={r.id} className="panel stack" style={{ gap: 10 }}>
+        <div key={r.id} className="panel admin-card">
           <Link to={`/u/${r.username}`} className="row" style={{ gap: 12, textDecoration: 'none' }}>
             <Avatar name={r.username} size={44} uid={r.id} />
             <span className="grow" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -105,8 +105,8 @@ function RequestList({ kind }: { kind: RequestKind }) {
               <span className="mute small-text">Asked {timeAgo(r.createdAt?.toDate())}</span>
             </span>
           </Link>
-          {r.note ? <p className="admin-note">“{r.note}”</p> : <p className="mute small-text">No note.</p>}
-          <div className="row">
+          {r.note ? <p className="admin-note">“{r.note}”</p> : <p className="admin-no-note">No note.</p>}
+          <div className="btns">
             <button className="btn sm grow" onClick={() => decide(r, false)}>
               Decline
             </button>
