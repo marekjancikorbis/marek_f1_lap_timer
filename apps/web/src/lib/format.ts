@@ -44,13 +44,13 @@ export function timeAgo(date: Date | null | undefined, now = new Date()): string
   if (h < 24) return `${h} h ago`;
   const d = Math.round(h / 24);
   if (d < 7) return `${d} d ago`;
-  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: d > 300 ? 'numeric' : undefined });
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: d > 300 ? 'numeric' : undefined });
 }
 
 export function formatDate(date: Date | number | null | undefined): string {
   if (date == null) return '';
   const d = typeof date === 'number' ? new Date(date) : date;
-  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 /** Who a route is credited to: Official for admin and owner routes, else the creator's username. */

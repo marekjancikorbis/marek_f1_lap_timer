@@ -289,7 +289,7 @@ export default function Settings() {
         {usage && (
           <div className="list-item settings-col">
             <span className="mute small-text">
-              Map usage this month · resets {usage.resetsAt.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}
+              Map usage this month · resets {usage.resetsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
             </span>
             <UsageBar label="Map loads" value={usage.mapLoads} cap={USAGE_CAP.mapLoads} />
             <UsageBar label="Road snapping" value={usage.directions} cap={USAGE_CAP.directions} />

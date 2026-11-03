@@ -33,7 +33,7 @@ export function runToLap(run: Run, label = 'Your lap'): ResolvedLap {
   return {
     ref: `run:${run.id}`,
     label,
-    sub: new Date(run.startedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+    sub: new Date(run.startedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
     splitTimesMs: run.splitTimesMs,
     totalMs: run.totalMs,
     penaltyMs: run.penaltyMs,
@@ -48,7 +48,7 @@ export function postToLap(post: Post): ResolvedLap {
   return {
     ref: `post:${post.id}`,
     label: post.username,
-    sub: post.caption ?? new Date(post.startedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+    sub: post.caption ?? new Date(post.startedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
     splitTimesMs: post.splitTimesMs,
     totalMs: post.totalMs,
     penaltyMs: post.penaltyMs,

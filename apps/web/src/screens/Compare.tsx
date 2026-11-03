@@ -1,12 +1,13 @@
 import { compareLaps, type LapComparison } from '@laptimer/timing';
-import { ArrowLeftRight, ChevronRight } from 'lucide-react';
+import { ArrowDownUp, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { LapTabs, SectorList, useSectorTable } from '../components/LapView';
+import { DeltaGraph } from '../components/Charts';
+import { SectorList, useSectorTable } from '../components/LapView';
 import { Empty, errorMessage, Loading, ScreenHead, Sheet } from '../components/ui';
 import { getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
-import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
-import { notCounted, resolveLap, type ResolvedLap } from '../lib/laps';
+import { formatDate, formatLap, formatSeconds } from '../lib/format';
+import { bigRoute, notCounted, resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
 
@@ -94,7 +95,7 @@ export default function Compare() {
       <section className="cmp-cards">
         <LapHead lap={a} label={a.username || a.label} tag="A" />
         <button className="icon-btn cmp-swap" aria-label="Swap A and B" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
-          <ArrowLeftRight size={20} />
+          <ArrowDownUp size={22} />
         </button>
         <LapHead lap={b} label={b.username || b.label} tag="B" record={bRef === 'record'} />
       </section>
@@ -105,21 +106,16 @@ export default function Compare() {
         </strong>
         <ChevronRight size={18} aria-hidden="true" />
       </button>
-      <p className={`cmp-total-line ${cmp.gapMs < 0 ? 'faster' : cmp.gapMs > 0 ? 'slower' : ''}`}>
-        <strong className="num">{formatDelta(cmp.gapMs, 3)}</strong>{' '}
-        <span className="mute">
-          {cmp.gapMs < 0 ? 'A faster' : cmp.gapMs > 0 ? 'A slower' : 'Dead heat'}
-          {cmp.throughM != null && ` at ${formatDistance(cmp.throughM)}`}
-        </span>
-      </p>
+      <h2 className="section-title row between">
+        Sectors
+        <span className="section-sub">A against B</span>
+      </h2>
+      <SectorList table={sectorTable} refLabel={bLabel} totalMs={cmp.gapMs} who="A" />
 
-      <LapTabs
-        lap={{ ...a, username: aLabel }}
-        reference={{ label: bLabel, splitTimesMs: b.splitTimesMs, totalMs: b.totalMs, penaltyMs: b.penaltyMs, profile: b.profile, partial: b.partial }}
-        route={route}
-        colours={sectorTable?.flatMap((x) => x.kids.map((k) => k.colour)) ?? []}
-        sectors={<SectorList table={sectorTable} refLabel={bLabel} />}
-      />
+      <section className="panel chart-panel cmp-gap-card">
+        <span className="cap">Gap over the lap</span>
+        <DeltaGraph data={cmp.delta} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} />
+      </section>
 
       <Sheet open={picker} onClose={() => setPicker(false)} label="Compare with">
         <LapPicker
@@ -139,8 +135,8 @@ export default function Compare() {
 
 function LapHead({ lap, label, tag, record }: { lap: ResolvedLap; label: string; tag: string; record?: boolean }) {
   return (
-    <div className={`panel cmp-card ${record ? 'record' : ''}`}>
-      <span className="cap ellipsis">
+    <div className={`panel cmp-card ${record ? 'is-record' : ''}`}>
+      <span className="cap">
         {tag} · {label}
       </span>
       <span className="num cmp-total">{formatLap(lap.totalMs)}</span>

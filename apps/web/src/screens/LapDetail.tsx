@@ -94,28 +94,25 @@ export default function LapDetail() {
         reference={against}
         onOpen={() => setOpened(true)}
         badges={post.isPB && <span className="badge ink">PB when posted</span>}
-        caption={
-          (post.caption || post.car) && (
-            <p className="lap-hero-caption">
-              {post.caption} {post.car && <span className="mute">· {post.car}</span>}
-            </p>
-          )
-        }
+        meta={post.car}
+        caption={post.caption && <p className="lap-hero-caption">{post.caption}</p>}
         actions={
-          <>
-            <Link className="btn primary lg block" style={{ marginTop: 16 }} to={`/drive/${post.routeId}?ref=post:${post.id}`}>
-              Race against this
+          <div className="btns lap-panel-btns">
+            <Link className="btn primary grow" to={`/drive/${post.routeId}?ref=post:${post.id}`}>
+              Race this lap
             </Link>
-            <div className="row" style={{ marginTop: 8 }}>
-              {driven && (
-                <Link className="btn grow" to={`/compare/${post.routeId}?a=best&b=post:${post.id}`}>
-                  Compare with my best
-                </Link>
-              )}
-              <Link className="btn grow" to={`/compare/${post.routeId}?a=post:${post.id}&b=record`}>
-                Compare with…
+          </div>
+        }
+        menu={
+          <>
+            {driven && (
+              <Link className="btn block" to={`/compare/${post.routeId}?a=best&b=post:${post.id}`}>
+                Compare with my best
               </Link>
-            </div>
+            )}
+            <Link className="btn block" to={`/compare/${post.routeId}?a=post:${post.id}&b=record`}>
+              Compare with…
+            </Link>
           </>
         }
       >

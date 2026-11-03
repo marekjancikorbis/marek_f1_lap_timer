@@ -5,8 +5,8 @@ import type { UsageState } from '../lib/usage';
  * unusable until the period resets, so nobody ever goes past the free tier.
  */
 export function LimitScreen({ usage }: { usage: UsageState }) {
-  const when = usage.resetsAt.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-  const time = usage.resetsAt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const when = usage.resetsAt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  const time = usage.resetsAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   return (
     <main className="limit navy">
       <span className="livery" aria-hidden="true">
@@ -15,7 +15,7 @@ export function LimitScreen({ usage }: { usage: UsageState }) {
         <i />
       </span>
       <div className="limit-body">
-        <div className="num limit-day">{usage.resetsAt.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div>
+        <div className="num limit-day">{usage.resetsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
         <div className="cap">Maps back on · {time}</div>
         <h1>Monthly limit reached</h1>
         <p>

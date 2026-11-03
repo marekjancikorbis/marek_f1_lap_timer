@@ -1,5 +1,5 @@
 import { compareLaps, fitsBoundaries, sectorColour, sectorTimes, type LapProfile } from '@laptimer/timing';
-import { ChevronDown, ChevronLeft, Pause, Play } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Pause, Play } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import type { Post, Route, SectorColourName } from '../lib/types';
 import { DeltaGraph, SERIES, SpeedGraph } from './Charts';
 import { RouteMap } from './RouteMap';
 import { RouteShape } from './RouteShape';
-import { Avatar, Segmented, STRIP_LABEL, UserName } from './ui';
+import { Avatar, Segmented, Sheet, STRIP_LABEL, UserName } from './ui';
 
 export interface LapViewLap {
   /** Post id, or run id (a posted run's post shares its id). */
@@ -73,6 +73,8 @@ export function LapView({
   badges,
   caption,
   actions,
+  menu,
+  meta,
   mapExtra,
   onOpen,
   children,
@@ -89,6 +91,10 @@ export function LapView({
   caption?: ReactNode;
   /** Buttons under the hero. */
   actions?: ReactNode;
+  /** Less used actions, behind the bar's more button. */
+  menu?: ReactNode;
+  /** Added to the route and date line, e.g. the car. */
+  meta?: string | null;
   mapExtra?: (map: mapboxgl.Map) => void | (() => void);
   /** Called when Graphs or Map is first opened: load what only they need. */
   onOpen?: () => void;
@@ -99,6 +105,7 @@ export function LapView({
   const rank = board.find((r) => r.post.id === lap.id)?.rank;
   const ref = sameRouteRef(lap, reference, route);
   const nav = useNavigate();
+  const [more, setMore] = useState(false);
 
   const table = useSectorTable(lap, route, posts, ref, colours);
 
@@ -114,28 +121,36 @@ export function LapView({
           <i />
           <i />
         </span>
-        <button className="icon-btn back" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))}>
-          <ChevronLeft size={26} />
-        </button>
+        <div className="lap-panel-bar">
+          <button className="icon-btn back" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))}>
+            <ChevronLeft size={26} />
+          </button>
+          {menu && (
+            <button className="icon-btn" aria-label="More" onClick={() => setMore(true)}>
+              <MoreHorizontal size={22} />
+            </button>
+          )}
+        </div>
         <div className="lap-panel-body">
           <Link to={`/u/${lap.username}`} className="row" style={{ gap: 12, textDecoration: 'none' }}>
             <Avatar name={lap.username} hue={lap.avatarHue} size={44} uid={lap.userId} />
             <span className="grow" style={{ minWidth: 0 }}>
               <strong>{lap.userId ? <UserName uid={lap.userId} fallback={lap.username} /> : lap.username}</strong>
               <span className="mute small-text ellipsis">
-                {lap.routeName} · {formatDate(lap.startedAt)}
+                {lap.routeName} · {new Date(lap.startedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                {meta && ` · ${meta}`}
               </span>
             </span>
           </Link>
           <div className="row wrap" style={{ gap: 10, alignItems: 'baseline', marginTop: 12 }}>
-            <span className={`num lap-panel-time ${rank === 1 ? 'fastest' : ''}`}>{formatLap(lap.totalMs)}</span>
+            <span className="num lap-panel-time">{formatLap(lap.totalMs)}</span>
             {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>{rank === 1 ? 'Route record' : `P${rank} now`}</span>}
             {badges}
             {lap.penaltyMs > 0 && <span className="badge red">incl. +{formatSeconds(lap.penaltyMs, 3)}</span>}
           </div>
           {ref && (
             <p className="mute small-text" style={{ marginTop: 4 }}>
-              vs {ref.label} <span className="num">{formatLap(ref.totalMs)}</span>
+              vs {ref.label} {formatLap(ref.totalMs)}
               {!lap.partial && !ref.partial && (
                 <>
                   {' · '}
@@ -152,6 +167,13 @@ export function LapView({
       </section>
 
       <LapTabs lap={lap} reference={ref} route={route} colours={miniColours} sectors={sectors} mapExtra={mapExtra} onOpen={onOpen} />
+      {menu && (
+        <Sheet open={more} onClose={() => setMore(false)} label="More">
+          <div className="stack" onClick={() => setMore(false)}>
+            {menu}
+          </div>
+        </Sheet>
+      )}
 
       {children}
     </>
@@ -209,11 +231,13 @@ export function useSectorTable(
 
 }
 
-/** Big sectors as rows of centre-out delta bars; tap one to open its minisectors. */
-export function SectorList({ table, refLabel }: { table: SectorTableRows | null; refLabel: string | null }) {
+/**
+ * Big sectors as rows of centre-out delta bars; tap one to open its minisectors.
+ * Compare passes the total gap and "A" to label the scale A faster / A slower.
+ */
+export function SectorList({ table, refLabel, totalMs, who }: { table: SectorTableRows | null; refLabel: string | null; totalMs?: number | null; who?: string }) {
   const [open, setOpen] = useState<Set<number>>(new Set());
   const bigScale = Math.max(1, ...(table ?? []).map((t) => Math.abs(t.row.deltaMs ?? 0)));
-  const miniScale = Math.max(1, ...(table ?? []).flatMap((t) => t.kids.map((k) => Math.abs(k.deltaMs ?? 0))));
 
   return !table ? (
     <p className="mute">This lap was timed on an older version of the route, so its sectors can't be shown.</p>
@@ -221,13 +245,7 @@ export function SectorList({ table, refLabel }: { table: SectorTableRows | null;
     <p className="mute">The lap stopped before the first sector ended. The graphs and map show what was recorded.</p>
   ) : (
     <>
-      {refLabel ? (
-        <div className="dscale" aria-hidden="true">
-          <span>← Faster</span>
-          <span>vs {refLabel}</span>
-          <span>Slower →</span>
-        </div>
-      ) : (
+      {!refLabel && (
         <p className="mute small-text" style={{ marginBottom: 8 }}>
           Your first lap here: nothing to compare with yet.
         </p>
@@ -238,27 +256,39 @@ export function SectorList({ table, refLabel }: { table: SectorTableRows | null;
             <button
               className="sec-row"
               aria-expanded={open.has(b)}
+              aria-label={`${row.name}, ${kids.length} minisectors`}
               onClick={() => setOpen((o) => (o.has(b) ? new Set([...o].filter((x) => x !== b)) : new Set(o).add(b)))}
             >
               <SecCells row={row} scale={bigScale} />
-              <span className="sec-sub">
-                {formatLap(row.ms)}
-                {row.colour === 'purple' && refLabel ? ' · fastest ever' : ''} · {kids.length} minisectors
-                <ChevronDown size={14} aria-hidden="true" className="sec-chev" />
-              </span>
+              {open.has(b) && (
+                <>
+                  <span className="sec-minis" aria-label={kids.map((k) => `${k.name} ${k.colour ? STRIP_LABEL[k.colour] : 'no time'}`).join(', ')}>
+                    {kids.map((k) => (
+                      <i key={k.name} className={k.colour ?? ''} />
+                    ))}
+                  </span>
+                  <span className="sec-sub">
+                    {formatLap(row.ms)}
+                    {row.colour === 'purple' && refLabel ? ' · fastest ever' : ''} · {kids.length} minisectors
+                  </span>
+                </>
+              )}
             </button>
-            {open.has(b) && (
-              <ol className="sec-minis">
-                {kids.map((k) => (
-                  <li key={k.name} className="sec-row mini">
-                    <SecCells row={k} scale={miniScale} />
-                  </li>
-                ))}
-              </ol>
-            )}
           </li>
         ))}
+        {totalMs != null && (
+          <li className="sec-total">
+            <strong>Total</strong>
+            <span className={`num ${totalMs < 0 ? 'green' : totalMs > 0 ? 'yellow' : ''}`}>{formatDelta(totalMs, 2)}</span>
+          </li>
+        )}
       </ol>
+      {refLabel && (
+        <div className="dscale" aria-hidden="true">
+          <span>← {who ? `${who} faster` : 'Faster'}</span>
+          <span>{who ? `${who} slower` : 'Slower'} →</span>
+        </div>
+      )}
     </>
   );
 }
@@ -390,7 +420,7 @@ export function LapTabs({
   return (
     <>
       {/* On Graphs and Map the tabs become the screen's header: back, driver and time, then the tabs. */}
-      <div ref={strip} className={tab === 'sectors' ? 'lap-tabs' : 'lap-strip'}>
+      <div ref={strip} className={tab === 'sectors' ? 'lap-tabs' : `lap-strip ${tab === 'map' ? 'over-map' : ''}`}>
         {tab !== 'sectors' && (
           <header className="screen-head">
             <div className="row grow">
@@ -427,12 +457,12 @@ export function LapTabs({
 
       {/* One map for both tabs: small and pinned above the graphs, full size on the Map tab. */}
       {mapSeen && route && (
-        <div className={tab === 'graphs' ? 'lap-pin' : ''} hidden={tab === 'sectors'}>
+        <div hidden={tab !== 'map'} className="lap-map-full">
           <div className="map-card">
             <RouteMap
               route={route}
               colours={colours}
-              height={tab === 'map' ? 360 : 190}
+              height="100dvh"
               extra={mapExtra}
               carAtM={carAtM}
               ghostAtM={ghostAtM}
@@ -440,7 +470,6 @@ export function LapTabs({
               onPick={fits ? scrubTo : undefined}
             />
           </div>
-          {tab === 'graphs' && readout}
         </div>
       )}
 
@@ -449,9 +478,10 @@ export function LapTabs({
           <p className="mute">No graphs for this lap.</p>
         ) : (
           <div className="stack">
-            {carAtM == null && <p className="mute small-text">Slide along a graph to see that spot on the map.</p>}
+            {readout}
             {cmp ? (
               <div className="panel chart-panel">
+                <span className="cap">Gap</span>
                 <DeltaGraph data={cmp.delta} boundaries={bigBoundaries} aLabel={lap.username} bLabel={ref!.label} onScrub={scrubTo} at={carAtM} />
                 {!cmp.smooth && (
                   <p className="mute small-text" style={{ marginTop: 8 }}>
@@ -464,6 +494,7 @@ export function LapTabs({
             )}
             {(cmp?.speed || hasSpeed) && (
               <div className="panel chart-panel">
+                <span className="cap">Speed km/h</span>
                 <SpeedGraph
                   data={cmp?.speed ?? lap.profile!.speedDms.map((v, i) => ({ d: i * lap.profile!.stepM, a: v * 0.36, b: 0 }))}
                   boundaries={bigBoundaries}
@@ -478,16 +509,8 @@ export function LapTabs({
         ))}
 
       {tab === 'map' && route && (
-        <div className="stack">
-          <p className="maplegend">
-            <span>
-              <i className="dot car" /> {lap.username}
-            </span>
-            {ref && (
-              <span>
-                <i className="dot ghost" /> {ref.label}
-              </span>
-            )}
+        <>
+          <p className="maplegend over-map">
             {colours.includes('purple') && (
               <span>
                 <i style={{ background: 'var(--purple)' }} /> Fastest ever
@@ -500,57 +523,69 @@ export function LapTabs({
               <i style={{ background: 'var(--yellow)' }} /> Slower
             </span>
           </p>
-          {fits ? (
-            <>
-              <div className="play-bar">
-                <button className="play-btn" aria-label={playing ? 'Pause' : 'Play the lap'} onClick={togglePlay}>
-                  {playing ? <Pause size={22} aria-hidden="true" /> : <Play size={22} aria-hidden="true" />}
-                </button>
-                <span className="play-time num">{formatLap(t ?? 0)}</span>
-                <label className="grow">
-                  <span className="visually-hidden">Time into the lap</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={Math.round(endT)}
-                    step={100}
-                    value={Math.round(t ?? 0)}
-                    onChange={(e) => {
-                      setPlaying(false);
-                      setT(Number(e.target.value));
+          <div className="map-sheet">
+            <span className="grabber" aria-hidden="true" />
+            {fits ? (
+              <>
+                <div className="play-bar">
+                  <button className="btn primary play-btn" aria-label={playing ? 'Pause' : 'Play the lap'} onClick={togglePlay}>
+                    {playing ? <Pause size={22} aria-hidden="true" /> : <Play size={22} aria-hidden="true" />}
+                  </button>
+                  <label className="grow play-track">
+                    <span className="play-line">
+                      <span className="num play-time">{formatLap(t ?? 0)}</span>
+                      {gapAt != null && <strong className={gapAt <= 0 ? 'faster' : 'slower'}>{formatDelta(gapAt)}</strong>}
+                    </span>
+                    <span className="visually-hidden">Time into the lap</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={Math.round(endT)}
+                      step={100}
+                      value={Math.round(t ?? 0)}
+                      style={{ ['--p' as string]: `${((t ?? 0) / Math.max(1, endT)) * 100}%` }}
+                      onChange={(e) => {
+                        setPlaying(false);
+                        setT(Number(e.target.value));
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span className="visually-hidden">Playback speed</span>
+                    <select className="badge outline play-speed" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
+                      {SPEEDS.map((x) => (
+                        <option key={x} value={x}>
+                          {x}×
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <p className="mute small-text" style={{ marginTop: 10 }}>
+                  Navy dot: {lap.username}
+                  {ref && ` · light dot: ${ref.label}`}
+                </p>
+                <div style={{ marginTop: 10 }}>
+                  <Segmented
+                    label="Follow"
+                    value={follow}
+                    onChange={(v) => {
+                      setFollow(v);
+                      if (v !== 'route' && t == null) setT(0);
                     }}
+                    options={[
+                      { value: 'route', label: 'Whole route' },
+                      { value: 'car', label: lap.username },
+                      ...(ref ? [{ value: 'ghost' as const, label: ref.label }] : []),
+                    ]}
                   />
-                </label>
-                <label>
-                  <span className="visually-hidden">Playback speed</span>
-                  <select className="play-speed num" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
-                    {SPEEDS.map((x) => (
-                      <option key={x} value={x}>
-                        {x}×
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <Segmented
-                label="Follow"
-                value={follow}
-                onChange={(v) => {
-                  setFollow(v);
-                  if (v !== 'route' && t == null) setT(0);
-                }}
-                options={[
-                  { value: 'route', label: 'Whole route' },
-                  { value: 'car', label: lap.username },
-                  ...(ref ? [{ value: 'ghost' as const, label: ref.label }] : []),
-                ]}
-              />
-              {readout || <p className="mute small-text">Press play, drag the slider or tap the route{ref ? ` to race ${ref.label}` : ''}.</p>}
-            </>
-          ) : (
-            <p className="mute small-text">This lap was timed on an older version of the route, so it can't be played back.</p>
-          )}
-        </div>
+                </div>
+              </>
+            ) : (
+              <p className="mute small-text">This lap was timed on an older version of the route, so it can't be played back.</p>
+            )}
+          </div>
+        </>
       )}
     </>
   );
@@ -558,16 +593,16 @@ export function LapTabs({
 
 /** Name, the delta bar growing from the centre (faster left, slower right), and the delta. */
 function SecCells({ row, scale }: { row: Row; scale: number }) {
-  const w = row.deltaMs == null ? 0 : Math.max(2, (Math.abs(row.deltaMs) / scale) * 46);
+  const w = row.deltaMs == null ? 0 : Math.max(2, (Math.abs(row.deltaMs) / scale) * 50);
   const faster = row.deltaMs != null && row.deltaMs < 0;
   return (
     <>
-      <span className="sec-name num">{row.name}</span>
+      <span className="sec-name">{row.name}</span>
       <span className="dbar" aria-hidden="true">
         {row.deltaMs != null && <b className={`${faster ? 'gain' : 'loss'} ${row.colour === 'purple' ? 'rec' : ''}`} style={{ width: `${w}%` }} />}
       </span>
       <span className={`sec-delta num ${row.colour ?? ''}`}>
-        {row.deltaMs != null ? formatDelta(row.deltaMs, 3) : formatLap(row.ms)}
+        {row.deltaMs != null ? formatDelta(row.deltaMs, 2) : formatLap(row.ms)}
         {row.colour && <span className="visually-hidden"> {STRIP_LABEL[row.colour]}</span>}
       </span>
     </>
