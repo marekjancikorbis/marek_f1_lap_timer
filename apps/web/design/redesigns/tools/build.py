@@ -3,10 +3,9 @@
     python -X utf8 apps/web/design/redesigns/tools/build.py
 
 Placeholders in src/*.html: {{palette}} (CSS custom properties), {{name}}, {{swatches}},
-{{lens.wide}} / {{lens.round}} (displacement maps for the liquid glass filter),
 and map keys from maps/maps.json such as {{full.s1}} or {{card.start.0}}.
 """
-import json, pathlib, re, urllib.parse
+import json, pathlib, re
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MAPS = json.loads((ROOT / 'maps' / 'maps.json').read_text())
@@ -66,23 +65,9 @@ PAGES = {
 }
 
 
-def lens(rx_frac):
-    """Displacement map: red ramps along x, blue along y, neutral grey in the middle so only the rim bends."""
-    svg = (f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' preserveAspectRatio='none'>"
-           "<defs><linearGradient id='r' x1='1' x2='0'><stop offset='0' stop-color='#000'/><stop offset='1' stop-color='#f00'/></linearGradient>"
-           "<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#000'/><stop offset='1' stop-color='#00f'/></linearGradient>"
-           "<filter id='f'><feGaussianBlur stdDeviation='22'/></filter></defs>"
-           "<rect width='400' height='400' fill='url(#r)'/>"
-           "<rect width='400' height='400' fill='url(#b)' style='mix-blend-mode:screen'/>"
-           f"<rect x='34' y='34' width='332' height='332' rx='{int(166 * rx_frac)}' fill='#808080' filter='url(#f)'/></svg>")
-    return 'data:image/svg+xml,' + urllib.parse.quote(svg)
-
-
 def lookup(key):
-    if key == 'lens.wide':
-        return lens(.45)
-    if key == 'lens.round':
-        return lens(1)
+    if key == 'glassjs':
+        return (ROOT / 'tools' / 'glass.js').read_text(encoding='utf8')
     v = MAPS
     for part in key.split('.'):
         v = v[int(part)] if isinstance(v, list) else v[part]

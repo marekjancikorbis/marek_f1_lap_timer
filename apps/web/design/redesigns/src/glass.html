@@ -38,30 +38,40 @@ figcaption { margin-top: 14px; font-size: 13px; color: var(--ink-2); text-align:
 .sb::after { content: ""; width: 66px; height: 12px; border-radius: 4px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
 
 /* ---------- liquid glass ---------- */
-.glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear);
+/* --lens is a per-element SVG filter built by the script at the bottom: it bends the backdrop inside a rim
+   band shaped like a convex edge, so the bending follows the element's real size and corners. */
+@property --lit { syntax: '<number>'; inherits: true; initial-value: 0 }
+.glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear); --light: 300deg;
   -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx);
-  box-shadow:
-    inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.55),    /* light catching the top-left rim */
-    inset -1px -1px 0 -.5px rgba(255,255,255,.22),      /* the far rim, dimmer */
-    inset 0 0 0 .5px rgba(255,255,255,.18),
-    inset 0 0 18px rgba(255,255,255,.06),
-    0 10px 30px -10px rgba(0,0,0,.55);
-  transition: transform .35s var(--spring), filter .2s ease-out }
+  box-shadow: inset 0 0 18px rgba(255,255,255,.05), 0 10px 30px -10px rgba(0,0,0,.5);
+  transition: transform .45s var(--spring), --lit .6s ease-out }
+html.lens .glass { -webkit-backdrop-filter: var(--lens) blur(.4px) var(--glass-fx); backdrop-filter: var(--lens) blur(.4px) var(--glass-fx) }
+/* inner sheen, plus light spreading from the touch point while pressed */
 .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
-  background: radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.22), transparent 55%), radial-gradient(80% 50% at 90% 120%, rgba(255,255,255,.08), transparent 60%) }
-html.lens .glass { -webkit-backdrop-filter: url(#lens-w) blur(.5px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(.5px) var(--glass-fx) }
-html.lens .glass.round { -webkit-backdrop-filter: url(#lens-r) var(--glass-fx); backdrop-filter: url(#lens-r) var(--glass-fx) }
-/* tinted (regular) glass: thick enough to carry text */
+  background:
+    radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255,255,255, calc(.32 * var(--lit))), transparent 65%),
+    radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.16), transparent 55%) }
+/* rim: a thin ring lit where the light source is (moves with the pointer, standing in for tilting the phone) */
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.3px; pointer-events: none;
+  background: conic-gradient(from var(--light), rgba(255,255,255,.95), rgba(255,255,255,.12) 16%, rgba(255,255,255,.06) 40%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.08) 62%, rgba(255,255,255,.12) 84%, rgba(255,255,255,.95));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude }
+/* regular glass: blurs and evens out the luminance behind it, thick enough to carry text */
 .glass.sheet { background: var(--sheet); -webkit-backdrop-filter: blur(7px) saturate(1.6); backdrop-filter: blur(7px) saturate(1.6) }
-html.lens .glass.sheet { -webkit-backdrop-filter: url(#lens-w) blur(5px) saturate(1.6); backdrop-filter: url(#lens-w) blur(5px) saturate(1.6) }
+html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(5px) saturate(1.6); backdrop-filter: var(--lens) blur(5px) saturate(1.6) }
 .glass.tint-p { background: color-mix(in srgb, var(--s-p) 85%, transparent) }
 .glass.tint-g { background: color-mix(in srgb, var(--s-g) 82%, transparent) }
-/* glass grows and brightens under the finger instead of shrinking */
-.glass:active { transform: scale(1.06); filter: brightness(1.18) }
+/* under the finger glass swells from where it is pressed and lights up from that point */
+.glass.pressed { transform: scale(1.05); --lit: 1; transition: transform .25s var(--spring), --lit .12s ease-out; transform-origin: var(--px, 50%) var(--py, 50%) }
+/* scroll edge effect: content fades and blurs where it runs under the floating controls */
+.edge { position: absolute; left: 0; right: 0; top: 0; height: 130px; z-index: -1; pointer-events: none;
+  background: linear-gradient(color-mix(in srgb, var(--night) 60%, transparent), transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent) }
 @media (prefers-reduced-transparency: reduce) {
-  .glass, html.lens .glass, html.lens .glass.round, html.lens .glass.sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+  .glass, html.lens .glass, html.lens .glass.sheet, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+  .edge { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
 }
-@media (prefers-reduced-motion: reduce) { .glass { transition: filter .2s ease-out } .glass:active { transform: none } }
+@media (prefers-reduced-motion: reduce) { .glass, .glass.pressed { transform: none } }
 
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
 :focus-visible { outline: 2px solid var(--main-hi); outline-offset: 3px }
@@ -97,7 +107,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3 }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
 .glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(2px) var(--glass-fx); backdrop-filter: blur(2px) var(--glass-fx) }
-html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(1px) var(--glass-fx); backdrop-filter: var(--lens) blur(1px) var(--glass-fx) }
 .pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
 .pill .av { width: 40px; height: 40px }
 @media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
@@ -105,32 +115,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <!-- Liquid glass lens: displace the backdrop along a red/blue ramp at the rim (flat grey middle = no bend),
-         once per colour channel at slightly different strengths for a little dispersion. -->
-    <filter id="lens-w" x="0" y="0" width="1" height="1" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-      <feImage href="{{lens.wide}}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="m"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.075" xChannelSelector="R" yChannelSelector="B" result="dr"/>
-      <feColorMatrix in="dr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.07" xChannelSelector="R" yChannelSelector="B" result="dg"/>
-      <feColorMatrix in="dg" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.065" xChannelSelector="R" yChannelSelector="B" result="db"/>
-      <feColorMatrix in="db" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
-      <feBlend in="r" in2="g" mode="screen" result="rg"/>
-      <feBlend in="rg" in2="b" mode="screen"/>
-    </filter>
-    <filter id="lens-r" x="0" y="0" width="1" height="1" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-      <feImage href="{{lens.round}}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="m"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.22" xChannelSelector="R" yChannelSelector="B" result="dr"/>
-      <feColorMatrix in="dr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.2" xChannelSelector="R" yChannelSelector="B" result="dg"/>
-      <feColorMatrix in="dg" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.18" xChannelSelector="R" yChannelSelector="B" result="db"/>
-      <feColorMatrix in="db" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
-      <feBlend in="r" in2="g" mode="screen" result="rg"/>
-      <feBlend in="rg" in2="b" mode="screen"/>
-    </filter>
-  </defs>
+  <defs id="lens-defs"></defs>
   <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
   <symbol id="map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
   <symbol id="flag" viewBox="0 0 24 24"><path d="M5 21V4h12l-2 4 2 4H5"/></symbol>
@@ -193,6 +178,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
     <circle cx="{{full.start.0}}" cy="{{full.start.1}}" r="7" fill="var(--accent)" stroke="var(--night)" stroke-width="2.5"/>
     <circle cx="{{full.finish.0}}" cy="{{full.finish.1}}" r="6" fill="var(--ink)" stroke="var(--night)" stroke-width="2.5"/>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
   <div class="glass sheet sheet-b">
@@ -219,6 +205,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
     <circle cx="{{full.start.0}}" cy="{{full.start.1}}" r="16" fill="var(--accent)" opacity=".25"/>
     <circle cx="{{full.start.0}}" cy="{{full.start.1}}" r="7" fill="var(--accent)" stroke="var(--night)" stroke-width="2.5"/>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px"><span class="dot g"></span>±3 m</span></div>
   <div class="glass sheet sheet-b" style="padding-top:18px">
@@ -272,6 +259,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
     <path d="{{full.s2}}" stroke="var(--s-g)" stroke-width="5"/>
     <path d="{{full.s3}}" stroke="var(--s-y)" stroke-width="5"/>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
   <div class="glass sheet sheet-b" style="padding-top:22px">
@@ -301,6 +289,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
       <path d="{{full.c9}}" stroke="var(--accent)"/><path d="{{full.c10}}" stroke="var(--accent)"/><path d="{{full.c11}}" stroke="var(--accent)"/>
     </g>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
   <div class="glass sheet sheet-b" style="padding-top:20px">
@@ -327,6 +316,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
 <div class="ph">
   <div class="map" style="--map-img:var(--map-full)"></div>
   <svg class="route" viewBox="0 0 390 844" aria-hidden="true"><path d="{{full.all}}" stroke="var(--main-hi)" stroke-width="4" opacity=".8"/></svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div class="glass sheet" style="position:absolute;left:8px;right:8px;top:250px;bottom:100px;border-radius:40px;padding:20px">
     <div style="display:flex;gap:14px;align-items:center">
@@ -389,5 +379,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
   requestAnimationFrame(tick);
 })();
 </script>
+<script>
+{{glassjs}}</script>
 </body>
 </html>

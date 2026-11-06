@@ -38,30 +38,40 @@ figcaption { margin-top: 14px; font-size: 13px; color: var(--ink-2); text-align:
 .sb::after { content: ""; width: 66px; height: 12px; border-radius: 4px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
 
 /* ---------- liquid glass ---------- */
-.glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear);
+/* --lens is a per-element SVG filter built by the script at the bottom: it bends the backdrop inside a rim
+   band shaped like a convex edge, so the bending follows the element's real size and corners. */
+@property --lit { syntax: '<number>'; inherits: true; initial-value: 0 }
+.glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear); --light: 300deg;
   -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx);
-  box-shadow:
-    inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.55),    /* light catching the top-left rim */
-    inset -1px -1px 0 -.5px rgba(255,255,255,.22),      /* the far rim, dimmer */
-    inset 0 0 0 .5px rgba(255,255,255,.18),
-    inset 0 0 18px rgba(255,255,255,.06),
-    0 10px 30px -10px rgba(0,0,0,.55);
-  transition: transform .35s var(--spring), filter .2s ease-out }
+  box-shadow: inset 0 0 18px rgba(255,255,255,.05), 0 10px 30px -10px rgba(0,0,0,.5);
+  transition: transform .45s var(--spring), --lit .6s ease-out }
+html.lens .glass { -webkit-backdrop-filter: var(--lens) blur(.4px) var(--glass-fx); backdrop-filter: var(--lens) blur(.4px) var(--glass-fx) }
+/* inner sheen, plus light spreading from the touch point while pressed */
 .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
-  background: radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.22), transparent 55%), radial-gradient(80% 50% at 90% 120%, rgba(255,255,255,.08), transparent 60%) }
-html.lens .glass { -webkit-backdrop-filter: url(#lens-w) blur(.5px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(.5px) var(--glass-fx) }
-html.lens .glass.round { -webkit-backdrop-filter: url(#lens-r) var(--glass-fx); backdrop-filter: url(#lens-r) var(--glass-fx) }
-/* tinted (regular) glass: thick enough to carry text */
+  background:
+    radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255,255,255, calc(.32 * var(--lit))), transparent 65%),
+    radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.16), transparent 55%) }
+/* rim: a thin ring lit where the light source is (moves with the pointer, standing in for tilting the phone) */
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.3px; pointer-events: none;
+  background: conic-gradient(from var(--light), rgba(255,255,255,.95), rgba(255,255,255,.12) 16%, rgba(255,255,255,.06) 40%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.08) 62%, rgba(255,255,255,.12) 84%, rgba(255,255,255,.95));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude }
+/* regular glass: blurs and evens out the luminance behind it, thick enough to carry text */
 .glass.sheet { background: var(--sheet); -webkit-backdrop-filter: blur(7px) saturate(1.6); backdrop-filter: blur(7px) saturate(1.6) }
-html.lens .glass.sheet { -webkit-backdrop-filter: url(#lens-w) blur(5px) saturate(1.6); backdrop-filter: url(#lens-w) blur(5px) saturate(1.6) }
+html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(5px) saturate(1.6); backdrop-filter: var(--lens) blur(5px) saturate(1.6) }
 .glass.tint-p { background: color-mix(in srgb, var(--s-p) 85%, transparent) }
 .glass.tint-g { background: color-mix(in srgb, var(--s-g) 82%, transparent) }
-/* glass grows and brightens under the finger instead of shrinking */
-.glass:active { transform: scale(1.06); filter: brightness(1.18) }
+/* under the finger glass swells from where it is pressed and lights up from that point */
+.glass.pressed { transform: scale(1.05); --lit: 1; transition: transform .25s var(--spring), --lit .12s ease-out; transform-origin: var(--px, 50%) var(--py, 50%) }
+/* scroll edge effect: content fades and blurs where it runs under the floating controls */
+.edge { position: absolute; left: 0; right: 0; top: 0; height: 130px; z-index: -1; pointer-events: none;
+  background: linear-gradient(color-mix(in srgb, var(--night) 60%, transparent), transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent) }
 @media (prefers-reduced-transparency: reduce) {
-  .glass, html.lens .glass, html.lens .glass.round, html.lens .glass.sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+  .glass, html.lens .glass, html.lens .glass.sheet, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+  .edge { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
 }
-@media (prefers-reduced-motion: reduce) { .glass { transition: filter .2s ease-out } .glass:active { transform: none } }
+@media (prefers-reduced-motion: reduce) { .glass, .glass.pressed { transform: none } }
 
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
 :focus-visible { outline: 2px solid var(--main-hi); outline-offset: 3px }
@@ -97,7 +107,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3 }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
 .glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(2px) var(--glass-fx); backdrop-filter: blur(2px) var(--glass-fx) }
-html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(1px) var(--glass-fx); backdrop-filter: var(--lens) blur(1px) var(--glass-fx) }
 .pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
 .pill .av { width: 40px; height: 40px }
 @media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
@@ -105,32 +115,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <!-- Liquid glass lens: displace the backdrop along a red/blue ramp at the rim (flat grey middle = no bend),
-         once per colour channel at slightly different strengths for a little dispersion. -->
-    <filter id="lens-w" x="0" y="0" width="1" height="1" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-      <feImage href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20400%20400%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27r%27%20x1%3D%271%27%20x2%3D%270%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23000%27/%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23f00%27/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%27b%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23000%27/%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2300f%27/%3E%3C/linearGradient%3E%3Cfilter%20id%3D%27f%27%3E%3CfeGaussianBlur%20stdDeviation%3D%2722%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20width%3D%27400%27%20height%3D%27400%27%20fill%3D%27url%28%23r%29%27/%3E%3Crect%20width%3D%27400%27%20height%3D%27400%27%20fill%3D%27url%28%23b%29%27%20style%3D%27mix-blend-mode%3Ascreen%27/%3E%3Crect%20x%3D%2734%27%20y%3D%2734%27%20width%3D%27332%27%20height%3D%27332%27%20rx%3D%2774%27%20fill%3D%27%23808080%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="m"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.075" xChannelSelector="R" yChannelSelector="B" result="dr"/>
-      <feColorMatrix in="dr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.07" xChannelSelector="R" yChannelSelector="B" result="dg"/>
-      <feColorMatrix in="dg" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.065" xChannelSelector="R" yChannelSelector="B" result="db"/>
-      <feColorMatrix in="db" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
-      <feBlend in="r" in2="g" mode="screen" result="rg"/>
-      <feBlend in="rg" in2="b" mode="screen"/>
-    </filter>
-    <filter id="lens-r" x="0" y="0" width="1" height="1" filterUnits="objectBoundingBox" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
-      <feImage href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20400%20400%27%20preserveAspectRatio%3D%27none%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27r%27%20x1%3D%271%27%20x2%3D%270%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23000%27/%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23f00%27/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%27b%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23000%27/%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2300f%27/%3E%3C/linearGradient%3E%3Cfilter%20id%3D%27f%27%3E%3CfeGaussianBlur%20stdDeviation%3D%2722%27/%3E%3C/filter%3E%3C/defs%3E%3Crect%20width%3D%27400%27%20height%3D%27400%27%20fill%3D%27url%28%23r%29%27/%3E%3Crect%20width%3D%27400%27%20height%3D%27400%27%20fill%3D%27url%28%23b%29%27%20style%3D%27mix-blend-mode%3Ascreen%27/%3E%3Crect%20x%3D%2734%27%20y%3D%2734%27%20width%3D%27332%27%20height%3D%27332%27%20rx%3D%27166%27%20fill%3D%27%23808080%27%20filter%3D%27url%28%23f%29%27/%3E%3C/svg%3E" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="m"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.22" xChannelSelector="R" yChannelSelector="B" result="dr"/>
-      <feColorMatrix in="dr" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.2" xChannelSelector="R" yChannelSelector="B" result="dg"/>
-      <feColorMatrix in="dg" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
-      <feDisplacementMap in="SourceGraphic" in2="m" scale="-.18" xChannelSelector="R" yChannelSelector="B" result="db"/>
-      <feColorMatrix in="db" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
-      <feBlend in="r" in2="g" mode="screen" result="rg"/>
-      <feBlend in="rg" in2="b" mode="screen"/>
-    </filter>
-  </defs>
+  <defs id="lens-defs"></defs>
   <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
   <symbol id="map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
   <symbol id="flag" viewBox="0 0 24 24"><path d="M5 21V4h12l-2 4 2 4H5"/></symbol>
@@ -193,6 +178,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
     <circle cx="108.2" cy="337.0" r="7" fill="var(--accent)" stroke="var(--night)" stroke-width="2.5"/>
     <circle cx="281.8" cy="120.0" r="6" fill="var(--ink)" stroke="var(--night)" stroke-width="2.5"/>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
   <div class="glass sheet sheet-b">
@@ -219,6 +205,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
     <circle cx="108.2" cy="337.0" r="16" fill="var(--accent)" opacity=".25"/>
     <circle cx="108.2" cy="337.0" r="7" fill="var(--accent)" stroke="var(--night)" stroke-width="2.5"/>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px"><span class="dot g"></span>±3 m</span></div>
   <div class="glass sheet sheet-b" style="padding-top:18px">
@@ -272,6 +259,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
     <path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="var(--s-g)" stroke-width="5"/>
     <path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--s-y)" stroke-width="5"/>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
   <div class="glass sheet sheet-b" style="padding-top:22px">
@@ -301,6 +289,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
       <path d="M245.4 231.3 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.6" stroke="var(--accent)"/><path d="M252.9 214.6 L252.9 214.5 L266.2 173.4 L266.5 172.7 L268.0 167.5" stroke="var(--accent)"/><path d="M268.0 167.5 L271.4 155.3 L281.8 120.0" stroke="var(--accent)"/>
     </g>
   </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
   <div class="glass sheet sheet-b" style="padding-top:20px">
@@ -327,6 +316,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
 <div class="ph">
   <div class="map" style="--map-img:var(--map-full)"></div>
   <svg class="route" viewBox="0 0 390 844" aria-hidden="true"><path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--main-hi)" stroke-width="4" opacity=".8"/></svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
   <div class="glass sheet" style="position:absolute;left:8px;right:8px;top:250px;bottom:100px;border-radius:40px;padding:20px">
     <div style="display:flex;gap:14px;align-items:center">
@@ -387,6 +377,94 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
   const start = performance.now();
   const tick = (now) => { draw((now - start) / 1000); requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
+})();
+</script>
+<script>
+// Liquid glass, built per element (inlined into src/glass.html at build time):
+//  - a displacement map sized to the element: inside a rim band the backdrop is pulled inward along the edge
+//    normal, strongest at the edge and fading to nothing (a convex edge profile), so corners bend correctly;
+//    three passes at slightly different strengths split the colours a little at the rim;
+//  - it materializes by ramping the bending up from zero;
+//  - the rim light follows the pointer; a press lights the glass from the touch point.
+(() => {
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const glass = [...document.querySelectorAll('.glass')];
+
+  glass.forEach((el) => {
+    el.addEventListener('pointerdown', (e) => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--px', `${((e.clientX - r.left) / r.width) * 100}%`);
+      el.style.setProperty('--py', `${((e.clientY - r.top) / r.height) * 100}%`);
+      el.classList.add('pressed');
+    });
+    for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) el.addEventListener(ev, () => el.classList.remove('pressed'));
+  });
+
+  addEventListener('pointermove', (e) => {
+    const a = Math.atan2(e.clientY - innerHeight / 2, e.clientX - innerWidth / 2) * 180 / Math.PI + 90;
+    glass.forEach((el) => el.style.setProperty('--light', `${a + 180}deg`));
+  }, { passive: true });
+
+  if (!root.classList.contains('lens')) return;
+  const defs = document.getElementById('lens-defs');
+  const maps = new Map();
+
+  function displacementMap(w, h, r, band) {
+    const key = `${w}x${h}x${r}x${band}`;
+    if (maps.has(key)) return maps.get(key);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(w, h), d = img.data;
+    const hx = w / 2 - r, hy = h / 2 - r;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const px = x + .5 - w / 2, py = y + .5 - h / 2;
+      const qx = Math.abs(px) - hx, qy = Math.abs(py) - hy;
+      // signed distance to the rounded rectangle (negative inside) and its outward normal
+      let dist, nx, ny;
+      if (qx > 0 && qy > 0) { const l = Math.hypot(qx, qy); dist = l - r; nx = qx / l; ny = qy / l; }
+      else if (qx > qy) { dist = qx - r; nx = 1; ny = 0; }
+      else { dist = qy - r; nx = 0; ny = 1; }
+      nx *= Math.sign(px) || 1; ny *= Math.sign(py) || 1;
+      const inside = -dist, i = (y * w + x) * 4;
+      let m = 0;
+      if (inside >= 0 && inside < band) { const t = 1 - inside / band; m = t * t * (3 - 2 * t) * t; } // eased, steepest at the edge
+      d[i] = 128 + nx * m * 127; d[i + 1] = 128 + ny * m * 127; d[i + 2] = 128; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    const url = c.toDataURL();
+    maps.set(key, url);
+    return url;
+  }
+
+  const ramps = [];
+  glass.forEach((el, n) => {
+    const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight);
+    if (!w || !h) return;
+    const r = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, w / 2, h / 2);
+    const round = Math.abs(w - h) < 2 && r >= w / 2 - 1;
+    const band = round ? w / 2 : Math.min(30, h / 2);
+    const k = round ? 30 : el.classList.contains('sheet') ? 46 : 42; // strongest pull, px
+    const id = `lens-${n}`;
+    const pass = (s, ch, out) =>
+      `<feDisplacementMap in="SourceGraphic" in2="m" scale="0" data-to="${(-2 * k * s).toFixed(1)}" xChannelSelector="R" yChannelSelector="G" result="d${out}"/>` +
+      `<feColorMatrix in="d${out}" type="matrix" values="${ch}" result="${out}"/>`;
+    defs.insertAdjacentHTML('beforeend',
+      `<filter id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">` +
+      `<feImage href="${displacementMap(w, h, Math.round(r), Math.round(band))}" x="0" y="0" width="${w}" height="${h}" result="m"/>` +
+      pass(1, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0', 'r') +
+      pass(.94, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0', 'g') +
+      pass(.88, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0', 'b') +
+      `<feBlend in="r" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b" mode="screen"/></filter>`);
+    el.style.setProperty('--lens', `url(#${id})`);
+    ramps.push(...defs.lastElementChild.querySelectorAll('feDisplacementMap'));
+  });
+
+  // materialize: the bending ramps in from nothing
+  const set = (f) => ramps.forEach((m) => m.setAttribute('scale', (m.dataset.to * f).toFixed(1)));
+  if (reduce) return set(1);
+  const t0 = performance.now();
+  const step = (now) => { const t = Math.min(1, (now - t0) / 700); set(1 - (1 - t) ** 3); if (t < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
 })();
 </script>
 </body>
