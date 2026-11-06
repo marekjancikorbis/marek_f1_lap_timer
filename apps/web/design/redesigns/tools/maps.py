@@ -146,18 +146,21 @@ def main():
     bearing = round((math.degrees(math.atan2(b[0] - a[0], (b[1] - a[1]) / math.cos(math.radians(b[1])))) + 360) % 360)
     s1, s2, s3a = cut(driven, [0.4630, 0.9259])   # sector boundaries at 1/3 and 2/3 of the whole route
     near = lambda line: [p for p in line if hav(p, b) < 700] or line[-2:]
-    feats = [
-        {'type': 'Feature', 'properties': {'stroke': c, 'stroke-width': 8, 'stroke-opacity': o},
-         'geometry': {'type': 'LineString', 'coordinates': [[round(x, 5), round(y, 5)] for x, y in near(line)]}}
-        for line, c, o in ((ahead, '#ffffff', .35), (s1, '#a970ff', 1), (s2, '#3be07a', 1), (s3a, '#ffffff', 1))
-    ]
-    gj = urllib.parse.quote(json.dumps({'type': 'FeatureCollection', 'features': feats}, separators=(',', ':')))
     # look slightly ahead so the car sits low on the screen
     look = cut(ahead, [0.06])[0][-1]
-    img = Image.open(io.BytesIO(get(
-        f'{API}/styles/v1/mapbox/dark-v11/static/geojson({gj})/{look[0]:.6f},{look[1]:.6f},16.2,{bearing},60'
-        f'/390x640@2x?attribution=false&logo=false&access_token={TOKEN}'))).convert('RGB')
-    img.save(OUT / 'drive-dark.png', optimize=True)
+    # style: (ahead, sector 1, sector 2, current sector) colours
+    for style, (c_ahead, c1, c2, c3) in {'dark-v11': ('#ffffff', '#a970ff', '#3be07a', '#ffffff'),
+                                         'light-v11': ('#304352', '#7a3fd0', '#1f7a45', '#304352')}.items():
+        feats = [
+            {'type': 'Feature', 'properties': {'stroke': c, 'stroke-width': 8, 'stroke-opacity': o},
+             'geometry': {'type': 'LineString', 'coordinates': [[round(x, 5), round(y, 5)] for x, y in near(line)]}}
+            for line, c, o in ((ahead, c_ahead, .35), (s1, c1, 1), (s2, c2, 1), (s3a, c3, 1))
+        ]
+        gj = urllib.parse.quote(json.dumps({'type': 'FeatureCollection', 'features': feats}, separators=(',', ':')))
+        img = Image.open(io.BytesIO(get(
+            f'{API}/styles/v1/mapbox/{style}/static/geojson({gj})/{look[0]:.6f},{look[1]:.6f},16.2,{bearing},60'
+            f'/390x640@2x?attribution=false&logo=false&access_token={TOKEN}'))).convert('RGB')
+        img.save(OUT / f'drive-{style[:-4]}.png', optimize=True)
 
     (OUT / 'maps.json').write_text(json.dumps(data, indent=1))
     print('route', len(pts), 'points; wrote', sorted(p.name for p in OUT.iterdir()))

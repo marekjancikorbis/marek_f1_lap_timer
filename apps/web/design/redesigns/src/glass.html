@@ -15,7 +15,6 @@
   {{palette}}
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
   --spring: cubic-bezier(.3, 1.5, .5, 1);
-  color-scheme: dark;
 }
 * { box-sizing: border-box; margin: 0; padding: 0 }
 html, body { background: var(--page); color: var(--ink); font: 15px/1.4 var(--font) }
@@ -40,7 +39,7 @@ figcaption { margin-top: 14px; font-size: 13px; color: var(--ink-2); text-align:
 
 /* ---------- liquid glass ---------- */
 .glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear);
-  -webkit-backdrop-filter: blur(10px) var(--glass-fx); backdrop-filter: blur(10px) var(--glass-fx);
+  -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx);
   box-shadow:
     inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.55),    /* light catching the top-left rim */
     inset -1px -1px 0 -.5px rgba(255,255,255,.22),      /* the far rim, dimmer */
@@ -50,11 +49,11 @@ figcaption { margin-top: 14px; font-size: 13px; color: var(--ink-2); text-align:
   transition: transform .35s var(--spring), filter .2s ease-out }
 .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
   background: radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.22), transparent 55%), radial-gradient(80% 50% at 90% 120%, rgba(255,255,255,.08), transparent 60%) }
-html.lens .glass { -webkit-backdrop-filter: url(#lens-w) blur(1.5px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(1.5px) var(--glass-fx) }
-html.lens .glass.round { -webkit-backdrop-filter: url(#lens-r) blur(1px) var(--glass-fx); backdrop-filter: url(#lens-r) blur(1px) var(--glass-fx) }
+html.lens .glass { -webkit-backdrop-filter: url(#lens-w) blur(.5px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(.5px) var(--glass-fx) }
+html.lens .glass.round { -webkit-backdrop-filter: url(#lens-r) var(--glass-fx); backdrop-filter: url(#lens-r) var(--glass-fx) }
 /* tinted (regular) glass: thick enough to carry text */
-.glass.sheet { background: var(--sheet); -webkit-backdrop-filter: blur(26px) saturate(1.8); backdrop-filter: blur(26px) saturate(1.8) }
-html.lens .glass.sheet { -webkit-backdrop-filter: url(#lens-w) blur(18px) saturate(1.8); backdrop-filter: url(#lens-w) blur(18px) saturate(1.8) }
+.glass.sheet { background: var(--sheet); -webkit-backdrop-filter: blur(7px) saturate(1.6); backdrop-filter: blur(7px) saturate(1.6) }
+html.lens .glass.sheet { -webkit-backdrop-filter: url(#lens-w) blur(5px) saturate(1.6); backdrop-filter: url(#lens-w) blur(5px) saturate(1.6) }
 .glass.tint-p { background: color-mix(in srgb, var(--s-p) 85%, transparent) }
 .glass.tint-g { background: color-mix(in srgb, var(--s-g) 82%, transparent) }
 /* glass grows and brightens under the finger instead of shrinking */
@@ -69,7 +68,7 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .ib { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center }
 svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round }
 .solid { height: 52px; border-radius: 26px; background: var(--main); color: var(--on-main); font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; transition: transform .12s ease-out; width: 100% }
-.solid.quiet { background: rgba(255,255,255,.1); color: var(--ink) }
+.solid.quiet { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink) }
 .solid:active { transform: scale(.97) }
 .chip { height: 36px; padding: 0 14px; border-radius: 18px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px }
 
@@ -82,33 +81,33 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 
 /* sheet: inset 8 px from a 48 px screen corner, so 40 px keeps the corners concentric */
 .sheet-b { position: absolute; left: 8px; right: 8px; bottom: 8px; border-radius: 40px; padding: 10px 20px 20px }
-.grab { width: 38px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.3); margin: 0 auto 14px }
+.grab { width: 38px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 30%, transparent); margin: 0 auto 14px }
 .rows > div { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 10px 0 }
-.rows > div + div { border-top: 1px solid rgba(255,255,255,.08) }
+.rows > div + div { border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent) }
 .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #10131c }
 
 /* tab bar: tabs in one capsule, Drive in its own circle, like the separate search button */
 .tabbar { position: absolute; left: 20px; right: 20px; bottom: 24px; display: flex; gap: 10px; align-items: center }
 .tabs { flex: 1; height: 62px; border-radius: 31px; display: grid; grid-template-columns: repeat(4, 1fr); padding: 4px }
 .tab { display: grid; place-items: center; border-radius: 27px; color: var(--ink-2) }
-.tab.on { color: var(--main-hi); background: rgba(255,255,255,.1) }
+.tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
-/* ---------- home: drifting gradient shape ---------- */
-.aura { position: absolute; inset: 0; z-index: -3; overflow: hidden }
-.aura i { position: absolute; width: 360px; height: 360px; border-radius: 50%; filter: blur(50px); opacity: .75 }
-.aura .a { left: -90px; top: 90px; background: var(--blob-a); animation: bloom-a 38s ease-in-out infinite alternate }
-.aura .b { right: -120px; top: 420px; background: var(--blob-b); animation: bloom-b 46s ease-in-out infinite alternate }
-.ribbon { position: absolute; left: -15px; top: 60px; width: 420px; height: 615px; z-index: -2; animation: sway 30s ease-in-out infinite alternate; will-change: transform }
-@keyframes bloom-a { to { transform: translate(120px, 160px) scale(1.15) } }
-@keyframes bloom-b { to { transform: translate(-140px, -120px) scale(.9) } }
-@keyframes sway { from { transform: translate(-18px, 8px) rotate(-7deg) } to { transform: translate(24px, 40px) rotate(8deg) scale(1.06) } }
+/* ---------- home: a soft gradient blob that slowly changes shape ---------- */
+.blob { position: absolute; inset: 0; z-index: -3; overflow: hidden }
+.blob i { position: absolute; left: 34px; top: 140px; width: 330px; height: 350px; background: linear-gradient(150deg, var(--blob-a), var(--blob-b));
+  border-radius: 58% 42% 50% 50% / 46% 54% 46% 54%; filter: blur(12px); animation: morph 26s ease-in-out infinite alternate; will-change: transform, border-radius }
+.blob i + i { left: -70px; top: 480px; width: 280px; height: 280px; opacity: .75; background: linear-gradient(210deg, var(--blob-b), transparent 75%); animation-duration: 34s; animation-direction: alternate-reverse }
+@keyframes morph {
+  0% { border-radius: 58% 42% 50% 50% / 46% 54% 46% 54%; transform: translate(0, 0) rotate(0) }
+  50% { border-radius: 40% 60% 62% 38% / 55% 40% 60% 45%; transform: translate(-22px, 46px) rotate(24deg) }
+  100% { border-radius: 52% 48% 35% 65% / 40% 62% 38% 60%; transform: translate(24px, -12px) rotate(-14deg) scale(1.06) } }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
-.glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(5px) var(--glass-fx); backdrop-filter: blur(5px) var(--glass-fx) }
-html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(4px) var(--glass-fx) }
+.glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(2px) var(--glass-fx); backdrop-filter: blur(2px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx) }
 .pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
 .pill .av { width: 40px; height: 40px }
-@media (prefers-reduced-motion: reduce) { .aura i, .ribbon { animation: none } }
+@media (prefers-reduced-motion: reduce) { .blob i { animation: none } }
 @media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
 </style>
 </head>
@@ -160,14 +159,10 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
 
 <div class="wall">
 
-<!-- HOME: a gradient shape (the route itself, as a ribbon) drifts behind the glass -->
+<!-- HOME: a soft gradient blob slowly changes shape behind the glass -->
 <figure>
 <div class="ph">
-  <div class="aura" aria-hidden="true"><i class="a"></i><i class="b"></i></div>
-  <svg class="ribbon" viewBox="110 18 146 214" aria-hidden="true">
-    <defs><linearGradient id="rib" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--ribbon-b)"/><stop offset=".55" stop-color="var(--ribbon-a)"/><stop offset="1" stop-color="var(--ribbon-b)"/></linearGradient></defs>
-    <path d="{{card.all}}" fill="none" stroke="url(#rib)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
+  <div class="blob" aria-hidden="true"><i></i><i></i></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:flex-end"><button class="glass round ib" aria-label="Notifications"><svg class="i ndot"><use href="#bell"/></svg></button></div>
   <div class="glass lift" style="position:absolute;left:16px;right:16px;top:300px;border-radius:36px;padding:22px 20px 20px">
@@ -190,7 +185,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
 <!-- ROUTE -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/full-dark.png)"></div>
+  <div class="map" style="--map-img:var(--map-full)"></div>
   <svg class="route" viewBox="0 0 390 844" aria-label="Route map, three sectors">
     <path d="{{full.all}}" stroke="var(--night)" stroke-width="10" opacity=".6"/>
     <path d="{{full.s1}}" stroke="var(--s-p)" stroke-width="5"/>
@@ -219,7 +214,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
 <!-- READY -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/full-dark.png)"></div>
+  <div class="map" style="--map-img:var(--map-full)"></div>
   <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
     <path d="{{full.all}}" stroke="var(--main-hi)" stroke-width="4" opacity=".7"/>
     <circle cx="{{full.start.0}}" cy="{{full.start.1}}" r="16" fill="var(--accent)" opacity=".25"/>
@@ -230,15 +225,15 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
   <div class="glass sheet sheet-b" style="padding-top:18px">
     <div class="lbl">Race against</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-      <div style="padding:14px;border-radius:22px;background:rgba(255,255,255,.07)"><div class="lbl">Record</div><div class="t acc" style="font-size:26px;margin-top:6px">2:11.47</div></div>
+      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Record</div><div class="t acc" style="font-size:26px;margin-top:6px">2:11.47</div></div>
       <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--main) 35%,transparent);box-shadow:inset 0 0 0 2px var(--main-hi)"><div class="lbl" style="color:var(--ink)">Your best</div><div class="t" style="font-size:26px;margin-top:6px">2:14.83</div></div>
-      <div style="padding:14px;border-radius:22px;background:rgba(255,255,255,.07)"><div class="lbl">Ideal</div><div class="t" style="font-size:26px;margin-top:6px">2:13.91</div></div>
-      <div style="padding:14px;border-radius:22px;background:rgba(255,255,255,.07)"><div class="lbl">Clock only</div><div class="t" style="font-size:26px;margin-top:6px;color:var(--ink-2)">—</div></div>
+      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Ideal</div><div class="t" style="font-size:26px;margin-top:6px">2:13.91</div></div>
+      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Clock only</div><div class="t" style="font-size:26px;margin-top:6px;color:var(--ink-2)">—</div></div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding:4px 6px 4px 16px;border-radius:26px;background:rgba(255,255,255,.07)">
+    <div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding:4px 6px 4px 16px;border-radius:26px;background:color-mix(in srgb,var(--ink) 8%,transparent)">
       <span class="lbl" style="flex:1">Lights</span>
       <button class="ib" aria-label="Shorter">−</button><b class="t" style="font-size:22px;width:36px;text-align:center">5s</b><button class="ib" aria-label="Longer">+</button>
-      <span style="width:1px;height:26px;background:rgba(255,255,255,.14)"></span>
+      <span style="width:1px;height:26px;background:color-mix(in srgb,var(--ink) 16%,transparent)"></span>
       <button class="ib" aria-label="Voice on" style="color:var(--main-hi)"><svg class="i"><use href="#vol"/></svg></button>
     </div>
     <div style="display:grid;justify-items:center;margin-top:18px"><button class="solid" style="width:112px;height:112px;border-radius:50%;font-size:21px">Start</button></div>
@@ -250,7 +245,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
 <!-- DRIVE -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/drive-dark.png);top:204px;-webkit-mask-image:linear-gradient(transparent,#000 22%);mask-image:linear-gradient(transparent,#000 22%)"></div>
+  <div class="map" style="--map-img:var(--map-drive);top:204px;-webkit-mask-image:linear-gradient(transparent,#000 22%);mask-image:linear-gradient(transparent,#000 22%)"></div>
   <span style="position:absolute;left:203px;top:554px;width:24px;height:24px;border-radius:50%;background:var(--main);box-shadow:0 0 0 4px var(--ink),0 6px 14px rgba(0,0,0,.5);z-index:-1"></span>
   <div class="sb">9:41</div>
   <div style="padding:4px 20px;display:flex;justify-content:space-between;align-items:center"><span class="glass chip" style="height:40px;border-radius:20px"><span class="dot g"></span>±3 m</span><span class="t" style="font-size:24px">118<span class="lbl"> km/h</span></span></div>
@@ -271,7 +266,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
 <!-- RESULT -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/full-dark.png)"></div>
+  <div class="map" style="--map-img:var(--map-full)"></div>
   <svg class="route" viewBox="0 0 390 844" aria-label="Your lap, three sectors">
     <path d="{{full.all}}" stroke="var(--night)" stroke-width="10" opacity=".6"/>
     <path d="{{full.s1}}" stroke="var(--s-p)" stroke-width="5"/>
@@ -297,7 +292,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
 <!-- COMPARE -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/full-dark.png)"></div>
+  <div class="map" style="--map-img:var(--map-full)"></div>
   <svg class="route" viewBox="0 0 390 844" aria-label="Map coloured by who was faster">
     <path d="{{full.all}}" stroke="var(--night)" stroke-width="10" opacity=".6"/>
     <g stroke-width="5">
@@ -316,8 +311,8 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
       <div style="text-align:right"><div class="lbl" style="display:flex;gap:6px;align-items:center;justify-content:flex-end">petra_r<i class="dot" style="background:var(--accent)"></i></div><div class="t" style="font-size:26px;margin-top:6px">2:11.47</div></div>
     </div>
     <svg viewBox="0 0 334 110" style="width:100%;display:block;margin-top:16px" aria-label="Gap over the lap">
-      <line x1="0" y1="20" x2="334" y2="20" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 5"/>
-      <line x1="111" y1="0" x2="111" y2="110" stroke="rgba(255,255,255,.08)"/><line x1="222" y1="0" x2="222" y2="110" stroke="rgba(255,255,255,.08)"/>
+      <line x1="0" y1="20" x2="334" y2="20" stroke="var(--ink)" stroke-opacity=".2" stroke-dasharray="3 5"/>
+      <line x1="111" y1="0" x2="111" y2="110" stroke="var(--ink)" stroke-opacity=".1"/><line x1="222" y1="0" x2="222" y2="110" stroke="var(--ink)" stroke-opacity=".1"/>
       <path d="M0 20 C30 18 50 26 80 36 S120 40 150 54 S200 68 230 62 S290 92 334 98 L334 20Z" fill="var(--accent)" fill-opacity=".16"/>
       <path d="M0 20 C30 18 50 26 80 36 S120 40 150 54 S200 68 230 62 S290 92 334 98" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
     </svg>
@@ -331,7 +326,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--gl
 <!-- PROFILE (scrolled: the tab bar has shrunk to the current tab and Drive) -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/full-dark.png)"></div>
+  <div class="map" style="--map-img:var(--map-full)"></div>
   <svg class="route" viewBox="0 0 390 844" aria-hidden="true"><path d="{{full.all}}" stroke="var(--main-hi)" stroke-width="4" opacity=".8"/></svg>
   <div class="sb">9:41</div>
   <div class="glass sheet" style="position:absolute;left:8px;right:8px;top:250px;bottom:100px;border-radius:40px;padding:20px">
