@@ -1,42 +1,56 @@
 <title>Purple Sector Redesigns</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Five directions, one row each: the palette band is the preview, the name is the link. */
+/* Three directions, two colourways each: the palette band is the preview, the name is the link. */
 :root { --bg: #eceef3; --fg: #141826; --mute: #4c5468; --rule: #d4d8e2; --card: #f7f8fb;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0d0f15; --fg: #eef0f6; --mute: #a2a9bb; --rule: #252a36; --card: #151821; color-scheme: dark } }
 :root[data-theme="dark"] { --bg: #0d0f15; --fg: #eef0f6; --mute: #a2a9bb; --rule: #252a36; --card: #151821; color-scheme: dark }
 body { background: var(--bg); color: var(--fg); font: 16px/1.45 var(--font); margin: 0 }
-main { max-width: 880px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+main { max-width: 920px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
 h1 { font-size: clamp(30px, 6vw, 44px); letter-spacing: -.03em; line-height: 1.05; margin: 0; text-wrap: balance }
-.lede { color: var(--mute); margin: 10px 0 32px }
-ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px }
-a.d { display: grid; grid-template-columns: 180px 1fr auto; gap: 20px; align-items: center; padding: 14px; border-radius: 22px; background: var(--card); color: inherit; text-decoration: none;
-  box-shadow: inset 0 0 0 1px var(--rule); transition: transform .12s ease-out }
-a.d:active { transform: scale(.985) }
+.lede { color: var(--mute); margin: 10px 0 32px; max-width: 62ch }
+section { display: grid; gap: 10px; margin-top: 26px }
+h2 { font-size: 22px; letter-spacing: -.02em; margin: 0 }
+.idea { color: var(--mute); font-size: 15px; margin: 0 }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+a.d { display: grid; gap: 10px; padding: 12px; border-radius: 22px; background: var(--card); color: inherit; text-decoration: none; box-shadow: inset 0 0 0 1px var(--rule); transition: transform .12s ease-out }
 a.d:hover { box-shadow: inset 0 0 0 2px var(--mute) }
+a.d:active { transform: scale(.985) }
 a.d:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px }
-.band { height: 96px; border-radius: 14px; display: flex; overflow: hidden }
-.band i { display: block }
-.name { font-size: 22px; font-weight: 700; letter-spacing: -.02em }
-.idea { color: var(--mute); font-size: 15px; margin-top: 2px; min-width: 0 }
-.go { font-size: 22px; color: var(--mute); padding-right: 8px }
-@media (max-width: 560px) { a.d { grid-template-columns: 1fr auto } .band { grid-column: 1 / -1; height: 64px } }
+.band { height: 84px; border-radius: 14px; display: flex; overflow: hidden }
+.name { font-weight: 650; display: flex; justify-content: space-between; padding: 0 4px }
+@media (max-width: 520px) { .pair { grid-template-columns: 1fr } }
 @media (prefers-reduced-motion: reduce) { a.d { transition: none } }
 </style>
 <main>
-  <h1>Purple Sector, five ways</h1>
-  <p class="lede">Each opens seven screens: Home, Route, Ready, Drive, Result, Compare, Profile. Same sample laps in all five.</p>
-  <ol>
-    <li><a class="d" href="glass.html"><span class="band"><i style="flex:3;background:#07080d"></i><i style="flex:2;background:#2f6bff"></i><i style="flex:1;background:#ffa45b"></i></span>
-      <span><span class="name">Glass</span><div class="idea">Liquid glass floating over the map. Midnight, electric blue, cantaloupe.</div></span><span class="go">→</span></a></li>
-    <li><a class="d" href="sleigh.html"><span class="band"><i style="flex:3;background:#013f60"></i><i style="flex:2;background:#e22c2c"></i><i style="flex:1;background:#f3efe6"></i></span>
-      <span><span class="name">Sleigh</span><div class="idea">Bento tiles on grained winter blue. One red tile is the next thing to do.</div></span><span class="go">→</span></a></li>
-    <li><a class="d" href="quiet.html"><span class="band"><i style="flex:3;background:#d7d2cc"></i><i style="flex:2;background:#304352"></i></span>
-      <span><span class="name">Quiet</span><div class="idea">Two colours, one number per screen, hairlines only. Cloud.</div></span><span class="go">→</span></a></li>
-    <li><a class="d" href="chrome.html"><span class="band"><i style="flex:3;background:#090f22"></i><i style="flex:2;background:#b9a6ff"></i><i style="flex:1;background:#c8f53a"></i></span>
-      <span><span class="name">Chrome</span><div class="idea">Timing tower. Chrome type, pixel accents. Cobalt black, lavender, lime.</div></span><span class="go">→</span></a></li>
-    <li><a class="d" href="pop.html"><span class="band"><i style="flex:3;background:#8fd3f7"></i><i style="flex:2;background:#fcfeff"></i><i style="flex:1;background:#f2307d"></i></span>
-      <span><span class="name">Pop</span><div class="idea">Chunky cards, swipe-through laps, stickers for records. Sky, white, hot pink.</div></span><span class="go">→</span></a></li>
-  </ol>
+  <h1>Purple Sector redesigns</h1>
+  <p class="lede">Three directions, each in two colourways. Seven screens per page, the same sample laps throughout, and the route is the real Ecce Homo road out of Šternberk.</p>
+
+  <section>
+    <h2>Glass</h2>
+    <p class="idea">The map is always the content. Liquid glass is only the layer of controls floating above it, and its rim bends the map underneath.</p>
+    <div class="pair">
+      <a class="d" href="glass.html"><span class="band"><i style="flex:3;background:#07080d"></i><i style="flex:2;background:#2f6bff"></i><i style="flex:1;background:#ffa45b"></i></span><span class="name">Midnight <span>→</span></span></a>
+      <a class="d" href="glass-crimson.html"><span class="band"><i style="flex:3;background:#c3142f"></i><i style="flex:2;background:#6e0a1d"></i><i style="flex:1;background:#fff1a6"></i></span><span class="name">Crimson <span>→</span></span></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sleigh</h2>
+    <p class="idea">Bento tiles on grain, one fact per tile. A single colour tile is always the next thing to do.</p>
+    <div class="pair">
+      <a class="d" href="sleigh.html"><span class="band"><i style="flex:3;background:#013f60"></i><i style="flex:2;background:#e22c2c"></i><i style="flex:1;background:#f3efe6"></i></span><span class="name">Winter sleigh <span>→</span></span></a>
+      <a class="d" href="sleigh-forest.html"><span class="band"><i style="flex:3;background:#0e4d3a"></i><i style="flex:2;background:#9be15d"></i></span><span class="name">Forest <span>→</span></span></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Quiet</h2>
+    <p class="idea">Two colours, one number per screen, hairlines instead of boxes.</p>
+    <div class="pair">
+      <a class="d" href="quiet.html"><span class="band"><i style="flex:3;background:#d7d2cc"></i><i style="flex:2;background:#304352"></i></span><span class="name">Cloud <span>→</span></span></a>
+      <a class="d" href="quiet-pine.html"><span class="band"><i style="flex:3;background:#0b303c"></i><i style="flex:2;background:#cdece2"></i></span><span class="name">Frozen pine <span>→</span></span></a>
+    </div>
+  </section>
 </main>

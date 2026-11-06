@@ -1,0 +1,94 @@
+"""Build the redesign mockups: src/<style>.html + a palette -> <page>.html, with real map paths filled in.
+
+    python -X utf8 apps/web/design/redesigns/tools/build.py
+
+Placeholders in src/*.html: {{palette}} (CSS custom properties), {{name}}, {{swatches}},
+{{lens.wide}} / {{lens.round}} (displacement maps for the liquid glass filter),
+and map keys from maps/maps.json such as {{full.s1}} or {{card.start.0}}.
+"""
+import json, pathlib, re, urllib.parse
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+MAPS = json.loads((ROOT / 'maps' / 'maps.json').read_text())
+
+SECTORS = {'s-p': '#a970ff', 's-g': '#3be07a', 's-y': '#ffd43b'}
+
+PAGES = {
+    'glass': ('glass', 'Glass', {
+        'page': '#050609', 'ring': '#14161d', 'night': '#07080d',
+        'main': '#2f6bff', 'main-hi': '#8fb0ff', 'on-main': '#f4f7ff',
+        'accent': '#ffa45b', 'ink': '#f2f5ff', 'ink-2': 'rgba(242, 245, 255, .74)',
+        'sheet': 'rgba(12, 16, 30, .62)', 'clear': 'rgba(255, 255, 255, .05)', 'glass-fx': 'saturate(1.9) brightness(1.1)',
+        'map-filter': 'grayscale(1) brightness(1.2) contrast(1.1)', 'map-tint': '#1c2747', 'map-blend': 'color',
+        **SECTORS}, ['#07080d', '#2f6bff', '#ffa45b']),
+    'glass-crimson': ('glass', 'Glass · Crimson', {
+        'page': '#2a030b', 'ring': '#1d0207', 'night': '#5a0716',
+        'main': '#fff1a6', 'main-hi': '#fff4f2', 'on-main': '#5a0716',
+        'accent': '#fff1a6', 'ink': '#fff4f2', 'ink-2': 'rgba(255, 244, 242, .78)',
+        'sheet': 'rgba(70, 6, 18, .6)', 'clear': 'rgba(90, 7, 22, .18)', 'glass-fx': 'saturate(1.15) brightness(.92)',
+        'map-filter': 'grayscale(1) brightness(1.7) contrast(1.05)', 'map-tint': '#c3142f', 'map-blend': 'color',
+        **SECTORS}, ['#c3142f', '#6e0a1d', '#fff1a6']),
+    'sleigh': ('sleigh', 'Sleigh', {
+        'page': '#00263a', 'ring': '#0d1a22', 'sea': '#013f60', 'tile': '#0a4c71', 'deep': '#012f48',
+        'red': '#e22c2c', 'on-red': '#f3efe6', 'red-ink': '#c41f1f', 'snow': '#f3efe6', 'snow-2': 'rgba(243, 239, 230, .8)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#01507a', 'map-blend': 'color',
+        's-p': '#b884ff', 's-g': '#52e08c', 's-y': '#ffd43b'}, ['#013f60', '#e22c2c', '#f3efe6']),
+    'sleigh-forest': ('sleigh', 'Sleigh · Forest', {
+        'page': '#06271d', 'ring': '#04140f', 'sea': '#0e4d3a', 'tile': '#175f49', 'deep': '#093a2b',
+        'red': '#9be15d', 'on-red': '#0b2f22', 'red-ink': '#0e4d3a', 'snow': '#eef6e7', 'snow-2': 'rgba(238, 246, 231, .8)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#0f6b4f', 'map-blend': 'color',
+        # sector green moves to mint so it never reads as the lime action colour
+        's-p': '#c29bff', 's-g': '#45e6c4', 's-y': '#ffd43b'}, ['#0e4d3a', '#9be15d']),
+    'quiet': ('quiet', 'Quiet', {
+        'page': '#cdc8c1', 'ring': '#2a3440', 'cloud': '#d7d2cc', 'slate': '#304352',
+        'slate-2': 'rgba(48, 67, 82, .82)', 'hair': 'rgba(48, 67, 82, .2)',
+        'cloud-2': 'rgba(215, 210, 204, .85)', 'cloud-hair': 'rgba(215, 210, 204, .25)',
+        's-p': '#7a3fd0', 's-g': '#1f7a45', 's-y': '#b88a00', 'i-p': '#a77cf0', 'i-g': '#5fd18f',
+        'map-card': 'url(maps/card-light.png)', 'map-filter': 'grayscale(1) contrast(2.2) brightness(.92)', 'map-tint': '#d7d2cc', 'map-blend': 'multiply'},
+        ['#d7d2cc', '#304352']),
+    'quiet-pine': ('quiet', 'Quiet · Frozen Pine', {
+        'page': '#08262f', 'ring': '#04141a', 'cloud': '#0b303c', 'slate': '#cdece2',
+        'slate-2': 'rgba(205, 236, 226, .8)', 'hair': 'rgba(205, 236, 226, .2)',
+        'cloud-2': 'rgba(11, 48, 60, .85)', 'cloud-hair': 'rgba(11, 48, 60, .25)',
+        's-p': '#b892ff', 's-g': '#5fe0a0', 's-y': '#ffd24a', 'i-p': '#6a2fc0', 'i-g': '#17703f',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#0f4a5c', 'map-blend': 'color'},
+        ['#0b303c', '#cdece2']),
+}
+
+
+def lens(rx_frac):
+    """Displacement map: red ramps along x, blue along y, neutral grey in the middle so only the rim bends."""
+    svg = (f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' preserveAspectRatio='none'>"
+           "<defs><linearGradient id='r' x1='1' x2='0'><stop offset='0' stop-color='#000'/><stop offset='1' stop-color='#f00'/></linearGradient>"
+           "<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#000'/><stop offset='1' stop-color='#00f'/></linearGradient>"
+           "<filter id='f'><feGaussianBlur stdDeviation='22'/></filter></defs>"
+           "<rect width='400' height='400' fill='url(#r)'/>"
+           "<rect width='400' height='400' fill='url(#b)' style='mix-blend-mode:screen'/>"
+           f"<rect x='34' y='34' width='332' height='332' rx='{int(166 * rx_frac)}' fill='#808080' filter='url(#f)'/></svg>")
+    return 'data:image/svg+xml,' + urllib.parse.quote(svg)
+
+
+def lookup(key):
+    if key == 'lens.wide':
+        return lens(.45)
+    if key == 'lens.round':
+        return lens(1)
+    v = MAPS
+    for part in key.split('.'):
+        v = v[int(part)] if isinstance(v, list) else v[part]
+    return str(v)
+
+
+def main():
+    for out, (src, name, palette, swatches) in PAGES.items():
+        html = (ROOT / 'src' / f'{src}.html').read_text()
+        css = ' '.join(f'--{k}: {v};' for k, v in palette.items())
+        sw = ''.join(f'<i style="background:{c}"></i>' for c in swatches)
+        html = html.replace('{{palette}}', css).replace('{{name}}', name).replace('{{swatches}}', sw)
+        html = re.sub(r'\{\{([\w.]+)\}\}', lambda m: lookup(m.group(1)), html)
+        (ROOT / f'{out}.html').write_text(html)
+        print('wrote', out + '.html')
+
+
+if __name__ == '__main__':
+    main()

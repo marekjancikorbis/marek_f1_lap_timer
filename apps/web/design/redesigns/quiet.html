@@ -10,16 +10,12 @@
 <style>
 /* Quiet: two colours, one number per screen, hairlines instead of boxes. Sector colour appears only as small marks. */
 :root {
-  --cloud: #d7d2cc;      /* ground */
-  --slate: #304352;      /* everything else */
-  --slate-2: rgba(48, 67, 82, .82);
-  --hair: rgba(48, 67, 82, .2);
-  --s-p: #7a3fd0; --s-g: #1f7a45; --s-y: #b88a00;   /* sector marks, deepened to read on cloud */
+  --page: #cdc8c1; --ring: #2a3440; --cloud: #d7d2cc; --slate: #304352; --slate-2: rgba(48, 67, 82, .82); --hair: rgba(48, 67, 82, .2); --cloud-2: rgba(215, 210, 204, .85); --cloud-hair: rgba(215, 210, 204, .25); --s-p: #7a3fd0; --s-g: #1f7a45; --s-y: #b88a00; --i-p: #a77cf0; --i-g: #5fd18f; --map-card: url(maps/card-light.png); --map-filter: grayscale(1) contrast(2.2) brightness(.92); --map-tint: #d7d2cc; --map-blend: multiply;
   --font: "Geist", system-ui, sans-serif;
   --mono: "Geist Mono", ui-monospace, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0 }
-html, body { background: #cdc8c1; color: var(--slate); font: 15px/1.45 var(--font) }
+html, body { background: var(--page); color: var(--slate); font: 15px/1.45 var(--font) }
 body { padding-block: 24px 48px }
 header.top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
 header.top a { color: var(--slate-2); text-decoration: none; font-size: 14px }
@@ -30,7 +26,7 @@ figure { flex: none; scroll-snap-align: center }
 figcaption { margin-top: 14px; font-size: 13px; color: var(--slate-2); text-align: center }
 
 .ph { width: 390px; height: 844px; border-radius: 46px; overflow: hidden; position: relative; background: var(--cloud);
-  box-shadow: 0 0 0 9px #2a3440, 0 40px 80px -36px rgba(30, 40, 50, .55); font-variant-numeric: tabular-nums }
+  box-shadow: 0 0 0 9px var(--ring), 0 40px 80px -36px rgba(30, 40, 50, .55); font-variant-numeric: tabular-nums }
 .ph.ink { background: var(--slate); color: var(--cloud) }
 .sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 500 }
 .sb::after { content: ""; width: 66px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
@@ -38,7 +34,7 @@ figcaption { margin-top: 14px; font-size: 13px; color: var(--slate-2); text-alig
 .t { font-weight: 200; letter-spacing: -.055em; line-height: .9 }
 .m { font-family: var(--mono); font-weight: 400; letter-spacing: -.02em }
 .sm { font-size: 13px; color: var(--slate-2) }
-.ink .sm { color: rgba(215, 210, 204, .85) }
+.ink .sm { color: var(--cloud-2) }
 .mk { display: inline-flex; gap: 4px } .mk i { width: 6px; height: 6px; border-radius: 50% }
 .p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
 .list > div { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0; border-top: 1px solid var(--hair) }
@@ -55,6 +51,9 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .unread { position: absolute; top: 62px; right: 30px; width: 8px; height: 8px; border-radius: 50%; background: var(--slate) }
 .tg { display: inline-block; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--slate) }
 .tg.on { box-shadow: inset 0 0 0 7px var(--slate) }
+.map { isolation: isolate }
+.map::before { content: ""; position: absolute; inset: 0; background: var(--map-img) center / cover; filter: var(--map-filter); z-index: -2 }
+.map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: var(--map-blend); z-index: -1 }
 </style>
 </head>
 <body>
@@ -94,10 +93,12 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 <div class="ph">
   <div class="sb">9:41</div>
   <div class="pg" style="padding-top:18px"><span class="sm">←</span></div>
-  <svg viewBox="0 0 220 170" style="display:block;width:300px;margin:28px auto 0;fill:none;stroke:var(--slate);stroke-width:1.5;stroke-linecap:round" aria-label="Route map">
-    <path d="M18 152 C60 140 48 92 96 86 S150 122 170 72 S140 22 204 14"/>
-    <circle cx="18" cy="152" r="4" fill="var(--slate)"/><circle cx="204" cy="14" r="4" fill="var(--cloud)"/>
-  </svg>
+  <div class="map" style="position:relative;width:334px;height:228px;margin:20px auto 0;--map-img:var(--map-card);-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent)">
+    <svg viewBox="0 0 366 250" style="position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:var(--slate);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round" aria-label="Route map">
+      <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0"/>
+      <circle cx="126.9" cy="170.2" r="5" fill="var(--slate)"/><circle cx="239.1" cy="30.0" r="5" fill="var(--cloud)"/>
+    </svg>
+  </div>
   <div class="pg" style="margin-top:36px">
     <div style="display:flex;justify-content:space-between" class="sm"><span>Ecce Homo</span><span>3.42 km</span></div>
     <div class="t" style="font-size:80px;margin-top:14px">2:11.47</div>
@@ -141,9 +142,9 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
     <div class="t" style="font-size:172px;font-weight:300">−0.41</div>
   </div>
   <div class="pg" style="position:absolute;left:0;right:0;bottom:150px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-    <div><i style="display:block;height:4px;border-radius:2px;background:#a77cf0"></i><div class="m" style="margin-top:12px;font-size:18px">−0.28</div></div>
-    <div><i style="display:block;height:4px;border-radius:2px;background:#5fd18f"></i><div class="m" style="margin-top:12px;font-size:18px">−0.20</div></div>
-    <div><i style="display:block;height:4px;border-radius:2px;background:rgba(215,210,204,.25)"></i></div>
+    <div><i style="display:block;height:4px;border-radius:2px;background:var(--i-p)"></i><div class="m" style="margin-top:12px;font-size:18px">−0.28</div></div>
+    <div><i style="display:block;height:4px;border-radius:2px;background:var(--i-g)"></i><div class="m" style="margin-top:12px;font-size:18px">−0.20</div></div>
+    <div><i style="display:block;height:4px;border-radius:2px;background:var(--cloud-hair)"></i></div>
   </div>
   <div class="sm" style="position:absolute;left:0;right:0;bottom:44px;text-align:center">Hold to stop</div>
 </div>

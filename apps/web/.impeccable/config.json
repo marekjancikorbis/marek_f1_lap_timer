@@ -2,16 +2,6 @@
   "detector": {
     "ignoreRules": [],
     "ignoreFiles": [],
-    "ignoreValues": [
-      {
-        "rule": "gradient-text",
-        "value": "*",
-        "files": [
-          "design/redesigns/chrome.html"
-        ],
-        "createdAt": "2026-11-06T19:31:38.904Z",
-        "reason": "user asked for chrome type in the redesign brief (2026-11-06)"
-      }
-    ]
+    "ignoreValues": []
   }
 }

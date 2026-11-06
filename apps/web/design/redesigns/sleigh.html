@@ -10,59 +10,56 @@
 <style>
 /* Sleigh: every screen is a bento box of tiles, one fact per tile, on grained winter blue with one red tile that matters most. */
 :root {
-  --sea: #013f60;        /* winter sleigh blue: ground */
-  --tile: #0a4c71;       /* raised tile */
-  --deep: #012f48;       /* sunken tile */
-  --red: #e22c2c;        /* winter sleigh red: the one thing to do */
-  --snow: #f3efe6;       /* text, never pure white */
-  --snow-2: rgba(243, 239, 230, .8);
-  --s-p: #b884ff; --s-g: #52e08c; --s-y: #ffd43b;
+  --page: #00263a; --ring: #0d1a22; --sea: #013f60; --tile: #0a4c71; --deep: #012f48; --red: #e22c2c; --on-red: #f3efe6; --red-ink: #c41f1f; --snow: #f3efe6; --snow-2: rgba(243, 239, 230, .8); --map-card: url(maps/card-dark.png); --map-filter: grayscale(1) brightness(1.5); --map-tint: #01507a; --map-blend: color; --s-p: #b884ff; --s-g: #52e08c; --s-y: #ffd43b;
   --font: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 * { box-sizing: border-box; margin: 0; padding: 0 }
-html, body { background: #00263a; color: var(--snow); font: 15px/1.35 var(--font) }
+html, body { background: var(--page); color: var(--snow); font: 15px/1.35 var(--font) }
 body { padding-block: 24px 48px }
 header.top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
 header.top a { color: var(--snow-2); text-decoration: none; font-size: 14px }
 header.top h1 { font-size: 30px; font-weight: 900; font-stretch: 125%; text-transform: uppercase; letter-spacing: -.01em }
-.sw { display: flex; gap: 6px } .sw i { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(243,239,230,.25) }
+.sw { display: flex; gap: 6px } .sw i { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--snow) 25%, transparent) }
 .wall { display: flex; gap: 36px; overflow-x: auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 12px; scroll-snap-type: x proximity }
 figure { flex: none; scroll-snap-align: center }
 figcaption { margin-top: 14px; font-size: 13px; color: var(--snow-2); text-align: center; font-stretch: 112%; text-transform: uppercase; letter-spacing: .08em; font-weight: 700 }
 
 .ph { width: 390px; height: 844px; border-radius: 46px; overflow: hidden; position: relative; isolation: isolate; background: var(--sea);
-  box-shadow: 0 0 0 9px #0d1a22, 0 40px 80px -30px rgba(0, 10, 20, .8); font-variant-numeric: tabular-nums }
+  box-shadow: 0 0 0 9px var(--ring), 0 40px 80px -30px rgba(0, 10, 20, .8); font-variant-numeric: tabular-nums }
 .ph::after { content: ""; position: absolute; inset: 0; background: var(--grain); opacity: .13; mix-blend-mode: overlay; pointer-events: none; z-index: 50 }
 .sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 700 }
 .sb::after { content: ""; width: 66px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
 
 .bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px }
 .tl { background: var(--tile); border-radius: 22px; padding: 16px; position: relative; overflow: hidden; min-width: 0 }
-.tl.deep { background: var(--deep) } .tl.red { background: var(--red) } .tl.snow { background: var(--snow); color: var(--sea) }
+.tl.deep { background: var(--deep) } .tl.red { background: var(--red); color: var(--on-red) } .tl.snow { background: var(--snow); color: var(--sea) }
 .w2 { grid-column: span 2 }
 .k { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-stretch: 125%; color: var(--snow-2) }
-.tl.red .k { color: var(--snow); font-size: 12px } .tl.snow .k { color: var(--sea) }
+.tl.red .k { color: var(--on-red); font-size: 12px } .tl.snow .k { color: var(--sea) }
 .t { font-weight: 800; font-stretch: 70%; letter-spacing: -.01em; line-height: .9 }
 .wm { font-weight: 900; font-stretch: 125%; font-size: 16px; text-transform: uppercase; letter-spacing: .02em }
 .p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
 .st { display: flex; gap: 4px } .st i { flex: 1; height: 8px; border-radius: 2px }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
 .btn { height: 50px; border-radius: 16px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: transform .1s ease-out }
-.btn.snow { background: var(--snow); color: var(--red) } .btn.red { background: var(--red); color: var(--snow) } .btn.line { box-shadow: inset 0 0 0 2px rgba(243,239,230,.3) }
+.btn.snow { background: var(--snow); color: var(--red-ink) } .btn.red { background: var(--red); color: var(--on-red) } .btn.line { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--snow) 30%, transparent) }
 .btn:active, .tl:active, .ib:active { transform: scale(.97) }
 .ib { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
 svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round }
 :focus-visible { outline: 3px solid var(--snow); outline-offset: 2px }
 .tabs { position: absolute; left: 12px; right: 12px; bottom: 22px; height: 64px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px }
 .tab { border-radius: 18px; background: var(--deep); display: grid; place-items: center; color: var(--snow-2) }
-.tab.on { background: var(--snow); color: var(--sea) } .tab.go { background: var(--red); color: var(--snow) }
+.tab.on { background: var(--snow); color: var(--sea) } .tab.go { background: var(--red); color: var(--on-red) }
 .av { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--sea); flex: none }
 .top-r { display: flex; justify-content: space-between; align-items: center; padding: 4px 16px 12px }
 .heat { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px }
 .heat i { aspect-ratio: 1; border-radius: 3px; background: var(--deep) }
-.heat i.a { background: rgba(226,44,44,.45) } .heat i.b { background: var(--red) }
+.heat i.a { background: color-mix(in srgb, var(--red) 45%, transparent) } .heat i.b { background: var(--red) }
+.map { isolation: isolate }
+.map::before { content: ""; position: absolute; inset: 0; background: var(--map-img) center / cover; filter: var(--map-filter); z-index: -2 }
+.map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: var(--map-blend); z-index: -1 }
 </style>
 </head>
 <body>
@@ -76,7 +73,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
   <symbol id="share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 14v6h14v-6"/></symbol>
   <symbol id="vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
-  <symbol id="route" viewBox="0 0 220 170"><path d="M18 152 C60 140 48 92 96 86 S150 122 170 72 S140 22 204 14"/></symbol>
+  <symbol id="route" viewBox="0 0 366 250"><path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0"/></symbol>
 </svg>
 
 <header class="top">
@@ -98,7 +95,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
       <div class="t" style="font-size:86px;margin-top:10px">2:14.83</div>
       <div style="display:flex;gap:10px;align-items:end;margin-top:14px">
         <button class="btn snow" style="flex:1">Drive</button>
-        <svg viewBox="0 0 220 170" style="width:84px;stroke:var(--snow);fill:none;stroke-width:10;stroke-linecap:round;opacity:.9"><use href="#route"/></svg>
+        <svg viewBox="40 0 300 250" style="width:84px;stroke:var(--on-red);fill:none;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;opacity:.9"><use href="#route"/></svg>
       </div>
     </div>
     <div class="tl"><div class="k">Record</div><div class="t" style="font-size:38px;margin-top:12px">2:11.47</div><div class="k" style="margin-top:8px;letter-spacing:.04em">petra_r</div></div>
@@ -124,13 +121,14 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
   <div class="sb">9:41</div>
   <div class="top-r"><button class="ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
   <div class="bento">
-    <div class="tl deep w2" style="height:250px;padding:0">
-      <svg viewBox="0 0 220 170" style="position:absolute;inset:20px 30px;width:calc(100% - 60px);height:calc(100% - 40px);fill:none;stroke-width:6;stroke-linecap:round" aria-label="Route map">
-        <use href="#route" stroke="var(--tile)" stroke-width="16"/>
-        <path d="M18 152 C60 140 48 92 96 86 S150 122 170 72 S140 22 204 14" pathLength="3" stroke="var(--s-p)" stroke-dasharray="1 2"/>
-        <path d="M18 152 C60 140 48 92 96 86 S150 122 170 72 S140 22 204 14" pathLength="3" stroke="var(--s-g)" stroke-dasharray="1 2" stroke-dashoffset="-1" stroke-linecap="butt"/>
-        <path d="M18 152 C60 140 48 92 96 86 S150 122 170 72 S140 22 204 14" pathLength="3" stroke="var(--s-y)" stroke-dasharray="1 2" stroke-dashoffset="-2"/>
-        <circle cx="18" cy="152" r="8" fill="var(--red)" stroke="var(--snow)" stroke-width="3"/>
+    <div class="tl deep w2 map" style="height:250px;padding:0;--map-img:var(--map-card)">
+      <svg viewBox="0 0 366 250" style="position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round" aria-label="Route map">
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--deep)" stroke-width="13"/>
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L170.6 162.6" stroke="var(--s-p)" stroke-width="6"/>
+        <path d="M170.6 162.6 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L212.7 70.9" stroke="var(--s-g)" stroke-width="6"/>
+        <path d="M212.7 70.9 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--s-y)" stroke-width="6"/>
+        <circle cx="126.9" cy="170.2" r="8" fill="var(--red)" stroke="var(--snow)" stroke-width="3"/>
+        <circle cx="239.1" cy="30.0" r="6" fill="var(--snow)" stroke="var(--deep)" stroke-width="3"/>
       </svg>
       <div class="k" style="position:absolute;left:16px;top:16px;color:var(--snow)">Ecce Homo</div>
     </div>
@@ -141,7 +139,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px"><span class="t" style="font-size:52px">2:11.47</span><b>petra_r</b></div>
       <div style="display:grid;gap:8px;margin-top:14px;font-weight:600">
         <div style="display:flex;justify-content:space-between"><span>2 · Pavel N.</span><span class="t" style="font-size:20px">2:12.90</span></div>
-        <div style="display:flex;justify-content:space-between;color:var(--red)"><b>7 · You</b><span class="t" style="font-size:20px">2:14.83</span></div>
+        <div style="display:flex;justify-content:space-between;color:var(--red-ink)"><b>7 · You</b><span class="t" style="font-size:20px">2:14.83</span></div>
       </div>
     </div>
   </div>
@@ -226,8 +224,8 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
     <div class="tl"><div class="k">petra_r</div><div class="t" style="font-size:36px;margin-top:12px">2:11.47</div></div>
     <div class="tl deep w2" style="padding:16px 12px 12px">
       <svg viewBox="0 0 340 170" style="width:100%;display:block" aria-label="Gap over the lap">
-        <line x1="0" y1="70" x2="340" y2="70" stroke="rgba(243,239,230,.25)" stroke-dasharray="4 5"/>
-        <path d="M0 70 C30 68 50 76 80 86 S120 90 150 104 S200 118 230 112 S290 140 340 144 L340 70 Z" fill="rgba(226,44,44,.35)"/>
+        <line x1="0" y1="70" x2="340" y2="70" stroke="var(--snow)" stroke-opacity=".25" stroke-dasharray="4 5"/>
+        <path d="M0 70 C30 68 50 76 80 86 S120 90 150 104 S200 118 230 112 S290 140 340 144 L340 70 Z" fill="var(--red)" fill-opacity=".35"/>
         <path d="M0 70 C30 68 50 76 80 86 S120 90 150 104 S200 118 230 112 S290 140 340 144" fill="none" stroke="var(--red)" stroke-width="3"/>
         <text x="336" y="164" text-anchor="end" fill="var(--snow)" font-family="Archivo" font-weight="800" font-size="16">+2.15</text>
       </svg>
