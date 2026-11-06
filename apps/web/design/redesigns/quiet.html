@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Purple Sector · Quiet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@200..700&family=Geist+Mono:wght@300..500&display=swap">
+<style>
+/* Quiet: two colours, one number per screen, hairlines instead of boxes. Sector colour appears only as small marks. */
+:root {
+  --cloud: #d7d2cc;      /* ground */
+  --slate: #304352;      /* everything else */
+  --slate-2: rgba(48, 67, 82, .82);
+  --hair: rgba(48, 67, 82, .2);
+  --s-p: #7a3fd0; --s-g: #1f7a45; --s-y: #b88a00;   /* sector marks, deepened to read on cloud */
+  --font: "Geist", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { background: #cdc8c1; color: var(--slate); font: 15px/1.45 var(--font) }
+body { padding-block: 24px 48px }
+header.top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+header.top a { color: var(--slate-2); text-decoration: none; font-size: 14px }
+header.top h1 { font-size: 28px; font-weight: 300; letter-spacing: -.03em }
+.sw { display: flex; gap: 6px } .sw i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--hair) }
+.wall { display: flex; gap: 36px; overflow-x: auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 12px; scroll-snap-type: x proximity }
+figure { flex: none; scroll-snap-align: center }
+figcaption { margin-top: 14px; font-size: 13px; color: var(--slate-2); text-align: center }
+
+.ph { width: 390px; height: 844px; border-radius: 46px; overflow: hidden; position: relative; background: var(--cloud);
+  box-shadow: 0 0 0 9px #2a3440, 0 40px 80px -36px rgba(30, 40, 50, .55); font-variant-numeric: tabular-nums }
+.ph.ink { background: var(--slate); color: var(--cloud) }
+.sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 500 }
+.sb::after { content: ""; width: 66px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
+.pg { padding: 0 28px }
+.t { font-weight: 200; letter-spacing: -.055em; line-height: .9 }
+.m { font-family: var(--mono); font-weight: 400; letter-spacing: -.02em }
+.sm { font-size: 13px; color: var(--slate-2) }
+.ink .sm { color: rgba(215, 210, 204, .85) }
+.mk { display: inline-flex; gap: 4px } .mk i { width: 6px; height: 6px; border-radius: 50% }
+.p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
+.list > div { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0; border-top: 1px solid var(--hair) }
+.list > div:last-child { border-bottom: 1px solid var(--hair) }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
+.go { width: 76px; height: 76px; border-radius: 50%; background: var(--slate); color: var(--cloud); font-size: 15px; font-weight: 500; display: grid; place-items: center; transition: transform .12s ease-out }
+.go.big { width: 132px; height: 132px; font-size: 19px }
+.go:active, .tx:active { transform: scale(.96) }
+.tx { font-size: 16px; font-weight: 500; padding: 12px 0; border-bottom: 1px solid currentColor; transition: transform .12s ease-out }
+:focus-visible { outline: 1.5px solid var(--slate); outline-offset: 4px }
+.nav { position: absolute; left: 28px; right: 28px; bottom: 30px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: var(--slate-2) }
+.nav b { color: var(--slate); font-weight: 600 }
+.nav .d { width: 44px; height: 44px; border-radius: 50%; background: var(--slate) }
+.unread { position: absolute; top: 62px; right: 30px; width: 8px; height: 8px; border-radius: 50%; background: var(--slate) }
+.tg { display: inline-block; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--slate) }
+.tg.on { box-shadow: inset 0 0 0 7px var(--slate) }
+</style>
+</head>
+<body>
+<header class="top">
+  <a href="index.html">← All designs</a>
+  <h1>Quiet</h1>
+  <span class="sw"><i style="background:#d7d2cc"></i><i style="background:#304352"></i></span>
+</header>
+
+<div class="wall">
+
+<!-- HOME -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <span class="unread" aria-label="1 unread"></span>
+  <div class="pg" style="padding-top:70px">
+    <div class="sm">Ecce Homo</div>
+    <div class="t" style="font-size:96px;margin-top:10px">2:14.83</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:28px">
+      <span class="mk"><i class="g"></i><i class="y"></i><i class="g"></i></span>
+      <button class="go">Drive</button>
+    </div>
+  </div>
+  <div class="pg list" style="margin-top:70px">
+    <div><span>petra_r</span><span class="m" style="font-size:20px">2:11.47</span></div>
+    <div><span>jan.k</span><span class="m" style="font-size:20px">1:38.902</span></div>
+    <div><span>ondra_m</span><span class="m" style="font-size:20px">0:48.115</span></div>
+  </div>
+  <nav class="nav"><b>Feed</b><span>Routes</span><span class="d" aria-label="Drive"></span><span>Alerts</span><span>You</span></nav>
+</div>
+<figcaption>Home</figcaption>
+</figure>
+
+<!-- ROUTE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="pg" style="padding-top:18px"><span class="sm">←</span></div>
+  <svg viewBox="0 0 220 170" style="display:block;width:300px;margin:28px auto 0;fill:none;stroke:var(--slate);stroke-width:1.5;stroke-linecap:round" aria-label="Route map">
+    <path d="M18 152 C60 140 48 92 96 86 S150 122 170 72 S140 22 204 14"/>
+    <circle cx="18" cy="152" r="4" fill="var(--slate)"/><circle cx="204" cy="14" r="4" fill="var(--cloud)"/>
+  </svg>
+  <div class="pg" style="margin-top:36px">
+    <div style="display:flex;justify-content:space-between" class="sm"><span>Ecce Homo</span><span>3.42 km</span></div>
+    <div class="t" style="font-size:80px;margin-top:14px">2:11.47</div>
+    <div class="sm" style="margin-top:8px">petra_r</div>
+  </div>
+  <div class="pg list" style="margin-top:28px">
+    <div><span>Pavel N.</span><span class="m">2:12.90</span></div>
+    <div style="font-weight:600"><span>You · 7th</span><span class="m">2:14.83</span></div>
+  </div>
+  <div style="position:absolute;right:28px;bottom:36px"><button class="go">Drive</button></div>
+</div>
+<figcaption>Route</figcaption>
+</figure>
+
+<!-- READY -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="pg" style="padding-top:18px;display:flex;justify-content:space-between" ><span class="sm">×</span><span class="sm">GPS 3 m</span></div>
+  <div class="pg list" style="margin-top:60px">
+    <div><span>Record</span><span style="display:flex;gap:18px;align-items:center"><span class="m">2:11.47</span><i class="tg"></i></span></div>
+    <div><span style="font-weight:600">Your best</span><span style="display:flex;gap:18px;align-items:center"><span class="m">2:14.83</span><i class="tg on"></i></span></div>
+    <div><span>Ideal</span><span style="display:flex;gap:18px;align-items:center"><span class="m">2:13.91</span><i class="tg"></i></span></div>
+    <div><span>None</span><i class="tg"></i></div>
+  </div>
+  <div class="pg list" style="margin-top:40px">
+    <div><span>Lights</span><span class="m">− 5 s +</span></div>
+    <div><span>Voice</span><i class="tg on"></i></div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:60px;display:grid;justify-items:center"><button class="go big">Start</button></div>
+</div>
+<figcaption>Ready</figcaption>
+</figure>
+
+<!-- DRIVE -->
+<figure>
+<div class="ph ink">
+  <div class="sb">9:41</div>
+  <div class="pg" style="padding-top:18px;display:flex;justify-content:space-between"><span class="m sm">1:38.4</span><span class="m sm">118 km/h</span></div>
+  <div style="position:absolute;inset:0;display:grid;place-items:center">
+    <div class="t" style="font-size:172px;font-weight:300">−0.41</div>
+  </div>
+  <div class="pg" style="position:absolute;left:0;right:0;bottom:150px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+    <div><i style="display:block;height:4px;border-radius:2px;background:#a77cf0"></i><div class="m" style="margin-top:12px;font-size:18px">−0.28</div></div>
+    <div><i style="display:block;height:4px;border-radius:2px;background:#5fd18f"></i><div class="m" style="margin-top:12px;font-size:18px">−0.20</div></div>
+    <div><i style="display:block;height:4px;border-radius:2px;background:rgba(215,210,204,.25)"></i></div>
+  </div>
+  <div class="sm" style="position:absolute;left:0;right:0;bottom:44px;text-align:center">Hold to stop</div>
+</div>
+<figcaption>Drive</figcaption>
+</figure>
+
+<!-- RESULT -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="pg" style="padding-top:18px"><span class="sm">×</span></div>
+  <div class="pg" style="padding-top:110px">
+    <div class="sm">New best</div>
+    <div class="t" style="font-size:104px;margin-top:12px">2:13.62</div>
+    <div class="m" style="font-size:20px;margin-top:14px;color:var(--s-g)">−1.21</div>
+  </div>
+  <div class="pg list" style="margin-top:56px">
+    <div><span style="display:flex;gap:10px;align-items:center"><i style="width:6px;height:6px;border-radius:50%" class="p"></i>S1</span><span class="m">0:41.08</span></div>
+    <div><span style="display:flex;gap:10px;align-items:center"><i style="width:6px;height:6px;border-radius:50%" class="g"></i>S2</span><span class="m">0:48.37</span></div>
+    <div><span style="display:flex;gap:10px;align-items:center"><i style="width:6px;height:6px;border-radius:50%" class="y"></i>S3</span><span class="m">0:44.17</span></div>
+  </div>
+  <div class="pg" style="position:absolute;left:0;right:0;bottom:44px;display:flex;justify-content:space-between;align-items:center"><button class="tx">Again</button><button class="go">Post</button></div>
+</div>
+<figcaption>Result</figcaption>
+</figure>
+
+<!-- COMPARE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="pg" style="padding-top:18px"><span class="sm">←</span></div>
+  <div class="pg" style="padding-top:60px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="sm">You</span><span class="m" style="font-size:22px">2:13.62</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px"><span class="sm">petra_r</span><span class="m" style="font-size:22px">2:11.47</span></div>
+    <div class="t" style="font-size:96px;margin-top:40px">+2.15</div>
+  </div>
+  <svg viewBox="0 0 334 120" style="display:block;width:334px;margin:44px auto 0" aria-label="Gap over the lap">
+    <line x1="0" y1="20" x2="334" y2="20" stroke="var(--hair)"/>
+    <line x1="111" y1="0" x2="111" y2="120" stroke="var(--hair)"/><line x1="222" y1="0" x2="222" y2="120" stroke="var(--hair)"/>
+    <path d="M0 20 C30 18 50 26 80 36 S120 40 150 54 S200 68 230 62 S290 90 334 96" fill="none" stroke="var(--slate)" stroke-width="1.5"/>
+  </svg>
+  <div class="pg" style="display:grid;grid-template-columns:repeat(3,1fr);margin-top:14px">
+    <span class="m sm">+0.57</span><span class="m sm">+0.73</span><span class="m sm">+0.85</span>
+  </div>
+  <div style="position:absolute;right:28px;bottom:36px"><button class="go">Race</button></div>
+</div>
+<figcaption>Compare</figcaption>
+</figure>
+
+<!-- PROFILE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="pg" style="padding-top:70px">
+    <span style="width:72px;height:72px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--slate);display:grid;place-items:center;font-size:22px;font-weight:300">MJ</span>
+    <div style="font-size:30px;font-weight:300;letter-spacing:-.03em;margin-top:22px">Marek J.</div>
+    <div class="sm" style="margin-top:6px"><span class="m" style="color:var(--slate)">48</span> laps &nbsp; <span class="m" style="color:var(--slate)">12</span> followers &nbsp; <span class="m" style="color:var(--slate)">9</span> following</div>
+  </div>
+  <div class="pg list" style="margin-top:60px">
+    <div><span>Ecce Homo</span><span style="display:flex;gap:14px;align-items:center"><span class="mk"><i class="p"></i><i class="g"></i><i class="y"></i></span><span class="m">2:13.62</span></span></div>
+    <div><span>Autodrom Most</span><span style="display:flex;gap:14px;align-items:center"><span class="mk"><i class="y"></i><i class="g"></i><i class="g"></i></span><span class="m">1:41.330</span></span></div>
+    <div><span>Vysoké Mýto</span><span style="display:flex;gap:14px;align-items:center"><span class="mk"><i class="g"></i><i class="y"></i><i class="y"></i></span><span class="m">0:49.02</span></span></div>
+  </div>
+  <nav class="nav"><span>Feed</span><span>Routes</span><span class="d" aria-label="Drive"></span><span>Alerts</span><b>You</b></nav>
+</div>
+<figcaption>Profile</figcaption>
+</figure>
+
+</div>
+</body>
+</html>
