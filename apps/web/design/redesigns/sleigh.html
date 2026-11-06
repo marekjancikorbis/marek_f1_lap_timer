@@ -10,7 +10,7 @@
 <style>
 /* Sleigh: every screen is a bento box of tiles, one fact per tile, on grained winter blue with one red tile that matters most. */
 :root {
-  --page: #00263a; --ring: #0d1a22; --sea: #013f60; --tile: #0a4c71; --deep: #012f48; --red: #e22c2c; --on-red: #f3efe6; --red-ink: #c41f1f; --snow: #f3efe6; --snow-2: rgba(243, 239, 230, .8); --map-card: url(maps/card-dark.png); --map-filter: grayscale(1) brightness(1.5); --map-tint: #01507a; --map-blend: color; --s-p: #b884ff; --s-g: #52e08c; --s-y: #ffd43b;
+  --page: #00263a; --ring: #0d1a22; --sea: #013f60; --tile: #0a4c71; --deep: #012f48; --red: #e22c2c; --on-red: #f3efe6; --red-ink: #c41f1f; --snow: #f3efe6; --snow-2: rgba(243, 239, 230, .8); --map-card: url(maps/card-dark.png); --map-filter: grayscale(1) brightness(1.5); --map-tint: #01507a; --map-blend: color; --s-p: #c9b3ff; --s-g: #8fe3bd; --s-y: #f2d58a;
   --font: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   color-scheme: dark;
@@ -104,11 +104,11 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
       <div class="t" style="font-size:20px;margin-top:8px">14 laps</div></div>
     <div class="tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center">
       <span class="av" style="background:#ffc2a8">PR</span>
-      <div style="min-width:0"><div class="k" style="letter-spacing:.04em">petra_r · Ecce Homo</div><div class="t" style="font-size:30px;margin-top:6px">2:11.47</div><div class="st" style="margin-top:8px;width:120px"><i class="p"></i><i class="p"></i><i class="g"></i></div></div>
+      <div style="min-width:0"><div class="k" style="letter-spacing:.04em">petra_r · Ecce Homo</div><div class="t" style="font-size:30px;margin-top:6px">2:11.47</div></div>
       <button class="btn red" style="padding:0 16px;height:42px;font-size:13px">Race</button>
     </div>
-    <div class="tl"><span class="av" style="background:#b9d3ff">JK</span><div class="t" style="font-size:28px;margin-top:12px">1:38.902</div><div class="st" style="margin-top:8px"><i class="g"></i><i class="y"></i><i class="g"></i></div></div>
-    <div class="tl"><span class="av" style="background:#c9f0d8">OM</span><div class="t" style="font-size:28px;margin-top:12px">0:48.115</div><div class="st" style="margin-top:8px"><i class="y"></i><i class="g"></i><i class="y"></i></div></div>
+    <div class="tl"><span class="av" style="background:#b9d3ff">JK</span><div class="t" style="font-size:28px;margin-top:12px">1:38.902</div></div>
+    <div class="tl"><span class="av" style="background:#c9f0d8">OM</span><div class="t" style="font-size:28px;margin-top:12px">0:48.115</div></div>
   </div>
   <nav class="tabs"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
@@ -259,8 +259,8 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
         <i></i><i></i><i class="a"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i>
       </div></div>
     <div class="tl w2" style="display:grid;gap:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Ecce Homo</div><div class="t" style="font-size:28px;margin-top:6px">2:13.62</div></div><div class="st" style="width:90px"><i class="p"></i><i class="g"></i><i class="y"></i></div></div>
-      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Autodrom Most</div><div class="t" style="font-size:28px;margin-top:6px">1:41.330</div></div><div class="st" style="width:90px"><i class="y"></i><i class="g"></i><i class="g"></i></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Ecce Homo</div><div class="t" style="font-size:28px;margin-top:6px">2:13.62</div></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Autodrom Most</div><div class="t" style="font-size:28px;margin-top:6px">1:41.330</div></div></div>
     </div>
   </div>
   <nav class="tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab on"><svg class="i"><use href="#user"/></svg></span></nav>

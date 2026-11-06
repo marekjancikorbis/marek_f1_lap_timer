@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Purple Sector · Glass · Crimson</title>
+<title>Purple Sector · Glass · Sleigh</title>
 <script>
   // Only Chromium can feed an SVG filter to backdrop-filter; everyone else gets frosted glass.
   if (window.chrome && CSS.supports('backdrop-filter', 'url(#x)')) document.documentElement.classList.add('lens');
@@ -12,7 +12,7 @@
 /* Glass: the real map is the content layer. Glass is only the floating control layer above it:
    bars, buttons, sheets. Text sits on tinted glass or solid, never on clear glass. */
 :root {
-  --page: #2a030b; --ring: #1d0207; --night: #5a0716; --main: #fff1a6; --main-hi: #fff4f2; --on-main: #5a0716; --accent: #fff1a6; --ink: #fff4f2; --ink-2: rgba(255, 244, 242, .78); --sheet: rgba(70, 6, 18, .6); --clear: rgba(90, 7, 22, .18); --glass-fx: saturate(1.15) brightness(.92); --map-filter: grayscale(1) brightness(1.7) contrast(1.05); --map-tint: #c3142f; --map-blend: color; --s-p: #a970ff; --s-g: #3be07a; --s-y: #ffd43b;
+  --page: #001f30; --ring: #0d1a22; --night: #012a42; --main: #e22c2c; --main-hi: #ff9d95; --on-main: #f3efe6; --accent: #f3efe6; --ink: #f3efe6; --ink-2: rgba(243, 239, 230, .78); --sheet: rgba(1, 38, 58, .6); --clear: rgba(243, 239, 230, .06); --glass-fx: saturate(1.5) brightness(1.08); --map-filter: grayscale(1) brightness(1.4); --map-tint: #01507a; --map-blend: color; --blob-a: #0a6a9c; --blob-b: #e22c2c; --ribbon-a: #f3efe6; --ribbon-b: #e22c2c; --s-p: #c9b3ff; --s-g: #8fe3bd; --s-y: #f2d58a;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
   --spring: cubic-bezier(.3, 1.5, .5, 1);
   color-scheme: dark;
@@ -94,6 +94,22 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .tab.on { color: var(--main-hi); background: rgba(255,255,255,.1) }
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
+/* ---------- home: drifting gradient shape ---------- */
+.aura { position: absolute; inset: 0; z-index: -3; overflow: hidden }
+.aura i { position: absolute; width: 360px; height: 360px; border-radius: 50%; filter: blur(50px); opacity: .75 }
+.aura .a { left: -90px; top: 90px; background: var(--blob-a); animation: bloom-a 38s ease-in-out infinite alternate }
+.aura .b { right: -120px; top: 420px; background: var(--blob-b); animation: bloom-b 46s ease-in-out infinite alternate }
+.ribbon { position: absolute; left: -15px; top: 60px; width: 420px; height: 615px; z-index: -2; animation: sway 30s ease-in-out infinite alternate; will-change: transform }
+@keyframes bloom-a { to { transform: translate(120px, 160px) scale(1.15) } }
+@keyframes bloom-b { to { transform: translate(-140px, -120px) scale(.9) } }
+@keyframes sway { from { transform: translate(-18px, 8px) rotate(-7deg) } to { transform: translate(24px, 40px) rotate(8deg) scale(1.06) } }
+/* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
+.glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(5px) var(--glass-fx); backdrop-filter: blur(5px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(4px) var(--glass-fx) }
+.pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
+.pill .av { width: 40px; height: 40px }
+@media (prefers-reduced-motion: reduce) { .aura i, .ribbon { animation: none } }
+@media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
 </style>
 </head>
 <body>
@@ -138,32 +154,30 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 
 <header class="top">
   <a href="index.html">← All designs</a>
-  <h1>Glass · Crimson</h1>
-  <span class="sw"><i style="background:#c3142f"></i><i style="background:#6e0a1d"></i><i style="background:#fff1a6"></i></span>
+  <h1>Glass · Sleigh</h1>
+  <span class="sw"><i style="background:#013f60"></i><i style="background:#e22c2c"></i><i style="background:#f3efe6"></i></span>
 </header>
 
 <div class="wall">
 
-<!-- HOME -->
+<!-- HOME: a gradient shape (the route itself, as a ribbon) drifts behind the glass -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/full-dark.png)"></div>
-  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
-    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="9" opacity=".6"/>
-    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--main-hi)" stroke-width="4"/>
-    <circle cx="108.2" cy="337.0" r="6" fill="var(--accent)" stroke="var(--night)" stroke-width="2"/>
+  <div class="aura" aria-hidden="true"><i class="a"></i><i class="b"></i></div>
+  <svg class="ribbon" viewBox="110 18 146 214" aria-hidden="true">
+    <defs><linearGradient id="rib" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--ribbon-b)"/><stop offset=".55" stop-color="var(--ribbon-a)"/><stop offset="1" stop-color="var(--ribbon-b)"/></linearGradient></defs>
+    <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" fill="none" stroke="url(#rib)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:flex-end"><button class="glass round ib" aria-label="Notifications"><svg class="i ndot"><use href="#bell"/></svg></button></div>
-  <div class="glass sheet" style="position:absolute;left:8px;right:8px;bottom:102px;border-radius:40px;padding:22px 20px 14px">
+  <div class="glass lift" style="position:absolute;left:16px;right:16px;top:300px;border-radius:36px;padding:22px 20px 20px">
     <div style="display:flex;justify-content:space-between" class="lbl"><span>Ecce Homo</span><span>3.42 km</span></div>
-    <div class="t" style="font-size:56px;margin-top:10px">2:14.83</div>
-    <div class="st" style="margin-top:12px"><i class="g"></i><i class="y"></i><i class="g"></i></div>
-    <button class="solid" style="margin-top:18px">Drive</button>
-    <div class="rows" style="margin-top:8px">
-      <div><span class="av" style="background:#ffc49b">PR</span><div><div class="lbl">petra_r</div><div class="t" style="font-size:22px;margin-top:2px">2:11.47</div></div><span class="chip acc" style="background:color-mix(in srgb,var(--accent) 16%,transparent)">Race</span></div>
-      <div><span class="av" style="background:#a9c2ff">JK</span><div><div class="lbl">jan.k · Most</div><div class="t" style="font-size:22px;margin-top:2px">1:38.902</div></div><span class="chip acc" style="background:color-mix(in srgb,var(--accent) 16%,transparent)">Race</span></div>
-    </div>
+    <div class="t" style="font-size:64px;margin-top:12px">2:14.83</div>
+    <button class="solid" style="margin-top:20px">Drive</button>
+  </div>
+  <div style="position:absolute;left:16px;right:16px;top:556px;display:grid;gap:10px">
+    <div class="glass lift pill"><span class="av" style="background:#ffc49b">PR</span><div><div class="lbl">petra_r</div><div class="t" style="font-size:22px;margin-top:2px">2:11.47</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Race</span></div>
+    <div class="glass lift pill"><span class="av" style="background:#a9c2ff">JK</span><div><div class="lbl">jan.k · Most</div><div class="t" style="font-size:22px;margin-top:2px">1:38.902</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Race</span></div>
   </div>
   <div class="tabbar">
     <nav class="glass tabs"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>

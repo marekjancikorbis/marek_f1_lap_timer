@@ -94,6 +94,22 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .tab.on { color: var(--main-hi); background: rgba(255,255,255,.1) }
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
+/* ---------- home: drifting gradient shape ---------- */
+.aura { position: absolute; inset: 0; z-index: -3; overflow: hidden }
+.aura i { position: absolute; width: 360px; height: 360px; border-radius: 50%; filter: blur(50px); opacity: .75 }
+.aura .a { left: -90px; top: 90px; background: var(--blob-a); animation: bloom-a 38s ease-in-out infinite alternate }
+.aura .b { right: -120px; top: 420px; background: var(--blob-b); animation: bloom-b 46s ease-in-out infinite alternate }
+.ribbon { position: absolute; left: -15px; top: 60px; width: 420px; height: 615px; z-index: -2; animation: sway 30s ease-in-out infinite alternate; will-change: transform }
+@keyframes bloom-a { to { transform: translate(120px, 160px) scale(1.15) } }
+@keyframes bloom-b { to { transform: translate(-140px, -120px) scale(.9) } }
+@keyframes sway { from { transform: translate(-18px, 8px) rotate(-7deg) } to { transform: translate(24px, 40px) rotate(8deg) scale(1.06) } }
+/* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
+.glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(5px) var(--glass-fx); backdrop-filter: blur(5px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(4px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(4px) var(--glass-fx) }
+.pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
+.pill .av { width: 40px; height: 40px }
+@media (prefers-reduced-motion: reduce) { .aura i, .ribbon { animation: none } }
+@media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
 </style>
 </head>
 <body>
@@ -144,26 +160,24 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 
 <div class="wall">
 
-<!-- HOME -->
+<!-- HOME: a gradient shape (the route itself, as a ribbon) drifts behind the glass -->
 <figure>
 <div class="ph">
-  <div class="map" style="--map-img:url(maps/full-dark.png)"></div>
-  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
-    <path d="{{full.all}}" stroke="var(--night)" stroke-width="9" opacity=".6"/>
-    <path d="{{full.all}}" stroke="var(--main-hi)" stroke-width="4"/>
-    <circle cx="{{full.start.0}}" cy="{{full.start.1}}" r="6" fill="var(--accent)" stroke="var(--night)" stroke-width="2"/>
+  <div class="aura" aria-hidden="true"><i class="a"></i><i class="b"></i></div>
+  <svg class="ribbon" viewBox="110 18 146 214" aria-hidden="true">
+    <defs><linearGradient id="rib" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="var(--ribbon-b)"/><stop offset=".55" stop-color="var(--ribbon-a)"/><stop offset="1" stop-color="var(--ribbon-b)"/></linearGradient></defs>
+    <path d="{{card.all}}" fill="none" stroke="url(#rib)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:flex-end"><button class="glass round ib" aria-label="Notifications"><svg class="i ndot"><use href="#bell"/></svg></button></div>
-  <div class="glass sheet" style="position:absolute;left:8px;right:8px;bottom:102px;border-radius:40px;padding:22px 20px 14px">
+  <div class="glass lift" style="position:absolute;left:16px;right:16px;top:300px;border-radius:36px;padding:22px 20px 20px">
     <div style="display:flex;justify-content:space-between" class="lbl"><span>Ecce Homo</span><span>3.42 km</span></div>
-    <div class="t" style="font-size:56px;margin-top:10px">2:14.83</div>
-    <div class="st" style="margin-top:12px"><i class="g"></i><i class="y"></i><i class="g"></i></div>
-    <button class="solid" style="margin-top:18px">Drive</button>
-    <div class="rows" style="margin-top:8px">
-      <div><span class="av" style="background:#ffc49b">PR</span><div><div class="lbl">petra_r</div><div class="t" style="font-size:22px;margin-top:2px">2:11.47</div></div><span class="chip acc" style="background:color-mix(in srgb,var(--accent) 16%,transparent)">Race</span></div>
-      <div><span class="av" style="background:#a9c2ff">JK</span><div><div class="lbl">jan.k · Most</div><div class="t" style="font-size:22px;margin-top:2px">1:38.902</div></div><span class="chip acc" style="background:color-mix(in srgb,var(--accent) 16%,transparent)">Race</span></div>
-    </div>
+    <div class="t" style="font-size:64px;margin-top:12px">2:14.83</div>
+    <button class="solid" style="margin-top:20px">Drive</button>
+  </div>
+  <div style="position:absolute;left:16px;right:16px;top:556px;display:grid;gap:10px">
+    <div class="glass lift pill"><span class="av" style="background:#ffc49b">PR</span><div><div class="lbl">petra_r</div><div class="t" style="font-size:22px;margin-top:2px">2:11.47</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Race</span></div>
+    <div class="glass lift pill"><span class="av" style="background:#a9c2ff">JK</span><div><div class="lbl">jan.k · Most</div><div class="t" style="font-size:22px;margin-top:2px">1:38.902</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Race</span></div>
   </div>
   <div class="tabbar">
     <nav class="glass tabs"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>

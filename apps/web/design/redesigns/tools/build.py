@@ -14,31 +14,34 @@ MAPS = json.loads((ROOT / 'maps' / 'maps.json').read_text())
 SECTORS = {'s-p': '#a970ff', 's-g': '#3be07a', 's-y': '#ffd43b'}
 
 PAGES = {
-    'glass': ('glass', 'Glass', {
-        'page': '#050609', 'ring': '#14161d', 'night': '#07080d',
-        'main': '#2f6bff', 'main-hi': '#8fb0ff', 'on-main': '#f4f7ff',
-        'accent': '#ffa45b', 'ink': '#f2f5ff', 'ink-2': 'rgba(242, 245, 255, .74)',
-        'sheet': 'rgba(12, 16, 30, .62)', 'clear': 'rgba(255, 255, 255, .05)', 'glass-fx': 'saturate(1.9) brightness(1.1)',
-        'map-filter': 'grayscale(1) brightness(1.2) contrast(1.1)', 'map-tint': '#1c2747', 'map-blend': 'color',
-        **SECTORS}, ['#07080d', '#2f6bff', '#ffa45b']),
-    'glass-crimson': ('glass', 'Glass · Crimson', {
-        'page': '#2a030b', 'ring': '#1d0207', 'night': '#5a0716',
-        'main': '#fff1a6', 'main-hi': '#fff4f2', 'on-main': '#5a0716',
-        'accent': '#fff1a6', 'ink': '#fff4f2', 'ink-2': 'rgba(255, 244, 242, .78)',
-        'sheet': 'rgba(70, 6, 18, .6)', 'clear': 'rgba(90, 7, 22, .18)', 'glass-fx': 'saturate(1.15) brightness(.92)',
-        'map-filter': 'grayscale(1) brightness(1.7) contrast(1.05)', 'map-tint': '#c3142f', 'map-blend': 'color',
-        **SECTORS}, ['#c3142f', '#6e0a1d', '#fff1a6']),
+    'glass': ('glass', 'Glass · Graphite', {
+        # near-monochrome: one cool grey family, light buttons; the sector colours are the only hue
+        'page': '#08090b', 'ring': '#16181c', 'night': '#0c0d10',
+        'main': '#e8ebf0', 'main-hi': '#f4f6f9', 'on-main': '#111318',
+        'accent': '#a9b4c8', 'ink': '#f1f3f6', 'ink-2': 'rgba(241, 243, 246, .72)',
+        'sheet': 'rgba(18, 20, 24, .58)', 'clear': 'rgba(255, 255, 255, .05)', 'glass-fx': 'saturate(1.2) brightness(1.08)',
+        'map-filter': 'grayscale(1) brightness(1.15) contrast(1.1)', 'map-tint': 'transparent', 'map-blend': 'normal',
+        'blob-a': '#6f7a90', 'blob-b': '#343a47', 'ribbon-a': '#c9ced8', 'ribbon-b': '#4a5162',
+        **SECTORS}, ['#0c0d10', '#6b7486', '#e8ebf0']),
+    'glass-sleigh': ('glass', 'Glass · Sleigh', {
+        'page': '#001f30', 'ring': '#0d1a22', 'night': '#012a42',
+        'main': '#e22c2c', 'main-hi': '#ff9d95', 'on-main': '#f3efe6',
+        'accent': '#f3efe6', 'ink': '#f3efe6', 'ink-2': 'rgba(243, 239, 230, .78)',
+        'sheet': 'rgba(1, 38, 58, .6)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.5) brightness(1.08)',
+        'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#01507a', 'map-blend': 'color',
+        'blob-a': '#0a6a9c', 'blob-b': '#e22c2c', 'ribbon-a': '#f3efe6', 'ribbon-b': '#e22c2c',
+        's-p': '#c9b3ff', 's-g': '#8fe3bd', 's-y': '#f2d58a'}, ['#013f60', '#e22c2c', '#f3efe6']),
     'sleigh': ('sleigh', 'Sleigh', {
         'page': '#00263a', 'ring': '#0d1a22', 'sea': '#013f60', 'tile': '#0a4c71', 'deep': '#012f48',
         'red': '#e22c2c', 'on-red': '#f3efe6', 'red-ink': '#c41f1f', 'snow': '#f3efe6', 'snow-2': 'rgba(243, 239, 230, .8)',
         'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#01507a', 'map-blend': 'color',
-        's-p': '#b884ff', 's-g': '#52e08c', 's-y': '#ffd43b'}, ['#013f60', '#e22c2c', '#f3efe6']),
+        's-p': '#c9b3ff', 's-g': '#8fe3bd', 's-y': '#f2d58a'}, ['#013f60', '#e22c2c', '#f3efe6']),
     'sleigh-forest': ('sleigh', 'Sleigh · Forest', {
         'page': '#06271d', 'ring': '#04140f', 'sea': '#0e4d3a', 'tile': '#175f49', 'deep': '#093a2b',
         'red': '#9be15d', 'on-red': '#0b2f22', 'red-ink': '#0e4d3a', 'snow': '#eef6e7', 'snow-2': 'rgba(238, 246, 231, .8)',
         'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#0f6b4f', 'map-blend': 'color',
-        # sector green moves to mint so it never reads as the lime action colour
-        's-p': '#c29bff', 's-g': '#45e6c4', 's-y': '#ffd43b'}, ['#0e4d3a', '#9be15d']),
+        # sector green leans to icy cyan so it never reads as the lime action colour
+        's-p': '#c9b3ff', 's-g': '#94e2e6', 's-y': '#f2d58a'}, ['#0e4d3a', '#9be15d']),
     'quiet': ('quiet', 'Quiet', {
         'page': '#cdc8c1', 'ring': '#2a3440', 'cloud': '#d7d2cc', 'slate': '#304352',
         'slate-2': 'rgba(48, 67, 82, .82)', 'hair': 'rgba(48, 67, 82, .2)',
