@@ -12,18 +12,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 MAPS = json.loads((ROOT / 'maps' / 'maps.json').read_text())
 
 FROST = {'s-p': '#c9b3ff', 's-g': '#8fe3bd', 's-y': '#f2d58a'}   # softened for muted palettes
-DEEP = {'s-p': '#7a3fd0', 's-g': '#1f7a45', 's-y': '#9a7200'}    # deepened to read on light grounds
 
 PAGES = {
-    'glass': ('glass', 'Glass · Cloud', {
-        'page': '#cdc8c1', 'ring': '#2a3440', 'night': '#d7d2cc',
-        'main': '#304352', 'main-hi': '#304352', 'on-main': '#eeebe7',
-        'accent': '#5d6c79', 'ink': '#304352', 'ink-2': 'rgba(48, 67, 82, .8)',
-        'sheet': 'rgba(222, 218, 213, .45)', 'clear': 'rgba(255, 255, 255, .16)', 'glass-fx': 'saturate(1.1) brightness(1.04)',
-        'map-full': 'url(maps/full-light.png)', 'map-drive': 'url(maps/drive-light.png)',
-        'map-filter': 'grayscale(1) contrast(1.1)', 'map-tint': '#d7d2cc', 'map-blend': 'multiply',
-        'blob-a': '#304352', 'blob-b': '#a3afba',
-        **DEEP}, ['#d7d2cc', '#304352']),
     'glass-sleigh': ('glass', 'Glass · Sleigh', {
         'page': '#001f30', 'ring': '#0d1a22', 'night': '#012a42',
         'main': '#e22c2c', 'main-hi': '#ff9d95', 'on-main': '#f3efe6',

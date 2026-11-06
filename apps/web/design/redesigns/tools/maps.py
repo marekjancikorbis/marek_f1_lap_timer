@@ -149,8 +149,7 @@ def main():
     # look slightly ahead so the car sits low on the screen
     look = cut(ahead, [0.06])[0][-1]
     # style: (ahead, sector 1, sector 2, current sector) colours
-    for style, (c_ahead, c1, c2, c3) in {'dark-v11': ('#ffffff', '#a970ff', '#3be07a', '#ffffff'),
-                                         'light-v11': ('#304352', '#7a3fd0', '#1f7a45', '#304352')}.items():
+    for style, (c_ahead, c1, c2, c3) in {'dark-v11': ('#ffffff', '#a970ff', '#3be07a', '#ffffff')}.items():
         feats = [
             {'type': 'Feature', 'properties': {'stroke': c, 'stroke-width': 8, 'stroke-opacity': o},
              'geometry': {'type': 'LineString', 'coordinates': [[round(x, 5), round(y, 5)] for x, y in near(line)]}}

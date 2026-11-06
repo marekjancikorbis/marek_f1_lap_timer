@@ -20,18 +20,18 @@ a.d:active { transform: scale(.985) }
 a.d:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px }
 .band { height: 84px; border-radius: 14px; display: flex; overflow: hidden }
 .name { font-weight: 650; display: flex; justify-content: space-between; padding: 0 4px }
-@media (max-width: 520px) { .pair { grid-template-columns: 1fr } }
+.pair.three { grid-template-columns: repeat(3, 1fr) }
+@media (max-width: 520px) { .pair, .pair.three { grid-template-columns: 1fr } }
 @media (prefers-reduced-motion: reduce) { a.d { transition: none } }
 </style>
 <main>
   <h1>Purple Sector redesigns</h1>
-  <p class="lede">Three directions: Glass in four colourways, Sleigh and Quiet in two. Seven screens per page, the same sample laps throughout, and the route is the real Ecce Homo road out of Šternberk.</p>
+  <p class="lede">Three directions: Glass in three colourways, Sleigh and Quiet in two. Seven screens per page, the same sample laps throughout, and the route is the real Ecce Homo road out of Šternberk.</p>
 
   <section>
     <h2>Glass</h2>
-    <p class="idea">Liquid glass is only the layer of controls floating above the content. On Home that content is a soft gradient blob slowly changing shape; everywhere else it is the map. The glass rim bends whatever is underneath.</p>
-    <div class="pair">
-      <a class="d" href="glass.html"><span class="band"><i style="flex:3;background:#d7d2cc"></i><i style="flex:2;background:#304352"></i></span><span class="name">Cloud <span>→</span></span></a>
+    <p class="idea">Liquid glass is only the layer of controls floating above the content. On Home that content is soft gradient blobs that keep changing shape; everywhere else it is the map. The glass rim bends whatever is underneath.</p>
+    <div class="pair three">
       <a class="d" href="glass-sleigh.html"><span class="band"><i style="flex:3;background:#013f60"></i><i style="flex:2;background:#e22c2c"></i><i style="flex:1;background:#f3efe6"></i></span><span class="name">Sleigh <span>→</span></span></a>
       <a class="d" href="glass-bluenight.html"><span class="band"><i style="flex:3;background:#062041"></i><i style="flex:2;background:#9fa8b7"></i></span><span class="name">Blue night <span>→</span></span></a>
       <a class="d" href="glass-pine.html"><span class="band"><i style="flex:3;background:#0b303c"></i><i style="flex:2;background:#cdece2"></i></span><span class="name">Frozen pine <span>→</span></span></a>

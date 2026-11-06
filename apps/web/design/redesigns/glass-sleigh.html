@@ -93,21 +93,13 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
-/* ---------- home: a soft gradient blob that slowly changes shape ---------- */
-.blob { position: absolute; inset: 0; z-index: -3; overflow: hidden }
-.blob i { position: absolute; left: 34px; top: 140px; width: 330px; height: 350px; background: linear-gradient(150deg, var(--blob-a), var(--blob-b));
-  border-radius: 58% 42% 50% 50% / 46% 54% 46% 54%; filter: blur(12px); animation: morph 26s ease-in-out infinite alternate; will-change: transform, border-radius }
-.blob i + i { left: -70px; top: 480px; width: 280px; height: 280px; opacity: .75; background: linear-gradient(210deg, var(--blob-b), transparent 75%); animation-duration: 34s; animation-direction: alternate-reverse }
-@keyframes morph {
-  0% { border-radius: 58% 42% 50% 50% / 46% 54% 46% 54%; transform: translate(0, 0) rotate(0) }
-  50% { border-radius: 40% 60% 62% 38% / 55% 40% 60% 45%; transform: translate(-22px, 46px) rotate(24deg) }
-  100% { border-radius: 52% 48% 35% 65% / 40% 62% 38% 60%; transform: translate(24px, -12px) rotate(-14deg) scale(1.06) } }
+/* ---------- home: soft gradient blobs whose outline is redrawn every frame from layered waves ---------- */
+.blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3 }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
 .glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(2px) var(--glass-fx); backdrop-filter: blur(2px) var(--glass-fx) }
 html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx); backdrop-filter: url(#lens-w) blur(1px) var(--glass-fx) }
 .pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
 .pill .av { width: 40px; height: 40px }
-@media (prefers-reduced-motion: reduce) { .blob i { animation: none } }
 @media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
 </style>
 </head>
@@ -159,10 +151,17 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
 
 <div class="wall">
 
-<!-- HOME: a soft gradient blob slowly changes shape behind the glass -->
+<!-- HOME: soft gradient blobs keep changing shape behind the glass -->
 <figure>
 <div class="ph">
-  <div class="blob" aria-hidden="true"><i></i><i></i></div>
+  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true">
+    <defs>
+      <linearGradient id="blob-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--blob-a)"/><stop offset="1" stop-color="var(--blob-b)"/></linearGradient>
+      <linearGradient id="blob-g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blob-b)"/><stop offset="1" stop-color="var(--blob-a)" stop-opacity=".35"/></linearGradient>
+      <filter id="blob-soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter>
+    </defs>
+    <g filter="url(#blob-soft)"><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g>
+  </svg>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:flex-end"><button class="glass round ib" aria-label="Notifications"><svg class="i ndot"><use href="#bell"/></svg></button></div>
   <div class="glass lift" style="position:absolute;left:16px;right:16px;top:300px;border-radius:36px;padding:22px 20px 20px">
@@ -349,5 +348,46 @@ html.lens .glass.lift { -webkit-backdrop-filter: url(#lens-w) blur(1px) var(--gl
 </figure>
 
 </div>
+<script>
+// Home blobs: each outline is 10 points whose radius is a sum of out-of-phase waves, joined by a closed
+// Catmull-Rom curve, so the shape never repeats a simple ellipse. Reduced motion draws one still frame.
+(() => {
+  const blobs = [
+    { cx: 200, cy: 330, r: 150, seed: 0 },
+    { cx: 120, cy: 600, r: 105, seed: 2.1 },
+    { cx: 300, cy: 520, r: 70, seed: 4.3 },
+  ];
+  const N = 10, TAU = Math.PI * 2;
+  const paths = [...document.querySelectorAll('[data-blob]')];
+  function outline(b, t) {
+    const s = b.seed, pts = [];
+    const cx = b.cx + 34 * Math.sin(t * 0.37 + s) + 14 * Math.sin(t * 0.83 + s * 3);
+    const cy = b.cy + 40 * Math.cos(t * 0.29 + s * 1.7) + 12 * Math.sin(t * 0.71 + s);
+    const spin = t * 0.12 + s;
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * TAU + spin;
+      const k = 1
+        + 0.26 * Math.sin(2 * a + t * 0.9 + s)
+        + 0.17 * Math.sin(3 * a - t * 1.3 + s * 2)
+        + 0.10 * Math.sin(5 * a + t * 2.1 + s * 3);
+      pts.push([cx + Math.cos(a) * b.r * k, cy + Math.sin(a) * b.r * k]);
+    }
+    let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < N; i++) {
+      const p0 = pts[(i + N - 1) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
+      d += `C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} `
+         + `${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} `
+         + `${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    return d + 'Z';
+  }
+  const draw = (t) => paths.forEach((p, i) => p.setAttribute('d', outline(blobs[i], t)));
+  draw(0);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const start = performance.now();
+  const tick = (now) => { draw((now - start) / 1000); requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+})();
+</script>
 </body>
 </html>
