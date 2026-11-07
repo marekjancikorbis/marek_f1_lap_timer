@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Purple Sector · Glass bento · Forest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&display=swap">
+<script>
+  // Only Chromium can feed an SVG filter to backdrop-filter; everyone else gets frosted glass.
+  if (window.chrome && CSS.supports('backdrop-filter', 'url(#x)')) document.documentElement.classList.add('lens');
+</script>
+<style>
+/* Glass bento: Sleigh's layout (one fact per tile) built from liquid glass tiles floating over moving gradient blobs.
+   Sleigh: every screen is a bento box of tiles, one fact per tile, on grained winter blue with one red tile that matters most. */
+:root {
+  --page: #06271d; --ring: #04140f; --sea: #0e4d3a; --tile: #175f49; --deep: #093a2b; --red: #9be15d; --on-red: #0b2f22; --red-ink: #0e4d3a; --snow: #eef6e7; --snow-2: rgba(238, 246, 231, .8); --map-card: url(maps/card-dark.png); --map-filter: grayscale(1) brightness(1.5); --map-tint: #0f6b4f; --map-blend: color; --sheet: rgba(14, 77, 58, .45); --clear: rgba(243, 239, 230, .06); --glass-fx: saturate(1.3) brightness(1.08); --blob-a: #9be15d; --blob-b: #1a7a5a; --s-p: #c9b3ff; --s-g: #94e2e6; --s-y: #f2d58a;
+  --font: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --night: var(--sea);
+  --spring: cubic-bezier(.3, 1.5, .5, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { background: var(--page); color: var(--snow); font: 15px/1.35 var(--font) }
+body { padding-block: 24px 48px }
+header.top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+header.top a { color: var(--snow-2); text-decoration: none; font-size: 14px }
+header.top h1 { font-size: 30px; font-weight: 900; font-stretch: 125%; text-transform: uppercase; letter-spacing: -.01em }
+.sw { display: flex; gap: 6px } .sw i { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--snow) 25%, transparent) }
+.wall { display: flex; gap: 36px; overflow-x: auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 12px; scroll-snap-type: x proximity }
+figure { flex: none; scroll-snap-align: center }
+figcaption { margin-top: 14px; font-size: 13px; color: var(--snow-2); text-align: center; font-stretch: 112%; text-transform: uppercase; letter-spacing: .08em; font-weight: 700 }
+
+.ph { width: 390px; height: 844px; border-radius: 46px; overflow: hidden; position: relative; isolation: isolate; background: var(--sea);
+  box-shadow: 0 0 0 9px var(--ring), 0 40px 80px -30px rgba(0, 10, 20, .8); font-variant-numeric: tabular-nums }
+.ph::after { content: ""; position: absolute; inset: 0; background: var(--grain); opacity: .13; mix-blend-mode: overlay; pointer-events: none; z-index: 50 }
+.sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 700 }
+.sb::after { content: ""; width: 66px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
+
+.bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px }
+.tl { background: var(--tile); border-radius: 22px; padding: 16px; position: relative; overflow: hidden; min-width: 0 }
+.tl.deep { background: var(--deep) } .tl.red { background: var(--red); color: var(--on-red) } .tl.snow { background: var(--snow); color: var(--sea) }
+.w2 { grid-column: span 2 }
+.k { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-stretch: 125%; color: var(--snow-2) }
+.tl.red .k { color: var(--on-red); font-size: 12px } .tl.snow .k { color: var(--sea) }
+.t { font-weight: 800; font-stretch: 70%; letter-spacing: -.01em; line-height: .9 }
+.wm { font-weight: 900; font-stretch: 125%; font-size: 16px; text-transform: uppercase; letter-spacing: .02em }
+.p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
+.st { display: flex; gap: 4px } .st i { flex: 1; height: 8px; border-radius: 2px }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
+.btn { height: 50px; border-radius: 16px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: transform .1s ease-out }
+.btn.snow { background: var(--snow); color: var(--red-ink) } .btn.red { background: var(--red); color: var(--on-red) } .btn.line { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--snow) 30%, transparent) }
+.btn:active, .tl:active, .ib:active { transform: scale(.97) }
+.ib { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
+svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round }
+:focus-visible { outline: 3px solid var(--snow); outline-offset: 2px }
+.tabs { position: absolute; left: 12px; right: 12px; bottom: 22px; height: 64px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px }
+.tab { border-radius: 18px; background: var(--deep); display: grid; place-items: center; color: var(--snow-2) }
+.tab.on { background: var(--snow); color: var(--sea) } .tab.go { background: var(--red); color: var(--on-red) }
+.av { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--sea); flex: none }
+.top-r { display: flex; justify-content: space-between; align-items: center; padding: 4px 16px 12px }
+.heat { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px }
+.heat i { aspect-ratio: 1; border-radius: 3px; background: var(--deep) }
+.heat i.a { background: color-mix(in srgb, var(--red) 45%, transparent) } .heat i.b { background: var(--red) }
+.map { isolation: isolate }
+.map::before { content: ""; position: absolute; inset: 0; background: var(--map-img) center / cover; filter: var(--map-filter); z-index: -2 }
+.map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: var(--map-blend); z-index: -1 }
+/* ---------- liquid glass (shared with the Glass direction) ---------- */
+@property --lit { syntax: '<number>'; inherits: true; initial-value: 0 }
+.glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear); --light: 300deg;
+  -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx);
+  box-shadow: inset 0 0 18px rgba(255,255,255,.05), 0 10px 30px -10px rgba(0,0,0,.5);
+  transition: transform .45s var(--spring), --lit .6s ease-out }
+html.lens .glass { -webkit-backdrop-filter: var(--lens) blur(.4px) var(--glass-fx); backdrop-filter: var(--lens) blur(.4px) var(--glass-fx) }
+/* inner sheen, plus light spreading from the touch point while pressed */
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255,255,255, calc(.32 * var(--lit))), transparent 65%),
+    radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.16), transparent 55%) }
+/* rim: a thin ring lit where the light source is (moves with the pointer, standing in for tilting the phone) */
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.3px; pointer-events: none;
+  background: conic-gradient(from var(--light), rgba(255,255,255,.95), rgba(255,255,255,.12) 16%, rgba(255,255,255,.06) 40%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.08) 62%, rgba(255,255,255,.12) 84%, rgba(255,255,255,.95));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude }
+/* regular glass: blurs and evens out the luminance behind it, thick enough to carry text */
+/* cards: light tint (60% of --sheet) and a 3 px blur, the same on Home (.lift) and elsewhere (.sheet) */
+.glass.sheet { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
+html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+.glass.tint-p { background: color-mix(in srgb, var(--s-p) 85%, transparent) }
+.glass.tint-g { background: color-mix(in srgb, var(--s-g) 82%, transparent) }
+/* under the finger glass swells from where it is pressed and lights up from that point */
+.glass.pressed { transform: scale(1.05); --lit: 1; transition: transform .25s var(--spring), --lit .12s ease-out; transform-origin: var(--px, 50%) var(--py, 50%) }
+/* scroll edge effect: content fades and blurs where it runs under the floating controls */
+.edge { position: absolute; left: 0; right: 0; top: 0; height: 130px; z-index: -1; pointer-events: none;
+  background: linear-gradient(color-mix(in srgb, var(--night) 60%, transparent), transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent) }
+@media (prefers-reduced-transparency: reduce) {
+  .glass, html.lens .glass, html.lens .glass.sheet, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+  .edge { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+}
+@media (prefers-reduced-motion: reduce) { .glass, .glass.pressed { transform: none } }
+
+/* ---------- the bento as glass ---------- */
+.ph::after { opacity: .08 }
+/* background: a still gradient in the palette's blob colours (an optional third colour glows in the middle) */
+.ph { background:
+  radial-gradient(60% 32% at 62% 46%, color-mix(in srgb, var(--blob-c, transparent) 70%, transparent), transparent 100%),
+  radial-gradient(90% 55% at 15% 12%, color-mix(in srgb, var(--blob-a) 75%, transparent), transparent 100%),
+  radial-gradient(90% 55% at 90% 88%, color-mix(in srgb, var(--blob-b) 80%, transparent), transparent 100%),
+  var(--sea) }
+.glass.tl, .glass.ib, .glass.tab { background: color-mix(in srgb, var(--sheet) 60%, transparent);
+  -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
+html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+.glass.tl.deep { background: color-mix(in srgb, var(--deep) 55%, transparent) }
+.glass.tl.red, .glass.tab.go { background: color-mix(in srgb, var(--red) 86%, transparent) }
+.glass.tl.snow, .glass.tab.on { background: color-mix(in srgb, var(--snow) 86%, transparent) }
+.glass.tl.p { background: color-mix(in srgb, var(--s-p) 86%, transparent) }
+.glass.tl.g { background: color-mix(in srgb, var(--s-g) 86%, transparent) }
+.glass.btn.line { box-shadow: none; background: color-mix(in srgb, var(--sheet) 60%, transparent) }
+@media (prefers-reduced-transparency: reduce) { .glass.tl, .glass.ib, .glass.tab, .glass.btn.line, html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs id="lens-defs"></defs>
+  <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
+  <symbol id="flag" viewBox="0 0 24 24"><path d="M5 21V4h12l-2 4 2 4H5"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+  <symbol id="share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 14v6h14v-6"/></symbol>
+  <symbol id="vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="route" viewBox="0 0 366 250"><path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0"/></symbol>
+</svg>
+
+<header class="top">
+  <a href="index.html">← All designs</a>
+  <h1>Glass bento · Forest</h1>
+  <span class="sw"><i style="background:#0e4d3a"></i><i style="background:#9be15d"></i></span>
+</header>
+
+<div class="wall">
+
+<!-- HOME -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><span class="wm">Purple Sector</span><button class="glass ib" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button></div>
+  <div class="bento">
+    <div class="glass tl red w2" style="padding:18px">
+      <div class="k">Ecce Homo</div>
+      <div class="t" style="font-size:86px;margin-top:10px">2:14.83</div>
+      <div style="display:flex;gap:10px;align-items:end;margin-top:14px">
+        <button class="btn snow" style="flex:1">Drive</button>
+        <svg viewBox="40 0 300 250" style="width:84px;stroke:var(--on-red);fill:none;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;opacity:.9"><use href="#route"/></svg>
+      </div>
+    </div>
+    <div class="glass tl"><div class="k">Record</div><div class="t" style="font-size:38px;margin-top:12px">2:11.47</div><div class="k" style="margin-top:8px;letter-spacing:.04em">petra_r</div></div>
+    <div class="glass tl deep"><div class="k">This week</div>
+      <div style="display:flex;gap:5px;align-items:end;height:46px;margin-top:12px"><i style="flex:1;height:30%;background:var(--tile);border-radius:3px"></i><i style="flex:1;height:0"></i><i style="flex:1;height:70%;background:var(--tile);border-radius:3px"></i><i style="flex:1;height:45%;background:var(--tile);border-radius:3px"></i><i style="flex:1;height:0"></i><i style="flex:1;height:100%;background:var(--red);border-radius:3px"></i><i style="flex:1;height:20%;background:var(--tile);border-radius:3px"></i></div>
+      <div class="t" style="font-size:20px;margin-top:8px">14 laps</div></div>
+    <div class="glass tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center">
+      <span class="av" style="background:#ffc2a8">PR</span>
+      <div style="min-width:0"><div class="k" style="letter-spacing:.04em">petra_r · Ecce Homo</div><div class="t" style="font-size:30px;margin-top:6px">2:11.47</div></div>
+      <button class="btn red" style="padding:0 16px;height:42px;font-size:13px">Race</button>
+    </div>
+    <div class="glass tl"><span class="av" style="background:#b9d3ff">JK</span><div class="t" style="font-size:28px;margin-top:12px">1:38.902</div></div>
+    <div class="glass tl"><span class="av" style="background:#c9f0d8">OM</span><div class="t" style="font-size:28px;margin-top:12px">0:48.115</div></div>
+  </div>
+  <nav class="tabs"><span class="glass tab on"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Home</figcaption>
+</figure>
+
+<!-- ROUTE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="bento">
+    <div class="tl deep w2 map" style="height:250px;padding:0;--map-img:var(--map-card)">
+      <svg viewBox="0 0 366 250" style="position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round" aria-label="Route map">
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--deep)" stroke-width="13"/>
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L170.6 162.6" stroke="var(--s-p)" stroke-width="6"/>
+        <path d="M170.6 162.6 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L212.7 70.9" stroke="var(--s-g)" stroke-width="6"/>
+        <path d="M212.7 70.9 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--s-y)" stroke-width="6"/>
+        <circle cx="126.9" cy="170.2" r="8" fill="var(--red)" stroke="var(--snow)" stroke-width="3"/>
+        <circle cx="239.1" cy="30.0" r="6" fill="var(--snow)" stroke="var(--deep)" stroke-width="3"/>
+      </svg>
+      <div class="k" style="position:absolute;left:16px;top:16px;color:var(--snow)">Ecce Homo</div>
+    </div>
+    <div class="glass tl"><div class="k">Length</div><div class="t" style="font-size:40px;margin-top:12px">3.42<span style="font-size:18px"> km</span></div></div>
+    <div class="glass tl"><div class="k">Start</div><div class="t" style="font-size:40px;margin-top:12px">Stand</div></div>
+    <div class="glass tl snow w2">
+      <div class="k">Record</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px"><span class="t" style="font-size:52px">2:11.47</span><b>petra_r</b></div>
+      <div style="display:grid;gap:8px;margin-top:14px;font-weight:600">
+        <div style="display:flex;justify-content:space-between"><span>2 · Pavel N.</span><span class="t" style="font-size:20px">2:12.90</span></div>
+        <div style="display:flex;justify-content:space-between;color:var(--red-ink)"><b>7 · You</b><span class="t" style="font-size:20px">2:14.83</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px;font-size:17px">Drive</button></div>
+</div>
+<figcaption>Route</figcaption>
+</figure>
+
+<!-- READY -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><span class="k" style="display:flex;gap:6px;align-items:center;color:var(--snow)"><i style="width:9px;height:9px;border-radius:50%" class="g"></i>GPS 3 m</span></div>
+  <div class="bento">
+    <div class="glass tl"><div class="k">Record</div><div class="t" style="font-size:34px;margin-top:14px">2:11.47</div></div>
+    <div class="glass tl red"><div class="k">Your best</div><div class="t" style="font-size:34px;margin-top:14px">2:14.83</div></div>
+    <div class="glass tl"><div class="k">Ideal</div><div class="t" style="font-size:34px;margin-top:14px">2:13.91</div></div>
+    <div class="glass tl deep"><div class="k">Clock only</div><div class="t" style="font-size:34px;margin-top:14px;color:var(--snow-2)">—</div></div>
+    <div class="glass tl" style="display:grid;gap:10px"><div class="k">Lights</div>
+      <div style="display:flex;align-items:center;justify-content:space-between"><button class="glass ib" aria-label="Shorter">−</button><span class="t" style="font-size:34px">5s</span><button class="glass ib" aria-label="Longer">+</button></div></div>
+    <div class="glass tl snow" style="display:grid;gap:10px"><div class="k">Voice</div><svg class="i" style="width:40px;height:40px"><use href="#vol"/></svg></div>
+    <div class="glass tl deep w2" style="display:flex;gap:10px;justify-content:center;padding:22px">
+      <i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i>
+    </div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:96px;font-size:26px;border-radius:26px">Start</button></div>
+</div>
+<figcaption>Ready</figcaption>
+</figure>
+
+<!-- DRIVE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="bento" style="padding-top:8px">
+    <div class="glass tl" style="padding:14px 16px"><div class="k">Lap</div><div class="t" style="font-size:46px;margin-top:8px">1:38.4</div></div>
+    <div class="glass tl" style="padding:14px 16px"><div class="k">km/h</div><div class="t" style="font-size:46px;margin-top:8px">118</div></div>
+    <div class="glass tl deep w2" style="height:330px;display:grid;place-items:center">
+      <div class="t" style="font-size:146px;color:var(--s-g)">−0.41</div>
+    </div>
+    <div class="w2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="glass tl p" style="height:120px;color:var(--sea);display:flex;flex-direction:column;justify-content:space-between"><span class="k" style="color:inherit">S1</span><span class="t" style="font-size:30px">−0.28</span></div>
+      <div class="glass tl g" style="height:120px;color:var(--sea);display:flex;flex-direction:column;justify-content:space-between"><span class="k" style="color:inherit">S2</span><span class="t" style="font-size:30px">−0.20</span></div>
+      <div class="glass tl" style="height:120px;box-shadow:inset 0 0 0 3px var(--snow-2)"><span class="k">S3</span></div>
+    </div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="glass btn line" style="width:100%;height:58px;color:var(--snow-2)">Hold to stop</button></div>
+</div>
+<figcaption>Drive</figcaption>
+</figure>
+
+<!-- RESULT -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="bento">
+    <div class="glass tl red w2" style="padding:20px 18px">
+      <div class="k">New best</div>
+      <div class="t" style="font-size:104px;margin-top:12px">2:13.62</div>
+    </div>
+    <div class="glass tl snow"><div class="k">vs best</div><div class="t" style="font-size:44px;margin-top:12px">−1.21</div></div>
+    <div class="glass tl"><div class="k">Rank</div><div class="t" style="font-size:44px;margin-top:12px">P5<span style="font-size:20px;color:var(--snow-2)"> ↑2</span></div></div>
+    <div class="w2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="glass tl deep"><i style="display:block;height:8px;border-radius:2px" class="p"></i><div class="t" style="font-size:24px;margin-top:14px">41.08</div><div class="k" style="margin-top:6px">S1</div></div>
+      <div class="glass tl deep"><i style="display:block;height:8px;border-radius:2px" class="g"></i><div class="t" style="font-size:24px;margin-top:14px">48.37</div><div class="k" style="margin-top:6px">S2</div></div>
+      <div class="glass tl deep"><i style="display:block;height:8px;border-radius:2px" class="y"></i><div class="t" style="font-size:24px;margin-top:14px">44.17</div><div class="k" style="margin-top:6px">S3</div></div>
+    </div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px;display:grid;grid-template-columns:1fr 2fr;gap:8px"><button class="glass btn line" style="height:60px">Again</button><button class="btn red" style="height:60px">Post</button></div>
+</div>
+<figcaption>Result</figcaption>
+</figure>
+
+<!-- COMPARE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div class="bento">
+    <div class="glass tl snow"><div class="k">You</div><div class="t" style="font-size:36px;margin-top:12px">2:13.62</div></div>
+    <div class="glass tl"><div class="k">petra_r</div><div class="t" style="font-size:36px;margin-top:12px">2:11.47</div></div>
+    <div class="glass tl deep w2" style="padding:16px 12px 12px">
+      <svg viewBox="0 0 340 170" style="width:100%;display:block" aria-label="Gap over the lap">
+        <line x1="0" y1="70" x2="340" y2="70" stroke="var(--snow)" stroke-opacity=".25" stroke-dasharray="4 5"/>
+        <path d="M0 70 C30 68 50 76 80 86 S120 90 150 104 S200 118 230 112 S290 140 340 144 L340 70 Z" fill="var(--red)" fill-opacity=".35"/>
+        <path d="M0 70 C30 68 50 76 80 86 S120 90 150 104 S200 118 230 112 S290 140 340 144" fill="none" stroke="var(--red)" stroke-width="3"/>
+        <text x="336" y="164" text-anchor="end" fill="var(--snow)" font-family="Archivo" font-weight="800" font-size="16">+2.15</text>
+      </svg>
+    </div>
+    <div class="w2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="glass tl"><div class="k">S1</div><div class="t" style="font-size:28px;margin-top:12px">+0.57</div></div>
+      <div class="glass tl"><div class="k">S2</div><div class="t" style="font-size:28px;margin-top:12px">+0.73</div></div>
+      <div class="glass tl"><div class="k">S3</div><div class="t" style="font-size:28px;margin-top:12px">+0.85</div></div>
+    </div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px">Race petra_r</button></div>
+</div>
+<figcaption>Compare</figcaption>
+</figure>
+
+<!-- PROFILE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="bento" style="padding-top:8px">
+    <div class="glass tl red w2" style="display:flex;gap:14px;align-items:center">
+      <span class="av" style="width:64px;height:64px;border-radius:20px;font-size:22px;background:var(--snow);color:var(--red)">MJ</span>
+      <div><div class="t" style="font-size:34px">Marek J.</div><div class="k" style="margin-top:6px">Ecce Homo</div></div>
+    </div>
+    <div class="glass tl"><div class="k">Laps</div><div class="t" style="font-size:44px;margin-top:12px">48</div></div>
+    <div class="glass tl"><div class="k">Followers</div><div class="t" style="font-size:44px;margin-top:12px">12</div></div>
+    <div class="glass tl deep w2"><div class="k">Last 13 weeks</div>
+      <div class="heat" style="margin-top:12px">
+        <i></i><i class="a"></i><i></i><i></i><i class="a"></i><i class="b"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i><i class="a"></i><i></i>
+        <i class="a"></i><i></i><i></i><i class="b"></i><i></i><i></i><i class="a"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i><i class="a"></i>
+        <i></i><i></i><i class="a"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i>
+      </div></div>
+    <div class="glass tl w2" style="display:grid;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Ecce Homo</div><div class="t" style="font-size:28px;margin-top:6px">2:13.62</div></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Autodrom Most</div><div class="t" style="font-size:28px;margin-top:6px">1:41.330</div></div></div>
+    </div>
+  </div>
+  <nav class="tabs"><span class="glass tab"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab on"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Profile</figcaption>
+</figure>
+
+</div>
+<script>
+// The lens filters are sized to each element, so build them once the web font has set the tile sizes.
+document.fonts.ready.then(() => {
+// Liquid glass, built per element (inlined into src/glass.html at build time):
+//  - a displacement map sized to the element: inside a rim band the backdrop is pulled inward along the edge
+//    normal, strongest at the edge and fading to nothing (a convex edge profile), so corners bend correctly;
+//    three passes at slightly different strengths split the colours a little at the rim;
+//  - it materializes by ramping the bending up from zero;
+//  - the rim light follows the pointer; a press lights the glass from the touch point.
+(() => {
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const glass = [...document.querySelectorAll('.glass')];
+
+  glass.forEach((el) => {
+    el.addEventListener('pointerdown', (e) => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--px', `${((e.clientX - r.left) / r.width) * 100}%`);
+      el.style.setProperty('--py', `${((e.clientY - r.top) / r.height) * 100}%`);
+      el.classList.add('pressed');
+    });
+    for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) el.addEventListener(ev, () => el.classList.remove('pressed'));
+  });
+
+  addEventListener('pointermove', (e) => {
+    const a = Math.atan2(e.clientY - innerHeight / 2, e.clientX - innerWidth / 2) * 180 / Math.PI + 90;
+    glass.forEach((el) => el.style.setProperty('--light', `${a + 180}deg`));
+  }, { passive: true });
+
+  if (!root.classList.contains('lens')) return;
+  const defs = document.getElementById('lens-defs');
+  const maps = new Map();
+
+  function displacementMap(w, h, r, band) {
+    const key = `${w}x${h}x${r}x${band}`;
+    if (maps.has(key)) return maps.get(key);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(w, h), d = img.data;
+    const hx = w / 2 - r, hy = h / 2 - r;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const px = x + .5 - w / 2, py = y + .5 - h / 2;
+      const qx = Math.abs(px) - hx, qy = Math.abs(py) - hy;
+      // signed distance to the rounded rectangle (negative inside) and its outward normal
+      let dist, nx, ny;
+      if (qx > 0 && qy > 0) { const l = Math.hypot(qx, qy); dist = l - r; nx = qx / l; ny = qy / l; }
+      else if (qx > qy) { dist = qx - r; nx = 1; ny = 0; }
+      else { dist = qy - r; nx = 0; ny = 1; }
+      nx *= Math.sign(px) || 1; ny *= Math.sign(py) || 1;
+      const inside = -dist, i = (y * w + x) * 4;
+      let m = 0;
+      if (inside >= 0 && inside < band) { const t = 1 - inside / band; m = t * t * (3 - 2 * t) * t; } // eased, steepest at the edge
+      d[i] = 128 + nx * m * 127; d[i + 1] = 128 + ny * m * 127; d[i + 2] = 128; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    const url = c.toDataURL();
+    maps.set(key, url);
+    return url;
+  }
+
+  const ramps = [];
+  glass.forEach((el, n) => {
+    const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight);
+    if (!w || !h) return;
+    const r = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, w / 2, h / 2);
+    const round = Math.abs(w - h) < 2 && r >= w / 2 - 1;
+    const band = round ? w / 2 : Math.min(30, h / 2);
+    const k = round ? 18 : el.classList.contains('sheet') ? 26 : 24; // strongest pull, px
+    const id = `lens-${n}`;
+    const pass = (s, ch, out) =>
+      `<feDisplacementMap in="SourceGraphic" in2="m" scale="0" data-to="${(-2 * k * s).toFixed(1)}" xChannelSelector="R" yChannelSelector="G" result="d${out}"/>` +
+      `<feColorMatrix in="d${out}" type="matrix" values="${ch}" result="${out}"/>`;
+    defs.insertAdjacentHTML('beforeend',
+      `<filter id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">` +
+      `<feImage href="${displacementMap(w, h, Math.round(r), Math.round(band))}" x="0" y="0" width="${w}" height="${h}" result="m"/>` +
+      pass(1, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0', 'r') +
+      pass(.97, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0', 'g') +
+      pass(.94, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0', 'b') +
+      `<feBlend in="r" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b" mode="screen"/></filter>`);
+    el.style.setProperty('--lens', `url(#${id})`);
+    ramps.push(...defs.lastElementChild.querySelectorAll('feDisplacementMap'));
+  });
+
+  // materialize: the bending ramps in from nothing
+  const set = (f) => ramps.forEach((m) => m.setAttribute('scale', (m.dataset.to * f).toFixed(1)));
+  if (reduce) return set(1);
+  const t0 = performance.now();
+  const step = (now) => { const t = Math.min(1, (now - t0) / 700); set(1 - (1 - t) ** 3); if (t < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+})();
+});
+</script>
+</body>
+</html>

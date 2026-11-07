@@ -108,6 +108,20 @@ PAGES = {
         'sheet': 'rgba(110, 10, 27, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'blob-a': '#d81e3a', 'blob-b': '#4a0612',
         **FROST}, ['#a3122a', '#7a0c1f', '#ffe03a']),
+    'bento-midnight': ('bento', 'Glass bento · Midnight', {
+        'page': '#060920', 'ring': '#04061a', 'sea': '#0b1033', 'tile': '#161c4d', 'deep': '#080c28',
+        'red': '#5b4bff', 'on-red': '#ffffff', 'red-ink': '#4a3be0', 'snow': '#eceeff', 'snow-2': 'rgba(236, 238, 255, .8)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#1a1f66', 'map-blend': 'color',
+        'sheet': 'rgba(11, 16, 51, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
+        'blob-a': '#5b4bff', 'blob-b': '#1d2a8f',
+        **FROST}, ['#0b1033', '#5b4bff']),
+    'bento-forest': ('bento', 'Glass bento · Forest', {
+        'page': '#06271d', 'ring': '#04140f', 'sea': '#0e4d3a', 'tile': '#175f49', 'deep': '#093a2b',
+        'red': '#9be15d', 'on-red': '#0b2f22', 'red-ink': '#0e4d3a', 'snow': '#eef6e7', 'snow-2': 'rgba(238, 246, 231, .8)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#0f6b4f', 'map-blend': 'color',
+        'sheet': 'rgba(14, 77, 58, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
+        'blob-a': '#9be15d', 'blob-b': '#1a7a5a',
+        **FROST, 's-g': '#94e2e6'}, ['#0e4d3a', '#9be15d']),
 }
 
 
