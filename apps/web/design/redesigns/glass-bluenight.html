@@ -56,9 +56,9 @@ html.lens .glass { -webkit-backdrop-filter: var(--lens) blur(.4px) var(--glass-f
   background: conic-gradient(from var(--light), rgba(255,255,255,.95), rgba(255,255,255,.12) 16%, rgba(255,255,255,.06) 40%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.08) 62%, rgba(255,255,255,.12) 84%, rgba(255,255,255,.95));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude }
 /* regular glass: blurs and evens out the luminance behind it, thick enough to carry text */
-/* sheets off Home: about 60% of the Home card tint and a light blur, so the map stays readable through them */
-.glass.sheet { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(4px) saturate(1.5); backdrop-filter: blur(4px) saturate(1.5) }
-html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(2px) saturate(1.5); backdrop-filter: var(--lens) blur(2px) saturate(1.5) }
+/* cards: light tint (60% of --sheet) and a 3 px blur, the same on Home (.lift) and elsewhere (.sheet) */
+.glass.sheet { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
+html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
 .glass.tint-p { background: color-mix(in srgb, var(--s-p) 85%, transparent) }
 .glass.tint-g { background: color-mix(in srgb, var(--s-g) 82%, transparent) }
 /* under the finger glass swells from where it is pressed and lights up from that point */
@@ -107,8 +107,8 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 /* ---------- home: crisp gradient blobs whose outline is redrawn every frame from layered waves ---------- */
 .blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3 }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
-.glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(4px) var(--glass-fx); backdrop-filter: blur(4px) var(--glass-fx) }
-html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(2px) var(--glass-fx); backdrop-filter: var(--lens) blur(2px) var(--glass-fx) }
+.glass.lift { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--glass-fx); backdrop-filter: var(--lens) blur(3px) var(--glass-fx) }
 .pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
 .pill .av { width: 40px; height: 40px }
 @media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
