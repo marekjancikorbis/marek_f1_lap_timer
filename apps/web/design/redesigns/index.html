@@ -1,7 +1,7 @@
 <title>Purple Sector Redesigns</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Three directions, two colourways each: the palette band is the preview, the name is the link. */
+/* Two directions, several colourways each: the palette band is the preview, the name is the link. */
 :root { --bg: #eceef3; --fg: #141826; --mute: #4c5468; --rule: #d4d8e2; --card: #f7f8fb;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0d0f15; --fg: #eef0f6; --mute: #a2a9bb; --rule: #252a36; --card: #151821; color-scheme: dark } }
@@ -21,12 +21,13 @@ a.d:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px }
 .band { height: 84px; border-radius: 14px; display: flex; overflow: hidden }
 .name { font-weight: 650; display: flex; justify-content: space-between; padding: 0 4px }
 .pair.three { grid-template-columns: repeat(3, 1fr) }
-@media (max-width: 520px) { .pair, .pair.three { grid-template-columns: 1fr } }
+@media (max-width: 720px) { .pair.three { grid-template-columns: 1fr 1fr } }
+@media (max-width: 440px) { .pair, .pair.three { grid-template-columns: 1fr } }
 @media (prefers-reduced-motion: reduce) { a.d { transition: none } }
 </style>
 <main>
   <h1>Purple Sector redesigns</h1>
-  <p class="lede">Three directions: Glass in three colourways, Sleigh and Quiet in two. Seven screens per page, the same sample laps throughout, and the route is the real Ecce Homo road out of Šternberk.</p>
+  <p class="lede">Two directions in six and five colourways. Seven screens per page, the same sample laps throughout, and the route is the real Ecce Homo road out of Šternberk.</p>
 
   <section>
     <h2>Glass</h2>
@@ -35,24 +36,22 @@ a.d:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px }
       <a class="d" href="glass-sleigh.html"><span class="band"><i style="flex:3;background:#013f60"></i><i style="flex:2;background:#e22c2c"></i><i style="flex:1;background:#f3efe6"></i></span><span class="name">Sleigh <span>→</span></span></a>
       <a class="d" href="glass-bluenight.html"><span class="band"><i style="flex:3;background:#062041"></i><i style="flex:2;background:#9fa8b7"></i></span><span class="name">Blue night <span>→</span></span></a>
       <a class="d" href="glass-pine.html"><span class="band"><i style="flex:3;background:#0b303c"></i><i style="flex:2;background:#cdece2"></i></span><span class="name">Frozen pine <span>→</span></span></a>
+      <a class="d" href="glass-midnight.html"><span class="band"><i style="flex:3;background:#0b1033"></i><i style="flex:2;background:#5b4bff"></i></span><span class="name">Midnight <span>→</span></span></a>
+      <a class="d" href="glass-forest.html"><span class="band"><i style="flex:3;background:#0e4d3a"></i><i style="flex:2;background:#9be15d"></i></span><span class="name">Forest <span>→</span></span></a>
+      <a class="d" href="glass-cobalt.html"><span class="band"><i style="flex:3;background:#10121c"></i><i style="flex:2;background:#c4b5ff"></i><i style="flex:1;background:#c6ff3d"></i></span><span class="name">Cobalt <span>→</span></span></a>
     </div>
   </section>
 
   <section>
     <h2>Sleigh</h2>
     <p class="idea">Bento tiles on grain, one fact per tile. A single colour tile is always the next thing to do.</p>
-    <div class="pair">
+    <div class="pair three">
       <a class="d" href="sleigh.html"><span class="band"><i style="flex:3;background:#013f60"></i><i style="flex:2;background:#e22c2c"></i><i style="flex:1;background:#f3efe6"></i></span><span class="name">Winter sleigh <span>→</span></span></a>
       <a class="d" href="sleigh-forest.html"><span class="band"><i style="flex:3;background:#0e4d3a"></i><i style="flex:2;background:#9be15d"></i></span><span class="name">Forest <span>→</span></span></a>
+      <a class="d" href="sleigh-midnight.html"><span class="band"><i style="flex:3;background:#0b1033"></i><i style="flex:2;background:#5b4bff"></i></span><span class="name">Midnight <span>→</span></span></a>
+      <a class="d" href="sleigh-cobalt.html"><span class="band"><i style="flex:3;background:#10121c"></i><i style="flex:2;background:#c4b5ff"></i><i style="flex:1;background:#c6ff3d"></i></span><span class="name">Cobalt <span>→</span></span></a>
+      <a class="d" href="sleigh-crimson.html"><span class="band"><i style="flex:3;background:#a3122a"></i><i style="flex:2;background:#7a0c1f"></i><i style="flex:1;background:#fff1a1"></i></span><span class="name">Crimson <span>→</span></span></a>
     </div>
   </section>
 
-  <section>
-    <h2>Quiet</h2>
-    <p class="idea">Two colours, one number per screen, hairlines instead of boxes.</p>
-    <div class="pair">
-      <a class="d" href="quiet.html"><span class="band"><i style="flex:3;background:#d7d2cc"></i><i style="flex:2;background:#304352"></i></span><span class="name">Cloud <span>→</span></span></a>
-      <a class="d" href="quiet-pine.html"><span class="band"><i style="flex:3;background:#0b303c"></i><i style="flex:2;background:#cdece2"></i></span><span class="name">Frozen pine <span>→</span></span></a>
-    </div>
-  </section>
-</main>
+/main>
