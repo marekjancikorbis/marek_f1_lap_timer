@@ -442,7 +442,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(1px) var(--gla
     const r = Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0, w / 2, h / 2);
     const round = Math.abs(w - h) < 2 && r >= w / 2 - 1;
     const band = round ? w / 2 : Math.min(30, h / 2);
-    const k = round ? 30 : el.classList.contains('sheet') ? 46 : 42; // strongest pull, px
+    const k = round ? 18 : el.classList.contains('sheet') ? 26 : 24; // strongest pull, px
     const id = `lens-${n}`;
     const pass = (s, ch, out) =>
       `<feDisplacementMap in="SourceGraphic" in2="m" scale="0" data-to="${(-2 * k * s).toFixed(1)}" xChannelSelector="R" yChannelSelector="G" result="d${out}"/>` +
@@ -451,8 +451,8 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(1px) var(--gla
       `<filter id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">` +
       `<feImage href="${displacementMap(w, h, Math.round(r), Math.round(band))}" x="0" y="0" width="${w}" height="${h}" result="m"/>` +
       pass(1, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0', 'r') +
-      pass(.94, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0', 'g') +
-      pass(.88, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0', 'b') +
+      pass(.97, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0', 'g') +
+      pass(.94, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0', 'b') +
       `<feBlend in="r" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b" mode="screen"/></filter>`);
     el.style.setProperty('--lens', `url(#${id})`);
     ramps.push(...defs.lastElementChild.querySelectorAll('feDisplacementMap'));
