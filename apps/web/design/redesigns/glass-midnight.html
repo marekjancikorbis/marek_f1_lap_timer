@@ -105,7 +105,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
 /* ---------- home: lightly blurred gradient blobs whose outline is redrawn every frame from layered waves ---------- */
-.blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3; filter: blur(10px) }
+.blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3; filter: blur(4px) }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
 .glass.lift { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx) }
 html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--glass-fx); backdrop-filter: var(--lens) blur(3px) var(--glass-fx) }
