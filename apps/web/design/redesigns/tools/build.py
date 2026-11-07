@@ -21,14 +21,6 @@ PAGES = {
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#01507a', 'map-blend': 'color',
         'blob-a': '#0a6a9c', 'blob-b': '#e22c2c',
         **FROST}, ['#013f60', '#e22c2c', '#f3efe6']),
-    'glass-bluenight': ('glass', 'Glass · Blue night', {
-        'page': '#03152b', 'ring': '#0a1626', 'night': '#062041',
-        'main': '#9fa8b7', 'main-hi': '#d5dae3', 'on-main': '#062041',
-        'accent': '#a2abbd', 'ink': '#e6e9ef', 'ink-2': 'rgba(230, 233, 239, .74)',
-        'sheet': 'rgba(6, 32, 65, .45)', 'clear': 'rgba(159, 168, 183, .08)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
-        'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.35)', 'map-tint': '#0b3166', 'map-blend': 'color',
-        'blob-a': '#9fa8b7', 'blob-b': '#1d4f8f',
-        **FROST}, ['#062041', '#9fa8b7']),
     'glass-pine': ('glass', 'Glass · Frozen pine', {
         'page': '#071f27', 'ring': '#04141a', 'night': '#0b303c',
         'main': '#cdece2', 'main-hi': '#e8f7f2', 'on-main': '#0b303c',
@@ -59,8 +51,16 @@ PAGES = {
         'accent': '#c6ff3d', 'ink': '#f0edff', 'ink-2': 'rgba(240, 237, 255, .74)',
         'sheet': 'rgba(16, 18, 40, .45)', 'clear': 'rgba(196, 181, 255, .07)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.35)', 'map-tint': '#1d1f4a', 'map-blend': 'color',
-        'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6',
+        'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6', 'blob-c': '#c6ff3d',
         **FROST, 's-g': '#94e2e6'}, ['#10121c', '#c4b5ff', '#c6ff3d']),
+    'glass-crimson': ('glass', 'Glass · Crimson', {
+        'page': '#5c0816', 'ring': '#2a0409', 'night': '#7a0c1f',
+        'main': '#ffe03a', 'main-hi': '#fff09a', 'on-main': '#5c0816',
+        'accent': '#ffe03a', 'ink': '#fff7ec', 'ink-2': 'rgba(255, 247, 236, .78)',
+        'sheet': 'rgba(110, 10, 27, .45)', 'clear': 'rgba(255, 224, 58, .05)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
+        'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#a3122a', 'map-blend': 'color',
+        'blob-a': '#d81e3a', 'blob-b': '#4a0612',
+        **FROST}, ['#a3122a', '#7a0c1f', '#ffe03a']),
     'sleigh': ('sleigh', 'Sleigh', {
         'page': '#00263a', 'ring': '#0d1a22', 'sea': '#013f60', 'tile': '#0a4c71', 'deep': '#012f48',
         'red': '#e22c2c', 'on-red': '#f3efe6', 'red-ink': '#c41f1f', 'snow': '#f3efe6', 'snow-2': 'rgba(243, 239, 230, .8)',
@@ -84,9 +84,9 @@ PAGES = {
         **FROST, 's-g': '#94e2e6'}, ['#10121c', '#c4b5ff', '#c6ff3d']),
     'sleigh-crimson': ('sleigh', 'Sleigh · Crimson', {
         'page': '#6e0a1b', 'ring': '#2a0409', 'sea': '#a3122a', 'tile': '#8a0f24', 'deep': '#7a0c1f',
-        'red': '#fff1a1', 'on-red': '#6e0a1b', 'red-ink': '#a3122a', 'snow': '#fff7ec', 'snow-2': 'rgba(255, 247, 236, .82)',
+        'red': '#ffe03a', 'on-red': '#6e0a1b', 'red-ink': '#a3122a', 'snow': '#fff7ec', 'snow-2': 'rgba(255, 247, 236, .82)',
         'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#a3122a', 'map-blend': 'color',
-        **FROST}, ['#a3122a', '#7a0c1f', '#fff1a1']),
+        **FROST}, ['#a3122a', '#7a0c1f', '#ffe03a']),
 }
 
 
