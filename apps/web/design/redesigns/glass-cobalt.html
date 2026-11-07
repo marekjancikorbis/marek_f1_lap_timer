@@ -145,7 +145,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
       <linearGradient id="blob-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--blob-a)"/><stop offset="1" stop-color="var(--blob-b)"/></linearGradient>
       <linearGradient id="blob-g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blob-b)"/><stop offset="1" stop-color="var(--blob-a)" stop-opacity=".35"/></linearGradient>
       <!-- optional third colour glowing inside the middle blob; palettes without --blob-c hide it -->
-      <radialGradient id="blob-g3" cx=".6" cy=".62" r=".55"><stop offset="0" stop-color="var(--blob-c, transparent)"/><stop offset=".45" stop-color="var(--blob-c, transparent)" stop-opacity=".85"/><stop offset="1" stop-color="var(--blob-c, transparent)" stop-opacity="0"/></radialGradient>
+      <radialGradient id="blob-g3" cx=".6" cy=".62" r=".33"><stop offset="0" stop-color="var(--blob-c, transparent)"/><stop offset=".45" stop-color="var(--blob-c, transparent)" stop-opacity=".85"/><stop offset="1" stop-color="var(--blob-c, transparent)" stop-opacity="0"/></radialGradient>
     </defs>
     <g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g>
   </svg>
