@@ -107,8 +107,8 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 /* ---------- home: crisp gradient blobs whose outline is redrawn every frame from layered waves ---------- */
 .blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3 }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
-.glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(2px) var(--glass-fx); backdrop-filter: blur(2px) var(--glass-fx) }
-html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(1px) var(--glass-fx); backdrop-filter: var(--lens) blur(1px) var(--glass-fx) }
+.glass.lift { background: var(--sheet); -webkit-backdrop-filter: blur(4px) var(--glass-fx); backdrop-filter: blur(4px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(2px) var(--glass-fx); backdrop-filter: var(--lens) blur(2px) var(--glass-fx) }
 .pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
 .pill .av { width: 40px; height: 40px }
 @media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
