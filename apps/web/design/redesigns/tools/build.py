@@ -87,6 +87,27 @@ PAGES = {
         'red': '#ffe03a', 'on-red': '#6e0a1b', 'red-ink': '#a3122a', 'snow': '#fff7ec', 'snow-2': 'rgba(255, 247, 236, .82)',
         'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#a3122a', 'map-blend': 'color',
         **FROST}, ['#a3122a', '#7a0c1f', '#ffe03a']),
+    'bento-sleigh': ('bento', 'Glass bento · Sleigh', {
+        'page': '#00263a', 'ring': '#0d1a22', 'sea': '#013f60', 'tile': '#0a4c71', 'deep': '#012f48',
+        'red': '#e22c2c', 'on-red': '#f3efe6', 'red-ink': '#c41f1f', 'snow': '#f3efe6', 'snow-2': 'rgba(243, 239, 230, .8)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#01507a', 'map-blend': 'color',
+        'sheet': 'rgba(1, 38, 58, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
+        'blob-a': '#0a6a9c', 'blob-b': '#e22c2c',
+        **FROST}, ['#013f60', '#e22c2c', '#f3efe6']),
+    'bento-cobalt': ('bento', 'Glass bento · Cobalt', {
+        'page': '#080a12', 'ring': '#05060b', 'sea': '#10121c', 'tile': '#1c1d33', 'deep': '#0b0c15',
+        'red': '#c6ff3d', 'on-red': '#14112b', 'red-ink': '#2a2350', 'snow': '#ece6ff', 'snow-2': 'rgba(236, 230, 255, .8)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#1d1f4a', 'map-blend': 'color',
+        'sheet': 'rgba(16, 18, 40, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
+        'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6', 'blob-c': '#d8ff2e',
+        **FROST, 's-g': '#94e2e6'}, ['#10121c', '#c4b5ff', '#c6ff3d']),
+    'bento-crimson': ('bento', 'Glass bento · Crimson', {
+        'page': '#5c0816', 'ring': '#2a0409', 'sea': '#7a0c1f', 'tile': '#8a0f24', 'deep': '#5c0816',
+        'red': '#ffe03a', 'on-red': '#5c0816', 'red-ink': '#a3122a', 'snow': '#fff7ec', 'snow-2': 'rgba(255, 247, 236, .82)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#a3122a', 'map-blend': 'color',
+        'sheet': 'rgba(110, 10, 27, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
+        'blob-a': '#d81e3a', 'blob-b': '#4a0612',
+        **FROST}, ['#a3122a', '#7a0c1f', '#ffe03a']),
 }
 
 
