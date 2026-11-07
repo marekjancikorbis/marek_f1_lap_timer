@@ -340,7 +340,7 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 </div>
 <script>
 // Blobs behind every screen: each outline is 10 points whose radius is a sum of out-of-phase waves, joined by a
-// closed Catmull-Rom curve. Each screen runs the same motion at a different moment. Reduced motion draws one still frame.
+// closed Catmull-Rom curve. They stand still: each screen gets one frozen moment, so every screen's shape differs.
 (() => {
   const blobs = [
     { cx: 200, cy: 330, r: 150, seed: 0 },
@@ -370,10 +370,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
   }
   const draw = (t) => screens.forEach((sc) => sc.paths.forEach((p) => p.setAttribute('d', outline(blobs[p.dataset.blob], t + sc.offset))));
   draw(0);
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const start = performance.now();
-  const tick = (now) => { draw((now - start) / 1000); requestAnimationFrame(tick); };
-  requestAnimationFrame(tick);
 })();
 </script>
 <script>
