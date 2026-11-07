@@ -12,7 +12,7 @@
 /* Glass: the real map is the content layer. Glass is only the floating control layer above it:
    bars, buttons, sheets. Text sits on tinted glass or solid, never on clear glass. */
 :root {
-  --page: #080a12; --ring: #05060b; --night: #10121c; --main: #c4b5ff; --main-hi: #e4dcff; --on-main: #14112b; --accent: #c6ff3d; --ink: #f0edff; --ink-2: rgba(240, 237, 255, .74); --sheet: rgba(16, 18, 40, .45); --clear: rgba(196, 181, 255, .07); --glass-fx: saturate(1.3) brightness(1.08); --map-full: url(maps/full-dark.png); --map-drive: url(maps/drive-dark.png); --map-filter: grayscale(1) brightness(1.35); --map-tint: #1d1f4a; --map-blend: color; --blob-a: #c4b5ff; --blob-b: #6f5bd6; --blob-c: #c6ff3d; --s-p: #c9b3ff; --s-g: #94e2e6; --s-y: #f2d58a;
+  --page: #080a12; --ring: #05060b; --night: #10121c; --main: #c4b5ff; --main-hi: #e4dcff; --on-main: #14112b; --accent: #c6ff3d; --ink: #f0edff; --ink-2: rgba(240, 237, 255, .74); --sheet: rgba(16, 18, 40, .45); --clear: rgba(196, 181, 255, .07); --glass-fx: saturate(1.3) brightness(1.08); --map-full: url(maps/full-dark.png); --map-drive: url(maps/drive-dark.png); --map-filter: grayscale(1) brightness(1.35); --map-tint: #1d1f4a; --map-blend: color; --blob-a: #c4b5ff; --blob-b: #6f5bd6; --blob-c: #d8ff2e; --s-p: #c9b3ff; --s-g: #94e2e6; --s-y: #f2d58a;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
   --spring: cubic-bezier(.3, 1.5, .5, 1);
 }
@@ -143,9 +143,11 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
   <svg class="blob" viewBox="0 0 390 844" aria-hidden="true">
     <defs>
       <linearGradient id="blob-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--blob-a)"/><stop offset="1" stop-color="var(--blob-b)"/></linearGradient>
-      <linearGradient id="blob-g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blob-b)"/><stop offset="1" stop-color="var(--blob-c, var(--blob-a))" stop-opacity=".35"/></linearGradient>
+      <linearGradient id="blob-g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blob-b)"/><stop offset="1" stop-color="var(--blob-a)" stop-opacity=".35"/></linearGradient>
+      <!-- optional third colour glowing inside the middle blob; palettes without --blob-c hide it -->
+      <radialGradient id="blob-g3" cx=".6" cy=".62" r=".55"><stop offset="0" stop-color="var(--blob-c, transparent)"/><stop offset=".45" stop-color="var(--blob-c, transparent)" stop-opacity=".85"/><stop offset="1" stop-color="var(--blob-c, transparent)" stop-opacity="0"/></radialGradient>
     </defs>
-    <g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g>
+    <g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g>
   </svg>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:flex-end"><button class="glass round ib" aria-label="Notifications"><svg class="i ndot"><use href="#bell"/></svg></button></div>
@@ -371,7 +373,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
     }
     return d + 'Z';
   }
-  const draw = (t) => paths.forEach((p, i) => p.setAttribute('d', outline(blobs[i], t)));
+  const draw = (t) => paths.forEach((p) => p.setAttribute('d', outline(blobs[p.dataset.blob], t)));
   draw(0);
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const start = performance.now();

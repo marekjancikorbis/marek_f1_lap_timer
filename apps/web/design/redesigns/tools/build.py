@@ -51,7 +51,7 @@ PAGES = {
         'accent': '#c6ff3d', 'ink': '#f0edff', 'ink-2': 'rgba(240, 237, 255, .74)',
         'sheet': 'rgba(16, 18, 40, .45)', 'clear': 'rgba(196, 181, 255, .07)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.35)', 'map-tint': '#1d1f4a', 'map-blend': 'color',
-        'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6', 'blob-c': '#c6ff3d',
+        'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6', 'blob-c': '#d8ff2e',
         **FROST, 's-g': '#94e2e6'}, ['#10121c', '#c4b5ff', '#c6ff3d']),
     'glass-crimson': ('glass', 'Glass · Crimson', {
         'page': '#5c0816', 'ring': '#2a0409', 'night': '#7a0c1f',
