@@ -104,7 +104,12 @@ html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(3px) saturate
 
 /* ---------- the bento as glass ---------- */
 .ph::after { opacity: .08 }
-.blob { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -3; filter: blur(3px) }
+/* background: a still gradient in the palette's blob colours (an optional third colour glows in the middle) */
+.ph { background:
+  radial-gradient(60% 32% at 62% 46%, color-mix(in srgb, var(--blob-c, transparent) 70%, transparent), transparent 100%),
+  radial-gradient(90% 55% at 15% 12%, color-mix(in srgb, var(--blob-a) 75%, transparent), transparent 100%),
+  radial-gradient(90% 55% at 90% 88%, color-mix(in srgb, var(--blob-b) 80%, transparent), transparent 100%),
+  var(--sea) }
 .glass.tl, .glass.ib, .glass.tab { background: color-mix(in srgb, var(--sheet) 60%, transparent);
   -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
 html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
@@ -119,12 +124,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-      <linearGradient id="blob-g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--blob-a)"/><stop offset="1" stop-color="var(--blob-b)"/></linearGradient>
-      <linearGradient id="blob-g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blob-b)"/><stop offset="1" stop-color="var(--blob-a)" stop-opacity=".35"/></linearGradient>
-      <!-- optional third colour glowing inside the middle blob; palettes without --blob-c hide it -->
-      <radialGradient id="blob-g3" cx=".6" cy=".62" r=".55"><stop offset="0" stop-color="var(--blob-c, transparent)"/><stop offset=".45" stop-color="var(--blob-c, transparent)" stop-opacity=".85"/><stop offset="1" stop-color="var(--blob-c, transparent)" stop-opacity="0"/></radialGradient>
-  </defs>
   <defs id="lens-defs"></defs>
   <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
   <symbol id="map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
@@ -149,7 +148,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- HOME -->
 <figure>
 <div class="ph">
-  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true"><g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g></svg>
   <div class="sb">9:41</div>
   <div class="top-r"><span class="wm">Purple Sector</span><button class="glass ib" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button></div>
   <div class="bento">
@@ -181,7 +179,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- ROUTE -->
 <figure>
 <div class="ph">
-  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true"><g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g></svg>
   <div class="sb">9:41</div>
   <div class="top-r"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
   <div class="bento">
@@ -215,7 +212,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- READY -->
 <figure>
 <div class="ph">
-  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true"><g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g></svg>
   <div class="sb">9:41</div>
   <div class="top-r"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><span class="k" style="display:flex;gap:6px;align-items:center;color:var(--snow)"><i style="width:9px;height:9px;border-radius:50%" class="g"></i>GPS 3 m</span></div>
   <div class="bento">
@@ -238,7 +234,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- DRIVE -->
 <figure>
 <div class="ph">
-  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true"><g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g></svg>
   <div class="sb">9:41</div>
   <div class="bento" style="padding-top:8px">
     <div class="glass tl" style="padding:14px 16px"><div class="k">Lap</div><div class="t" style="font-size:46px;margin-top:8px">1:38.4</div></div>
@@ -260,7 +255,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- RESULT -->
 <figure>
 <div class="ph">
-  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true"><g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g></svg>
   <div class="sb">9:41</div>
   <div class="top-r"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
   <div class="bento">
@@ -284,7 +278,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- COMPARE -->
 <figure>
 <div class="ph">
-  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true"><g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g></svg>
   <div class="sb">9:41</div>
   <div class="top-r"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
   <div class="bento">
@@ -312,7 +305,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- PROFILE -->
 <figure>
 <div class="ph">
-  <svg class="blob" viewBox="0 0 390 844" aria-hidden="true"><g><path data-blob="0" fill="url(#blob-g1)"/><path data-blob="0" fill="url(#blob-g3)"/><path data-blob="1" fill="url(#blob-g2)" opacity=".85"/><path data-blob="2" fill="url(#blob-g1)" opacity=".6"/></g></svg>
   <div class="sb">9:41</div>
   <div class="bento" style="padding-top:8px">
     <div class="glass tl red w2" style="display:flex;gap:14px;align-items:center">
@@ -338,40 +330,6 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 </figure>
 
 </div>
-<script>
-// Blobs behind every screen: each outline is 10 points whose radius is a sum of out-of-phase waves, joined by a
-// closed Catmull-Rom curve. They stand still: each screen gets one frozen moment, so every screen's shape differs.
-(() => {
-  const blobs = [
-    { cx: 200, cy: 330, r: 150, seed: 0 },
-    { cx: 120, cy: 600, r: 105, seed: 2.1 },
-    { cx: 300, cy: 520, r: 70, seed: 4.3 },
-  ];
-  const N = 10, TAU = Math.PI * 2;
-  const screens = [...document.querySelectorAll('svg.blob')].map((svg, n) => ({ offset: n * 9, paths: [...svg.querySelectorAll('[data-blob]')] }));
-  function outline(b, t) {
-    const s = b.seed, pts = [];
-    const cx = b.cx + 34 * Math.sin(t * 0.37 + s) + 14 * Math.sin(t * 0.83 + s * 3);
-    const cy = b.cy + 40 * Math.cos(t * 0.29 + s * 1.7) + 12 * Math.sin(t * 0.71 + s);
-    const spin = t * 0.12 + s;
-    for (let i = 0; i < N; i++) {
-      const a = (i / N) * TAU + spin;
-      const k = 1 + 0.26 * Math.sin(2 * a + t * 0.9 + s) + 0.17 * Math.sin(3 * a - t * 1.3 + s * 2) + 0.10 * Math.sin(5 * a + t * 2.1 + s * 3);
-      pts.push([cx + Math.cos(a) * b.r * k, cy + Math.sin(a) * b.r * k]);
-    }
-    let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
-    for (let i = 0; i < N; i++) {
-      const p0 = pts[(i + N - 1) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
-      d += `C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} `
-         + `${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} `
-         + `${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
-    }
-    return d + 'Z';
-  }
-  const draw = (t) => screens.forEach((sc) => sc.paths.forEach((p) => p.setAttribute('d', outline(blobs[p.dataset.blob], t + sc.offset))));
-  draw(0);
-})();
-</script>
 <script>
 // The lens filters are sized to each element, so build them once the web font has set the tile sizes.
 document.fonts.ready.then(() => {
