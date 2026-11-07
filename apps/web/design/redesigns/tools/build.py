@@ -124,6 +124,12 @@ PAGES = {
         **FROST, 's-g': '#94e2e6'}, ['#0e4d3a', '#9be15d']),
 }
 
+# Glass bento uses the Glass screens too, so each bento palette starts from the Glass palette of the same name.
+for _name, (_src, _title, _pal, _sw) in list(PAGES.items()):
+    if _src == 'bento':
+        PAGES[_name] = (_src, _title, {**PAGES['glass-' + _name.split('-', 1)[1]][2], **_pal}, _sw)
+
+
 
 def lookup(key):
     if key == 'glassjs':

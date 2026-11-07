@@ -12,62 +12,39 @@
   if (window.chrome && CSS.supports('backdrop-filter', 'url(#x)')) document.documentElement.classList.add('lens');
 </script>
 <style>
-/* Glass bento: Sleigh's layout (one fact per tile) built from liquid glass tiles floating over moving gradient blobs.
-   Sleigh: every screen is a bento box of tiles, one fact per tile, on grained winter blue with one red tile that matters most. */
+/* Glass bento: Home is Sleigh's bento of glass tiles; every other screen is the Glass layout (map content, floating glass).
+   Glass: the real map is the content layer. Glass is only the floating control layer above it:
+   bars, buttons, sheets. Text sits on tinted glass or solid, never on clear glass. */
 :root {
-  --page: #5c0816; --ring: #2a0409; --sea: #7a0c1f; --tile: #8a0f24; --deep: #5c0816; --red: #ffe03a; --on-red: #5c0816; --red-ink: #a3122a; --snow: #fff7ec; --snow-2: rgba(255, 247, 236, .82); --map-card: url(maps/card-dark.png); --map-filter: grayscale(1) brightness(1.5); --map-tint: #a3122a; --map-blend: color; --sheet: rgba(110, 10, 27, .45); --clear: rgba(243, 239, 230, .06); --glass-fx: saturate(1.3) brightness(1.08); --blob-a: #d81e3a; --blob-b: #4a0612; --s-p: #c9b3ff; --s-g: #8fe3bd; --s-y: #f2d58a;
+  --page: #5c0816; --ring: #2a0409; --night: #7a0c1f; --main: #ffe03a; --main-hi: #fff09a; --on-main: #5c0816; --accent: #ffe03a; --ink: #fff7ec; --ink-2: rgba(255, 247, 236, .78); --sheet: rgba(110, 10, 27, .45); --clear: rgba(243, 239, 230, .06); --glass-fx: saturate(1.3) brightness(1.08); --map-full: url(maps/full-dark.png); --map-drive: url(maps/drive-dark.png); --map-filter: grayscale(1) brightness(1.5); --map-tint: #a3122a; --map-blend: color; --blob-a: #d81e3a; --blob-b: #4a0612; --s-p: #c9b3ff; --s-g: #8fe3bd; --s-y: #f2d58a; --sea: #7a0c1f; --tile: #8a0f24; --deep: #5c0816; --red: #ffe03a; --on-red: #5c0816; --red-ink: #a3122a; --snow: #fff7ec; --snow-2: rgba(255, 247, 236, .82); --map-card: url(maps/card-dark.png);
   --font: "Archivo", "Arial Narrow", system-ui, sans-serif;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --night: var(--sea);
   --spring: cubic-bezier(.3, 1.5, .5, 1);
-  color-scheme: dark;
 }
 * { box-sizing: border-box; margin: 0; padding: 0 }
-html, body { background: var(--page); color: var(--snow); font: 15px/1.35 var(--font) }
+html, body { background: var(--page); color: var(--ink); font: 15px/1.4 var(--font) }
 body { padding-block: 24px 48px }
 header.top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
-header.top a { color: var(--snow-2); text-decoration: none; font-size: 14px }
-header.top h1 { font-size: 30px; font-weight: 900; font-stretch: 125%; text-transform: uppercase; letter-spacing: -.01em }
-.sw { display: flex; gap: 6px } .sw i { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--snow) 25%, transparent) }
+header.top a { color: var(--ink-2); text-decoration: none; font-size: 14px }
+header.top h1 { font-size: 28px; letter-spacing: -.02em; font-weight: 700 }
+.sw { display: flex; gap: 6px } .sw i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2) }
 .wall { display: flex; gap: 36px; overflow-x: auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 12px; scroll-snap-type: x proximity }
 figure { flex: none; scroll-snap-align: center }
-figcaption { margin-top: 14px; font-size: 13px; color: var(--snow-2); text-align: center; font-stretch: 112%; text-transform: uppercase; letter-spacing: .08em; font-weight: 700 }
+figcaption { margin-top: 14px; font-size: 13px; color: var(--ink-2); text-align: center }
 
-.ph { width: 390px; height: 844px; border-radius: 46px; overflow: hidden; position: relative; isolation: isolate; background: var(--sea);
-  box-shadow: 0 0 0 9px var(--ring), 0 40px 80px -30px rgba(0, 10, 20, .8); font-variant-numeric: tabular-nums }
-.ph::after { content: ""; position: absolute; inset: 0; background: var(--grain); opacity: .13; mix-blend-mode: overlay; pointer-events: none; z-index: 50 }
-.sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 700 }
-.sb::after { content: ""; width: 66px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
+/* ---------- phone + content layer ---------- */
+.ph { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; isolation: isolate; background: var(--night);
+  box-shadow: 0 0 0 9px var(--ring), 0 0 0 10px rgba(255,255,255,.08), 0 40px 80px -30px rgba(0, 0, 0, .8); font-variant-numeric: tabular-nums }
+.map { position: absolute; inset: 0; isolation: isolate; z-index: -3 }
+.map::before { content: ""; position: absolute; inset: 0; background: var(--map-img) center / cover; filter: var(--map-filter) }
+.map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: var(--map-blend) }
+.route { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -2; fill: none; stroke-linecap: round; stroke-linejoin: round }
+.sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 600 }
+.sb::after { content: ""; width: 66px; height: 12px; border-radius: 4px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
 
-.bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px }
-.tl { background: var(--tile); border-radius: 22px; padding: 16px; position: relative; overflow: hidden; min-width: 0 }
-.tl.deep { background: var(--deep) } .tl.red { background: var(--red); color: var(--on-red) } .tl.snow { background: var(--snow); color: var(--sea) }
-.w2 { grid-column: span 2 }
-.k { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-stretch: 125%; color: var(--snow-2) }
-.tl.red .k { color: var(--on-red); font-size: 12px } .tl.snow .k { color: var(--sea) }
-.t { font-weight: 800; font-stretch: 70%; letter-spacing: -.01em; line-height: .9 }
-.wm { font-weight: 900; font-stretch: 125%; font-size: 16px; text-transform: uppercase; letter-spacing: .02em }
-.p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
-.st { display: flex; gap: 4px } .st i { flex: 1; height: 8px; border-radius: 2px }
-button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
-.btn { height: 50px; border-radius: 16px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: transform .1s ease-out }
-.btn.snow { background: var(--snow); color: var(--red-ink) } .btn.red { background: var(--red); color: var(--on-red) } .btn.line { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--snow) 30%, transparent) }
-.btn:active, .tl:active, .ib:active { transform: scale(.97) }
-.ib { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
-svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round }
-:focus-visible { outline: 3px solid var(--snow); outline-offset: 2px }
-.tabs { position: absolute; left: 12px; right: 12px; bottom: 22px; height: 64px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px }
-.tab { border-radius: 18px; background: var(--deep); display: grid; place-items: center; color: var(--snow-2) }
-.tab.on { background: var(--snow); color: var(--sea) } .tab.go { background: var(--red); color: var(--on-red) }
-.av { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--sea); flex: none }
-.top-r { display: flex; justify-content: space-between; align-items: center; padding: 4px 16px 12px }
-.heat { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px }
-.heat i { aspect-ratio: 1; border-radius: 3px; background: var(--deep) }
-.heat i.a { background: color-mix(in srgb, var(--red) 45%, transparent) } .heat i.b { background: var(--red) }
-.map { isolation: isolate }
-.map::before { content: ""; position: absolute; inset: 0; background: var(--map-img) center / cover; filter: var(--map-filter); z-index: -2 }
-.map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: var(--map-blend); z-index: -1 }
-/* ---------- liquid glass (shared with the Glass direction) ---------- */
+/* ---------- liquid glass ---------- */
+/* --lens is a per-element SVG filter built by the script at the bottom: it bends the backdrop inside a rim
+   band shaped like a convex edge, so the bending follows the element's real size and corners. */
 @property --lit { syntax: '<number>'; inherits: true; initial-value: 0 }
 .glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear); --light: 300deg;
   -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx);
@@ -102,24 +79,93 @@ html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(3px) saturate
 }
 @media (prefers-reduced-motion: reduce) { .glass, .glass.pressed { transform: none } }
 
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
+:focus-visible { outline: 2px solid var(--main-hi); outline-offset: 3px }
+.ib { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center }
+svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round }
+.solid { height: 52px; border-radius: 26px; background: var(--main); color: var(--on-main); font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; transition: transform .12s ease-out; width: 100% }
+.solid.quiet { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink) }
+.solid:active { transform: scale(.97) }
+.chip { height: 36px; padding: 0 14px; border-radius: 18px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px }
+
+.t { font-weight: 700; letter-spacing: -.035em; line-height: .95 }
+.lbl { font-size: 13px; font-weight: 600; color: var(--ink-2) }
+.acc { color: var(--accent) }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none }
+.p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
+.st { display: flex; gap: 3px } .st i { width: 22px; height: 5px; border-radius: 3px }
+
+/* sheet: inset 8 px from a 48 px screen corner, so 40 px keeps the corners concentric */
+.sheet-b { position: absolute; left: 8px; right: 8px; bottom: 8px; border-radius: 40px; padding: 10px 20px 20px }
+.grab { width: 38px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 30%, transparent); margin: 0 auto 14px }
+.rows > div { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 10px 0 }
+.rows > div + div { border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent) }
+.av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #10131c }
+
+/* tab bar: tabs in one capsule, Drive in its own circle, like the separate search button */
+.tabbar { position: absolute; left: 20px; right: 20px; bottom: 24px; display: flex; gap: 10px; align-items: center }
+.tabs { flex: 1; height: 62px; border-radius: 31px; display: grid; grid-template-columns: repeat(4, 1fr); padding: 4px }
+.tab { display: grid; place-items: center; border-radius: 27px; color: var(--ink-2) }
+.tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
+.go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
+.ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
+/* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
+.glass.lift { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--glass-fx); backdrop-filter: var(--lens) blur(3px) var(--glass-fx) }
+.pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
+.pill .av { width: 40px; height: 40px }
+@media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
+/* ---------- Home: Sleigh's bento (one fact per tile), tiles made of glass, on a still gradient ---------- */
+.ph.sl { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; isolation: isolate; background: var(--sea);
+  box-shadow: 0 0 0 9px var(--ring), 0 40px 80px -30px rgba(0, 10, 20, .8); font-variant-numeric: tabular-nums }
+.ph.sl::after { content: ""; position: absolute; inset: 0; background: var(--grain); opacity: .13; mix-blend-mode: overlay; pointer-events: none; z-index: 50 }
+.ph.sl .sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 700 }
+.ph.sl .sb::after { content: ""; width: 66px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
+
+.ph.sl .bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px }
+.ph.sl .tl { background: var(--tile); border-radius: 22px; padding: 16px; position: relative; overflow: hidden; min-width: 0 }
+.ph.sl .tl.deep { background: var(--deep) } .ph.sl .tl.red { background: var(--red); color: var(--on-red) } .ph.sl .tl.snow { background: var(--snow); color: var(--sea) }
+.ph.sl .w2 { grid-column: span 2 }
+.ph.sl .k { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-stretch: 125%; color: var(--snow-2) }
+.ph.sl .tl.red .k { color: var(--on-red); font-size: 12px } .ph.sl .tl.snow .k { color: var(--sea) }
+.ph.sl .t { font-weight: 800; font-stretch: 70%; letter-spacing: -.01em; line-height: .9 }
+.ph.sl .wm { font-weight: 900; font-stretch: 125%; font-size: 16px; text-transform: uppercase; letter-spacing: .02em }
+.ph.sl .p { background: var(--s-p) } .ph.sl .g { background: var(--s-g) } .ph.sl .y { background: var(--s-y) }
+.ph.sl .st { display: flex; gap: 4px } .ph.sl .st i { flex: 1; height: 8px; border-radius: 2px }
+.ph.sl button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
+.ph.sl .btn { height: 50px; border-radius: 16px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: transform .1s ease-out }
+.ph.sl .btn.snow { background: var(--snow); color: var(--red-ink) } .ph.sl .btn.red { background: var(--red); color: var(--on-red) } .ph.sl .btn.line { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--snow) 30%, transparent) }
+.ph.sl .btn:active, .ph.sl .tl:active, .ph.sl .ib:active { transform: scale(.97) }
+.ph.sl .ib { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
+.ph.sl svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round }
+.ph.sl :focus-visible { outline: 3px solid var(--snow); outline-offset: 2px }
+.ph.sl .tabs { position: absolute; left: 12px; right: 12px; bottom: 22px; height: 64px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px }
+.ph.sl .tab { border-radius: 18px; background: var(--deep); display: grid; place-items: center; color: var(--snow-2) }
+.ph.sl .tab.on { background: var(--snow); color: var(--sea) } .ph.sl .tab.go { background: var(--red); color: var(--on-red) }
+.ph.sl .av { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--sea); flex: none }
+.ph.sl .top-r { display: flex; justify-content: space-between; align-items: center; padding: 4px 16px 12px }
+.ph.sl .heat { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px }
+.ph.sl .heat i { aspect-ratio: 1; border-radius: 3px; background: var(--deep) }
+.ph.sl .heat i.a { background: color-mix(in srgb, var(--red) 45%, transparent) } .ph.sl .heat i.b { background: var(--red) }
+
 /* ---------- the bento as glass ---------- */
-.ph::after { opacity: .08 }
+.ph.sl::after { opacity: .08 }
 /* background: a still gradient in the palette's blob colours (an optional third colour glows in the middle) */
-.ph { background:
+.ph.sl { background:
   radial-gradient(60% 32% at 62% 46%, color-mix(in srgb, var(--blob-c, transparent) 70%, transparent), transparent 100%),
   radial-gradient(90% 55% at 15% 12%, color-mix(in srgb, var(--blob-a) 75%, transparent), transparent 100%),
   radial-gradient(90% 55% at 90% 88%, color-mix(in srgb, var(--blob-b) 80%, transparent), transparent 100%),
   var(--sea) }
-.glass.tl, .glass.ib, .glass.tab { background: color-mix(in srgb, var(--sheet) 60%, transparent);
+.ph.sl .glass.tl, .ph.sl .glass.ib, .ph.sl .glass.tab { background: color-mix(in srgb, var(--sheet) 60%, transparent);
   -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
-html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
-.glass.tl.deep { background: color-mix(in srgb, var(--deep) 55%, transparent) }
-.glass.tl.red, .glass.tab.go { background: color-mix(in srgb, var(--red) 86%, transparent) }
-.glass.tl.snow, .glass.tab.on { background: color-mix(in srgb, var(--snow) 86%, transparent) }
-.glass.tl.p { background: color-mix(in srgb, var(--s-p) 86%, transparent) }
-.glass.tl.g { background: color-mix(in srgb, var(--s-g) 86%, transparent) }
-.glass.btn.line { box-shadow: none; background: color-mix(in srgb, var(--sheet) 60%, transparent) }
-@media (prefers-reduced-transparency: reduce) { .glass.tl, .glass.ib, .glass.tab, .glass.btn.line, html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
+html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.tab { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+.ph.sl .glass.tl.deep { background: color-mix(in srgb, var(--deep) 55%, transparent) }
+.ph.sl .glass.tl.red, .ph.sl .glass.tab.go { background: color-mix(in srgb, var(--red) 86%, transparent) }
+.ph.sl .glass.tl.snow, .ph.sl .glass.tab.on { background: color-mix(in srgb, var(--snow) 86%, transparent) }
+.ph.sl .glass.tl.p { background: color-mix(in srgb, var(--s-p) 86%, transparent) }
+.ph.sl .glass.tl.g { background: color-mix(in srgb, var(--s-g) 86%, transparent) }
+.ph.sl .glass.btn.line { box-shadow: none; background: color-mix(in srgb, var(--sheet) 60%, transparent) }
+@media (prefers-reduced-transparency: reduce) { .glass.tl, .ph.sl .glass.ib, .ph.sl .glass.tab, .ph.sl .glass.btn.line, html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.tab { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
 </style>
 </head>
 <body>
@@ -135,6 +181,7 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
   <symbol id="vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="route" viewBox="0 0 366 250"><path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0"/></symbol>
+  <symbol id="loc" viewBox="0 0 24 24"><path d="M12 2 4 21l8-4 8 4z"/></symbol>
 </svg>
 
 <header class="top">
@@ -147,7 +194,7 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 
 <!-- HOME -->
 <figure>
-<div class="ph">
+<div class="ph sl">
   <div class="sb">9:41</div>
   <div class="top-r"><span class="wm">Purple Sector</span><button class="glass ib" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button></div>
   <div class="bento">
@@ -179,32 +226,29 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- ROUTE -->
 <figure>
 <div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Route map, three sectors">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="var(--s-p)" stroke-width="5"/>
+    <path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="var(--s-g)" stroke-width="5"/>
+    <path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--s-y)" stroke-width="5"/>
+    <circle cx="108.2" cy="337.0" r="7" fill="var(--accent)" stroke="var(--night)" stroke-width="2.5"/>
+    <circle cx="281.8" cy="120.0" r="6" fill="var(--ink)" stroke="var(--night)" stroke-width="2.5"/>
+  </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
-  <div class="top-r"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
-  <div class="bento">
-    <div class="tl deep w2 map" style="height:250px;padding:0;--map-img:var(--map-card)">
-      <svg viewBox="0 0 366 250" style="position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round" aria-label="Route map">
-        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--deep)" stroke-width="13"/>
-        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L170.6 162.6" stroke="var(--s-p)" stroke-width="6"/>
-        <path d="M170.6 162.6 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L212.7 70.9" stroke="var(--s-g)" stroke-width="6"/>
-        <path d="M212.7 70.9 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--s-y)" stroke-width="6"/>
-        <circle cx="126.9" cy="170.2" r="8" fill="var(--red)" stroke="var(--snow)" stroke-width="3"/>
-        <circle cx="239.1" cy="30.0" r="6" fill="var(--snow)" stroke="var(--deep)" stroke-width="3"/>
-      </svg>
-      <div class="k" style="position:absolute;left:16px;top:16px;color:var(--snow)">Ecce Homo</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="glass sheet sheet-b">
+    <div class="grab"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:22px;letter-spacing:-.02em">Ecce Homo</b><span class="lbl">3.42 km · standing</span></div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-top:14px"><span class="t acc" style="font-size:52px">2:11.47</span><span class="lbl">petra_r</span></div>
+    <div class="rows" style="margin-top:10px">
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">2</span><span>Pavel N.</span><span class="t" style="font-size:19px">2:12.90</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">3</span><span>Ondra M.</span><span class="t" style="font-size:19px">2:13.55</span></div>
+      <div style="grid-template-columns:20px 1fr auto;color:var(--main-hi)"><span class="lbl" style="color:inherit">7</span><b>You</b><span class="t" style="font-size:19px">2:14.83</span></div>
     </div>
-    <div class="glass tl"><div class="k">Length</div><div class="t" style="font-size:40px;margin-top:12px">3.42<span style="font-size:18px"> km</span></div></div>
-    <div class="glass tl"><div class="k">Start</div><div class="t" style="font-size:40px;margin-top:12px">Stand</div></div>
-    <div class="glass tl snow w2">
-      <div class="k">Record</div>
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px"><span class="t" style="font-size:52px">2:11.47</span><b>petra_r</b></div>
-      <div style="display:grid;gap:8px;margin-top:14px;font-weight:600">
-        <div style="display:flex;justify-content:space-between"><span>2 · Pavel N.</span><span class="t" style="font-size:20px">2:12.90</span></div>
-        <div style="display:flex;justify-content:space-between;color:var(--red-ink)"><b>7 · You</b><span class="t" style="font-size:20px">2:14.83</span></div>
-      </div>
-    </div>
+    <button class="solid" style="margin-top:12px">Drive</button>
   </div>
-  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px;font-size:17px">Drive</button></div>
 </div>
 <figcaption>Route</figcaption>
 </figure>
@@ -212,21 +256,31 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- READY -->
 <figure>
 <div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--main-hi)" stroke-width="4" opacity=".7"/>
+    <circle cx="108.2" cy="337.0" r="16" fill="var(--accent)" opacity=".25"/>
+    <circle cx="108.2" cy="337.0" r="7" fill="var(--accent)" stroke="var(--night)" stroke-width="2.5"/>
+  </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
-  <div class="top-r"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><span class="k" style="display:flex;gap:6px;align-items:center;color:var(--snow)"><i style="width:9px;height:9px;border-radius:50%" class="g"></i>GPS 3 m</span></div>
-  <div class="bento">
-    <div class="glass tl"><div class="k">Record</div><div class="t" style="font-size:34px;margin-top:14px">2:11.47</div></div>
-    <div class="glass tl red"><div class="k">Your best</div><div class="t" style="font-size:34px;margin-top:14px">2:14.83</div></div>
-    <div class="glass tl"><div class="k">Ideal</div><div class="t" style="font-size:34px;margin-top:14px">2:13.91</div></div>
-    <div class="glass tl deep"><div class="k">Clock only</div><div class="t" style="font-size:34px;margin-top:14px;color:var(--snow-2)">—</div></div>
-    <div class="glass tl" style="display:grid;gap:10px"><div class="k">Lights</div>
-      <div style="display:flex;align-items:center;justify-content:space-between"><button class="glass ib" aria-label="Shorter">−</button><span class="t" style="font-size:34px">5s</span><button class="glass ib" aria-label="Longer">+</button></div></div>
-    <div class="glass tl snow" style="display:grid;gap:10px"><div class="k">Voice</div><svg class="i" style="width:40px;height:40px"><use href="#vol"/></svg></div>
-    <div class="glass tl deep w2" style="display:flex;gap:10px;justify-content:center;padding:22px">
-      <i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i><i style="width:34px;height:34px;border-radius:50%;background:var(--tile)"></i>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px"><span class="dot g"></span>±3 m</span></div>
+  <div class="glass sheet sheet-b" style="padding-top:18px">
+    <div class="lbl">Race against</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Record</div><div class="t acc" style="font-size:26px;margin-top:6px">2:11.47</div></div>
+      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--main) 35%,transparent);box-shadow:inset 0 0 0 2px var(--main-hi)"><div class="lbl" style="color:var(--ink)">Your best</div><div class="t" style="font-size:26px;margin-top:6px">2:14.83</div></div>
+      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Ideal</div><div class="t" style="font-size:26px;margin-top:6px">2:13.91</div></div>
+      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Clock only</div><div class="t" style="font-size:26px;margin-top:6px;color:var(--ink-2)">—</div></div>
     </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding:4px 6px 4px 16px;border-radius:26px;background:color-mix(in srgb,var(--ink) 8%,transparent)">
+      <span class="lbl" style="flex:1">Lights</span>
+      <button class="ib" aria-label="Shorter">−</button><b class="t" style="font-size:22px;width:36px;text-align:center">5s</b><button class="ib" aria-label="Longer">+</button>
+      <span style="width:1px;height:26px;background:color-mix(in srgb,var(--ink) 16%,transparent)"></span>
+      <button class="ib" aria-label="Voice on" style="color:var(--main-hi)"><svg class="i"><use href="#vol"/></svg></button>
+    </div>
+    <div style="display:grid;justify-items:center;margin-top:18px"><button class="solid" style="width:112px;height:112px;border-radius:50%;font-size:21px">Start</button></div>
   </div>
-  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:96px;font-size:26px;border-radius:26px">Start</button></div>
 </div>
 <figcaption>Ready</figcaption>
 </figure>
@@ -234,20 +288,20 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- DRIVE -->
 <figure>
 <div class="ph">
+  <div class="map" style="--map-img:var(--map-drive);top:204px;-webkit-mask-image:linear-gradient(transparent,#000 22%);mask-image:linear-gradient(transparent,#000 22%)"></div>
+  <span style="position:absolute;left:203px;top:554px;width:24px;height:24px;border-radius:50%;background:var(--main);box-shadow:0 0 0 4px var(--ink),0 6px 14px rgba(0,0,0,.5);z-index:-1"></span>
   <div class="sb">9:41</div>
-  <div class="bento" style="padding-top:8px">
-    <div class="glass tl" style="padding:14px 16px"><div class="k">Lap</div><div class="t" style="font-size:46px;margin-top:8px">1:38.4</div></div>
-    <div class="glass tl" style="padding:14px 16px"><div class="k">km/h</div><div class="t" style="font-size:46px;margin-top:8px">118</div></div>
-    <div class="glass tl deep w2" style="height:330px;display:grid;place-items:center">
-      <div class="t" style="font-size:146px;color:var(--s-g)">−0.41</div>
-    </div>
-    <div class="w2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <div class="glass tl p" style="height:120px;color:var(--sea);display:flex;flex-direction:column;justify-content:space-between"><span class="k" style="color:inherit">S1</span><span class="t" style="font-size:30px">−0.28</span></div>
-      <div class="glass tl g" style="height:120px;color:var(--sea);display:flex;flex-direction:column;justify-content:space-between"><span class="k" style="color:inherit">S2</span><span class="t" style="font-size:30px">−0.20</span></div>
-      <div class="glass tl" style="height:120px;box-shadow:inset 0 0 0 3px var(--snow-2)"><span class="k">S3</span></div>
-    </div>
+  <div style="padding:4px 20px;display:flex;justify-content:space-between;align-items:center"><span class="glass chip" style="height:40px;border-radius:20px"><span class="dot g"></span>±3 m</span><span class="t" style="font-size:24px">118<span class="lbl"> km/h</span></span></div>
+  <div style="text-align:center;padding-top:22px">
+    <div class="t" style="font-size:40px;color:var(--ink-2)">1:38.4</div>
+    <div class="t" style="font-size:144px;color:var(--s-g);margin-top:6px">−0.41</div>
   </div>
-  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="glass btn line" style="width:100%;height:58px;color:var(--snow-2)">Hold to stop</button></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:22px 20px 0">
+    <div class="glass tint-p" style="height:84px;border-radius:42px;display:grid;place-items:center"><span class="t" style="font-size:24px">−0.28</span></div>
+    <div class="glass tint-g" style="height:84px;border-radius:42px;display:grid;place-items:center"><span class="t" style="font-size:24px">−0.20</span></div>
+    <div class="glass" style="height:84px;border-radius:42px;display:grid;place-items:center"><span class="lbl" style="font-size:16px;color:var(--ink)">S3</span></div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="glass sheet" style="width:100%;height:58px;border-radius:29px;font-weight:600;font-size:17px">Hold to stop</button></div>
 </div>
 <figcaption>Drive</figcaption>
 </figure>
@@ -255,22 +309,26 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- RESULT -->
 <figure>
 <div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Your lap, three sectors">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="var(--s-p)" stroke-width="5"/>
+    <path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="var(--s-g)" stroke-width="5"/>
+    <path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--s-y)" stroke-width="5"/>
+  </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
-  <div class="top-r"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
-  <div class="bento">
-    <div class="glass tl red w2" style="padding:20px 18px">
-      <div class="k">New best</div>
-      <div class="t" style="font-size:104px;margin-top:12px">2:13.62</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="glass sheet sheet-b" style="padding-top:22px">
+    <span class="chip acc" style="background:color-mix(in srgb,var(--accent) 16%,transparent)">New best</span>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px"><span class="t" style="font-size:64px">2:13.62</span><span class="t" style="font-size:24px;color:var(--s-g)">−1.21</span></div>
+    <div class="rows" style="margin-top:10px">
+      <div style="grid-template-columns:12px 1fr auto 60px"><span class="dot p"></span><span class="lbl">S1</span><span class="t" style="font-size:19px">0:41.08</span><span class="t" style="font-size:15px;color:var(--s-p);text-align:right">−0.62</span></div>
+      <div style="grid-template-columns:12px 1fr auto 60px"><span class="dot g"></span><span class="lbl">S2</span><span class="t" style="font-size:19px">0:48.37</span><span class="t" style="font-size:15px;color:var(--s-g);text-align:right">−0.71</span></div>
+      <div style="grid-template-columns:12px 1fr auto 60px"><span class="dot y"></span><span class="lbl">S3</span><span class="t" style="font-size:19px">0:44.17</span><span class="t" style="font-size:15px;color:var(--s-y);text-align:right">+0.12</span></div>
     </div>
-    <div class="glass tl snow"><div class="k">vs best</div><div class="t" style="font-size:44px;margin-top:12px">−1.21</div></div>
-    <div class="glass tl"><div class="k">Rank</div><div class="t" style="font-size:44px;margin-top:12px">P5<span style="font-size:20px;color:var(--snow-2)"> ↑2</span></div></div>
-    <div class="w2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <div class="glass tl deep"><i style="display:block;height:8px;border-radius:2px" class="p"></i><div class="t" style="font-size:24px;margin-top:14px">41.08</div><div class="k" style="margin-top:6px">S1</div></div>
-      <div class="glass tl deep"><i style="display:block;height:8px;border-radius:2px" class="g"></i><div class="t" style="font-size:24px;margin-top:14px">48.37</div><div class="k" style="margin-top:6px">S2</div></div>
-      <div class="glass tl deep"><i style="display:block;height:8px;border-radius:2px" class="y"></i><div class="t" style="font-size:24px;margin-top:14px">44.17</div><div class="k" style="margin-top:6px">S3</div></div>
-    </div>
+    <div style="display:flex;gap:10px;margin-top:14px"><button class="solid quiet">Again</button><button class="solid">Post</button></div>
   </div>
-  <div style="position:absolute;left:12px;right:12px;bottom:24px;display:grid;grid-template-columns:1fr 2fr;gap:8px"><button class="glass btn line" style="height:60px">Again</button><button class="btn red" style="height:60px">Post</button></div>
 </div>
 <figcaption>Result</figcaption>
 </figure>
@@ -278,60 +336,67 @@ html.lens .glass.tl, html.lens .glass.ib, html.lens .glass.tab { -webkit-backdro
 <!-- COMPARE -->
 <figure>
 <div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Map coloured by who was faster">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <g stroke-width="5">
+      <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.0 384.4" stroke="var(--main-hi)"/><path d="M120.0 384.4 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L135.9 407.5" stroke="var(--accent)"/><path d="M135.9 407.5 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L150.2 366.3" stroke="var(--accent)"/>
+      <path d="M150.2 366.3 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="var(--main-hi)"/><path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.1 287.8" stroke="var(--accent)"/><path d="M194.1 287.8 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.8 241.4" stroke="var(--accent)"/>
+      <path d="M207.8 241.4 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L229.0 198.5" stroke="var(--accent)"/><path d="M229.0 198.5 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="var(--main-hi)"/><path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L245.4 231.3" stroke="var(--accent)"/>
+      <path d="M245.4 231.3 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.6" stroke="var(--accent)"/><path d="M252.9 214.6 L252.9 214.5 L266.2 173.4 L266.5 172.7 L268.0 167.5" stroke="var(--accent)"/><path d="M268.0 167.5 L271.4 155.3 L281.8 120.0" stroke="var(--accent)"/>
+    </g>
+  </svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
-  <div class="top-r"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
-  <div class="bento">
-    <div class="glass tl snow"><div class="k">You</div><div class="t" style="font-size:36px;margin-top:12px">2:13.62</div></div>
-    <div class="glass tl"><div class="k">petra_r</div><div class="t" style="font-size:36px;margin-top:12px">2:11.47</div></div>
-    <div class="glass tl deep w2" style="padding:16px 12px 12px">
-      <svg viewBox="0 0 340 170" style="width:100%;display:block" aria-label="Gap over the lap">
-        <line x1="0" y1="70" x2="340" y2="70" stroke="var(--snow)" stroke-opacity=".25" stroke-dasharray="4 5"/>
-        <path d="M0 70 C30 68 50 76 80 86 S120 90 150 104 S200 118 230 112 S290 140 340 144 L340 70 Z" fill="var(--red)" fill-opacity=".35"/>
-        <path d="M0 70 C30 68 50 76 80 86 S120 90 150 104 S200 118 230 112 S290 140 340 144" fill="none" stroke="var(--red)" stroke-width="3"/>
-        <text x="336" y="164" text-anchor="end" fill="var(--snow)" font-family="Archivo" font-weight="800" font-size="16">+2.15</text>
-      </svg>
+  <div style="padding:4px 16px"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div class="glass sheet sheet-b" style="padding-top:20px">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:8px">
+      <div><div class="lbl" style="display:flex;gap:6px;align-items:center"><i class="dot" style="background:var(--main-hi)"></i>You</div><div class="t" style="font-size:26px;margin-top:6px">2:13.62</div></div>
+      <span class="t acc" style="font-size:18px;padding-bottom:4px">+2.15</span>
+      <div style="text-align:right"><div class="lbl" style="display:flex;gap:6px;align-items:center;justify-content:flex-end">petra_r<i class="dot" style="background:var(--accent)"></i></div><div class="t" style="font-size:26px;margin-top:6px">2:11.47</div></div>
     </div>
-    <div class="w2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <div class="glass tl"><div class="k">S1</div><div class="t" style="font-size:28px;margin-top:12px">+0.57</div></div>
-      <div class="glass tl"><div class="k">S2</div><div class="t" style="font-size:28px;margin-top:12px">+0.73</div></div>
-      <div class="glass tl"><div class="k">S3</div><div class="t" style="font-size:28px;margin-top:12px">+0.85</div></div>
-    </div>
+    <svg viewBox="0 0 334 110" style="width:100%;display:block;margin-top:16px" aria-label="Gap over the lap">
+      <line x1="0" y1="20" x2="334" y2="20" stroke="var(--ink)" stroke-opacity=".2" stroke-dasharray="3 5"/>
+      <line x1="111" y1="0" x2="111" y2="110" stroke="var(--ink)" stroke-opacity=".1"/><line x1="222" y1="0" x2="222" y2="110" stroke="var(--ink)" stroke-opacity=".1"/>
+      <path d="M0 20 C30 18 50 26 80 36 S120 40 150 54 S200 68 230 62 S290 92 334 98 L334 20Z" fill="var(--accent)" fill-opacity=".16"/>
+      <path d="M0 20 C30 18 50 26 80 36 S120 40 150 54 S200 68 230 62 S290 92 334 98" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    </svg>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);margin-top:6px" class="lbl"><span>S1 +0.57</span><span style="text-align:center">S2 +0.73</span><span style="text-align:right">S3 +0.85</span></div>
+    <button class="solid" style="margin-top:16px">Race petra_r</button>
   </div>
-  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px">Race petra_r</button></div>
 </div>
 <figcaption>Compare</figcaption>
 </figure>
 
-<!-- PROFILE -->
+<!-- PROFILE (scrolled: the tab bar has shrunk to the current tab and Drive) -->
 <figure>
 <div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true"><path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--main-hi)" stroke-width="4" opacity=".8"/></svg>
+  <div class="edge"></div>
   <div class="sb">9:41</div>
-  <div class="bento" style="padding-top:8px">
-    <div class="glass tl red w2" style="display:flex;gap:14px;align-items:center">
-      <span class="av" style="width:64px;height:64px;border-radius:20px;font-size:22px;background:var(--snow);color:var(--red)">MJ</span>
-      <div><div class="t" style="font-size:34px">Marek J.</div><div class="k" style="margin-top:6px">Ecce Homo</div></div>
+  <div class="glass sheet" style="position:absolute;left:8px;right:8px;top:250px;bottom:100px;border-radius:40px;padding:20px">
+    <div style="display:flex;gap:14px;align-items:center">
+      <span class="av" style="width:64px;height:64px;font-size:22px;background:var(--main);color:var(--on-main)">MJ</span>
+      <div><div style="font-size:24px;font-weight:700;letter-spacing:-.02em">Marek J.</div><div class="lbl" style="margin-top:2px">48 laps · 12 followers · 9 following</div></div>
     </div>
-    <div class="glass tl"><div class="k">Laps</div><div class="t" style="font-size:44px;margin-top:12px">48</div></div>
-    <div class="glass tl"><div class="k">Followers</div><div class="t" style="font-size:44px;margin-top:12px">12</div></div>
-    <div class="glass tl deep w2"><div class="k">Last 13 weeks</div>
-      <div class="heat" style="margin-top:12px">
-        <i></i><i class="a"></i><i></i><i></i><i class="a"></i><i class="b"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i><i class="a"></i><i></i>
-        <i class="a"></i><i></i><i></i><i class="b"></i><i></i><i></i><i class="a"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i><i class="a"></i>
-        <i></i><i></i><i class="a"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i><i></i><i></i><i class="a"></i><i></i><i class="b"></i>
-      </div></div>
-    <div class="glass tl w2" style="display:grid;gap:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Ecce Homo</div><div class="t" style="font-size:28px;margin-top:6px">2:13.62</div></div></div>
-      <div style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Autodrom Most</div><div class="t" style="font-size:28px;margin-top:6px">1:41.330</div></div></div>
+    <div class="rows" style="margin-top:18px">
+      <div style="grid-template-columns:1fr auto"><div><div class="lbl">Ecce Homo</div><div class="t" style="font-size:24px;margin-top:3px">2:13.62</div></div><div class="st"><i class="p"></i><i class="g"></i><i class="y"></i></div></div>
+      <div style="grid-template-columns:1fr auto"><div><div class="lbl">Autodrom Most</div><div class="t" style="font-size:24px;margin-top:3px">1:41.330</div></div><div class="st"><i class="y"></i><i class="g"></i><i class="g"></i></div></div>
+      <div style="grid-template-columns:1fr auto"><div><div class="lbl">Vysoké Mýto</div><div class="t" style="font-size:24px;margin-top:3px">0:49.02</div></div><div class="st"><i class="g"></i><i class="y"></i><i class="y"></i></div></div>
     </div>
   </div>
-  <nav class="tabs"><span class="glass tab"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab on"><svg class="i"><use href="#user"/></svg></span></nav>
+  <div class="tabbar" style="justify-content:space-between">
+    <span class="glass round ib" style="width:62px;height:62px;color:var(--main-hi)" aria-label="You"><svg class="i"><use href="#user"/></svg></span>
+    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
+  </div>
 </div>
-<figcaption>Profile</figcaption>
+<figcaption>Profile, scrolled</figcaption>
 </figure>
 
 </div>
 <script>
-// The lens filters are sized to each element, so build them once the web font has set the tile sizes.
+// The lens filters are sized to each element, so build them once the web font has set the sizes.
 document.fonts.ready.then(() => {
 // Liquid glass, built per element (inlined into src/glass.html at build time):
 //  - a displacement map sized to the element: inside a rim band the backdrop is pulled inward along the edge
