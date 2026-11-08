@@ -70,6 +70,8 @@ export interface DriveState {
   bigThisLap: SectorInfo[];
   speed: number | null;
   accuracy: number | null;
+  /** The latest fix, for the drive screen's map. */
+  pos: { lat: number; lon: number; heading: number | null } | null;
   distanceToGateM: number | null;
   /** Where the driver is relative to the start line, until timing starts. */
   startRel: { a: number; c: number } | null;
@@ -176,6 +178,7 @@ export class DriveController {
       bigThisLap: [],
       speed: null,
       accuracy: null,
+      pos: null,
       distanceToGateM: null,
       startRel: null,
       nextSector: 0,
@@ -461,6 +464,7 @@ export class DriveController {
       gpsError: null,
       speed: fix.speed,
       accuracy: fix.accuracy,
+      pos: { lat: fix.lat, lon: fix.lon, heading: fix.heading },
       distanceToGateM: this.timer.distanceToNextGateM,
       startRel: ['waiting', 'armed', 'ready'].includes(this.timer.phase) ? this.timer.relToStart(fix) : null,
       nextSector: this.timer.nextSector,

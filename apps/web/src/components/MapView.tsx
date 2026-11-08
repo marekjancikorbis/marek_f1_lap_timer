@@ -2,6 +2,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useEffect, useRef, useState } from 'react';
 import { MAPBOX_STYLE, MAPBOX_TOKEN } from '../lib/config';
+import { tintMap } from '../lib/mapTint';
 import { consume, roomLeft, UsageLimitError } from '../lib/usage';
 import { Spinner } from './ui';
 
@@ -34,6 +35,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
   useEffect(() => {
     let map: mapboxgl.Map | null = null;
     let cleanup: void | (() => void);
+    let retint: (() => void) | null = null;
     let cancelled = false;
     let giveUp = 0;
     let resize: ResizeObserver | null = null;
@@ -75,6 +77,10 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
         if (cancelled || refused || !map) return;
         window.clearTimeout(giveUp);
         if (bounds) map.fitBounds(bounds, { padding, duration: 0 });
+        tintMap(map);
+        const m = map;
+        retint = () => tintMap(m);
+        window.addEventListener('ps-theme', retint);
         setState('ready');
         cleanup = readyRef.current(map);
       });
@@ -86,6 +92,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
       cancelled = true;
       window.clearTimeout(giveUp);
       resize?.disconnect();
+      if (retint) window.removeEventListener('ps-theme', retint);
       if (typeof cleanup === 'function') cleanup();
       map?.remove();
     };

@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type mapboxgl from 'mapbox-gl';
+import { RouteMap } from '../components/RouteMap';
+import type { Route } from '../lib/types';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { DriveController, type DriveState } from '../drive/controller';
 import { clearPendingDrive, takePendingDrive } from '../drive/store';
@@ -77,6 +80,8 @@ export default function Drive() {
   const gps = <GpsChip ok={s.gpsOk} accuracy={s.accuracy} clear={delta} />;
   return (
     <div className={`dv ${turn && !landscape ? `turn-${turn}` : ''} ${delta ? `delta ${flag}` : ''}`}>
+      {/* Loaded from the start (one map load per drive), shown under the HUD once the lap is running. */}
+      <DriveMap route={cfg.route} pos={s.pos} speed={s.speed} show={running && mode === 'hud'} />
       <header className="dv-top">
         {delta ? (
           <>
@@ -303,6 +308,39 @@ function useElapsed(s: DriveState, ctl: DriveController) {
     return () => cancelAnimationFrame(id);
   }, [ctl, s.lapStartT]);
   return ref;
+}
+
+/**
+ * The map under the HUD, as in the mockup: it fades in below the delta, follows the car (kept at its centre)
+ * and turns with the direction of travel once moving. Each fix eases the map over about the time to the
+ * next fix, so it glides instead of jumping; with reduced motion Mapbox jumps instead.
+ */
+function DriveMap({ route, pos, speed, show }: { route: Route; pos: DriveState['pos']; speed: number | null; show: boolean }) {
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const last = useRef(0);
+  const keep = useCallback((m: mapboxgl.Map) => {
+    mapRef.current = m;
+    m.jumpTo({ zoom: 16 });
+    return () => {
+      mapRef.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m || !pos) return;
+    const now = performance.now();
+    const gap = Math.min(1000, Math.max(100, now - last.current));
+    last.current = now;
+    // Below walking pace the GPS course is noise: keep the map's last direction.
+    const turning = (speed ?? 0) > 3 && pos.heading != null;
+    m.easeTo({ center: [pos.lon, pos.lat], zoom: 16, bearing: turning ? pos.heading! : m.getBearing(), duration: gap, easing: (t) => t });
+  }, [pos, speed]);
+  return (
+    <div className={`dv-map${show ? ' on' : ''}`} aria-hidden="true">
+      <RouteMap route={route} height="100%" extra={keep} />
+      <span className="dv-car" />
+    </div>
+  );
 }
 
 /** One pill per big sector: tinted by its flag once timed, the current one labelled. */

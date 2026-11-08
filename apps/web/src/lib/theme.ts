@@ -22,6 +22,8 @@ function paint(id: ThemeId) {
   // The status bar takes the colour at the very top of the page.
   const page = THEMES.find((t) => t.id === id)!.page;
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', page);
+  // Open maps recolour themselves in the new palette (see mapTint).
+  window.dispatchEvent(new Event('ps-theme'));
 }
 
 /** Apply a theme. With `animate`, the whole screen cross-fades into it instead of snapping. */

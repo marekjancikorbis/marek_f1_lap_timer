@@ -350,3 +350,15 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 /* a modal sheet is a heavier material than the glass it covers, so the screen behind can't bleed into its text */
 .glass.sheet.modal { background: color-mix(in srgb, var(--deep) 90%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4) }
 .rows > button, .rows > a { width: 100%; text-align: left }
+
+/* Drive: the map under the HUD, faded in from below the delta, the car fixed at its centre */
+.dv > :not(.dv-map):not(.dv-banner) { position: relative; z-index: 1 }
+.dv-map { position: absolute; left: 0; right: 0; top: 24%; bottom: 0; z-index: 0; pointer-events: none; opacity: 0;
+  -webkit-mask-image: linear-gradient(transparent, #000 22%); mask-image: linear-gradient(transparent, #000 22%);
+  transition: opacity .6s cubic-bezier(.22, 1, .36, 1) }
+.dv-map.on { opacity: 1 }
+.dv-map > :first-child { position: absolute !important; inset: 0; height: 100% !important; border-radius: 0 }
+.dv-car { position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%;
+  background: var(--main); box-shadow: 0 0 0 4px var(--ink), 0 6px 14px rgba(0,0,0,.5) }
+.dv-map .mapboxgl-ctrl-bottom-left, .dv-map .mapboxgl-ctrl-bottom-right { bottom: calc(150px + var(--safe-b)) }
+@media (prefers-reduced-motion: reduce) { .dv-map { transition: none } }
