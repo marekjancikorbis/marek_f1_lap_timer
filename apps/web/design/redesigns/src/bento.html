@@ -108,6 +108,14 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .tab { display: grid; place-items: center; border-radius: 27px; color: var(--ink-2) }
 .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
+/* tab bar on every screen: Home's five separate glass tiles, Drive in the middle, rounded into capsules */
+.dock { position: absolute; left: 12px; right: 12px; bottom: 22px; height: 62px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; z-index: 5 }
+.dock .tab { border-radius: 31px; display: grid; place-items: center; color: var(--snow-2); background: color-mix(in srgb, var(--sheet) 60%, transparent);
+  -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
+html.lens .dock .tab { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+.dock .tab.on { background: color-mix(in srgb, var(--snow) 86%, transparent); color: var(--sea) }
+.dock .tab.go { background: color-mix(in srgb, var(--red) 86%, transparent); color: var(--on-red) }
+@media (prefers-reduced-transparency: reduce) { .dock .tab, html.lens .dock .tab { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
 
 /* ---------- screens without a map sit on Home's moving gradient (defined with Home below); lists sit on it directly ---------- */
@@ -149,9 +157,6 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
 .ph.sl .ib { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
 .ph.sl svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round }
 .ph.sl :focus-visible { outline: 3px solid var(--snow); outline-offset: 2px }
-.ph.sl .tabs { position: absolute; left: 12px; right: 12px; bottom: 22px; height: 64px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px }
-.ph.sl .tab { border-radius: 18px; background: var(--deep); display: grid; place-items: center; color: var(--snow-2) }
-.ph.sl .tab.on { background: var(--snow); color: var(--sea) } .ph.sl .tab.go { background: var(--red); color: var(--on-red) }
 .ph.sl .av { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--sea); flex: none }
 .ph.sl .top-r { display: flex; justify-content: space-between; align-items: center; padding: 4px 16px 12px }
 .ph.sl .heat { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px }
@@ -281,7 +286,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div class="glass tl"><span class="av" style="background:#b9d3ff">JK</span><div class="t" style="font-size:28px;margin-top:12px">1:38.902</div></div>
     <div class="glass tl"><span class="av" style="background:#c9f0d8">OM</span><div class="t" style="font-size:28px;margin-top:12px">0:48.115</div></div>
   </div>
-  <nav class="tabs"><span class="glass tab on"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="dock"><span class="glass tab on"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Home</figcaption>
 </figure>
@@ -307,10 +312,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
       <div style="grid-template-columns:1fr auto"><div><b>Autodrom Most</b><div class="lbl">4.21 km · lap</div></div><span class="t" style="font-size:20px">1:38.902</span></div>
     </div>
   </div>
-  <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
-    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
-  </div>
+  <nav class="dock"><span class="glass tab"><svg class="i"><use href="#home"/></svg></span><span class="glass tab on"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Explore</figcaption>
 </figure>
@@ -325,10 +327,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:var(--main-hi);stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Ecce Homo</b><div class="lbl">3.42 km · standing</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Public</span></div>
     <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:var(--main-hi);stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Club sprint</b><div class="lbl">2.10 km · lap</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Private</span></div>
   </div>
-  <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
-    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
-  </div>
+  <nav class="dock"><span class="glass tab"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Routes</figcaption>
 </figure>
@@ -421,10 +420,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div style="grid-template-columns:1fr auto"><div><b>Autodrom Most</b><div class="lbl">26 Oct</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
     <div style="grid-template-columns:1fr auto"><div><b>Club sprint</b><div class="lbl">19 Oct</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
   </div>
-  <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
-    <button class="glass round go" style="box-shadow:0 0 0 3px var(--main-hi)" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
-  </div>
+  <nav class="dock"><span class="glass tab"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go" style="box-shadow:0 0 0 3px var(--snow)"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Drive</figcaption>
 </figure>
@@ -581,10 +577,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
       <div style="grid-template-columns:1fr auto"><div><div class="lbl">Vysoké Mýto</div><div class="t" style="font-size:24px;margin-top:3px">0:49.02</div></div><div class="st"><i class="g"></i><i class="y"></i><i class="y"></i></div></div>
     </div>
   </div>
-  <div class="tabbar" style="justify-content:space-between">
-    <span class="glass round ib" style="width:62px;height:62px;color:var(--main-hi)" aria-label="You"><svg class="i"><use href="#user"/></svg></span>
-    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
-  </div>
+  <nav class="dock"><span class="glass tab"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab on"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Profile, scrolled</figcaption>
 </figure>
@@ -623,10 +616,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div style="grid-template-columns:36px 1fr"><span class="av" style="background:var(--main);color:var(--on-main)">✓</span><div><b>Creator access approved</b><div class="lbl">Mon</div></div></div>
     <div><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><b>ondra_m</b><div class="lbl">Followed you · Sat</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Following</span></div>
   </div>
-  <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab on"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
-    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
-  </div>
+  <nav class="dock"><span class="glass tab"><svg class="i"><use href="#home"/></svg></span><span class="glass tab"><svg class="i"><use href="#map"/></svg></span><span class="glass tab go"><svg class="i"><use href="#flag"/></svg></span><span class="glass tab on"><svg class="i"><use href="#bell"/></svg></span><span class="glass tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Notifications</figcaption>
 </figure>
