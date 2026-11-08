@@ -11,6 +11,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 MAPS = json.loads((ROOT / 'maps' / 'maps.json').read_text())
 
 FROST = {'s-p': '#c9b3ff', 's-g': '#8fe3bd', 's-y': '#f2d58a'}   # softened for muted palettes
+VIVID = {'s-p': '#9d5cff', 's-g': '#1fd27a', 's-y': '#ffbe1a'}   # Glass: saturated sectors
 
 PAGES = {
     'glass-sleigh': ('glass', 'Glass · Sleigh', {
@@ -20,7 +21,7 @@ PAGES = {
         'sheet': 'rgba(1, 38, 58, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.5) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#01507a', 'map-blend': 'color',
         'blob-a': '#0a6a9c', 'blob-b': '#e22c2c',
-        **FROST}, ['#013f60', '#e22c2c', '#f3efe6']),
+        **VIVID}, ['#013f60', '#e22c2c', '#f3efe6']),
     'glass-pine': ('glass', 'Glass · Frozen pine', {
         'page': '#071f27', 'ring': '#04141a', 'night': '#0b303c',
         'main': '#cdece2', 'main-hi': '#e8f7f2', 'on-main': '#0b303c',
@@ -28,7 +29,7 @@ PAGES = {
         'sheet': 'rgba(11, 48, 60, .45)', 'clear': 'rgba(205, 236, 226, .07)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#0f4a5c', 'map-blend': 'color',
         'blob-a': '#cdece2', 'blob-b': '#1b6b6b',
-        **FROST}, ['#0b303c', '#cdece2']),
+        **VIVID}, ['#0b303c', '#cdece2']),
     'glass-midnight': ('glass', 'Glass · Midnight', {
         'page': '#060920', 'ring': '#04061a', 'night': '#0b1033',
         'main': '#5b4bff', 'main-hi': '#a79eff', 'on-main': '#ffffff',
@@ -36,7 +37,7 @@ PAGES = {
         'sheet': 'rgba(11, 16, 51, .45)', 'clear': 'rgba(91, 75, 255, .07)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.35)', 'map-tint': '#1a1f66', 'map-blend': 'color',
         'blob-a': '#5b4bff', 'blob-b': '#1d2a8f',
-        **FROST}, ['#0b1033', '#5b4bff']),
+        **VIVID}, ['#0b1033', '#5b4bff']),
     'glass-forest': ('glass', 'Glass · Forest', {
         'page': '#06271d', 'ring': '#04140f', 'night': '#0e4d3a',
         'main': '#9be15d', 'main-hi': '#c9f29f', 'on-main': '#0b2f22',
@@ -44,7 +45,7 @@ PAGES = {
         'sheet': 'rgba(14, 77, 58, .45)', 'clear': 'rgba(155, 225, 93, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#0f6b4f', 'map-blend': 'color',
         'blob-a': '#9be15d', 'blob-b': '#1a7a5a',
-        **FROST, 's-g': '#94e2e6'}, ['#0e4d3a', '#9be15d']),
+        **VIVID, 's-g': '#12c9b8'}, ['#0e4d3a', '#9be15d']),
     'glass-cobalt': ('glass', 'Glass · Cobalt', {
         'page': '#080a12', 'ring': '#05060b', 'night': '#10121c',
         'main': '#c4b5ff', 'main-hi': '#e4dcff', 'on-main': '#14112b',
@@ -52,7 +53,7 @@ PAGES = {
         'sheet': 'rgba(16, 18, 40, .45)', 'clear': 'rgba(196, 181, 255, .07)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.35)', 'map-tint': '#1d1f4a', 'map-blend': 'color',
         'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6', 'blob-c': '#d8ff2e',
-        **FROST, 's-g': '#94e2e6'}, ['#10121c', '#c4b5ff', '#c6ff3d']),
+        **VIVID, 's-g': '#12c9b8'}, ['#10121c', '#c4b5ff', '#c6ff3d']),
     'glass-crimson': ('glass', 'Glass · Crimson', {
         'page': '#5c0816', 'ring': '#2a0409', 'night': '#7a0c1f',
         'main': '#ffe03a', 'main-hi': '#fff09a', 'on-main': '#5c0816',
@@ -60,7 +61,7 @@ PAGES = {
         'sheet': 'rgba(110, 10, 27, .45)', 'clear': 'rgba(255, 224, 58, .05)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'map-full': 'url(maps/full-dark.png)', 'map-drive': 'url(maps/drive-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#a3122a', 'map-blend': 'color',
         'blob-a': '#d81e3a', 'blob-b': '#4a0612',
-        **FROST}, ['#a3122a', '#7a0c1f', '#ffe03a']),
+        **VIVID}, ['#a3122a', '#7a0c1f', '#ffe03a']),
     'sleigh': ('sleigh', 'Sleigh', {
         'page': '#00263a', 'ring': '#0d1a22', 'sea': '#013f60', 'tile': '#0a4c71', 'deep': '#012f48',
         'red': '#e22c2c', 'on-red': '#f3efe6', 'red-ink': '#c41f1f', 'snow': '#f3efe6', 'snow-2': 'rgba(243, 239, 230, .8)',
