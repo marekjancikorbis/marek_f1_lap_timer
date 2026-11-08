@@ -110,11 +110,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
 
-/* ---------- screens without a map: a still wash of the palette, lists sit on it directly ---------- */
-.ph.soft { background:
-  radial-gradient(90% 50% at 12% 6%, color-mix(in srgb, var(--blob-a) 42%, transparent), transparent 100%),
-  radial-gradient(90% 50% at 95% 96%, color-mix(in srgb, var(--blob-b) 48%, transparent), transparent 100%),
-  var(--night) }
+/* ---------- screens without a map sit on Home's moving gradient (defined with Home below); lists sit on it directly ---------- */
 .title { font-size: 30px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1 }
 .field { height: 52px; border-radius: 26px; padding: 0 18px; display: flex; align-items: center; background: color-mix(in srgb, var(--ink) 8%, transparent); font-size: 16px }
 .seg { height: 44px; border-radius: 22px; padding: 4px; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr }
@@ -164,21 +160,21 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
 
 /* ---------- the bento as glass ---------- */
 .ph.sl::after { opacity: .08 }
-/* background: the palette's blob colours as soft spots that sweep across the screen, so the glass tiles visibly bend
-   something moving. Each spot sits in the middle of its own layer, 220% of the phone, so it never meets the layer's
-   edge; the layer slides (spot on screen = 1.1 - 1.2 * position) and every spot stays in view. */
-.ph.sl { background:
+/* background of Home and every screen without a map: the palette's blob colours as soft spots that sweep from edge
+   to edge, so the glass visibly bends something moving. Each spot sits in the middle of its own layer, 220% of the
+   phone, so it never meets the layer's edge; the layer slides (spot on screen = 1.1 - 1.2 * position). */
+.ph.sl, .ph.soft { background:
   radial-gradient(27% 15% at 50% 50%, color-mix(in srgb, var(--blob-c, transparent) 70%, transparent), transparent 100%),
   radial-gradient(41% 25% at 50% 50%, color-mix(in srgb, var(--blob-a) 75%, transparent), transparent 100%),
   radial-gradient(41% 25% at 50% 50%, color-mix(in srgb, var(--blob-b) 80%, transparent), transparent 100%),
   var(--sea);
   background-size: 220% 220%, 220% 220%, 220% 220%, auto; background-repeat: no-repeat;
-  background-position: 40% 53%, 79% 83%, 17% 17%, 0 0;
-  animation: drift 9s ease-in-out infinite alternate }
+  background-position: 67% 67%, 83% 88%, 12% 12%, 0 0;
+  animation: drift 7s ease-in-out infinite alternate }
 @keyframes drift {
-  50% { background-position: 58% 38%, 21% 58%, 75% 42%, 0 0 }
-  to { background-position: 33% 63%, 67% 29%, 33% 75%, 0 0 } }
-@media (prefers-reduced-motion: reduce) { .ph.sl { animation: none } }
+  50% { background-position: 29% 29%, 12% 50%, 88% 54%, 0 0 }
+  to { background-position: 75% 33%, 79% 12%, 21% 88%, 0 0 } }
+@media (prefers-reduced-motion: reduce) { .ph.sl, .ph.soft { animation: none } }
 .ph.sl .glass.tl, .ph.sl .glass.ib, .ph.sl .glass.tab { background: color-mix(in srgb, var(--sheet) 60%, transparent);
   -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
 html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.tab { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
