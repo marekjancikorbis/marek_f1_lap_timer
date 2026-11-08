@@ -108,13 +108,13 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .tab { display: grid; place-items: center; border-radius: 27px; color: var(--ink-2) }
 .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
-/* tab bar on every screen: one wide glass capsule, Drive a red circle in the middle, a ring around the current tab */
-.dock { position: absolute; left: 16px; right: 16px; bottom: 22px; height: 66px; border-radius: 33px; padding: 6px; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; z-index: 5;
+/* tab bar on every screen: the Glass tab capsule stretched to the full width, Drive a red circle in the middle */
+.dock { position: absolute; left: 16px; right: 16px; bottom: 22px; height: 62px; border-radius: 31px; padding: 4px; display: grid; grid-template-columns: repeat(5, 1fr); align-items: stretch; z-index: 5;
   background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
 html.lens .dock { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
-.dock .tab { width: 54px; height: 54px; justify-self: center; border-radius: 50%; display: grid; place-items: center; color: var(--snow-2) }
-.dock .tab.on { color: var(--snow); background: color-mix(in srgb, var(--snow) 12%, transparent); box-shadow: inset 0 0 0 2px var(--snow) }
-.dock .tab.go { background: var(--red); color: var(--on-red) }
+.dock .tab { border-radius: 27px; display: grid; place-items: center; color: var(--ink-2) }
+.dock .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
+.dock .tab.go { width: 54px; height: 54px; justify-self: center; border-radius: 50%; background: var(--red); color: var(--on-red) }
 @media (prefers-reduced-transparency: reduce) { .dock, html.lens .dock { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
 
