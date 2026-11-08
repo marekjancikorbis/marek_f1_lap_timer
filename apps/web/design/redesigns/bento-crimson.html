@@ -160,20 +160,25 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
 
 /* ---------- the bento as glass ---------- */
 .ph.sl::after { opacity: .08 }
-/* background of Home and every screen without a map: the palette's blob colours as soft spots that sweep from edge
+/* background of Home and every screen without a map: the palette's blob colours as soft spots that glide from edge
    to edge, so the glass visibly bends something moving. Each spot sits in the middle of its own layer, 220% of the
-   phone, so it never meets the layer's edge; the layer slides (spot on screen = 1.1 - 1.2 * position). */
-.ph.sl, .ph.soft { background:
+   phone, so it never meets the layer's edge; the layer slides (spot on screen = 1.1 - 1.2 * position).
+   One angle turns at constant speed and every spot follows a closed loop of it (circle, figure eight), so the
+   motion never stops or turns a corner. */
+@property --orbit { syntax: "<angle>"; inherits: false; initial-value: 0deg }
+.ph.sl, .ph.soft { --r: 37%; background:
   radial-gradient(27% 15% at 50% 50%, color-mix(in srgb, var(--blob-c, transparent) 70%, transparent), transparent 100%),
   radial-gradient(41% 25% at 50% 50%, color-mix(in srgb, var(--blob-a) 75%, transparent), transparent 100%),
   radial-gradient(41% 25% at 50% 50%, color-mix(in srgb, var(--blob-b) 80%, transparent), transparent 100%),
   var(--sea);
   background-size: 220% 220%, 220% 220%, 220% 220%, auto; background-repeat: no-repeat;
-  background-position: 67% 67%, 83% 88%, 12% 12%, 0 0;
-  animation: drift 7s ease-in-out infinite alternate }
-@keyframes drift {
-  50% { background-position: 29% 29%, 12% 50%, 88% 54%, 0 0 }
-  to { background-position: 75% 33%, 79% 12%, 21% 88%, 0 0 } }
+  background-position:
+    calc(50% + var(--r) * .6 * sin(var(--orbit) * 2)) calc(50% + var(--r) * .6 * cos(var(--orbit))),
+    calc(50% + var(--r) * cos(var(--orbit))) calc(50% + var(--r) * sin(var(--orbit))),
+    calc(50% - var(--r) * cos(var(--orbit))) calc(50% + var(--r) * sin(var(--orbit) * 2)),
+    0 0;
+  animation: orbit 16s linear infinite }
+@keyframes orbit { to { --orbit: 360deg } }
 @media (prefers-reduced-motion: reduce) { .ph.sl, .ph.soft { animation: none } }
 .ph.sl .glass.tl, .ph.sl .glass.ib, .ph.sl .glass.tab { background: color-mix(in srgb, var(--sheet) 60%, transparent);
   -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
