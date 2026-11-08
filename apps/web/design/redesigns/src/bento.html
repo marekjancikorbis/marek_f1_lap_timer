@@ -116,8 +116,6 @@ html.lens .dock { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); 
 .dock .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .dock .tab.go { width: 54px; height: 54px; justify-self: center; border-radius: 50%; background: var(--red); color: var(--on-red) }
 @media (prefers-reduced-transparency: reduce) { .dock, html.lens .dock { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
-/* a sheet pulled up over the map turns thicker, so the route underneath doesn't run through the list */
-.glass.sheet.up { background: color-mix(in srgb, var(--night) 85%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
 
 /* ---------- screens without a map sit on Home's moving gradient (defined with Home below); lists sit on it directly ---------- */
@@ -330,7 +328,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px"><div class="glass field" style="color:var(--ink-2);gap:10px"><svg class="i" style="width:18px"><use href="#search"/></svg>Routes and drivers</div></div>
-  <div class="glass sheet up" style="position:absolute;left:8px;right:8px;top:128px;bottom:100px;border-radius:34px;padding:10px 18px 12px">
+  <div class="glass sheet" style="position:absolute;left:8px;right:8px;top:128px;bottom:100px;border-radius:34px;padding:10px 18px 12px">
     <div class="grab"></div>
     <div class="lbl">Routes nearby</div>
     <div class="rows">
@@ -429,16 +427,12 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
-  <div class="glass sheet sheet-b up" style="top:118px">
+  <div class="glass sheet sheet-b" style="top:118px">
     <div class="grab"></div>
     <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:22px;letter-spacing:-.02em">Ecce Homo</b><span class="lbl">3.42 km · standing</span></div>
     <div style="display:flex;align-items:baseline;gap:10px;margin-top:12px"><span class="t acc" style="font-size:44px">2:11.47</span><span class="lbl">petra_r</span></div>
-    <div style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr)" class="lbl">
-      <span style="display:flex;gap:6px;align-items:center"><i class="dot" style="background:var(--s-p)"></i>0:40.19</span>
-      <span style="display:flex;gap:6px;align-items:center;justify-content:center"><i class="dot" style="background:var(--s-g)"></i>0:47.69</span>
-      <span style="display:flex;gap:6px;align-items:center;justify-content:flex-end"><i class="dot" style="background:var(--s-y)"></i>0:43.59</span>
-    </div>
-    <div class="rows" style="margin-top:6px">
+    <div class="lbl" style="margin-top:14px">Leaderboard</div>
+    <div class="rows">
       <div style="grid-template-columns:20px 1fr auto"><span class="lbl">2</span><span>Pavel N.</span><span class="t" style="font-size:19px">2:12.90</span></div>
       <div style="grid-template-columns:20px 1fr auto"><span class="lbl">3</span><span>Ondra M.</span><span class="t" style="font-size:19px">2:13.55</span></div>
       <div style="grid-template-columns:20px 1fr auto"><span class="lbl">4</span><span>jan.k</span><span class="t" style="font-size:19px">2:13.98</span></div>
@@ -446,6 +440,12 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
       <div style="grid-template-columns:20px 1fr auto"><span class="lbl">6</span><span>marek_j</span><span class="t" style="font-size:19px">2:14.62</span></div>
       <div style="grid-template-columns:20px 1fr auto;color:var(--main-hi)"><span class="lbl" style="color:inherit">7</span><b>You</b><span class="t" style="font-size:19px">2:14.83</span></div>
       <div style="grid-template-columns:20px 1fr auto"><span class="lbl">8</span><span>Eva S.</span><span class="t" style="font-size:19px">2:16.40</span></div>
+    </div>
+    <div class="lbl" style="margin-top:14px">Following</div>
+    <div class="rows">
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">1</span><span>petra_r</span><span class="t" style="font-size:19px">2:11.47</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">3</span><span>Ondra M.</span><span class="t" style="font-size:19px">2:13.55</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">4</span><span>jan.k</span><span class="t" style="font-size:19px">2:13.98</span></div>
     </div>
     <button class="solid" style="margin-top:12px">Drive</button>
   </div>
