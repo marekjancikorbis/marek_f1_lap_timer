@@ -1,9 +1,8 @@
-import { Flag, Smartphone, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { DriveController, type DriveState } from '../drive/controller';
 import { clearPendingDrive, takePendingDrive } from '../drive/store';
-import { STRIP_LABEL } from '../components/ui';
+import { I, STRIP_LABEL } from '../components/ui';
 import { formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 
 export default function Drive() {
@@ -50,7 +49,7 @@ export default function Drive() {
   }, [s?.finished, s?.savedRunIds, cfg, nav]);
 
   if (!cfg) return <Navigate to={`/drive/${routeId}`} replace />;
-  if (!s || !ctl) return <div className="drive" />;
+  if (!s || !ctl) return <div className="dv" />;
 
   async function stop() {
     const ids = await ctl!.stop();
@@ -72,76 +71,74 @@ export default function Drive() {
   const standing = cfg.route.startType === 'standing';
   const running = s.phase === 'running';
   const jumpBanner = s.jumpBannerUntil > Date.now();
-  const colourClass = s.lastSector ? `flag-${s.lastSector.colour}` : '';
+  const flag = s.lastSector ? `flag-${s.lastSector.colour}` : '';
+  const delta = running && mode === 'delta';
 
+  const gps = <GpsChip ok={s.gpsOk} accuracy={s.accuracy} clear={delta} />;
   return (
-    <div className={`drive ${turn && !landscape ? `turn-${turn}` : ''} ${mode === 'delta' && running ? `delta-mode ${colourClass}` : ''}`}>
-      <header className="drive-top">
-        {running && mode === 'delta' ? (
-          // Delta only: the route on the left, GPS on the right, both in the flag's ink.
-          <span className="drive-route ellipsis">{cfg.route.name}</span>
+    <div className={`dv ${turn && !landscape ? `turn-${turn}` : ''} ${delta ? `delta ${flag}` : ''}`}>
+      <header className="dv-top">
+        {delta ? (
+          <>
+            <span className="glass chip clear ellipsis" style={{ maxWidth: '50%' }}>{cfg.route.name}</span>
+            {gps}
+          </>
         ) : (
-          <span className="row" style={{ gap: 6 }}>
-            <GpsDot ok={s.gpsOk} accuracy={s.accuracy} />
-            {cfg.replay && <span className="badge yellow">Simulated</span>}
-          </span>
-        )}
-        {running && mode === 'delta' ? (
-          <GpsDot ok={s.gpsOk} accuracy={s.accuracy} />
-        ) : running && mode === 'hud' ? (
-          <span className="drive-speed-top">
-            <span className="num">{s.speed != null ? Math.round(s.speed * 3.6) : '–'}</span> km/h
-          </span>
-        ) : (
-          <span className="mute drive-context">
-            {s.phase === 'ready' || s.phase === 'countdown'
-              ? `Armed · ${standing ? 'standing' : 'rolling'} start`
-              : cfg.reference
-                ? `vs ${cfg.reference.label}`
-                : 'No reference'}
-          </span>
+          <>
+            <span style={{ display: 'flex', gap: 6 }}>
+              {gps}
+              {cfg.replay && <span className="glass chip" style={{ height: 40, borderRadius: 20, color: 'var(--s-y)' }}>Simulated</span>}
+            </span>
+            {running ? (
+              <span className="t" style={{ fontSize: 24 }}>
+                {s.speed != null ? Math.round(s.speed * 3.6) : '–'}
+                <span className="lbl"> km/h</span>
+              </span>
+            ) : (
+              <span className="lbl">
+                {s.phase === 'ready' || s.phase === 'countdown'
+                  ? `Armed · ${standing ? 'standing' : 'rolling'} start`
+                  : cfg.reference
+                    ? `vs ${cfg.reference.label}`
+                    : 'Clock only'}
+              </span>
+            )}
+          </>
         )}
       </header>
 
-      {s.gpsError && !s.gpsOk && <p className="drive-gps-error">{s.gpsError}</p>}
+      {s.gpsError && !s.gpsOk && <p className="dv-note err">{s.gpsError}</p>}
 
       {/* ---------------- before the start ---------------- */}
       {(s.phase === 'waiting' || s.phase === 'armed') && !s.invalidReason && (
-        <section className="drive-center drive-approach">
+        <section className="dv-center">
           {standing ? (
             <>
-              <h1 className="cap drive-cap">Stop at the start line</h1>
+              <div className="lbl" style={{ fontSize: 15 }}>Stop at the start line</div>
               <ToStart rel={s.startRel} zoneM={ctl.timer.cfg.th.STANDING_ZONE_M} />
-              <p className="drive-sub">The countdown button appears once you've been still at the line for 2 seconds.</p>
+              <p className="lbl dv-sub">The countdown button appears once you&rsquo;ve been still at the line for 2 seconds.</p>
             </>
           ) : s.phase === 'armed' ? (
             <>
-              <h1 className="drive-big-label armed">Armed</h1>
-              <p className="drive-sub">The timer starts as you cross the line.</p>
+              <div className="t acc" style={{ fontSize: 96 }}>Armed</div>
+              <p className="lbl dv-sub">The timer starts as you cross the line.</p>
             </>
           ) : (
             <>
-              <h1 className="cap drive-cap">Drive to the start</h1>
+              <div className="lbl" style={{ fontSize: 15 }}>Drive to the start</div>
               <ToStart rel={s.startRel} zoneM={ctl.timer.cfg.th.STANDING_ZONE_M} />
-              <p className="drive-sub">Approach the start line in the route's direction. Timing arms within 50 m.</p>
+              <p className="lbl dv-sub">Approach the start line in the route&rsquo;s direction. Timing arms within 50 m.</p>
             </>
           )}
         </section>
       )}
-      {(s.phase === 'waiting' || s.phase === 'armed') && !s.invalidReason && (
-        <div className="drive-stripe" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
-      )}
 
       {s.phase === 'ready' && (
-        <section className="drive-center">
-          <p className="drive-sub">At the line and stationary.</p>
-          <button className="countdown-btn" onClick={() => ctl.startCountdown()}>
+        <section className="dv-center">
+          <p className="lbl" style={{ fontSize: 15 }}>At the line and stationary</p>
+          <button className="solid" style={{ width: 200, height: 200, borderRadius: '50%', fontSize: 22, display: 'grid', alignContent: 'center', gap: 6 }} onClick={() => ctl.startCountdown()}>
             Start countdown
-            <small>{cfg.countdownS} s · lights out = GO</small>
+            <span style={{ fontSize: 13, opacity: 0.7 }}>{cfg.countdownS} s · lights out = GO</span>
           </button>
         </section>
       )}
@@ -150,14 +147,14 @@ export default function Drive() {
 
       {/* ---------------- running ---------------- */}
       {running && mode === 'hud' && <Hud s={s} ctl={ctl} reference={cfg.reference?.label ?? null} />}
-      {running && mode === 'delta' && <DeltaOnly s={s} reference={cfg.reference?.label ?? null} />}
+      {delta && <DeltaOnly s={s} reference={cfg.reference?.label ?? null} />}
 
       {jumpBanner && (
-        <div className="jump-banner" role="alert">
-          <Flag size={30} aria-hidden="true" />
+        <div className="glass sheet dv-banner" role="alert">
+          <I n="flag" />
           <span>
-            <strong>Jump start · +{formatSeconds(s.penaltyMs, 0)}</strong>
-            <span>
+            <b>Jump start · +{formatSeconds(s.penaltyMs, 0)}</b>
+            <span className="lbl" style={{ display: 'block' }}>
               Moved {s.jumpDistanceM != null ? `${Math.round(s.jumpDistanceM)} m ` : ''}before GO. Timed from GO.
             </span>
           </span>
@@ -165,86 +162,78 @@ export default function Drive() {
       )}
 
       {s.partial && (
-        <section className="drive-center drive-partial">
-          <h1 className="cap drive-cap">GPS lost before the finish · {cfg.route.name}</h1>
-          <div className="drive-partial-dist num">{s.partial.lastSplitMs != null ? formatLap(s.partial.lastSplitMs) : formatDistance(s.partial.distanceM)}</div>
-          <p className="drive-sub">
+        <section className="dv-center">
+          <div className="lbl" style={{ fontSize: 15 }}>GPS lost before the finish</div>
+          <div className="t" style={{ fontSize: 72 }}>{s.partial.lastSplitMs != null ? formatLap(s.partial.lastSplitMs) : formatDistance(s.partial.distanceM)}</div>
+          <div className="lbl">
             {s.bigThisLap.length} of {ctl.bigEnds.length} sectors timed
-          </p>
-          <div className="hud-grid partial-bands">
-            {ctl.bigEnds.map((_, b) => {
-              const big = s.bigThisLap.find((x) => x.k === b);
-              return (
-                <div key={b} className={`hud-cell ${big ? `flag-${big.colour}` : 'unreached'}`}>
-                  <span>S{b + 1}</span>
-                  {big ? <strong className="num">{big.deltaMs != null ? formatDelta(big.deltaMs) : formatLap(big.sectorMs)}</strong> : <em>not reached</em>}
-                </div>
-              );
-            })}
           </div>
-          <p className="drive-note">
-            The GPS signal dropped out {formatDistance(Math.max(0, cfg.route.lengthM - s.partial.distanceM))} from the finish. Keep the{' '}
-            {formatDistance(s.partial.distanceM)} you drove to view it and compare it. A partial {cfg.route.isLoop ? 'lap' : 'run'} can't be posted or set a best.
+          <SectorPills s={s} ctl={ctl} />
+          <p className="lbl dv-sub">
+            The signal dropped out {formatDistance(Math.max(0, cfg.route.lengthM - s.partial.distanceM))} from the finish. Keep the{' '}
+            {formatDistance(s.partial.distanceM)} you drove to view and compare it. A partial {cfg.route.isLoop ? 'lap' : 'run'} can&rsquo;t be posted or set a best.
           </p>
-          {s.laps.length > 0 && <p className="drive-sub">Your {s.laps.length} completed {s.laps.length === 1 ? 'lap is' : 'laps are'} saved.</p>}
+          {s.laps.length > 0 && <p className="lbl">Your {s.laps.length} completed {s.laps.length === 1 ? 'lap is' : 'laps are'} saved.</p>}
         </section>
       )}
 
       {s.invalidReason && !s.partial && (
-        <section className="drive-center">
-          <h1 className="drive-big-label" style={{ color: 'var(--red-ink)' }}>
-            Run stopped
-          </h1>
-          <p className="drive-sub">{s.invalidReason}</p>
-          {s.laps.length > 0 && <p className="drive-sub">Your {s.laps.length} completed {s.laps.length === 1 ? 'lap is' : 'laps are'} saved.</p>}
+        <section className="dv-center">
+          <div className="t" style={{ fontSize: 64, color: '#ff9a9d' }}>Run stopped</div>
+          <p className="lbl dv-sub">{s.invalidReason}</p>
+          {s.laps.length > 0 && <p className="lbl">Your {s.laps.length} completed {s.laps.length === 1 ? 'lap is' : 'laps are'} saved.</p>}
         </section>
       )}
 
       {s.phase === 'finished' && !s.invalidReason && !s.partial && s.laps.length > 0 && (
-        <section className="drive-center">
-          <h1 className="drive-big-label armed">Finished</h1>
-          <p className="drive-sub num">
+        <section className="dv-center">
+          <div className="t acc" style={{ fontSize: 80 }}>Finished</div>
+          <p className="lbl" style={{ fontSize: 15 }}>
             {s.laps.length} {s.laps.length === 1 ? 'lap' : 'laps'} · best {formatLap(Math.min(...s.laps.map((l) => l.totalMs)))}
           </p>
         </section>
       )}
 
-      {cfg.route.isLoop && s.laps.length > 0 && running && (
-        <div className="drive-laps num">
+      {cfg.route.isLoop && s.laps.length > 0 && running && !delta && (
+        <div className="lbl" style={{ textAlign: 'center', marginTop: 14 }}>
           Lap {s.lap + 1} · last {formatLap(s.laps[s.laps.length - 1].totalMs)}
         </div>
       )}
 
-      <footer className="drive-bottom">
+      <footer className="dv-bottom">
         {s.partial ? (
-          <div className="stack">
-            <p className="drive-ask">{cfg.route.isLoop ? 'Keep this lap?' : 'Keep this run?'}</p>
-            <div className="row">
-              <button className="btn grow" onClick={() => leave(ctl.state.savedRunIds)}>
+          <div style={{ display: 'grid', gap: 10 }}>
+            <b style={{ textAlign: 'center' }}>{cfg.route.isLoop ? 'Keep this lap?' : 'Keep this run?'}</b>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="solid quiet" onClick={() => leave(ctl.state.savedRunIds)}>
                 Discard
               </button>
-              <button className="btn primary" style={{ flex: 2 }} onClick={savePartial}>
+              <button className="solid" onClick={savePartial}>
                 Keep
               </button>
             </div>
           </div>
         ) : s.invalidReason || s.phase === 'finished' ? (
-          <button className="btn primary lg block" onClick={stop}>
+          <button className="solid" onClick={stop}>
             {s.laps.length ? 'See results' : 'Back to route'}
           </button>
-        ) : running && mode === 'delta' ? (
-          <div className="delta-foot">
-            <span className="rotate-hint">
-              <Smartphone size={16} aria-hidden="true" /> Turn upright for full HUD
+        ) : delta ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, opacity: 0.8 }}>
+              <I n="phone" size={18} />
+              Turn upright for full HUD
             </span>
             <HoldToStop onStop={stop} label="Hold to exit" compact />
           </div>
         ) : running || s.phase === 'countdown' ? (
           <>
             {running && (
-              <span className="rotate-hint hud-hint">
-                <Smartphone size={16} aria-hidden="true" style={{ transform: 'rotate(90deg)' }} /> Turn sideways for delta only
-              </span>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+                <span className="glass chip lift" style={{ height: 36, fontSize: 14, color: 'var(--ink)', background: 'color-mix(in srgb, var(--night) 82%, transparent)' }}>
+                  <I n="phone" size={18} style={{ transform: 'rotate(90deg)' }} />
+                  Turn sideways for delta only
+                </span>
+              </div>
             )}
             <HoldToStop onStop={stop} label={cfg.route.isLoop && s.laps.length ? 'Hold to finish session' : 'Hold to stop'} />
           </>
@@ -267,30 +256,33 @@ function ToStart({ rel, zoneM }: { rel: { a: number; c: number } | null; zoneM: 
       : rel.c > -rel.a
         ? 'to the start line, off to the side'
         : 'to the start line';
+  const [num, unit] = formatDistance(Math.hypot(rel.a, rel.c)).split(' ');
   return (
-    <div className={`drive-to-start ${atLine ? 'at-line' : ''}`}>
+    <div style={{ display: 'grid', justifyItems: 'center', gap: 6 }}>
       {atLine ? (
-        <strong className="num">At the line</strong>
+        <div className="t" style={{ fontSize: 72, color: 'var(--s-g)' }}>At the line</div>
       ) : (
-        <strong className="num">
-          {formatDistance(Math.hypot(rel.a, rel.c)).split(' ')[0]}
-          <small> {formatDistance(Math.hypot(rel.a, rel.c)).split(' ')[1]}</small>
-        </strong>
+        <div className="t" style={{ fontSize: 120 }}>
+          {num}
+          <span className="lbl" style={{ fontSize: 22 }}> {unit}</span>
+        </div>
       )}
-      {!atLine && hint !== 'to the start line' && <span>{hint}</span>}
+      {!atLine && hint !== 'to the start line' && <span className="lbl" style={{ fontSize: 15, color: 'var(--s-y)' }}>{hint}</span>}
     </div>
   );
 }
 
-function GpsDot({ ok, accuracy }: { ok: boolean; accuracy: number | null }) {
+function GpsChip({ ok, accuracy, clear }: { ok: boolean; accuracy: number | null; clear?: boolean }) {
   const good = ok && accuracy != null && accuracy <= 10;
   const fair = ok && accuracy != null && accuracy <= 20;
   return (
-    <span className={`badge gps ${good ? 'good' : fair ? 'fair' : 'bad'}`} aria-label={ok ? `GPS accuracy ${Math.round(accuracy ?? 0)} metres` : 'No GPS'}>
-      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-        <path d="M4 20h2v-3H4zM9 20h2v-6H9zM14 20h2v-9h-2zM19 20h2V8h-2z" />
-      </svg>
-      {ok && accuracy != null ? `GPS ±${Math.round(accuracy)} m` : 'No GPS'}
+    <span
+      className={`glass chip${clear ? ' clear' : ''}`}
+      style={clear ? undefined : { height: 40, borderRadius: 20 }}
+      aria-label={ok ? `GPS accuracy ${Math.round(accuracy ?? 0)} metres` : 'No GPS'}
+    >
+      <span className="dot" style={{ background: clear ? 'currentColor' : good ? 'var(--s-g)' : fair ? 'var(--s-y)' : '#ff5a5f' }} />
+      {ok && accuracy != null ? `±${Math.round(accuracy)} m` : 'No GPS'}
     </span>
   );
 }
@@ -313,56 +305,49 @@ function useElapsed(s: DriveState, ctl: DriveController) {
   return ref;
 }
 
-function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; reference: string | null }) {
-  const elapsed = useElapsed(s, ctl);
-  const last = s.lastSector;
+/** One pill per big sector: tinted by its flag once timed, the current one labelled. */
+function SectorPills({ s, ctl }: { s: DriveState; ctl: DriveController }) {
   const ends = ctl.bigEnds;
   const current = ends.findIndex((e) => e >= s.nextSector);
   return (
-    <section className="hud">
-      <div className="hud-time num">
-        <span ref={elapsed}>0.0</span>
+    <div className="dv-pills" style={{ gridTemplateColumns: `repeat(${ends.length}, 1fr)` }}>
+      {ends.map((_, b) => {
+        const big = s.bigThisLap.find((x) => x.k === b);
+        return (
+          <div key={b} className={`glass ${big ? `tint-${big.colour[0]}` : ''}`} style={{ height: 84, borderRadius: 42, display: 'grid', placeItems: 'center' }}>
+            {big ? (
+              <span className="t" style={{ fontSize: ends.length > 4 ? 18 : 24 }}>
+                {big.deltaMs != null ? formatDelta(big.deltaMs) : formatLap(big.sectorMs)}
+                <span className="visually-hidden"> sector {b + 1}, {STRIP_LABEL[big.colour]}</span>
+              </span>
+            ) : (
+              <span className="lbl" style={{ fontSize: 16, color: b === current ? 'var(--ink)' : undefined }}>S{b + 1}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const FLAG_INK: Record<string, string> = { purple: 'var(--s-p)', green: 'var(--s-g)', yellow: 'var(--s-y)' };
+
+function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; reference: string | null }) {
+  const elapsed = useElapsed(s, ctl);
+  const last = s.lastSector;
+  return (
+    <section style={{ display: 'grid' }} aria-live="polite">
+      <div style={{ textAlign: 'center', paddingTop: 22 }}>
+        <div className="t" style={{ fontSize: 40, color: 'var(--ink-2)' }}>
+          <span ref={elapsed}>0.0</span>
+        </div>
+        <div className="t dv-delta" style={{ fontSize: "min(144px, 36vw)", marginTop: 6, color: last ? FLAG_INK[last.colour] : 'var(--ink)' }}>
+          {last?.deltaMs != null ? formatDelta(last.deltaMs) : reference ? '±0.00' : '—'}
+        </div>
+        <div className="lbl">{reference ? `vs ${reference}` : 'Clock only'}</div>
       </div>
-      <div className={`hud-delta num ${last?.deltaMs == null ? '' : last.deltaMs <= 0 ? 'ahead' : 'behind'}`}>
-        {last?.deltaMs != null ? formatDelta(last.deltaMs) : reference ? '±0.00' : '—'}
-        <small>
-          {reference ? `vs ${reference}` : 'no reference'}
-          {last?.deltaMs != null && (last.deltaMs <= 0 ? ' · faster' : ' · slower')}
-        </small>
-      </div>
-      <div className="hud-grid">
-        {ends.map((_, b) => {
-          const big = s.bigThisLap.find((x) => x.k === b);
-          return (
-            <div key={b} className={`hud-cell ${big ? `flag-${big.colour}` : b === current ? 'current' : ''}`}>
-              <span>S{b + 1}</span>
-              <strong className="num">
-                {big
-                  ? big.deltaMs != null
-                    ? formatDelta(big.deltaMs)
-                    : formatLap(big.sectorMs)
-                  : b === current
-                    ? `S${b + 1}.${s.nextSector - (b === 0 ? 0 : ends[b - 1] + 1) + 1}`
-                    : '—'}
-              </strong>
-              {big && <span className="visually-hidden">{STRIP_LABEL[big.colour]}</span>}
-            </div>
-          );
-        })}
-      </div>
-      <div className="hud-minis" aria-hidden="true">
-        {ends.map((end, b) => {
-          const from = b === 0 ? 0 : ends[b - 1] + 1;
-          return (
-            <span key={b}>
-              {Array.from({ length: end - from + 1 }, (_, j) => {
-                const i = from + j;
-                const sec = s.sectorsThisLap.find((x) => x.k === i);
-                return <i key={i} className={sec ? `flag-${sec.colour}` : i === s.nextSector ? 'current' : ''} />;
-              })}
-            </span>
-          );
-        })}
+      <div style={{ padding: '22px 4px 0' }}>
+        <SectorPills s={s} ctl={ctl} />
       </div>
     </section>
   );
@@ -371,9 +356,11 @@ function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; refer
 function DeltaOnly({ s, reference }: { s: DriveState; reference: string | null }) {
   const last = s.lastSector;
   return (
-    <section className="delta-only" aria-live="polite">
-      <div className="delta-value num">{last?.deltaMs != null ? formatDelta(last.deltaMs) : last ? formatLap(last.sectorMs) : 'GO'}</div>
-      <div className="delta-caption">{last ? (reference ? `vs ${reference}` : 'no reference') : 'The gap shows at the first minisector'}</div>
+    <section style={{ textAlign: 'center', marginTop: 6, flex: 1, display: 'grid', alignContent: 'center' }} aria-live="polite">
+      <div className="t dv-delta-big">{last?.deltaMs != null ? formatDelta(last.deltaMs) : last ? formatLap(last.sectorMs) : 'GO'}</div>
+      <div style={{ fontSize: 17, fontWeight: 600, marginTop: 6, opacity: 0.8 }}>
+        {last ? (reference ? `vs ${reference}` : 'Clock only') : 'The gap shows at the first minisector'}
+      </div>
     </section>
   );
 }
@@ -431,27 +418,32 @@ function Countdown({ goT, n, onCancel }: { goT: number; n: number; onCancel: () 
   const lit = Math.min(n, Math.floor((n * 1000 - remaining) / 1000) + 1);
   const seconds = Math.ceil(remaining / 1000);
   return (
-    <section className="countdown" aria-live="assertive">
-      <div className={`lights n${Math.min(n, 10)}`}>
+    <section className="dv-center" aria-live="assertive">
+      <div className="dv-lights">
         {Array.from({ length: n }, (_, i) => (
           <span key={i} className={i < lit ? 'on' : ''} />
         ))}
       </div>
-      <div className="countdown-num num">{seconds}</div>
-      <p className="drive-sub">Timing starts when you move off after GO. Moving more than 10 m early adds 5 s.</p>
-      <button className="btn ghost" onClick={onCancel}>
+      <div className="t" style={{ fontSize: 160 }}>{seconds}</div>
+      <p className="lbl dv-sub">Timing starts when you move off after GO. Moving more than 10 m early adds 5 s.</p>
+      <button className="solid quiet" style={{ width: 'auto', padding: '0 24px' }} onClick={onCancel}>
         Cancel countdown
       </button>
     </section>
   );
 }
 
+/** Hold to stop: the fill grows under the finger and the drive ends when it is full, so a bump can't end it. */
 function HoldToStop({ onStop, label, compact }: { onStop: () => void; label: string; compact?: boolean }) {
   const [holding, setHolding] = useState(false);
   const timer = useRef<number | null>(null);
   const begin = () => {
     setHolding(true);
-    timer.current = window.setTimeout(onStop, 800);
+    navigator.vibrate?.(8);
+    timer.current = window.setTimeout(() => {
+      navigator.vibrate?.(30);
+      onStop();
+    }, 800);
   };
   const end = () => {
     setHolding(false);
@@ -459,7 +451,7 @@ function HoldToStop({ onStop, label, compact }: { onStop: () => void; label: str
   };
   return (
     <button
-      className={`hold-stop ${compact ? 'compact' : ''} ${holding ? 'holding' : ''}`}
+      className={`dv-hold ${compact ? 'glass clear compact' : 'glass sheet'} ${holding ? 'holding' : ''}`}
       onPointerDown={begin}
       onPointerUp={end}
       onPointerLeave={end}
@@ -467,11 +459,8 @@ function HoldToStop({ onStop, label, compact }: { onStop: () => void; label: str
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onStop()}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <span className="hold-fill" aria-hidden="true" />
-      <span className="hold-label">
-        {compact && <X size={18} aria-hidden="true" />}
-        {label}
-      </span>
+      <span className="dv-fill" aria-hidden="true" />
+      <span style={{ position: 'relative' }}>{label}</span>
     </button>
   );
 }

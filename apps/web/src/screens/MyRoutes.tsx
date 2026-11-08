@@ -1,9 +1,8 @@
-import { Globe, Lock, Plus } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { RouteShape, RouteThumb } from '../components/RouteShape';
-import { Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, useToast } from '../components/ui';
-import { getMyRequest, getRoutes, myRoutes, publicLimit, requestCreatorAccess, routeStats, setRoutePublic, type RouteStats } from '../lib/data';
+import { RouteGlyph } from '../components/RouteShape';
+import { Empty, errorMessage, I, Loading, Segmented, Sheet, useToast } from '../components/ui';
+import { getMyRequest, getRoutes, myRoutes, publicLimit, publicRoutes, requestCreatorAccess, routeStats, setRoutePublic, type RouteStats } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { CreatorRequest, Route } from '../lib/types';
@@ -18,6 +17,7 @@ export default function MyRoutes() {
   const [request, setRequest] = useState<CreatorRequest | null | undefined>(undefined);
   const [confirm, setConfirm] = useState<Route | null>(null);
   const [busy, setBusy] = useState(false);
+  const [official, setOfficial] = useState<Route[]>([]);
   // Times first: your best on each route is what you come back for; building routes is occasional.
   const [tab, setTab] = useState<'laps' | 'built'>('laps');
 
@@ -38,6 +38,9 @@ export default function MyRoutes() {
   useEffect(() => {
     void load();
     if (!isCreator) getMyRequest(profile.id).then(setRequest).catch(() => setRequest(null));
+    publicRoutes()
+      .then((rs) => setOfficial(rs.filter((r) => r.official && !r.hidden)))
+      .catch(() => undefined);
   }, [load, isCreator, profile.id]);
 
   const pbs = useMemo(
@@ -83,151 +86,153 @@ export default function MyRoutes() {
 
   if (own === null) return <Loading />;
 
+  const routeCard = (r: Route, chip: ReactNode) => (
+    <div key={r.id} className="glass lift" style={{ borderRadius: 28, padding: 16, display: 'flex', gap: 14, alignItems: 'center' }}>
+      <Link to={`/r/${r.id}`} style={{ display: 'flex', gap: 14, alignItems: 'center', flex: 1, minWidth: 0 }}>
+        <RouteGlyph route={r} style={{ width: 64, height: 44, flex: 'none', color: '#fff' }} strokeWidth={56} />
+        <div style={{ minWidth: 0 }}>
+          <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
+          <div className="lbl">
+            {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : r.startType}
+            {r.hidden && ' · hidden by an admin'}
+          </div>
+        </div>
+      </Link>
+      {chip}
+    </div>
+  );
+  const quiet = { background: 'color-mix(in srgb, var(--ink) 10%, transparent)' };
+  const solidChip = { background: 'var(--main)', color: 'var(--on-main)' };
+
   return (
-    <main className="screen">
-      <ScreenHead
-        title="Times"
-        right={
-          tab === 'built' ? (
-            <Link to="/routes/new" className="btn primary sm">
-              <Plus size={18} aria-hidden="true" /> Build
-            </Link>
-          ) : undefined
-        }
-      />
-      <Segmented
-        label="Show"
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: 'laps', label: 'Times' },
-          { value: 'built', label: 'My routes' },
-        ]}
-      />
+    <main className="ph soft docked">
+      <div className="sb" />
+      <div style={{ padding: '8px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
+        <h1 className="title">Times</h1>
+        {tab === 'built' && (
+          <Link to="/routes/new" className="glass ib" aria-label="Build a route">
+            <I n="plus" />
+          </Link>
+        )}
+      </div>
+      <div style={{ padding: '14px 16px 0' }}>
+        <Segmented
+          label="Show"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'laps', label: 'Times' },
+            { value: 'built', label: 'My routes' },
+          ]}
+        />
+      </div>
 
       {tab === 'laps' ? (
         logbook.length === 0 ? (
-          <Empty title="No laps yet" action={<Link to="/drive" className="btn primary lg">Start a drive</Link>}>
+          <Empty title="No laps yet" action={<Link to="/drive" className="solid">Start a drive</Link>}>
             Every lap you drive is saved here, grouped by route, with your best time.
           </Empty>
         ) : (
-          <>
-            <p className="statline">
-              <span>
-                <strong className="num">{total.laps}</strong> {total.laps === 1 ? 'lap' : 'laps'}
-              </span>
-              <span>
-                <strong className="num">{logbook.length}</strong> {logbook.length === 1 ? 'route' : 'routes'}
-              </span>
-              <span>
-                <strong className="num">{total.posted}</strong> posted
-              </span>
-            </p>
-            <div className="list">
-              {logbook.map(({ route: r, laps, last, posted }) => (
-                <Link key={r.id} to={`/r/${r.id}/history`} className="list-item logbook-row">
-                  <span className="logbook-shape" aria-hidden="true">
-                    <RouteShape route={r} height={48} ticks={false} />
-                  </span>
-                  <span className="grow">
-                    <strong className="ellipsis">{r.name}</strong>
-                    <span className="mute ellipsis small-text">
-                      {laps} {laps === 1 ? 'lap' : 'laps'} · last {formatDate(last)}
-                      {posted > 0 && ` · ${posted} posted`}
-                    </span>
-                  </span>
-                  <span className="logbook-pb">
-                    <strong className="num">{pbs.has(r.id) ? formatLap(pbs.get(r.id)) : '—'}</strong>
-                    <span className="mute small-text">{pbs.has(r.id) ? 'PB' : 'no valid lap'}</span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </>
+          <div style={{ padding: '14px 16px 0', display: 'grid', gap: 10 }}>
+            {logbook.map(({ route: r, laps, last }) => (
+              <Link
+                key={r.id}
+                to={`/r/${r.id}/history`}
+                className="glass lift"
+                style={{ borderRadius: 28, padding: '16px 16px 16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
+                    <span className="t acc" style={{ fontSize: 28 }}>{pbs.has(r.id) ? formatLap(pbs.get(r.id)) : '–'}</span>
+                    <span className="lbl">{pbs.has(r.id) ? 'PB' : 'No valid lap'}</span>
+                  </div>
+                  <div className="lbl" style={{ marginTop: 4 }}>
+                    {laps} {laps === 1 ? 'lap' : 'laps'} · {formatDate(last)}
+                  </div>
+                </div>
+                <RouteGlyph route={r} style={{ width: 64, height: 44, flex: 'none', color: '#fff' }} strokeWidth={56} />
+                <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+              </Link>
+            ))}
+          </div>
         )
       ) : (
-        <div style={{ marginTop: 16 }}>
+        <div style={{ padding: '14px 16px 0', display: 'grid', gap: 10 }}>
+          <div className="lbl" style={{ padding: '0 4px' }}>
+            Your routes
+            {limit > 1 && own.length > 0 && (limit === Infinity ? ` · ${publicCount} public` : ` · ${publicCount} of ${limit} public`)}
+          </div>
           {own.length === 0 ? (
-            <Empty title="No routes yet" action={<Link to="/routes/new" className="btn primary lg">Build a route</Link>}>
-              Draw a route on the map, split it into sectors, then drive it.
-            </Empty>
+            <div className="glass lift" style={{ borderRadius: 28, padding: '18px 20px', display: 'grid', gap: 12 }}>
+              <div>
+                <b>No routes yet</b>
+                <div className="lbl" style={{ marginTop: 4 }}>Draw a route on the map, split it into sectors, then drive it.</div>
+              </div>
+              <Link to="/routes/new" className="solid">
+                Build a route
+              </Link>
+            </div>
           ) : (
-            <div className="stack">
-              {limit > 1 && (
-                <p className="mute" style={{ fontSize: 14 }}>
-                  {limit === Infinity ? `${publicCount} public · no limit` : `${publicCount} of ${limit} public routes`}
-                </p>
-              )}
-              {own.map((r) => (
-                <article key={r.id} className="panel route-card">
-                  <Link to={`/r/${r.id}`} className="route-card-shape" aria-label={r.name}>
-                    <RouteThumb route={r} />
-                  </Link>
-                  <div style={{ minWidth: 0 }}>
-                    <Link to={`/r/${r.id}`} className="route-card-name ellipsis">
-                      {r.name}
-                    </Link>
-                    <span className="mute small-text">
-                      {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : 'point to point'} · {r.startType === 'standing' ? 'standing' : 'rolling'}
-                    </span>
-                    <span className="row wrap" style={{ gap: 6, marginTop: 8 }}>
-                      {r.isPublic ? (
-                        <span className="badge ink">
-                          <Globe size={12} aria-hidden="true" /> Public
-                        </span>
-                      ) : (
-                        <span className="badge">
-                          <Lock size={12} aria-hidden="true" /> Private
-                        </span>
-                      )}
-                      {r.hidden && <span className="badge red">Hidden by an admin</span>}
-                      {isCreator &&
-                        !r.hidden &&
-                        (r.isPublic ? (
-                          <button className="btn sm chip-btn" disabled={busy} onClick={() => void setPublic(r, false)}>
-                            Make private
-                          </button>
-                        ) : (
-                          <button className="btn sm chip-btn" disabled={busy || (limit > 1 && publicCount >= limit)} onClick={() => setConfirm(r)}>
-                            Publish
-                          </button>
-                        ))}
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
+            own.map((r) =>
+              routeCard(
+                r,
+                isCreator && !r.hidden ? (
+                  <button className="chip" style={r.isPublic ? solidChip : quiet} disabled={busy} onClick={() => setConfirm(r)}>
+                    {r.isPublic ? 'Public' : 'Private'}
+                  </button>
+                ) : (
+                  <span className="chip" style={r.isPublic ? solidChip : quiet}>
+                    {r.isPublic ? 'Public' : 'Private'}
+                  </span>
+                ),
+              ),
+            )
           )}
-          {!isCreator && (
-            <div style={{ marginTop: 16 }}>
-              <DriverPanel request={request} onRequested={setRequest} />
-            </div>
+          {official.length > 0 && (
+            <>
+              <div className="lbl" style={{ padding: '8px 4px 0' }}>Official</div>
+              {official.map((r) => routeCard(r, <span className="chip" style={quiet}>Official</span>))}
+            </>
           )}
+          {!isCreator && <DriverPanel request={request} onRequested={setRequest} />}
         </div>
       )}
 
-      <Sheet open={!!confirm} onClose={() => setConfirm(null)} label="Make route public">
-        {confirm && (
-          <div className="stack">
-            <h2>Make “{confirm.name}” public?</h2>
-            {currentPublic && currentPublic.id !== confirm.id && (
-              <p className="notice warn">
-                You can have one public route. “{currentPublic.name}” will become private, and its leaderboard will no longer be shown.
+      <Sheet open={!!confirm} onClose={() => setConfirm(null)} label={confirm?.isPublic ? 'Make route private' : 'Make route public'}>
+        {confirm &&
+          (confirm.isPublic ? (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <h2 className="title" style={{ fontSize: 24 }}>Make “{confirm.name}” private?</h2>
+              <p className="lbl" style={{ fontSize: 15 }}>It leaves the map and its leaderboard is no longer shown. Laps already driven are kept.</p>
+              <button className="solid" disabled={busy} onClick={() => setPublic(confirm, false)}>
+                Make private
+              </button>
+              <button className="solid quiet" onClick={() => setConfirm(null)}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <h2 className="title" style={{ fontSize: 24 }}>Make “{confirm.name}” public?</h2>
+              {currentPublic && currentPublic.id !== confirm.id && (
+                <p style={{ color: 'var(--s-y)' }}>
+                  You can have one public route. “{currentPublic.name}” will become private, and its leaderboard will no longer be shown.
+                </p>
+              )}
+              <p className="lbl" style={{ fontSize: 15 }}>Everyone will see it on the map and can drive it and post laps to its leaderboard.</p>
+              <p className="lbl" style={{ fontSize: 15 }}>
+                The start and end points become visible to everyone. Don&rsquo;t publish a route that starts at your home. Once published, its shape and
+                sectors can&rsquo;t be edited, so times stay comparable.
               </p>
-            )}
-            <p>Everyone will see it on the map and can drive it and post laps to its leaderboard.</p>
-            <p className="notice info">The start and end points become visible to everyone. Don't publish a route that starts at your home.</p>
-            <p className="mute" style={{ fontSize: 14 }}>
-              Once published, the route's shape and sectors can't be edited, so times stay comparable.
-            </p>
-            <button className="btn primary lg block" disabled={busy} onClick={() => setPublic(confirm, true)}>
-              {currentPublic && currentPublic.id !== confirm.id ? 'Replace and publish' : 'Publish'}
-            </button>
-            <button className="btn block" onClick={() => setConfirm(null)}>
-              Cancel
-            </button>
-          </div>
-        )}
+              <button className="solid" disabled={busy || (limit > 1 && publicCount >= limit)} onClick={() => setPublic(confirm, true)}>
+                {currentPublic && currentPublic.id !== confirm.id ? 'Replace and publish' : 'Publish'}
+              </button>
+              <button className="solid quiet" onClick={() => setConfirm(null)}>
+                Cancel
+              </button>
+            </div>
+          ))}
       </Sheet>
     </main>
   );
@@ -255,33 +260,30 @@ function DriverPanel({ request, onRequested }: { request: CreatorRequest | null 
   }
 
   return (
-    <div className="panel navy stack request-card">
-      <span className="livery thin" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
-      <h3>Want to publish a route?</h3>
-      <p className="mute">Publishing, with a leaderboard, is for approved creators. Ask the admin and say which track or event you want to time.</p>
+    <div className="glass lift" style={{ borderRadius: 28, padding: '18px 20px', display: 'grid', gap: 12, marginTop: 8 }}>
       <div>
-        {request?.status === 'pending' ? (
-          <button className="btn sm" disabled>
-            Request pending
-          </button>
-        ) : (
-          <button className="btn primary sm" onClick={() => setOpen(true)} disabled={request === undefined}>
-            Request creator access
-          </button>
-        )}
+        <b>Want to publish a route?</b>
+        <div className="lbl" style={{ marginTop: 4 }}>
+          Publishing, with a leaderboard, is for approved creators. Ask the admin and say which track or event you want to time.
+        </div>
       </div>
+      {request?.status === 'pending' ? (
+        <button className="solid quiet" disabled>
+          Request pending
+        </button>
+      ) : (
+        <button className="solid" onClick={() => setOpen(true)} disabled={request === undefined}>
+          Request creator access
+        </button>
+      )}
       <Sheet open={open} onClose={() => setOpen(false)} label="Request creator access">
-        <div className="stack">
-          <h2>Request creator access</h2>
-          <label className="field">
-            <span>Note for the admin (optional)</span>
-            <textarea className="input" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. I run our club's rally sprint stages" />
+        <div style={{ display: 'grid', gap: 12 }}>
+          <h2 className="title" style={{ fontSize: 24 }}>Request creator access</h2>
+          <label>
+            <span className="visually-hidden">Note for the admin (optional)</span>
+            <textarea className="field" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note for the admin, e.g. I run our club's rally sprint stages" />
           </label>
-          <button className="btn primary lg block" disabled={busy} onClick={send}>
+          <button className="solid" disabled={busy} onClick={send}>
             Send request
           </button>
         </div>

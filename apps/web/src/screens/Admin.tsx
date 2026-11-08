@@ -27,8 +27,9 @@ export default function Admin() {
   const [tab, setTab] = useState<Tab>('requests');
   if (!isAdmin) return <Navigate to="/" replace />;
   return (
-    <main className="screen">
-      <ScreenHead back title="Admin" right={<span className="badge ink">{isOwner ? 'Owner' : 'Admin'}</span>} />
+    <main className="ph soft">
+      <div className="sb" />
+      <ScreenHead back title="Admin" right={<span className="glass chip" style={{ height: 48, borderRadius: 24 }}>{isOwner ? 'Owner' : 'Admin'}</span>} />
       <div style={{ overflowX: 'auto' }}>
         <Segmented
           label="Admin section"
@@ -87,7 +88,7 @@ function RequestList({ kind }: { kind: RequestKind }) {
   if (!items.length)
     return (
       <div className="admin-requests">
-        <h2 className="section-title">{title}</h2>
+        <h2 className="lbl admin-sec">{title}</h2>
         <p className="note-box">
           {kind === 'admin' ? 'Creators who ask to become admins show up here. Only you can decide them.' : 'Drivers who ask for creator access show up here.'}
         </p>
@@ -95,22 +96,22 @@ function RequestList({ kind }: { kind: RequestKind }) {
     );
   return (
     <div className="admin-requests">
-      <h2 className="section-title">{title}</h2>
+      <h2 className="lbl admin-sec">{title}</h2>
       {items.map((r) => (
-        <div key={r.id} className="panel admin-card">
+        <div key={r.id} className="glass lift admin-card">
           <Link to={`/u/${r.username}`} className="row" style={{ gap: 12, textDecoration: 'none' }}>
             <Avatar name={r.username} size={44} uid={r.id} />
             <span className="grow" style={{ display: 'flex', flexDirection: 'column' }}>
               <strong>{r.username}</strong>
-              <span className="mute small-text">Asked {timeAgo(r.createdAt?.toDate())}</span>
+              <span className="lbl">Asked {timeAgo(r.createdAt?.toDate())}</span>
             </span>
           </Link>
           {r.note ? <p className="admin-note">“{r.note}”</p> : <p className="admin-no-note">No note.</p>}
           <div className="btns">
-            <button className="btn sm grow" onClick={() => decide(r, false)}>
+            <button className="solid quiet" style={{ height: 44 }} onClick={() => decide(r, false)}>
               Decline
             </button>
-            <button className="btn primary sm grow" onClick={() => decide(r, true)}>
+            <button className="solid" style={{ height: 44 }} onClick={() => decide(r, true)}>
               Approve
             </button>
           </div>
@@ -176,31 +177,31 @@ function Users() {
 
   return (
     <div className="stack">
-      <input className="input" type="search" placeholder="Search users" value={q} onChange={(e) => setQ(e.target.value)} />
-      {!q.trim() && <p className="mute" style={{ fontSize: 14 }}>Showing users with a role.</p>}
-      <div className="list">
+      <input className="field" type="search" placeholder="Search users" value={q} onChange={(e) => setQ(e.target.value)} />
+      {!q.trim() && <p className="lbl" style={{ fontSize: 14 }}>Showing users with a role.</p>}
+      <div className="rows">
         {results.map((p) => {
           const role = roles.get(p.id) ?? 'driver';
           return (
-            <div key={p.id} className="list-item">
+            <div key={p.id} className="admin-row">
               <Avatar name={p.username} hue={p.avatarHue} uid={p.id} />
               <span className="grow">
-                <strong>{nameOf(p)}</strong> <span className="mute">@{p.username}</span>
+                <strong>{nameOf(p)}</strong> <span className="lbl">@{p.username}</span>
                 <br />
-                <span className="mute" style={{ fontSize: 14, textTransform: 'capitalize' }}>
+                <span className="lbl" style={{ fontSize: 14, textTransform: 'capitalize' }}>
                   {role}
                 </span>
               </span>
               {role === 'owner' ? (
-                <span className="badge blue">Owner</span>
+                <span className="chip admin-badge">Owner</span>
               ) : isOwner && (role === 'creator' || role === 'admin') ? (
                 // Only the owner makes or removes admins; a creator must exist first.
                 <span className="row" style={{ gap: 8 }}>
-                  <span className="mute" style={{ fontSize: 13 }}>Admin</span>
+                  <span className="lbl" style={{ fontSize: 13 }}>Admin</span>
                   <Switch label={`Admin access for ${p.username}`} checked={role === 'admin'} onChange={(v) => toggleAdmin(p, v)} />
                 </span>
               ) : role === 'admin' ? (
-                <span className="badge blue">Admin</span>
+                <span className="chip admin-badge">Admin</span>
               ) : (
                 <Switch label={`Creator access for ${p.username}`} checked={role === 'creator'} onChange={(v) => toggle(p, v)} />
               )}
@@ -244,40 +245,40 @@ function Routes() {
   if (!routes) return <Loading />;
   if (!routes.length) return <Empty title="No published routes" />;
   return (
-    <div className="list">
+    <div className="rows">
       {routes.map((r) => (
-        <div key={r.id} className="list-item" style={{ alignItems: 'flex-start', flexDirection: 'column' }}>
+        <div key={r.id} className="admin-row" style={{ alignItems: 'flex-start', flexDirection: 'column' }}>
           <div className="row between" style={{ width: '100%' }}>
             <Link to={`/r/${r.id}`}>
               <strong>{r.name}</strong>
             </Link>
             <span className="row" style={{ gap: 6 }}>
-              {r.isPublic && <span className="badge green">Public</span>}
-              {r.hidden && <span className="badge red">Hidden</span>}
+              {r.isPublic && <span className="chip admin-badge green">Public</span>}
+              {r.hidden && <span className="chip admin-badge red">Hidden</span>}
             </span>
           </div>
-          <span className="mute" style={{ fontSize: 14 }}>
+          <span className="lbl" style={{ fontSize: 14 }}>
             by {r.ownerName}
             {r.official && ' · Official'}
           </span>
           <div className="row" style={{ marginTop: 4 }}>
             {r.isPublic && (
-              <button className="btn sm" onClick={() => act(r, { isPublic: false }, 'Route unpublished')}>
+              <button className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} onClick={() => act(r, { isPublic: false }, 'Route unpublished')}>
                 Unpublish
               </button>
             )}
             {r.isPublic && (
               <button
-                className="btn sm"
+                className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}
                 onClick={() => act(r, { official: !r.official }, r.official ? 'Official label removed' : 'Route is now Official')}
               >
                 {r.official ? 'Remove Official' : 'Make Official'}
               </button>
             )}
-            <button className="btn sm" onClick={() => act(r, { hidden: !r.hidden }, r.hidden ? 'Route visible again' : 'Route hidden')}>
+            <button className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} onClick={() => act(r, { hidden: !r.hidden }, r.hidden ? 'Route visible again' : 'Route hidden')}>
               {r.hidden ? 'Unhide' : 'Hide'}
             </button>
-            <button className="btn danger sm" onClick={() => remove(r)}>
+            <button className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }} onClick={() => remove(r)}>
               Delete
             </button>
           </div>
@@ -309,21 +310,21 @@ function Posts() {
   if (!posts) return <Loading />;
   if (!posts.length) return <Empty title="No posts yet" />;
   return (
-    <div className="list">
+    <div className="rows">
       {posts.map((p) => (
-        <div key={p.id} className="list-item">
+        <div key={p.id} className="admin-row">
           <span className="grow">
             <strong className="num" style={{ fontSize: 20 }}>
               {formatLap(p.totalMs)}
             </strong>{' '}
-            <span className="mute">{p.username}</span>
+            <span className="lbl">{p.username}</span>
             <br />
-            <span className="mute" style={{ fontSize: 14 }}>
+            <span className="lbl" style={{ fontSize: 14 }}>
               {p.routeName} · {timeAgo(p.createdAt?.toDate())}
               {p.caption ? ` · “${p.caption}”` : ''}
             </span>
           </span>
-          <button className="btn danger sm" onClick={() => remove(p)}>
+          <button className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }} onClick={() => remove(p)}>
             Remove
           </button>
         </div>
@@ -348,13 +349,13 @@ function Log() {
   if (!items) return <Loading />;
   if (!items.length) return <Empty title="Nothing logged yet">Every grant and revoke is recorded here.</Empty>;
   return (
-    <div className="list">
+    <div className="rows">
       {items.map((a) => (
-        <div key={a.id} className="list-item">
+        <div key={a.id} className="admin-row">
           <span className="grow">
             <strong>{a.actorName}</strong> {ACTIONS[a.action] ?? a.action} <strong>{a.targetName}</strong>
             <br />
-            <span className="mute" style={{ fontSize: 14 }}>
+            <span className="lbl" style={{ fontSize: 14 }}>
               {a.createdAt?.toDate().toLocaleString()}
             </span>
           </span>

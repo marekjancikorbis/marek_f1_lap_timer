@@ -56,11 +56,12 @@ class Crashed extends Component<{ children: ReactNode }, { error: Error | null }
   render() {
     if (!this.state.error) return this.props.children;
     return (
-      <main className="screen" role="alert">
-        <div className="empty">
-          <h2>Something went wrong</h2>
+      <main className="ph soft" role="alert">
+        <div className="sb" />
+        <div className="empty-note" style={{ marginTop: 160 }}>
+          <b>Something went wrong</b>
           <p>Your saved laps are safe. Reload to carry on.</p>
-          <button className="btn primary" onClick={() => location.reload()}>
+          <button className="solid" onClick={() => location.reload()}>
             Reload
           </button>
         </div>
@@ -136,7 +137,7 @@ function Shell() {
     window.scrollTo(0, 0);
   }, [pathname]);
   // Detail screens take the whole height, as in the mockups; the five tab screens keep the bar.
-  const deep = /^\/(r\/|routes\/new|drive\/|run\/|lap\/|compare\/|settings|admin)/.test(pathname);
+  const deep = /^\/(r\/[^/]+(\/edit)?$|routes\/new|drive\/|run\/|lap\/|compare\/|settings|admin|u\/[^/]+\/)/.test(pathname);
   return (
     <div className={`app ${deep ? 'no-tabs' : ''}`}>
       <Suspense fallback={<Loading />}>
@@ -147,7 +148,7 @@ function Shell() {
           <MapScreen visible={onExplore} />
         </Suspense>
       )}
-      <TabBar />
+      {!deep && <TabBar />}
     </div>
   );
 }

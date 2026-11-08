@@ -1,11 +1,9 @@
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
-import { Search as SearchIcon, X } from 'lucide-react';
 import type mapboxgl from 'mapbox-gl';
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FollowButton } from '../components/FollowButton';
 import { MapView } from '../components/MapView';
-import { Avatar, errorMessage, Segmented, Spinner, useToast, WhoText } from '../components/ui';
+import { Avatar, errorMessage, I, Spinner, useToast, WhoText } from '../components/ui';
 import { myRoutes, publicRoutes, routePosts, searchUsers, setPostCount } from '../lib/data';
 import { db } from '../lib/firebase';
 import { formatDistance, formatLap } from '../lib/format';
@@ -294,7 +292,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
     setDragging(true);
     sheet.style.transition = 'none';
     sheet.style.maxHeight = 'none';
-    sheet.style.height = `${Math.min(sheet.parentElement!.clientHeight * 0.85, Math.max(70, d.h - d.dy))}px`;
+    sheet.style.height = `${Math.min(sheet.parentElement!.clientHeight - 228, Math.max(70, d.h - d.dy))}px`;
   };
   const onPullEnd = () => {
     const d = drag.current;
@@ -302,14 +300,15 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
     drag.current = null;
     if (!d || !sheet || Math.abs(d.dy) < 5) return;
     dragged.current = true;
-    // Hand over to the open or shut height from where the finger let go, animated.
-    sheet.style.maxHeight = `${sheet.offsetHeight}px`;
-    sheet.style.height = '';
-    void sheet.offsetHeight;
+    // Hand over to the open or shut height from where the finger let go: the class flips in the
+    // same frame the inline height is dropped, so the sheet springs on from the finger's position.
+    const opening = d.dy < 0;
+    sheet.classList.toggle('open', opening);
     sheet.style.transition = '';
     sheet.style.maxHeight = '';
+    sheet.style.height = '';
     setDragging(false);
-    setOpen(d.dy < 0);
+    setOpen(opening);
   };
 
   const onReady = useCallback(
@@ -335,7 +334,6 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
   );
 
   const listed = (shown ?? [])
-    .filter((r) => r.isPublic || filter === 'private')
     .sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name));
   // Drivers are found by typing a name; the chips only filter routes.
   const filters: Filter[] = ['all', 'official', 'private'];
@@ -355,20 +353,24 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
         : `${listed.length} ${listed.length === 1 ? 'route' : 'routes'}`;
 
   return (
-    <main className={`map-screen ${term ? 'searching' : ''}`} hidden={!visible}>
-      <MapView onReady={onReady} center={camera?.center ?? [15.5, 49.8]} zoom={camera?.zoom ?? 6} height="100%" label="Routes" />
-      <div className="explore-top" ref={topRef}>
-        <label className="search-box explore-search">
-          <SearchIcon size={18} aria-hidden="true" />
+    <main className={`ph soft fixed explore ${expanded ? 'pulled' : ''}`} hidden={!visible}>
+      <div className="map">
+        <MapView onReady={onReady} center={camera?.center ?? [15.5, 49.8]} zoom={camera?.zoom ?? 6} height="100%" label="Routes" />
+      </div>
+      <div className="edge" />
+      <div className="sb" />
+      <div style={{ padding: '4px 16px' }} ref={topRef}>
+        <label className="glass field" style={{ color: 'var(--ink-2)' }}>
+          <I n="search" size={18} />
           <span className="visually-hidden">Search routes and drivers</span>
           <input
-            className="input"
             type="search"
-            placeholder="Search routes and drivers"
+            placeholder="Routes and drivers"
             value={q}
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
+            enterKeyHint="search"
             onChange={(e) => {
               setQ(e.target.value);
               if (e.target.value) setOpen(true);
@@ -381,47 +383,25 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
             <Spinner label="Searching" />
           ) : (
             q && (
-              <button className="icon-btn explore-clear" aria-label="Clear search" onClick={() => setQ('')}>
-                <X size={18} />
+              <button aria-label="Clear search" onClick={() => setQ('')} style={{ display: 'grid' }}>
+                <I n="x" size={18} />
               </button>
             )
           )}
         </label>
-        {term ? (
-          <Segmented
-            label="Show"
-            value={filter === 'drivers' ? 'drivers' : 'routes'}
-            onChange={(v) => setFilter(v === 'drivers' ? 'drivers' : 'all')}
-            options={[
-              { value: 'routes', label: 'Routes' },
-              { value: 'drivers', label: 'Drivers' },
-            ]}
-          />
-        ) : (
-        <div className="chips" role="group" aria-label="Show">
-          {filters.map((f) => (
-            <button key={f} className="chip" aria-pressed={filter === f} onClick={() => {
-                setFilter(f);
-                if (f === 'drivers') setOpen(true);
-              }}>
-              {FILTER_LABEL[f]}
-            </button>
-          ))}
-        </div>
-        )}
       </div>
 
       <section
         ref={sheetRef}
-        className={`explore-sheet ${expanded ? 'open' : ''} ${docked ? 'docked' : ''}`}
-        style={docked && !term ? { top: dock.top, maxHeight: dock.h } : undefined}
+        className={`glass sheet xs ${expanded ? 'open' : ''}`}
         aria-label="Results"
         // Keeps the search focused (and the list in place) when a result is tapped.
         onMouseDown={(e) => docked && e.preventDefault()}
       >
         <button
-          className="explore-sheet-head"
+          className="xs-pull"
           aria-expanded={expanded}
+          aria-label={expanded ? 'Show less' : 'Show all routes'}
           onClick={() => {
             if (dragged.current) dragged.current = false;
             else if (!docked) setOpen((o) => !o);
@@ -431,60 +411,48 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           onPointerUp={onPullEnd}
           onPointerCancel={onPullEnd}
         >
-          {!docked && <span className="grabber" aria-hidden="true" />}
-          <span className="explore-sheet-title">
-            <strong>{title}</strong>
-            <span className="mute">{count}</span>
-          </span>
+          <span className="grab" />
         </button>
-        <div className="explore-sheet-body">
-          {showRoutes &&
-            (routes && listed.length === 0 ? (
-              <p className="mute explore-empty">
-                {term
-                  ? `No route name contains “${q.trim()}”.`
-                  : filter === 'private'
-                    ? 'You have no private routes.'
-                    : 'No public routes yet. When a creator publishes one, it shows up here with its leaderboard.'}
-              </p>
-            ) : (
-              <ul className="explore-list">
-                {(expanded ? listed : listed.slice(0, 2)).map((r) => (
-                  <li key={r.id}>
-                    <Link to={`/r/${r.id}`} className="explore-row">
-                      <span className="grow">
-                        <strong className="explore-name">
-                          <span className="ellipsis">{r.name}</span>
-                          {r.official && <span className="badge ink">Official</span>}
-                        </strong>
-                        <span className="mute ellipsis small-text">
-                          {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : 'point to point'} · {r.startType === 'standing' ? 'standing' : 'rolling'} start
-                        </span>
-                      </span>
-                      {r.isPublic && <RecordCell routeId={r.id} />}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ))}
-          {showDrivers && (
+        <div className="xs-body">
+          {expanded && <div className="lbl">{routes === null ? 'Loading routes…' : term ? 'Matching routes' : 'Routes'}</div>}
+          {routes === null ? (
+            <div style={{ display: 'grid', placeItems: 'center', padding: 20 }}>
+              <Spinner />
+            </div>
+          ) : listed.length === 0 ? (
+            <p className="lbl" style={{ padding: '10px 0' }}>
+              {term ? `No route name contains “${q.trim()}”.` : 'No routes yet. When a creator publishes one, it shows up here with its leaderboard.'}
+            </p>
+          ) : (
+            <div className="rows">
+              {(expanded ? listed : listed.slice(0, 2)).map((r) => (
+                <Link key={r.id} to={`/r/${r.id}`} style={{ gridTemplateColumns: '1fr auto' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
+                    <div className="lbl">
+                      {formatDistance(r.lengthM)} · {r.official ? 'Official' : !r.isPublic ? 'Private' : r.isLoop ? 'lap' : r.startType}
+                    </div>
+                  </div>
+                  {r.isPublic && <RecordCell routeId={r.id} acc={!!r.official} />}
+                </Link>
+              ))}
+            </div>
+          )}
+          {expanded && term && (
             <>
-              {!term ? (
-                <p className="mute explore-empty">Type the start of a name or @username to find a driver.</p>
-              ) : drivers && drivers.length === 0 && !searching ? (
-                <p className="mute explore-empty">No driver's name or @username starts with “{q.trim().replace(/^@/, '')}”.</p>
+              <div className="lbl" style={{ marginTop: 12 }}>Drivers</div>
+              {drivers && drivers.length === 0 && !searching ? (
+                <p className="lbl" style={{ padding: '10px 0' }}>No driver&rsquo;s name or @username starts with “{q.trim().replace(/^@/, '')}”.</p>
               ) : (
-                <ul className="explore-list">
+                <div className="rows">
                   {(drivers ?? []).map((p) => (
-                    <li key={p.id} className="explore-row">
-                      <Link to={`/u/${p.username}`} className="row grow" style={{ gap: 12, textDecoration: 'none' }}>
-                        <Avatar name={p.username} hue={p.avatarHue} size={44} uid={p.id} />
-                        <WhoText p={p} />
-                      </Link>
-                      {p.id !== profile.id && <FollowButton userId={p.id} />}
-                    </li>
+                    <Link key={p.id} to={`/u/${p.username}`}>
+                      <Avatar name={p.username} hue={p.avatarHue} uid={p.id} />
+                      <WhoText p={p} />
+                      <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+                    </Link>
                   ))}
-                </ul>
+                </div>
               )}
             </>
           )}
@@ -494,25 +462,20 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
   );
 }
 
-/** The route record and who holds it, as on the leaderboard's first row. */
-function RecordCell({ routeId }: { routeId: string }) {
-  const [top, setTop] = useState<{ ms: number; who: string } | null>(null);
+/** The route record, as on the leaderboard's first row. */
+function RecordCell({ routeId, acc }: { routeId: string; acc: boolean }) {
+  const [top, setTop] = useState<number | null>(null);
   useEffect(() => {
     let live = true;
     routePosts(routeId, 1)
-      .then((p) => live && p[0] && setTop({ ms: p[0].totalMs, who: p[0].username }))
+      .then((p) => live && p[0] && setTop(p[0].totalMs))
       .catch(() => undefined);
     return () => {
       live = false;
     };
   }, [routeId]);
-  if (!top) return null;
-  return (
-    <span className="explore-laps">
-      <strong className="num">{formatLap(top.ms)}</strong>
-      <span className="mute small-text">P1 {top.who}</span>
-    </span>
-  );
+  if (top == null) return null;
+  return <span className={`t${acc ? ' acc' : ''}`} style={{ fontSize: 20 }}>{formatLap(top)}</span>;
 }
 
 function fit(map: mapboxgl.Map, routes: Route[]) {

@@ -1,7 +1,6 @@
-import { Camera, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AndroidAppButton, InstallButton } from '../components/InstallButton';
-import { Avatar, errorMessage, ScreenHead, useToast } from '../components/ui';
+import { Avatar, errorMessage, I, ScreenHead, useToast } from '../components/ui';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getMyRequest, getPhoto, NAME_MAX, requestCreatorAccess, setDisplayName, setPhoto, squarePhoto, updateMyProfile } from '../lib/data';
 import { nameOf } from '../lib/format';
@@ -106,136 +105,149 @@ export default function Settings() {
 
   const [theme, setTheme] = useTheme();
 
-  return (
-    <main className="screen">
-      <ScreenHead back title="Settings" />
+  const card = { borderRadius: 28, padding: '16px 18px' } as const;
+  const usePct = usage ? Math.max(usage.mapLoads / USAGE_CAP.mapLoads, usage.directions / USAGE_CAP.directions, usage.staticMaps / USAGE_CAP.staticMaps) * 100 : 0;
+  const requestBox = (label: string, placeholder: string, primary: boolean) => (
+    <>
+      <label>
+        <span className="visually-hidden">{label}</span>
+        <textarea className="field" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder={`${label}: ${placeholder}`} />
+      </label>
+      <button className={primary ? 'solid' : 'solid quiet'} disabled={busy} onClick={sendRequest}>
+        {primary ? 'Request creator access' : 'Request admin access'}
+      </button>
+    </>
+  );
 
-      <h2 className="section-title">Profile</h2>
-      <div className="list">
-        <button className="list-item" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
-          <Avatar key={photoKey} name={profile.username} hue={profile.avatarHue} size={56} uid={profile.id} />
-          <span className="grow">
-            <strong>{photoBusy ? 'Checking photo…' : hasPhoto ? 'Change photo' : 'Add photo'}</strong>
-            <span className="mute small-text">{hasPhoto ? `@${profile.username} · ${user.email}` : 'Or keep your roundel'}</span>
-          </span>
-          <Camera size={22} aria-hidden="true" />
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0] ?? null;
-            e.target.value = '';
-            if (f) void changePhoto(f);
-          }}
-        />
-        {hasPhoto && (
-          <button className="list-item" onClick={() => void changePhoto(null, true)}>
-            <span className="grow">
-              <strong>Remove photo</strong>
-              <span className="mute small-text">Show your roundel instead</span>
-            </span>
-          </button>
-        )}
-        {editName ? (
-          <div className="list-item settings-col">
-            <span className="mute small-text">Display name</span>
-            <div className="row" style={{ gap: 8 }}>
-              <input className="input grow" autoFocus value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={profile.username} aria-label="Display name" />
-              <button
-                className="btn primary sm"
-                disabled={savingName || !name.trim() || name.trim() === nameOf(profile)}
-                onClick={() => void saveName().then(() => setEditName(false))}
-              >
-                {savingName ? 'Saving…' : 'Save'}
+  return (
+    <main className="ph soft">
+      <div className="sb" />
+      <ScreenHead back title="Settings" />
+      <div style={{ padding: '16px 16px 0', display: 'grid', gap: 12 }}>
+        <div className="glass lift" style={{ ...card, display: 'grid', gap: 14 }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            <Avatar key={photoKey} name={profile.username} hue={profile.avatarHue} size={52} uid={profile.id} />
+            {editName ? (
+              <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0 }}>
+                <label className="field" style={{ height: 44, flex: 1, minWidth: 0 }}>
+                  <span className="visually-hidden">Display name</span>
+                  <input autoFocus value={name} maxLength={NAME_MAX} onChange={(e) => setName(e.target.value)} placeholder={profile.username} enterKeyHint="done" />
+                </label>
+                <button
+                  className="chip"
+                  style={{ height: 44, borderRadius: 22, background: 'var(--main)', color: 'var(--on-main)' }}
+                  disabled={savingName || !name.trim() || name.trim() === nameOf(profile)}
+                  onClick={() => void saveName().then(() => setEditName(false))}
+                >
+                  {savingName ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            ) : (
+              <button style={{ flex: 1, textAlign: 'left', minWidth: 0 }} onClick={() => setEditName(true)} aria-label={`Display name ${nameOf(profile)}. Change`}>
+                <b className="ellipsis" style={{ display: 'block' }}>{nameOf(profile)}</b>
+                <div className="lbl ellipsis">@{profile.username}</div>
               </button>
-            </div>
-            <span className="mute small-text">Shown on your profile, laps and leaderboards. Your @{profile.username} stays the same.</span>
+            )}
+            {!editName && (
+              <button className="lbl" disabled={photoBusy} onClick={() => fileRef.current?.click()}>
+                {photoBusy ? 'Checking…' : 'Photo'}
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                e.target.value = '';
+                if (f) void changePhoto(f);
+              }}
+            />
           </div>
-        ) : (
-          <button className="list-item" onClick={() => setEditName(true)}>
-            <span className="grow">
-              <span className="mute small-text">Display name</span>
-              <strong>{nameOf(profile)}</strong>
-            </span>
-            <Pencil size={20} aria-hidden="true" />
-          </button>
-        )}
-        <div className="list-item settings-col">
-          <span className="mute small-text">Avatar colour (without a photo)</span>
-          <div className="row wrap" role="radiogroup" aria-label="Avatar colour" style={{ gap: 10 }}>
-            {HUES.map((h) => (
-              <button
-                key={h}
-                role="radio"
-                aria-checked={profile.avatarHue === h}
-                aria-label={`Hue ${h}`}
-                className="hue-dot"
-                style={{ background: `oklch(50% 0.15 ${h})` }}
-                onClick={() => setHue(h)}
-              />
+          {editName && <p className="lbl">Shown on your profile, laps and leaderboards. Your @{profile.username} stays the same.</p>}
+          {hasPhoto ? (
+            <button className="lbl" style={{ justifySelf: 'start' }} onClick={() => void changePhoto(null, true)}>
+              Remove photo
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }} role="radiogroup" aria-label="Avatar colour">
+              {HUES.map((h) => (
+                <button
+                  key={h}
+                  role="radio"
+                  aria-checked={profile.avatarHue === h}
+                  aria-label={`Hue ${h}`}
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: `oklch(86% 0.07 ${h})`,
+                    boxShadow: profile.avatarHue === h ? '0 0 0 2px var(--night), 0 0 0 4px var(--ink)' : 'none',
+                  }}
+                  onClick={() => setHue(h)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="glass lift" style={card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Theme</span>
+            <span className="lbl">Colours the whole app</span>
+          </div>
+          <div className="themes" role="radiogroup" aria-label="Theme">
+            {THEMES.map((t) => (
+              <button key={t.id} type="button" role="radio" aria-checked={theme === t.id} className={`theme${theme === t.id ? ' on' : ''}`} onClick={() => setTheme(t.id)}>
+                <i style={{ background: swatch(t.swatches) }} aria-hidden="true" />
+                {t.name}
+              </button>
             ))}
           </div>
         </div>
-      </div>
 
-      <h2 className="section-title">Theme</h2>
-      <div className="list">
-        <div className="themes" role="radiogroup" aria-label="Theme">
-          {THEMES.map((t) => (
-            <button key={t.id} type="button" role="radio" aria-checked={theme === t.id} className="theme-opt" onClick={() => setTheme(t.id)}>
-              <i style={{ background: swatch(t.swatches) }} aria-hidden="true" />
-              {t.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <h2 className="section-title">Driving</h2>
-      <div className="list">
-        <div className="list-item">
-          <span className="grow">
-            <strong>Countdown</strong>
-            <span className="mute small-text">Lights go out this long after Start</span>
-          </span>
-          <span className="stepper" role="group" aria-label="Countdown seconds">
-            <button className="icon-btn" aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
-              <ChevronLeft size={18} />
-            </button>
-            <strong>{countdown} s</strong>
-            <button className="icon-btn" aria-label="Longer" disabled={countdown >= 10} onClick={() => setCountdown(countdown + 1)}>
-              <ChevronRight size={18} />
-            </button>
-          </span>
-        </div>
-        <button className="list-item" onClick={() => setShowLogs((v) => !v)} aria-expanded={showLogs}>
-          <span className="grow">
-            <strong>GPS logs</strong>
-            <span className="mute small-text">Your last 5 real drives, kept on this phone</span>
-          </span>
-          <span className="badge">{logs.length}</span>
-          <ChevronRight size={18} aria-hidden="true" style={{ transform: showLogs ? 'rotate(90deg)' : undefined }} />
-        </button>
-        {showLogs && (
-          <>
-            {logs.length === 0 && (
-              <p className="list-item mute small-text">No drives recorded yet. Replay them from Drive → Simulate, or send them to the developer to test timing.</p>
-            )}
-            {logs.map((l) => (
-              <div key={l.recordedAt} className="list-item">
-                <span className="grow" style={{ minWidth: 0 }}>
-                  <strong className="ellipsis">{l.route.name}</strong>
-                  <span className="mute small-text">
+        <div className="glass lift rows" style={{ borderRadius: 28, padding: '4px 18px' }}>
+          <div style={{ gridTemplateColumns: '1fr auto' }}>
+            <span>
+              Countdown
+              <span className="lbl" style={{ display: 'block' }}>Lights go out this long after Start</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 2 }} role="group" aria-label="Countdown seconds">
+              <button className="ib" style={{ width: 36, height: 36 }} aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
+                <I n="minus" size={18} />
+              </button>
+              <b className="t" style={{ fontSize: 19, minWidth: 34, textAlign: 'center' }}>{countdown} s</b>
+              <button className="ib" style={{ width: 36, height: 36 }} aria-label="Longer" disabled={countdown >= 10} onClick={() => setCountdown(countdown + 1)}>
+                <I n="plus" size={18} />
+              </button>
+            </span>
+          </div>
+          <button style={{ gridTemplateColumns: '1fr auto', textAlign: 'left' }} onClick={() => setShowLogs((v) => !v)} aria-expanded={showLogs}>
+            <span>
+              GPS logs
+              <span className="lbl" style={{ display: 'block' }}>Your last 5 real drives, kept on this phone</span>
+            </span>
+            <b className="t" style={{ fontSize: 19 }}>{logs.length}</b>
+          </button>
+          {showLogs && logs.length === 0 && (
+            <p className="lbl" style={{ display: 'block' }}>No drives recorded yet. Replay them from Drive, More options, Simulate, or send them to the developer to test timing.</p>
+          )}
+          {showLogs &&
+            logs.map((l) => (
+              <div key={l.recordedAt} style={{ gridTemplateColumns: '1fr auto auto' }}>
+                <span style={{ minWidth: 0 }}>
+                  <b className="ellipsis" style={{ display: 'block' }}>{l.route.name}</b>
+                  <span className="lbl">
                     {new Date(l.recordedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })} · {l.fixes.length} fixes
                   </span>
                 </span>
-                <button className="btn sm" onClick={() => downloadLog(l)}>
-                  Download
+                <button className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} onClick={() => downloadLog(l)}>
+                  Save
                 </button>
                 <button
-                  className="btn sm danger"
+                  className="chip"
+                  style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }}
                   onClick={() => {
                     deleteLog(l.recordedAt);
                     setLogs(listLogs());
@@ -245,82 +257,60 @@ export default function Settings() {
                 </button>
               </div>
             ))}
-          </>
-        )}
-      </div>
-
-      <h2 className="section-title">Route creation</h2>
-      <div className="list">
-        <div className="list-item settings-col">
-        {role === 'owner' ? (
-          <p>
-            You're the <strong>owner</strong>. Unlimited public routes, shown as Official. Only you decide admin requests.
-          </p>
-        ) : role === 'admin' ? (
-          <p>
-            You're an <strong>admin</strong>. Up to 5 public routes, shown as Official, and you handle creator requests.
-          </p>
-        ) : role === 'creator' ? (
-          adminRequest === undefined ? null : adminRequest?.status === 'pending' ? (
-            <p>
-              You're a <strong>creator</strong> with one public route. <span className="badge yellow">Admin request pending</span>
-            </p>
-          ) : (
-            <>
-              <p>
-                You're a <strong>creator</strong>. You can build routes and publish one of them.
-              </p>
-              {adminRequest?.status === 'rejected' && <p className="notice warn">Your last admin request was declined. You can ask again.</p>}
-              <p className="mute">Admins publish up to 5 routes as Official and approve new creators. The owner decides.</p>
-              <label className="field">
-                <span>Note for the owner (optional)</span>
-                <textarea className="input" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Which events do you organise?" />
-              </label>
-              <button className="btn" disabled={busy} onClick={sendRequest}>
-                Request admin access
-              </button>
-            </>
-          )
-        ) : request === undefined ? null : request?.status === 'pending' ? (
-          <p>
-            <span className="badge yellow">Request pending</span>
-            <span className="mute" style={{ display: 'block', marginTop: 8 }}>
-              The admin will review your request.
-            </span>
-          </p>
-        ) : (
-          <>
-            {request?.status === 'rejected' && <p className="notice warn">Your last request was declined. You can ask again.</p>}
-            <p className="mute">You can build private routes that only you see. Publishing a route, with a leaderboard, is for approved creators.</p>
-            <label className="field">
-              <span>Note for the admin (optional)</span>
-              <textarea className="input" maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Which track or event do you want to time?" />
-            </label>
-            <button className="btn primary" disabled={busy} onClick={sendRequest}>
-              Request creator access
-            </button>
-          </>
-        )}
         </div>
+
         {usage && (
-          <div className="list-item settings-col">
-            <span className="mute small-text">
-              Map usage this month · resets {usage.resetsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
-            </span>
-            <UsageBar label="Map loads" value={usage.mapLoads} cap={USAGE_CAP.mapLoads} />
-            <UsageBar label="Road snapping" value={usage.directions} cap={USAGE_CAP.directions} />
-            <UsageBar label="Route card maps" value={usage.staticMaps} cap={USAGE_CAP.staticMaps} />
-            <span className="mute small-text">The app pauses at the limit to stay free.</span>
+          <div className="glass lift" style={card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Map use</span>
+              <b className="t" style={{ fontSize: 19 }}>{Math.round(usePct)}%</b>
+            </div>
+            <div style={{ height: 6, borderRadius: 3, marginTop: 12, background: 'color-mix(in srgb, var(--ink) 12%, transparent)' }} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(usePct)} aria-label="Map use this month">
+              <i style={{ display: 'block', width: `${Math.min(100, usePct)}%`, height: '100%', borderRadius: 3, background: usePct > 90 ? '#ff5a5f' : 'var(--main-hi)' }} />
+            </div>
+            <p className="lbl" style={{ marginTop: 10 }}>
+              Map loads {usage.mapLoads.toLocaleString()} / {USAGE_CAP.mapLoads.toLocaleString()} · road snapping {usage.directions.toLocaleString()} /{' '}
+              {USAGE_CAP.directions.toLocaleString()} · route card maps {usage.staticMaps.toLocaleString()} / {USAGE_CAP.staticMaps.toLocaleString()}. Resets{' '}
+              {usage.resetsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}; the app pauses at the limit to stay free.
+            </p>
           </div>
         )}
+
+        <div className="glass lift" style={{ ...card, display: 'grid', gap: 12 }}>
+          <span>Route creation</span>
+          {role === 'owner' ? (
+            <p className="lbl">You&rsquo;re the owner. Unlimited public routes, shown as Official. Only you decide admin requests.</p>
+          ) : role === 'admin' ? (
+            <p className="lbl">You&rsquo;re an admin. Up to 5 public routes, shown as Official, and you handle creator requests.</p>
+          ) : role === 'creator' ? (
+            adminRequest === undefined ? null : adminRequest?.status === 'pending' ? (
+              <p className="lbl">You&rsquo;re a creator with one public route. Admin request pending.</p>
+            ) : (
+              <>
+                <p className="lbl">
+                  You&rsquo;re a creator: you can build routes and publish one of them. Admins publish up to 5 routes as Official and approve new creators; the owner decides.
+                </p>
+                {adminRequest?.status === 'rejected' && <p style={{ color: 'var(--s-y)' }}>Your last admin request was declined. You can ask again.</p>}
+                {requestBox('Note for the owner (optional)', 'which events do you organise?', false)}
+              </>
+            )
+          ) : request === undefined ? null : request?.status === 'pending' ? (
+            <p className="lbl">Request pending. The admin will review it.</p>
+          ) : (
+            <>
+              {request?.status === 'rejected' && <p style={{ color: 'var(--s-y)' }}>Your last request was declined. You can ask again.</p>}
+              <p className="lbl">You can build private routes that only you see. Publishing a route, with a leaderboard, is for approved creators.</p>
+              {requestBox('Note for the admin (optional)', 'which track or event do you want to time?', true)}
+            </>
+          )}
+        </div>
+
+        <InstallButton className="solid quiet" />
+        <AndroidAppButton className="solid quiet" />
+        <button className="solid danger" style={{ marginTop: 12 }} onClick={signOut}>
+          Sign out
+        </button>
       </div>
-
-      <InstallButton className="btn block install-cta" />
-      <AndroidAppButton className="btn block install-cta" />
-
-      <button className="btn danger block" style={{ marginTop: 32 }} onClick={signOut}>
-        Sign out
-      </button>
     </main>
   );
 }

@@ -68,71 +68,93 @@ export default function Notifications() {
       });
   }, [profile.id]);
 
+  const ago = (n: Notice) => timeAgo(n.createdAt?.toDate()).replace(' ago', '');
+  const isNew = (n: Notice) => !!data && (!data.seenAt || (n.createdAt != null && n.createdAt.toMillis() > data.seenAt.toMillis()));
+  const beaten = data?.notices.filter((n) => n.type === 'beaten' && isNew(n)) ?? [];
+  const rest = data?.notices.filter((n) => !beaten.includes(n)) ?? [];
   return (
-    <main className="screen">
-      <ScreenHead back title="Notifications" />
-      {error && <p className="notice error">{error}</p>}
+    <main className="ph soft docked">
+      <div className="sb" />
+      <div style={{ padding: '8px 20px 0' }}>
+        <h1 className="title">Notifications</h1>
+      </div>
+      {error && <p className="err" style={{ padding: '12px 24px 0' }}>{error}</p>}
       {data === null ? (
-        <SkeletonRows />
+        <div style={{ padding: '16px 24px 0' }}>
+          <SkeletonRows />
+        </div>
       ) : data.notices.length === 0 ? (
         <Empty title="Nothing yet">New followers, laps that beat yours and news from the moderators show up here.</Empty>
       ) : (
         <>
-          {(['New', 'Earlier'] as const).map((group) => {
-            const isNew = (n: Notice) => !data.seenAt || (n.createdAt != null && n.createdAt.toMillis() > data.seenAt.toMillis());
-            const list = data.notices.filter((n) => isNew(n) === (group === 'New'));
-            if (!list.length) return null;
-            return (
-              <section key={group}>
-                <h2 className="section-title">{group}</h2>
-                <div className="list">
-                  {list.map((n) => {
-                    const { text, to } = describe(n);
-                    const main = (
-                      <span className="grow notice-text">
-                        <span>{text}</span>
-                        {n.type === 'beaten' ? (
-                          <span className="notice-time">
-                            <strong className="num">{formatLap(n.totalMs)}</strong>
-                            <strong className="num fastest">{formatDelta(n.totalMs - n.theirMs, 2)}</strong>
-                            <span className="mute">· {timeAgo(n.createdAt?.toDate()).replace(' ago', '')}</span>
-                          </span>
-                        ) : (
-                          <span className="mute small-text">{timeAgo(n.createdAt?.toDate()).replace(' ago', '')}</span>
-                        )}
-                      </span>
-                    );
-                    return (
-                      <div key={n.id} className="list-item" style={n.type === 'beaten' ? { alignItems: 'flex-start' } : undefined}>
-                        {n.type === 'follow' || n.type === 'beaten' ? (
-                          <Link to={`/u/${n.fromName}`} aria-label={n.fromName}>
-                            <Avatar name={n.fromName} size={44} uid={n.fromId} />
-                          </Link>
-                        ) : (
-                          <span className="mod-roundel" aria-hidden>
-                            <Shield size={20} />
-                          </span>
-                        )}
-                        {to ? (
-                          <Link to={to} className="grow notice-link">
-                            {main}
-                          </Link>
-                        ) : (
-                          main
-                        )}
-                        {n.type === 'beaten' && (
-                          <Link className="btn primary sm" to={`/drive/${n.routeId}?ref=post:${n.postId}`}>
-                            Race
-                          </Link>
-                        )}
-                        {n.type === 'follow' && <FollowButton userId={n.fromId} back />}
+          {beaten.length > 0 && (
+            <div style={{ padding: '16px 16px 0', display: 'grid', gap: 10 }}>
+              {beaten.map((n) => {
+                if (n.type !== 'beaten') return null;
+                const { text, to } = describe(n);
+                return (
+                  <div key={n.id} className="glass lift" style={{ borderRadius: 28, padding: '16px 18px', display: 'grid', gridTemplateColumns: '40px 1fr auto', gap: 12, alignItems: 'center' }}>
+                    <Link to={`/u/${n.fromName}`} aria-label={n.fromName}>
+                      <Avatar name={n.fromName} size={40} uid={n.fromId} />
+                    </Link>
+                    <Link to={to ?? `/u/${n.fromName}`} style={{ minWidth: 0 }}>
+                      <div className="lbl">{text}</div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginTop: 3 }}>
+                        <span className="t" style={{ fontSize: 22 }}>{formatLap(n.totalMs)}</span>
+                        <span className="t acc" style={{ fontSize: 15 }}>{formatDelta(n.totalMs - n.theirMs, 2)}</span>
                       </div>
-                    );
-                  })}
+                    </Link>
+                    <Link className="chip" style={{ background: 'var(--main)', color: 'var(--on-main)' }} to={`/drive/${n.routeId}?ref=post:${n.postId}`}>
+                      Race
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div className="rows" style={{ padding: '8px 24px 0' }}>
+            {rest.map((n) => {
+              const { text, to } = describe(n);
+              const pic =
+                n.type === 'follow' || n.type === 'beaten' ? (
+                  <Link to={`/u/${n.fromName}`} aria-label={n.fromName}>
+                    <Avatar name={n.fromName} uid={n.fromId} />
+                  </Link>
+                ) : (
+                  <span className="av" style={{ background: 'var(--main)', color: 'var(--on-main)' }} aria-hidden>
+                    ✓
+                  </span>
+                );
+              const body = (
+                <div style={{ minWidth: 0 }}>
+                  <b style={{ display: 'block' }}>{text}</b>
+                  <div className="lbl">
+                    {n.type === 'beaten' && `${formatLap(n.totalMs)} · `}
+                    {isNew(n) ? 'New · ' : ''}
+                    {ago(n)}
+                  </div>
                 </div>
-              </section>
-            );
-          })}
+              );
+              return (
+                <div key={n.id} style={n.type === 'follow' || n.type === 'beaten' ? undefined : { gridTemplateColumns: '36px 1fr' }}>
+                  {pic}
+                  {to ? (
+                    <Link to={to} style={{ minWidth: 0 }}>
+                      {body}
+                    </Link>
+                  ) : (
+                    body
+                  )}
+                  {n.type === 'follow' && <FollowButton userId={n.fromId} back />}
+                  {n.type === 'beaten' && (
+                    <Link className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} to={`/drive/${n.routeId}?ref=post:${n.postId}`}>
+                      Race
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </>
       )}
     </main>

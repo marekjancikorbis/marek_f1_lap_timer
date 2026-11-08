@@ -1,10 +1,10 @@
 import type mapboxgl from 'mapbox-gl';
-import { ChevronRight, Clock, Home, Maximize2, Minimize2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { RouteMap } from '../components/RouteMap';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, UserName, useToast, WhoText } from '../components/ui';
-import { adminDeleteRoute, deleteRoute, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, setHomeRoute } from '../lib/data';
+import { Empty, errorMessage, I, Loading, ScreenHead, Switch, UserName, useToast } from '../components/ui';
+import { usePullSheet } from '../lib/pullSheet';
+import { adminDeleteRoute, deleteRoute, followingIds, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, setHomeRoute } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { bigRecords, bigRoute, notCounted } from '../lib/laps';
 import { useMe } from '../lib/session';
@@ -22,43 +22,24 @@ export default function RouteDetail() {
   const [homeBusy, setHomeBusy] = useState(false);
   const [ownerRole, setOwnerRole] = useState<Role | null>(null);
   const [tab, setTab] = useState<'board' | 'mine' | 'locals'>('board');
-  // The map grows to most of the screen to inspect the route: pull down at the top of
-  // the page (or the button) opens it, pushing the page up closes it again.
-  const [bigMap, setBigMap] = useState(false);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const keepMap = useCallback((m: mapboxgl.Map) => {
-    mapRef.current = m;
-    return () => {
-      mapRef.current = null;
-    };
-  }, []);
+  const [open, setOpen] = useState(false);
+  const sheetRef = useRef<HTMLElement>(null);
+  const pull = usePullSheet(sheetRef, open, setOpen, () => (sheetRef.current?.parentElement?.clientHeight ?? 800) - 126);
+  const [following, setFollowing] = useState<Set<string>>(new Set());
   useEffect(() => {
-    let y0: number | null = null;
-    const start = (e: TouchEvent) => {
-      // Drags on the map itself pan it instead.
-      y0 = window.scrollY <= 0 && !(e.target as Element).closest?.('.mapboxgl-canvas-container') ? e.touches[0].clientY : null;
+    followingIds(profile.id).then((ids) => setFollowing(new Set(ids)), () => undefined);
+  }, [profile.id]);
+  // The map fills the screen: fit the route into the part the sheet leaves free.
+  const fitMap = useCallback((m: mapboxgl.Map) => {
+    const fitNow = () => {
+      const r = routeRef.current;
+      const h = sheetRef.current?.offsetHeight ?? 300;
+      if (r) m.fitBounds(r.bbox, { padding: { top: 130, bottom: h + 40, left: 40, right: 40 }, duration: 0, maxZoom: 15 });
     };
-    const move = (e: TouchEvent) => {
-      if (y0 == null) return;
-      const dy = e.touches[0].clientY - y0;
-      if (dy > 50 || dy < -30) {
-        setBigMap(dy > 0);
-        y0 = null;
-      }
-    };
-    window.addEventListener('touchstart', start, { passive: true });
-    window.addEventListener('touchmove', move, { passive: true });
-    return () => {
-      window.removeEventListener('touchstart', start);
-      window.removeEventListener('touchmove', move);
-    };
+    fitNow();
+    m.once('idle', fitNow);
   }, []);
-  // Refit the route once the map has finished growing or shrinking.
-  useEffect(() => {
-    const t = window.setTimeout(() => route && mapRef.current?.fitBounds(route.bbox, { padding: 40, duration: 300 }), 380);
-    return () => window.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bigMap]);
+  const routeRef = useRef<Route | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -66,6 +47,7 @@ export default function RouteDetail() {
       const r = await getRoute(routeId);
       if (!alive) return;
       setRoute(r);
+      routeRef.current = r;
       if (!r) return;
       const [p, mine, loc] = await Promise.all([
         r.isPublic ? routePosts(r.id).catch(() => []) : Promise.resolve([] as Post[]),
@@ -145,198 +127,153 @@ export default function RouteDetail() {
   if (route === undefined) return <Loading />;
   if (route === null)
     return (
-      <main className="screen">
+      <main className="ph soft">
+        <div className="sb" />
         <ScreenHead back />
-        <Empty title="Route not available">It's private, was unpublished, or has been removed.</Empty>
+        <Empty title="Route not available">It&rsquo;s private, was unpublished, or has been removed.</Empty>
       </main>
     );
 
-  const tabs = [
-    ...(route.isPublic ? [{ value: 'board' as const, label: 'Leaderboard' }] : [{ value: 'mine' as const, label: 'My laps' }]),
-    ...(route.isPublic ? [{ value: 'locals' as const, label: 'Locals' }] : []),
-  ];
-  const shownTab = tabs.some((t) => t.value === tab) ? tab : tabs[0].value;
-  const recent = [...runs].sort((a, b) => b.startedAt - a.startedAt).slice(0, 8);
+  const top = board[0];
+  const mine = board.find((b) => b.post.userId === profile.id);
+  // Collapsed: P2, P3 and you. Pulled up: the whole board, then the drivers you follow.
+  const shortBoard = board.slice(1, 3).concat(mine && mine.rank > 3 ? [mine] : []);
+  const followed = board.filter((b) => following.has(b.post.userId));
+  const row = ({ rank, post }: (typeof board)[number]) => {
+    const me = post.userId === profile.id;
+    return (
+      <Link key={post.id} to={`/lap/${post.id}`} style={{ gridTemplateColumns: '20px 1fr auto', ...(me ? { color: 'var(--main-hi)' } : null) }}>
+        <span className="lbl" style={me ? { color: 'inherit' } : undefined}>{rank}</span>
+        {me ? <b>You</b> : <span className="ellipsis"><UserName uid={post.userId} fallback={post.username} /></span>}
+        <span className="t" style={{ fontSize: 19 }}>{formatLap(post.totalMs)}</span>
+      </Link>
+    );
+  };
+  const share = () => {
+    const url = `${location.origin}/r/${route.id}`;
+    if (navigator.share) navigator.share({ title: route.name, url }).catch(() => undefined);
+    else navigator.clipboard?.writeText(url).then(() => toast('Link copied'), () => undefined);
+  };
+  const kind = route.isLoop ? 'lap' : route.startType;
 
   return (
-    <main className="screen with-cta">
-      <section className="route-hero">
-        <RouteMap route={bigRoute(route)} height={bigMap ? '70dvh' : 250} extra={keepMap} />
-        <div className="route-hero-top">
-          <ScreenHead
-            back
-            right={
-              <button className="icon-btn route-hero-btn" aria-label={bigMap ? 'Shrink the map' : 'Expand the map'} aria-pressed={bigMap} onClick={() => setBigMap((b) => !b)}>
-                {bigMap ? <Minimize2 size={20} aria-hidden="true" /> : <Maximize2 size={20} aria-hidden="true" />}
-              </button>
-            }
-          />
-        </div>
-      </section>
-
-      <section className="route-head">
-          <p className="row wrap" style={{ gap: 6 }}>
-            {route.official ? (
-              <span className="badge ink">Official</span>
+    <main className="ph fixed route-page">
+      <div className="map">
+        <RouteMap route={bigRoute(route)} height="100%" extra={fitMap} />
+      </div>
+      <div className="edge" />
+      <div className="sb" />
+      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
+        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/explore'))}>
+          <I n="back" />
+        </button>
+        <button className="glass ib" aria-label="Share" onClick={share}>
+          <I n="share" />
+        </button>
+      </div>
+      <section ref={sheetRef} className={`glass sheet sheet-b rs ${open ? 'open' : ''}`} aria-label={route.name}>
+        <button className="xs-pull" aria-expanded={open} aria-label={open ? 'Show less' : 'Show the whole leaderboard'} {...pull} onPointerCancel={pull.onPointerUp}>
+          <span className="grab" />
+        </button>
+        <div className="xs-body">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+            <h1 className="ellipsis" style={{ fontSize: 22, letterSpacing: '-.02em', fontWeight: 700 }}>{route.name}</h1>
+            <span className="lbl" style={{ flex: 'none' }}>
+              {formatDistance(route.lengthM)} · {kind}
+            </span>
+          </div>
+          {route.isPublic ? (
+            top ? (
+              <>
+                <Link to={`/lap/${top.post.id}`} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: open ? 12 : 14 }}>
+                  <span className="t acc" style={{ fontSize: open ? 44 : 52 }}>{formatLap(top.post.totalMs)}</span>
+                  <span className="lbl">{top.post.userId === profile.id ? 'You' : top.post.username}</span>
+                </Link>
+                {open && <div className="lbl" style={{ marginTop: 14 }}>Leaderboard</div>}
+                <div className="rows" style={{ marginTop: open ? 0 : 10 }}>{(open ? board.slice(1) : shortBoard).map(row)}</div>
+                {open && followed.length > 0 && (
+                  <>
+                    <div className="lbl" style={{ marginTop: 14 }}>Following</div>
+                    <div className="rows">{followed.map(row)}</div>
+                  </>
+                )}
+              </>
             ) : (
-              <Link to={`/u/${route.ownerName}`} className="badge route-hero-by">
-                by {route.ownerName}
-              </Link>
-            )}
-            <span className="badge">{route.startType === 'standing' ? 'Standing start' : 'Rolling start'}</span>
-            <span className="badge">{formatDistance(route.lengthM)}</span>
-            {!route.isPublic && <span className="badge">Private</span>}
-          </p>
-          <h1 className="route-title">{route.name}</h1>
-          {route.isPublic && board.length > 0 && (
+              <p className="lbl" style={{ marginTop: 12 }}>No posted laps yet. Drive it and post yours to take P1.</p>
+            )
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
+              <span className="t acc" style={{ fontSize: 52 }}>{myBest ? formatLap(myBest.totalMs) : '–'}</span>
+              <span className="lbl">{myBest ? 'Your best · private route' : 'Private route · not driven yet'}</span>
+            </div>
+          )}
+          {open && (
             <>
-              <div className="run-stripe route-records" role="img" aria-label={records.map((r, i) => `Sector ${i + 1} record ${r == null ? 'none' : formatLap(r)}`).join(', ')}>
-                {records.map((r, i) => (
-                  <b key={i} className={r == null ? 'empty' : 'flag-purple'}>
-                    <span>
-                      S{i + 1} {r == null ? '–' : formatLap(r)}
-                    </span>
-                  </b>
-                ))}
+              <div className="lbl" style={{ marginTop: 14 }}>This route</div>
+              <div className="rows">
+                <Link to={`/r/${route.id}/history`} style={{ gridTemplateColumns: '1fr auto' }}>
+                  <div>
+                    <b>My laps</b>
+                    <div className="lbl">
+                      {runs.length ? `${runs.length} ${runs.length === 1 ? 'lap' : 'laps'}${myBest ? ` · best ${formatLap(myBest.totalMs)}` : ''}` : 'Not driven yet'}
+                    </div>
+                  </div>
+                  <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+                </Link>
+                {route.isPublic && (
+                  <div style={{ gridTemplateColumns: '1fr auto' }}>
+                    <div>
+                      <b>Home course</b>
+                      <div className="lbl">{locals.length ? `${locals.length} ${locals.length === 1 ? 'driver calls' : 'drivers call'} it home` : 'Shown on your Home'}</div>
+                    </div>
+                    <Switch checked={isHome} disabled={homeBusy} onChange={() => void toggleHome()} label="Home course" />
+                  </div>
+                )}
+                {!route.official && (
+                  <Link to={`/u/${route.ownerName}`} style={{ gridTemplateColumns: '1fr auto' }}>
+                    <div>
+                      <b>Built by {route.ownerName}</b>
+                      <div className="lbl">{route.startType === 'standing' ? 'Standing start' : 'Rolling start'}</div>
+                    </div>
+                    <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+                  </Link>
+                )}
               </div>
-              <p className="mute small-text" style={{ marginTop: 6 }}>
-                Sector records, each by the fastest driver in that sector
-              </p>
+              {(isOwner || canModChange) && (
+                <>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                    {canRename && (
+                      <button className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} onClick={rename}>
+                        Rename
+                      </button>
+                    )}
+                    {(canOwnChange || canModChange) && (
+                      <Link className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} to={`/r/${route.id}/edit`}>
+                        Edit route
+                      </Link>
+                    )}
+                    {(canOwnChange || canModChange) && (
+                      <button className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }} onClick={remove}>
+                        Delete route
+                      </button>
+                    )}
+                  </div>
+                  {isOwner && !canOwnChange && !canModChange && (
+                    <p className="lbl" style={{ marginTop: 8 }}>
+                      {canRename
+                        ? 'The shape and sectors are locked because this route has been published, so other drivers may have laps on it.'
+                        : 'This route has been published and you no longer have creator access, so it is locked.'}
+                    </p>
+                  )}
+                </>
+              )}
             </>
           )}
-      </section>
-
-      {tabs.length > 1 && <Segmented label="Show" value={shownTab} onChange={setTab} options={tabs} />}
-
-      {shownTab === 'board' &&
-        (board.length === 0 ? (
-          <p className="mute route-empty">No posted laps yet. Drive it and post yours to take P1.</p>
-        ) : (
-          <>
-            <ol className="list board">
-              {board.map(({ rank, post }) => (
-                <li key={post.id} className={`board-row ${post.userId === profile.id ? 'me' : ''}`}>
-                  <span className={`board-pos num ${rank === 1 ? 'p1' : ''}`}>{rank}</span>
-                  <Link to={`/u/${post.username}`} className="row grow" style={{ gap: 10, textDecoration: 'none', minWidth: 0 }}>
-                    <Avatar name={post.username} hue={post.avatarHue} size={32} uid={post.userId} />
-                    <span className="grow" style={{ minWidth: 0 }}>
-                      <strong className="ellipsis">{post.userId === profile.id ? 'You' : <UserName uid={post.userId} fallback={post.username} />}</strong>
-                      {post.car && <span className="mute ellipsis small-text">{post.car}</span>}
-                    </span>
-                  </Link>
-                  {/* Race and Compare are on the lap's own page. */}
-                  <Link to={`/lap/${post.id}`} className={`board-time num ${rank === 1 ? 'fastest' : ''}`}>
-                    {formatLap(post.totalMs)}
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </>
-        ))}
-
-      {shownTab === 'mine' &&
-        (runs.length === 0 ? (
-          <p className="mute route-empty">You haven't driven this route yet.</p>
-        ) : (
-          <>
-            {myBest && (
-              <p className="statline">
-                <span>
-                  Your best <strong className="num">{formatLap(myBest.totalMs)}</strong>
-                </span>
-              </p>
-            )}
-            <div className="list">
-              {recent.map((r) => (
-                <Link key={r.id} to={`/run/${r.id}`} className="list-item">
-                  <span className="grow">
-                    <strong>{formatDate(r.startedAt)}</strong>
-                    <span className="mute small-text">
-                      {r.valid ? (r.id === myBest?.id ? 'Your best' : `Lap ${r.lap + 1}`) : notCounted(r)}
-                      {r.posted && ' · posted'}
-                      {r.replay && ' · simulated'}
-                    </span>
-                  </span>
-                  <strong className="num logbook-time">{r.partial ? '—' : formatLap(r.totalMs)}</strong>
-                </Link>
-              ))}
-            </div>
-            <Link className="btn block" style={{ marginTop: 12 }} to={`/r/${route.id}/history`}>
-              All my laps here
-            </Link>
-          </>
-        ))}
-
-      {shownTab === 'locals' &&
-        (locals.length === 0 ? (
-          <p className="mute route-empty">Nobody calls this their home course yet.</p>
-        ) : (
-          <div className="list">
-            {locals.map((l) => (
-              <Link key={l.id} to={`/u/${l.username}`} className="list-item">
-                <Avatar name={l.username} hue={l.avatarHue} size={32} uid={l.id} />
-                <WhoText p={l} />
-                {l.id === profile.id && <span className="badge outline">You</span>}
-              </Link>
-            ))}
-          </div>
-        ))}
-
-      {route.isPublic && (
-        <div className="list" style={{ marginTop: 10 }}>
-          <Link to={`/r/${route.id}/history`} className="list-item">
-            <Clock size={22} aria-hidden="true" />
-            <span className="grow">
-              <strong>My laps on this route</strong>
-              <span className="mute small-text">
-                {runs.length ? `${runs.length} ${runs.length === 1 ? 'lap' : 'laps'}${myBest ? ` · best ${formatLap(myBest.totalMs)}` : ''}` : 'Not driven yet'}
-              </span>
-            </span>
-            <ChevronRight size={18} aria-hidden="true" />
-          </Link>
         </div>
-      )}
-
-      {(isOwner || canModChange) && (
-        <>
-          <h2 className="section-title">Manage</h2>
-          <div className="row wrap">
-            {canRename && (
-              <button className="btn" onClick={rename}>
-                Rename
-              </button>
-            )}
-            {(canOwnChange || canModChange) && (
-              <Link className="btn" to={`/r/${route.id}/edit`}>
-                Edit route
-              </Link>
-            )}
-            {(canOwnChange || canModChange) && (
-              <button className="btn danger" onClick={remove}>
-                Delete route
-              </button>
-            )}
-          </div>
-          {isOwner && !canOwnChange && !canModChange && (
-            <p className="mute" style={{ fontSize: 14, marginTop: 8 }}>
-              {canRename
-                ? 'The shape and sectors are locked because this route has been published, so other drivers may have laps on it.'
-                : "This route has been published and you no longer have creator access, so it's locked."}
-            </p>
-          )}
-        </>
-      )}
-
-      <div className="sticky-cta row">
-        {route.isPublic && (
-          <button className={`btn lg home-btn ${isHome ? 'on' : ''}`} disabled={homeBusy} onClick={toggleHome} aria-pressed={isHome} aria-label={isHome ? 'Your home course, tap to remove' : 'Set as my home course'}>
-            <Home size={20} fill={isHome ? 'currentColor' : 'none'} aria-hidden="true" />
-          </button>
-        )}
-        <Link className="btn primary lg grow" to={`/drive/${route.id}`}>
-          Drive this route
+        <Link className="solid" style={{ marginTop: 12, flex: 'none' }} to={`/drive/${route.id}`}>
+          Drive
         </Link>
-      </div>
+      </section>
     </main>
   );
 }

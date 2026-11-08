@@ -1,11 +1,8 @@
-import { ChevronRight, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HomeCourse } from '../components/HomeCourse';
-import { RouteThumb } from '../components/RouteShape';
-import { Empty, errorMessage, Loading, useToast } from '../components/ui';
+import { Empty, errorMessage, I, Loading, useToast } from '../components/ui';
 import { getRoutes, myRoutes, routeStats, type RouteStats } from '../lib/data';
-import { formatDistance } from '../lib/format';
+import { formatDistance, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { Route } from '../lib/types';
 
@@ -45,58 +42,60 @@ export default function DriveLauncher() {
   const shownIds = new Set([home?.id, ...recentRoutes.map((r) => r.id)]);
   const builtRoutes = own.filter((r) => !shownIds.has(r.id));
 
-  const row = (r: Route) => {
-    const stats = recent.get(r.id);
-    return (
-      <Link key={r.id} to={`/drive/${r.id}`} className="list-item">
-        <span className="launch-shape" aria-hidden="true">
-          <RouteThumb route={r} />
-        </span>
-        <span className="grow">
-          <strong className="ellipsis">{r.name}</strong>
-          <span className="mute ellipsis small-text">
-            {r.isPublic ? 'Public' : 'Private'} ·{' '}
-            {stats ? `last driven ${new Date(stats.last).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : `${formatDistance(r.lengthM)} · not driven yet`}
-          </span>
-        </span>
-        <ChevronRight size={22} aria-hidden="true" />
-      </Link>
-    );
-  };
+  // The big card: the home course, else the route driven last.
+  const lead = home && drivable(home) ? home : recentRoutes[0];
+  const others = [...recentRoutes.filter((r) => r.id !== lead?.id), ...builtRoutes];
+  const day = (ms: number) => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   return (
-    <main className="screen">
-      <header className="screen-head">
-        <h1>Where are you driving?</h1>
-      </header>
-
-      {home && drivable(home) && (
-        <HomeCourse route={home} pb={recent.get(home.id)?.pb ?? null} />
-      )}
-
-      {recentRoutes.length > 0 && (
-        <>
-          <h2 className="section-title">Recently driven</h2>
-          <div className="list">{recentRoutes.map(row)}</div>
-        </>
-      )}
-
-      {builtRoutes.length > 0 && (
-        <>
-          <h2 className="section-title">Your routes</h2>
-          <div className="list">{builtRoutes.map(row)}</div>
-        </>
-      )}
-
-      {!home && recentRoutes.length === 0 && builtRoutes.length === 0 ? (
-        <Empty title="No routes yet" action={<Link to="/explore" className="btn primary lg">Find a route on the map</Link>}>
-          Pick a public route on the map and drive it. After that it's one tap from here.
-        </Empty>
+    <main className="ph soft docked">
+      <div className="sb" />
+      <div style={{ padding: '8px 20px 0' }}>
+        <h1 className="title">Where to?</h1>
+      </div>
+      {lead ? (
+        <div style={{ padding: '18px 16px 0' }}>
+          <div className="glass lift" style={{ borderRadius: 28, padding: '22px 20px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }} className="lbl">
+              <span className="ellipsis">{lead.name}</span>
+              <span style={{ flex: 'none' }}>{lead.id === home?.id ? 'Home course' : 'Last driven'}</span>
+            </div>
+            <div className="t" style={{ fontSize: 56, marginTop: 10 }}>
+              {recent.get(lead.id)?.pb != null ? formatLap(recent.get(lead.id)!.pb) : formatDistance(lead.lengthM)}
+            </div>
+            <Link className="solid" style={{ marginTop: 18 }} to={`/drive/${lead.id}`}>
+              Drive
+            </Link>
+          </div>
+        </div>
       ) : (
-        <Link to="/explore" className="btn block" style={{ marginTop: 14 }}>
-          <Search size={18} aria-hidden="true" /> Find a route on the map
-        </Link>
+        <Empty title="No routes yet" action={<Link to="/explore" className="solid">Find a route on the map</Link>}>
+          Pick a public route on the map and drive it. After that it&rsquo;s one tap from here.
+        </Empty>
       )}
+      <div className="rows" style={{ padding: '16px 24px 0' }}>
+        {others.map((r) => {
+          const st = recent.get(r.id);
+          return (
+            <Link key={r.id} to={`/drive/${r.id}`} style={{ gridTemplateColumns: '1fr auto' }}>
+              <div style={{ minWidth: 0 }}>
+                <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
+                <div className="lbl">{st ? day(st.last) : `${formatDistance(r.lengthM)} · not driven yet`}</div>
+              </div>
+              <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+            </Link>
+          );
+        })}
+        {lead && (
+          <Link to="/explore" style={{ gridTemplateColumns: '1fr auto' }}>
+            <div>
+              <b>Find a route</b>
+              <div className="lbl">On the map</div>
+            </div>
+            <I n="search" style={{ color: 'var(--ink-2)' }} />
+          </Link>
+        )}
+      </div>
     </main>
   );
 }

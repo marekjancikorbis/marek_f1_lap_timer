@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { createProfile, USERNAME_RE, usernameTaken } from '../lib/data';
 import { useSession } from '../lib/session';
-import { Avatar, errorMessage, SectorStrip } from '../components/ui';
+import { errorMessage } from '../components/ui';
+
+const initials = (u: string) => (u.split(/[_.]/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2) || '?').toUpperCase();
 
 export function Onboarding() {
   const { user, signOut } = useSession();
@@ -29,48 +31,55 @@ export function Onboarding() {
   }
 
   return (
-    <main className="screen no-tabs onboarding">
-      <span className="onboarding-stripe">
-        <SectorStrip colours={['purple', 'green', 'yellow']} height={10} />
-      </span>
-      <h1>Pick a username</h1>
-      <p className="mute" style={{ marginTop: 8 }}>
-        Other drivers find you by it and see it on every lap you post. It can't be changed later; your display name (in Settings) can.
-      </p>
-      <div className="row" style={{ gap: 14, marginTop: 20 }}>
-        <Avatar name={username || '?'} size={84} />
-        <span className="grow" style={{ display: 'flex', flexDirection: 'column' }}>
-          <strong style={{ fontSize: 18 }}>{username || 'your_name'}</strong>
-          <span className="mute small-text">Your roundel until you add a photo</span>
+    <main className="ph soft col">
+      <div className="sb" />
+      <div style={{ padding: '40px 24px 0' }}>
+        <h1 className="title">Pick a username</h1>
+        <p className="lbl" style={{ fontSize: 15, marginTop: 8 }}>
+          Shown on every lap you post. It can't be changed later; your display name can.
+        </p>
+      </div>
+      <div style={{ display: 'grid', justifyItems: 'center', marginTop: 56 }}>
+        <span className="av" style={{ width: 96, height: 96, fontSize: 32, background: 'var(--main)', color: 'var(--on-main)' }}>
+          {initials(username)}
         </span>
       </div>
-      <form className="stack" style={{ marginTop: 24 }} onSubmit={submit} noValidate>
-        <label className="field">
-          <span>Username</span>
-          <input
-            className="input"
-            value={username}
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            maxLength={20}
-            aria-invalid={username.length > 0 && !valid}
-            onChange={(e) => setUsername(e.target.value.replace(/\s/g, ''))}
-            placeholder="e.g. tomas_k"
-          />
-          <small>3–20 characters: letters, numbers, _ and .</small>
-        </label>
-        {error && (
-          <p className="error-text" role="alert">
-            {error}
+      <form style={{ display: 'contents' }} onSubmit={submit} noValidate>
+        <div style={{ padding: '40px 20px 0', display: 'grid', gap: 8 }}>
+          <label className="field" style={{ justifyContent: 'space-between' }}>
+            <span className="mute" aria-hidden="true">@</span>
+            <span className="visually-hidden">Username</span>
+            <input
+              value={username}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              maxLength={20}
+              enterKeyHint="go"
+              aria-invalid={username.length > 0 && !valid}
+              onChange={(e) => setUsername(e.target.value.replace(/\s/g, ''))}
+              placeholder="your_name"
+              style={{ marginLeft: -8 }}
+            />
+            {valid && <span style={{ color: 'var(--s-g)' }}>✓</span>}
+          </label>
+          <p className="lbl" style={{ paddingLeft: 18 }}>
+            3–20 letters, numbers, _ and .
           </p>
-        )}
-        <button className="btn primary lg block" disabled={!valid || busy}>
-          {busy ? 'Saving…' : 'Continue'}
-        </button>
-        <button type="button" className="btn ghost sm" style={{ alignSelf: 'center' }} onClick={signOut}>
-          Use a different account
-        </button>
+          {error && (
+            <p className="err" role="alert" style={{ paddingLeft: 18 }}>
+              {error}
+            </p>
+          )}
+        </div>
+        <div style={{ margin: 'auto 20px 0', paddingTop: 32, display: 'grid', gap: 10 }}>
+          <button className="solid" disabled={!valid || busy}>
+            {busy ? 'Saving…' : 'Continue'}
+          </button>
+          <button type="button" className="lbl" style={{ justifySelf: 'center', padding: 8 }} onClick={signOut}>
+            Use a different account
+          </button>
+        </div>
       </form>
     </main>
   );

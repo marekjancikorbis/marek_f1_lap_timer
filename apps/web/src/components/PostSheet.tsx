@@ -1,11 +1,10 @@
-import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { leaderboardFrom, notifyOvertaken, postLap, routePosts } from '../lib/data';
 import { formatLap } from '../lib/format';
 import { bigColoursFor, bigRecords, coloursFor, pbsBefore, recordsExcluding } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Route, Run, SectorColourName } from '../lib/types';
-import { errorMessage, SectorStrip, Sheet, useToast } from './ui';
+import { errorMessage, I, SectorStrip, Sheet, useToast } from './ui';
 
 /** Post a lap to a public route: optional caption and car. */
 export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { open: boolean; onClose: () => void; run: Run; route: Route; myRuns: Run[]; onPosted: () => void }) {
@@ -79,38 +78,38 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
 
   return (
     <Sheet open={open} onClose={onClose} label={stage ? 'Post time' : 'Post lap'}>
-      <div className="stack">
-        <div className="row between">
-          <h2 className="sheet-title">{stage ? 'Post time' : 'Post lap'}</h2>
-          <button className="icon-btn" aria-label="Close" onClick={onClose}>
-            <X size={22} />
+      <div style={{ display: 'grid', gap: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 className="title" style={{ fontSize: 24 }}>{stage ? 'Post time' : 'Post lap'}</h2>
+          <button className="ib" style={{ width: 40, height: 40 }} aria-label="Close" onClick={onClose}>
+            <I n="x" />
           </button>
         </div>
-        <div className="post-preview">
-          <span>
-            <span className="mute small-text ellipsis">{route.name}</span>
-            <strong className="num post-preview-time">{formatLap(run.totalMs)}</strong>
-          </span>
-          <span style={{ textAlign: 'right' }}>
-            <span className="mute small-text">Leaderboard</span>
-            <strong>{preview ? `P${preview.place} of ${preview.of}` : '…'}</strong>
-          </span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'end', gap: 8, padding: 14, borderRadius: 20, background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
+          <div style={{ minWidth: 0 }}>
+            <div className="lbl ellipsis">{route.name}</div>
+            <div className="t" style={{ fontSize: 34, marginTop: 6 }}>{formatLap(run.totalMs)}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div className="lbl">Leaderboard</div>
+            <b className="t" style={{ fontSize: 22 }}>{preview ? `P${preview.place} of ${preview.of}` : '…'}</b>
+          </div>
           {preview && preview.colours.length > 0 && (
-            <span className="post-preview-stripe">
-              <SectorStrip colours={preview.colours} />
-            </span>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <SectorStrip colours={preview.colours} wide />
+            </div>
           )}
         </div>
         <label className="field">
-          <span>Car (optional)</span>
-          <input className="input" maxLength={40} value={car} onChange={(e) => setCar(e.target.value)} placeholder="e.g. E46 M3" />
+          <span className="visually-hidden">Car (optional)</span>
+          <input maxLength={40} value={car} onChange={(e) => setCar(e.target.value)} placeholder="Car, e.g. E46 M3 (optional)" />
         </label>
-        <label className="field">
-          <span>About this {stage ? 'run' : 'lap'} (optional)</span>
-          <textarea className="input" rows={2} maxLength={280} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="e.g. wet first sector, dry at the top" />
+        <label>
+          <span className="visually-hidden">About this {stage ? 'run' : 'lap'} (optional)</span>
+          <textarea className="field" rows={2} maxLength={280} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder={`About this ${stage ? 'run' : 'lap'} (optional)`} />
         </label>
-        <p className="mute small-text">Followers and this route's leaderboard see the time, sectors and car. The raw GPS trace is never shared. You can remove it any time.</p>
-        <button className="btn primary lg block" disabled={busy} onClick={post}>
+        <p className="lbl">Followers and this route&rsquo;s leaderboard see the time, sectors and car. The raw GPS trace is never shared. You can remove it any time.</p>
+        <button className="solid" disabled={busy} onClick={post}>
           {busy ? 'Posting…' : stage ? 'Post time' : 'Post lap'}
         </button>
       </div>

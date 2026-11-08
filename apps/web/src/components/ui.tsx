@@ -1,5 +1,4 @@
-import { ChevronLeft } from 'lucide-react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { getPhoto, getProfile } from '../lib/data';
 import { useMe } from '../lib/session';
@@ -9,27 +8,24 @@ import type { SectorColourName } from '../lib/types';
 
 // ---------------------------------------------------------------- avatar
 
-/** Initials on the driver's colour, or their photo once it loads (pass uid). */
+/** Initials on the driver's pastel colour (the mockup's .av), or their photo once it loads (pass uid). */
 export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?: number; size?: number; uid?: string }) {
   const photo = useLoaded(uid, getPhoto);
   // petra_r -> PR, Tomáš Kolář -> TK, perf -> PE
   const parts = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
   const initials = (parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] ?? '').slice(0, 2)) || '?';
-  const ring = size >= 64 ? 5 : size >= 40 ? 3 : 2;
   return (
     <span
-      className="avatar"
+      className="av"
       aria-hidden="true"
       style={{
         width: size,
         height: size,
-        fontSize: size * 0.36,
-        background: photo ? `center / cover url(${photo})` : `oklch(50% 0.15 ${hue})`,
-        // A roundel: an off-white ring inside a hairline, around initials or a photo.
-        boxShadow: `inset 0 0 0 ${ring}px var(--card), 0 0 0 ${ring > 2 ? 1.5 : 1}px var(--hairline-2)`,
+        fontSize: Math.round(size / 3),
+        background: photo ? `center / cover url(${photo})` : `oklch(86% 0.07 ${hue})`,
       }}
     >
-      {!photo && initials}
+      {!photo && initials.toUpperCase()}
     </span>
   );
 }
@@ -44,7 +40,7 @@ export function UserName({ uid, fallback }: { uid: string; fallback: string }) {
   return (
     <>
       {name}
-      {name !== fallback && <span className="handle"> @{fallback}</span>}
+      {name !== fallback && <span className="mute"> @{fallback}</span>}
     </>
   );
 }
@@ -52,9 +48,9 @@ export function UserName({ uid, fallback }: { uid: string; fallback: string }) {
 /** Display name over @handle, for lists of drivers. */
 export function WhoText({ p }: { p: { username: string; displayName?: string } }) {
   return (
-    <span className="grow who-text">
-      <strong className="ellipsis">{nameOf(p)}</strong>
-      <span className="mute ellipsis small-text">@{p.username}</span>
+    <span style={{ minWidth: 0 }}>
+      <b className="ellipsis" style={{ display: 'block' }}>{nameOf(p)}</b>
+      <span className="lbl ellipsis" style={{ display: 'block' }}>@{p.username}</span>
     </span>
   );
 }
@@ -75,19 +71,15 @@ function useLoaded<T>(id: string | undefined, load: (id: string) => Promise<T | 
 
 // ---------------------------------------------------------------- sector strip
 
-const STRIP: Record<SectorColourName, string> = { purple: 'var(--purple)', green: 'var(--green)', yellow: 'var(--yellow)' };
+const STRIP: Record<SectorColourName, string> = { purple: 'var(--s-p)', green: 'var(--s-g)', yellow: 'var(--s-y)' };
 export const STRIP_LABEL: Record<SectorColourName, string> = { purple: 'best ever', green: 'faster', yellow: 'slower' };
 
-export function SectorStrip({ colours, height = 10 }: { colours: (SectorColourName | null)[]; height?: number }) {
+/** The mockup's .st: one short bar per sector; a sector without a time stays faint. */
+export function SectorStrip({ colours, height = 5, wide }: { colours: (SectorColourName | null)[]; height?: number; wide?: boolean }) {
   return (
-    // The lap's livery: one slanted band per sector; a sector without a time is an empty outline.
-    <div
-      className="lap-stripe"
-      role="img"
-      aria-label={colours.map((c, i) => `Sector ${i + 1} ${c ? STRIP_LABEL[c] : 'no data'}`).join(', ')}
-    >
+    <div className="st" role="img" aria-label={colours.map((c, i) => `Sector ${i + 1} ${c ? STRIP_LABEL[c] : 'no data'}`).join(', ')}>
       {colours.map((c, i) => (
-        <span key={i} className={c ? undefined : 'empty'} style={{ height, background: c ? STRIP[c] : undefined }} />
+        <i key={i} className={c ? c[0] : undefined} style={{ height, ...(wide ? { flex: 1, width: 'auto' } : null) }} />
       ))}
     </div>
   );
@@ -97,23 +89,28 @@ export const COLOUR_VAR: Record<SectorColourName, string> = STRIP;
 
 // ---------------------------------------------------------------- head / back
 
+/** A detail screen's top: the glass back button (and any buttons on the right), then the title. */
 export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: boolean | string; right?: ReactNode }) {
   const nav = useNavigate();
   return (
-    <header className="screen-head">
-      <div className="row grow">
-        {back && (
-          <button
-            className="icon-btn back"
-            aria-label="Back"
-            onClick={() => (typeof back === 'string' ? nav(back) : window.history.length > 1 ? nav(-1) : nav('/'))}
-          >
-            <ChevronLeft size={26} />
-          </button>
-        )}
-        {title && (typeof title === 'string' ? <h1 className={back ? 'bar-title ellipsis' : undefined}>{title}</h1> : title)}
-      </div>
-      {right}
+    <header className="head">
+      {(back || right) && (
+        <div className="head-bar">
+          {back ? (
+            <button
+              className="glass ib"
+              aria-label="Back"
+              onClick={() => (typeof back === 'string' ? nav(back) : window.history.length > 1 ? nav(-1) : nav('/'))}
+            >
+              <I n="back" />
+            </button>
+          ) : (
+            <span />
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>{right}</div>
+        </div>
+      )}
+      {title && (typeof title === 'string' ? <h1 className="title">{title}</h1> : title)}
     </header>
   );
 }
@@ -122,41 +119,112 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
 
 export function TabBar() {
   const { profile } = useMe();
-  const tabs = [
-    { to: '/', label: 'Home', icon: 'M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z', end: true },
-    { to: '/explore', label: 'Explore', icon: 'M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0zM20 20l-4-4' },
-    { to: '/drive', label: 'Drive', icon: '', end: true },
-    { to: '/routes', label: 'Times', icon: 'M12 13.5m-7.5 0a7.5 7.5 0 1 0 15 0a7.5 7.5 0 1 0-15 0M12 9.5v4l2.5 2M9.5 2.5h5M12 2.5V6' },
+  // One route's laps belong to Times, though they live under the route's address.
+  const inTimes = /^\/r\/[^/]+\/history/.test(useLocation().pathname);
+  const tabs: { to: string; label: string; icon: IconName; end?: boolean }[] = [
+    { to: '/', label: 'Home', icon: 'home', end: true },
+    { to: '/explore', label: 'Explore', icon: 'map' },
+    { to: '/drive', label: 'Drive', icon: 'flag', end: true },
+    { to: '/routes', label: 'Times', icon: 'watch' },
     // Your profile's own address, not /me (a redirect), so the tab lights up there.
-    { to: `/u/${profile.username}`, label: 'Profile', icon: 'M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM4 21c1.2-4.5 14.8-4.5 16 0' },
+    { to: `/u/${profile.username}`, label: 'Profile', icon: 'user' },
   ];
   return (
-    <div className="tabbar">
-      <nav aria-label="Main">
-        {tabs.map(({ to, label, icon, end }) =>
-          to === '/drive' ? (
-            // Driving is the main job: a solid circle in the middle of the glass bar.
-            <NavLink key={to} to={to} end={end} className="tab-go" aria-label={label}>
-              <span className="tab-go-btn" aria-hidden="true">
-                <TabIcon d="M5 21V4h12l-2 4 2 4H5" />
-              </span>
-            </NavLink>
-          ) : (
-            <NavLink key={to} to={to} end={end} aria-label={label}>
-              <TabIcon d={icon} />
-            </NavLink>
-          ),
-        )}
-      </nav>
-    </div>
+    <nav className="glass dock" aria-label="Main">
+      {tabs.map(({ to, label, icon, end }) => (
+        <NavLink
+          key={to}
+          to={to}
+          end={end}
+          aria-label={label}
+          className={({ isActive }) => `tab${to === '/drive' ? ' go' : ''}${isActive || (inTimes && to === '/routes') ? ' on' : ''}`}
+        >
+          <I n={icon} />
+        </NavLink>
+      ))}
+    </nav>
   );
 }
 
-/** The tab bar's own glyphs, drawn as in the mockups. */
-function TabIcon({ d }: { d: string }) {
+// ---------------------------------------------------------------- icons (the mockup's own set)
+
+const ICONS = {
+  home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+  map: <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14" />,
+  flag: <path d="M5 21V4h12l-2 4 2 4H5" />,
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+    </>
+  ),
+  bell: <path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4" />,
+  back: <path d="m15 5-7 7 7 7" />,
+  fwd: <path d="m9 5 7 7-7 7" />,
+  share: <path d="M12 3v13M7 8l5-5 5 5M5 14v6h14v-6" />,
+  vol: <path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" />,
+  mute: <path d="M4 9v6h4l5 4V5L8 9zM16 9l5 6M21 9l-5 6" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  minus: <path d="M5 12h14" />,
+  undo: <path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3" />,
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-4-4" />
+    </>
+  ),
+  play: <path d="M7 4.5v15l13-7.5z" />,
+  pause: <path d="M8 5v14M16 5v14" />,
+  routes: (
+    <>
+      <circle cx="6" cy="19" r="2.5" />
+      <circle cx="18" cy="5" r="2.5" />
+      <path d="M8.5 19h8a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7h8" />
+    </>
+  ),
+  watch: (
+    <>
+      <circle cx="12" cy="13.5" r="7.5" />
+      <path d="M12 9.5v4l2.5 2M9.5 2.5h5M12 2.5V6" />
+    </>
+  ),
+  phone: (
+    <>
+      <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+      <path d="M11 18.5h2" />
+    </>
+  ),
+  x: <path d="M6 6l12 12M18 6 6 18" />,
+  loc: <path d="M12 2 4 21l8-4 8 4z" />,
+  gear: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" />
+    </>
+  ),
+  check: <path d="m5 12 5 5L20 7" />,
+  trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
+  edit: <path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />,
+  camera: (
+    <>
+      <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
+  history: (
+    <>
+      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+      <path d="M3 3v5h5M12 7v5l3 2" />
+    </>
+  ),
+} as const;
+export type IconName = keyof typeof ICONS;
+
+/** One of the mockup's line icons (svg.i: 22 px, round caps, stroke 1.9). */
+export function I({ n, size, style }: { n: IconName; size?: number; style?: CSSProperties }) {
   return (
-    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={d} />
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true" style={size ? { width: size, height: size, ...style } : style}>
+      {ICONS[n]}
     </svg>
   );
 }
@@ -174,9 +242,9 @@ export function Loading() {
 
 export function Empty({ title, children, action, icon }: { title: string; children?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="empty">
-      {icon && <div className="empty-glyph">{icon}</div>}
-      <h2>{title}</h2>
+    <div className="empty-note">
+      {icon}
+      <b>{title}</b>
       {children && <p>{children}</p>}
       {action}
     </div>
@@ -209,6 +277,7 @@ export function Switch({
   );
 }
 
+/** The mockup's .seg: a glass track, the chosen side a lighter pill. */
 export function Segmented<T extends string>({
   value,
   options,
@@ -221,9 +290,9 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div className="segmented" role="group" aria-label={label}>
+    <div className="glass sheet seg" role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
+        <button key={o.value} type="button" className={o.value === value ? 'on' : undefined} aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}
         </button>
       ))}
@@ -245,8 +314,8 @@ export function Sheet({ open, onClose, children, label }: { open: boolean; onClo
   if (!open) return null;
   return (
     <div className="scrim" onClick={onClose}>
-      <div ref={ref} className="sheet" role="dialog" aria-modal="true" aria-label={label} onClick={(e) => e.stopPropagation()}>
-        <div className="grabber" />
+      <div ref={ref} className="glass sheet sheet-b modal" role="dialog" aria-modal="true" aria-label={label} onClick={(e) => e.stopPropagation()}>
+        <div className="grab" />
         {children}
       </div>
     </div>
@@ -270,7 +339,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className="toast-host" aria-live="polite">
         {toast && (
-          <div key={toast.id} className={`toast ${toast.kind === 'error' ? 'error' : ''}`} role={toast.kind === 'error' ? 'alert' : 'status'}>
+          <div key={toast.id} className={`glass sheet toast ${toast.kind === 'error' ? 'error' : ''}`} role={toast.kind === 'error' ? 'alert' : 'status'}>
             {toast.message}
           </div>
         )}

@@ -16,7 +16,10 @@ export function RouteMap({
   ghostAtM,
   follow,
   onPick,
+  padding = 40,
 }: {
+  /** Room around the route when the whole of it is shown (a sheet over the map takes the bottom). */
+  padding?: number | { top: number; bottom: number; left: number; right: number };
   route: Route;
   colours?: (SectorColourName | null)[];
   height?: number | string;
@@ -71,7 +74,7 @@ export function RouteMap({
     if (follow && d != null) {
       const p = preparedFor(route).pointAt(d);
       map.jumpTo({ center: [p.lon, p.lat], zoom: Math.max(map.getZoom(), 16) });
-    } else if (!follow) map.fitBounds(route.bbox, { padding: 40, duration: 400 });
+    } else if (!follow) map.fitBounds(route.bbox, { padding, duration: 400 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [follow]);
 
@@ -137,5 +140,5 @@ export function RouteMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route.id],
   );
-  return <MapView onReady={onReady} bounds={route.bbox} height={height} label={`Map of ${route.name}`} />;
+  return <MapView onReady={onReady} bounds={route.bbox} height={height} padding={padding} label={`Map of ${route.name}`} />;
 }

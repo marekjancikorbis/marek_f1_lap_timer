@@ -17,13 +17,15 @@ interface Props {
   height?: number | string;
   className?: string;
   label?: string;
+  /** Room to leave around the bounds, e.g. for a sheet over the map. */
+  padding?: number | { top: number; bottom: number; left: number; right: number };
 }
 
 /**
  * A Mapbox map. Every mount counts one map load against the monthly cap (before
  * Mapbox is contacted when close to it); at the cap the app's limit screen takes over.
  */
-export function MapView({ onReady, bounds, center, zoom = 12, interactive = true, height = 280, className, label }: Props) {
+export function MapView({ onReady, bounds, center, zoom = 12, interactive = true, height = 280, className, label, padding = 40 }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'limited' | 'error'>('loading');
   const readyRef = useRef(onReady);
@@ -72,7 +74,7 @@ export function MapView({ onReady, bounds, center, zoom = 12, interactive = true
       map.on('load', () => {
         if (cancelled || refused || !map) return;
         window.clearTimeout(giveUp);
-        if (bounds) map.fitBounds(bounds, { padding: 40, duration: 0 });
+        if (bounds) map.fitBounds(bounds, { padding, duration: 0 });
         setState('ready');
         cleanup = readyRef.current(map);
       });

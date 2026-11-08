@@ -1,0 +1,352 @@
+/* Glass tiles, ported from the mockup (design/redesigns/src/bento.html) rule for rule. Differences from the
+   mockup are only where a phone frame becomes a real screen: .ph fills the viewport instead of being a 390x844
+   frame, .sb is the real status-bar inset instead of a drawn one, the tab bar is fixed to the screen, and the
+   map layer is a live Mapbox map instead of a picture. The mockup's --red (its action colour) is --go here. */
+@import '@fontsource-variable/archivo/wdth.css';
+
+:root {
+  --font: 'Archivo Variable', 'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --spring: cubic-bezier(.3, 1.5, .5, 1);
+  --light: 300deg;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+
+/* The Livery token names the older rules still use, pointed at the theme (so nothing reads light-on-dark wrong). */
+:root {
+  --navy: var(--sea); --navy-2: var(--tile); --navy-3: color-mix(in srgb, var(--ink) 18%, var(--sea)); --on-navy: var(--ink);
+  --card: var(--deep); --tarmac: var(--sea); --tarmac-2: var(--deep);
+  --raised: color-mix(in srgb, var(--sheet) 60%, transparent); --raised-2: color-mix(in srgb, var(--ink) 10%, transparent);
+  --hairline: color-mix(in srgb, var(--ink) 10%, transparent); --hairline-2: color-mix(in srgb, var(--ink) 24%, transparent);
+  --mute: var(--ink-2); --mute-2: color-mix(in srgb, var(--ink) 50%, transparent);
+  --purple: var(--s-p); --purple-ink: var(--s-p); --green: var(--s-g); --green-ink: var(--s-g); --yellow: var(--s-y); --yellow-ink: var(--s-y);
+  --red: #ff5a5f; --red-ink: #ff9a9d;
+  --blue: var(--main); --blue-ink: var(--main-hi); --on-blue: var(--on-main); --blue-soft: color-mix(in srgb, var(--main) 16%, transparent);
+  --font-ui: var(--font); --font-num: var(--font);
+  --tabbar-h: 84px;
+}
+
+html, body { background: var(--sea); color: var(--ink); font: 15px/1.4 var(--font) }
+body { margin: 0; -webkit-font-smoothing: antialiased }
+
+/* ---------- screen + content layer (the mockup's phone) ---------- */
+.ph { position: relative; isolation: isolate; width: 100%; max-width: 560px; margin: 0 auto; min-height: 100dvh;
+  background: var(--night); color: var(--ink); font: 15px/1.4 var(--font); font-variant-numeric: tabular-nums;
+  padding-bottom: calc(var(--safe-b) + 32px); overflow-x: clip }
+.ph * { box-sizing: border-box }
+.ph :where(h1, h2, h3, p) { margin: 0 }
+.ph.docked { padding-bottom: calc(var(--safe-b) + 116px) }
+/* map screens: exactly one screen tall, the sheets float over the map */
+.ph.fixed { height: 100dvh; min-height: 0; overflow: hidden; padding-bottom: 0 }
+.map { position: absolute; inset: 0; isolation: isolate; z-index: -3 }
+.map > * { position: absolute !important; inset: 0; height: 100% !important }
+/* the status bar: the device's own, so only its height */
+.sb { height: max(50px, var(--safe-t)) }
+
+/* ---------- liquid glass ---------- */
+@property --lit { syntax: '<number>'; inherits: true; initial-value: 0 }
+.glass { position: relative; overflow: hidden; isolation: isolate; background: var(--clear);
+  -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx);
+  box-shadow: inset 0 0 18px rgba(255,255,255,.05), 0 10px 30px -10px rgba(0,0,0,.5);
+  transition: transform .45s var(--spring), --lit .6s ease-out }
+html.lens .glass { -webkit-backdrop-filter: var(--lens) blur(.4px) var(--glass-fx); backdrop-filter: var(--lens) blur(.4px) var(--glass-fx) }
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255,255,255, calc(.32 * var(--lit))), transparent 65%),
+    radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.16), transparent 55%) }
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.3px; pointer-events: none;
+  background: conic-gradient(from var(--light), rgba(255,255,255,.95), rgba(255,255,255,.12) 16%, rgba(255,255,255,.06) 40%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.08) 62%, rgba(255,255,255,.12) 84%, rgba(255,255,255,.95));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude }
+.glass.sheet { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
+html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+.glass.tint-p { background: color-mix(in srgb, var(--s-p) 85%, transparent) }
+.glass.tint-g { background: color-mix(in srgb, var(--s-g) 82%, transparent) }
+.glass.tint-y { background: color-mix(in srgb, var(--s-y) 82%, transparent); color: #1b1300 }
+.glass.pressed { transform: scale(1.05); --lit: 1; transition: transform .25s var(--spring), --lit .12s ease-out; transform-origin: var(--px, 50%) var(--py, 50%) }
+.edge { position: absolute; left: 0; right: 0; top: 0; height: 130px; z-index: -1; pointer-events: none;
+  background: linear-gradient(color-mix(in srgb, var(--night) 60%, transparent), transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent) }
+@media (prefers-reduced-transparency: reduce) {
+  .glass, html.lens .glass, html.lens .glass.sheet, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+  .edge { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
+}
+@media (prefers-reduced-motion: reduce) { .glass, .glass.pressed { transform: none } }
+
+.ph :where(button) { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; touch-action: manipulation; -webkit-user-select: none; user-select: none }
+.ph :where(a) { color: inherit; text-decoration: none }
+.ph :focus-visible { outline: 2px solid var(--main-hi); outline-offset: 3px }
+.ib { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; flex: none }
+svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none }
+.solid { height: 52px; border-radius: 26px; background: var(--main); color: var(--on-main); font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s ease-out; width: 100% }
+.solid.quiet { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink) }
+.solid.danger { background: color-mix(in srgb, #ff5a5f 18%, transparent); color: #ff9a9d }
+.solid:active { transform: scale(.97) }
+.solid:disabled { opacity: .45; transform: none }
+.ph .chip { height: 36px; padding: 0 14px; border-radius: 18px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  background: none; color: inherit; min-height: 0; letter-spacing: 0; text-transform: none; box-shadow: none }
+
+.t { font-weight: 700; letter-spacing: -.035em; line-height: .95 }
+.lbl { font-size: 13px; font-weight: 600; color: var(--ink-2) }
+.acc { color: var(--accent) }
+.ph .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none }
+.p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
+.st { display: flex; gap: 3px } .st i { width: 22px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 18%, transparent) }
+.st i.p { background: var(--s-p) } .st i.g { background: var(--s-g) } .st i.y { background: var(--s-y) }
+
+.sheet-b { position: absolute; left: 8px; right: 8px; bottom: 8px; border-radius: 40px; padding: 10px 20px 20px }
+.grab { display: block; width: 38px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 30%, transparent); margin: 0 auto 14px }
+.rows > * { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; padding: 10px 0 }
+.rows > * + * { border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent) }
+.av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #10131c; flex: none; overflow: hidden }
+.av img { width: 100%; height: 100%; object-fit: cover }
+
+/* tab bar on every tab screen: the Glass tab capsule stretched to the full width, Drive a circle in the middle */
+.dock { position: fixed; left: 16px; right: 16px; bottom: calc(22px + var(--safe-b)); max-width: 528px; margin: 0 auto; height: 62px; border-radius: 31px; padding: 4px;
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: stretch; z-index: 30;
+  background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
+html.lens .dock { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+.dock .tab { border-radius: 27px; display: grid; place-items: center; color: var(--ink-2); -webkit-user-select: none; user-select: none; touch-action: manipulation;
+  transition: color .2s, background-color .2s }
+.dock .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
+.dock .tab.go { width: 54px; height: 54px; align-self: center; justify-self: center; border-radius: 50%; background: var(--go); color: var(--on-go) }
+.dock .tab.go.on { box-shadow: 0 0 0 3px var(--snow) }
+.dock .tab svg { transition: transform .26s var(--spring) }
+.dock .tab:active svg { transform: scale(.86); transition-duration: .09s; transition-timing-function: ease-out }
+@media (prefers-reduced-transparency: reduce) { .dock, html.lens .dock { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
+
+/* lap playback on the Map tab */
+.ph .car { position: absolute; left: 0; top: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--night), 0 2px 8px rgba(0,0,0,.5); z-index: -1 }
+.ph .car.ghost { background: var(--night); box-shadow: inset 0 0 0 3px var(--ink), 0 0 0 2px var(--night) }
+.play { width: 56px; height: 56px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--main); color: var(--on-main); flex: none }
+.scrub { position: relative; height: 6px; border-radius: 3px; margin-top: 10px; background: linear-gradient(90deg, var(--main-hi) var(--p), color-mix(in srgb, var(--ink) 18%, transparent) var(--p)) }
+.scrub::after { content: ""; position: absolute; left: var(--p); top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.4) }
+.scrub input { position: absolute; inset: -14px 0; width: 100%; opacity: 0; margin: 0; cursor: pointer }
+/* Delta only (the phone on its side): the screen is the last sector's colour, glass on it is clear and the ink dark */
+.ph.delta { background: radial-gradient(70% 90% at 30% 10%, rgba(255,255,255,.28), transparent 70%), var(--flag, var(--s-g)); color: #04210f }
+.ph.delta.flag-purple { --flag: var(--s-p); color: #fff }
+.ph.delta.flag-yellow { --flag: var(--s-y); color: #1b1300 }
+.glass.clear { background: rgba(255,255,255,.2); color: inherit; -webkit-backdrop-filter: blur(3px) saturate(1.4); backdrop-filter: blur(3px) saturate(1.4) }
+.chip.clear { height: 38px; font-size: 15px }
+/* theme picker in Settings: a swatch per palette, the current one ringed */
+.themes { display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 16px; margin-top: 14px }
+.theme { display: grid; justify-items: center; gap: 7px; color: var(--ink-2); font-size: 12px; font-weight: 600 }
+.theme i { width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 25%, transparent); transition: transform .26s var(--spring) }
+.theme.on { color: var(--ink) } .theme.on i { box-shadow: 0 0 0 2px var(--night), 0 0 0 4px var(--ink) }
+.theme:active i { transform: scale(.94); transition-duration: .09s }
+.ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
+
+/* ---------- screens without a map ---------- */
+.title { font-size: 30px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1 }
+.ph .field { height: 52px; border-radius: 26px; padding: 0 18px; display: flex; align-items: center; gap: 10px; background: color-mix(in srgb, var(--ink) 8%, transparent); font-size: 16px; width: 100% }
+.ph .field input, .ph .field textarea, .ph input.field, .ph textarea.field { background: none; border: 0; outline: 0; color: var(--ink); font: inherit; font-size: 16px; flex: 1; min-width: 0; width: 100% }
+.ph textarea.field { height: auto; min-height: 96px; padding: 14px 18px; border-radius: 22px; resize: vertical; background: color-mix(in srgb, var(--ink) 8%, transparent) }
+.ph .field input::placeholder, .ph .field::placeholder { color: var(--ink-2) }
+.ph .field:focus-within, .ph .field:focus { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 40%, transparent) }
+.seg { height: 44px; border-radius: 22px; padding: 4px; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr }
+.seg > * { display: grid; place-items: center; border-radius: 18px; font-size: 14px; font-weight: 600; color: var(--ink-2); transition: background-color .2s, color .2s }
+.seg > .on { background: color-mix(in srgb, var(--ink) 14%, transparent); color: var(--ink) }
+.bar { display: grid; grid-template-columns: 28px 1fr 56px; align-items: center; gap: 10px }
+.bar i { height: 12px; border-radius: 6px; justify-self: end }
+.bar b { font-size: 17px; text-align: right }
+.glass.lift { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--glass-fx); backdrop-filter: var(--lens) blur(3px) var(--glass-fx) }
+.pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
+.pill .av { width: 40px; height: 40px }
+@media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
+
+/* ---------- Home: the bento of glass tiles ---------- */
+.ph.sl { background: transparent }
+.ph.sl::after { content: ""; position: fixed; inset: 0; background: var(--grain); opacity: .08; mix-blend-mode: overlay; pointer-events: none; z-index: 50 }
+.ph.sl .bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px }
+.ph.sl .tl { background: var(--tile); border-radius: 28px; padding: 16px; position: relative; overflow: hidden; min-width: 0; display: block }
+.ph.sl .tl.deep { background: var(--deep) } .ph.sl .tl.red { background: var(--go); color: var(--on-go) } .ph.sl .tl.snow { background: var(--snow); color: var(--sea) }
+.ph.sl .w2 { grid-column: span 2 }
+.ph.sl .k { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-stretch: 125%; color: var(--snow-2) }
+.ph.sl .tl.red .k { color: var(--on-go); font-size: 12px } .ph.sl .tl.snow .k { color: var(--sea) }
+.ph.sl .t { font-weight: 800; font-stretch: 70%; letter-spacing: -.01em; line-height: .9 }
+.ph.sl .wm { font-weight: 900; font-stretch: 125%; font-size: 16px; text-transform: uppercase; letter-spacing: .02em }
+.ph.sl .st { display: flex; gap: 4px } .ph.sl .st i { flex: 1; height: 8px; border-radius: 2px }
+.ph.sl .btn { height: 50px; border-radius: 25px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: transform .1s ease-out;
+  min-height: 0; padding: 0 18px; box-shadow: none; font-style: normal }
+.ph.sl .btn.snow { background: var(--snow); color: var(--go-ink) } .ph.sl .btn.red { background: var(--go); color: var(--on-go) } .ph.sl .btn.line { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--snow) 30%, transparent) }
+.ph.sl .btn:active, .ph.sl .tl:active, .ph.sl .ib:active { transform: scale(.97) }
+.ph.sl .ib { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
+.ph.sl svg.i { stroke-width: 2.2 }
+.ph.sl :focus-visible { outline: 3px solid var(--snow); outline-offset: 2px }
+.ph.sl .av { font-weight: 800; font-size: 13px; color: var(--sea) }
+.ph.sl .top-r { display: flex; justify-content: space-between; align-items: center; padding: 4px 16px 12px }
+.ph.sl .heat { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px }
+.ph.sl .heat i { aspect-ratio: 1; border-radius: 3px; background: var(--deep) }
+.ph.sl .heat i.a { background: color-mix(in srgb, var(--go) 45%, transparent) } .ph.sl .heat i.b { background: var(--go) }
+
+/* the moving background of Home and every screen without a map: soft spots in the palette's blob colours that glide
+   on closed loops of one angle turning at constant speed (circle, figure eight), so the motion never stops. It is
+   a fixed layer, so it stays put while the content scrolls over it. */
+@property --orbit { syntax: "<angle>"; inherits: false; initial-value: 0deg }
+.ph.sl, .ph.soft { background: transparent }
+.ph.sl::before, .ph.soft::before { content: ""; position: fixed; inset: 0; z-index: -5; pointer-events: none; --r: 37%; background:
+  radial-gradient(27% 15% at 50% 50%, color-mix(in srgb, var(--blob-c, transparent) 70%, transparent), transparent 100%),
+  radial-gradient(41% 25% at 50% 50%, color-mix(in srgb, var(--blob-a) 75%, transparent), transparent 100%),
+  radial-gradient(41% 25% at 50% 50%, color-mix(in srgb, var(--blob-b) 80%, transparent), transparent 100%),
+  var(--sea);
+  background-size: 220% 220%, 220% 220%, 220% 220%, auto; background-repeat: no-repeat;
+  background-position:
+    calc(50% + var(--r) * .6 * sin(var(--orbit) * 2)) calc(50% + var(--r) * .6 * cos(var(--orbit))),
+    calc(50% + var(--r) * cos(var(--orbit))) calc(50% + var(--r) * sin(var(--orbit))),
+    calc(50% - var(--r) * cos(var(--orbit))) calc(50% + var(--r) * sin(var(--orbit) * 2)),
+    0 0;
+  animation: orbit 16s linear infinite }
+@keyframes orbit { to { --orbit: 360deg } }
+@media (prefers-reduced-motion: reduce) { .ph.sl::before, .ph.soft::before { animation: none } }
+.ph.sl .glass.tl, .ph.sl .glass.ib { background: color-mix(in srgb, var(--sheet) 60%, transparent);
+  -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
+html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+.ph.sl .glass.tl.deep { background: color-mix(in srgb, var(--deep) 55%, transparent) }
+.ph.sl .glass.tl.red { background: color-mix(in srgb, var(--go) 86%, transparent) }
+.ph.sl .glass.tl.snow { background: color-mix(in srgb, var(--snow) 86%, transparent) }
+.ph.sl .glass.tl.p { background: color-mix(in srgb, var(--s-p) 86%, transparent) }
+.ph.sl .glass.tl.g { background: color-mix(in srgb, var(--s-g) 86%, transparent) }
+.ph.sl .glass.btn.line { box-shadow: none; background: color-mix(in srgb, var(--sheet) 60%, transparent) }
+@media (prefers-reduced-transparency: reduce) { .glass.tl, .ph.sl .glass.ib, .ph.sl .glass.btn.line, html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
+
+/* ---------- motion (apple-design): a screen materializes as it arrives, never blocking input ---------- */
+.ph > :not(.dock):not(.map) { animation: ph-in .34s cubic-bezier(.22, 1, .36, 1) both }
+@keyframes ph-in { from { opacity: 0; transform: translateY(8px) } }
+@media (prefers-reduced-motion: reduce) { .ph > :not(.dock):not(.map) { animation: ph-fade .16s ease-out both } }
+@keyframes ph-fade { from { opacity: 0 } }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .42s; animation-timing-function: cubic-bezier(.22, 1, .36, 1) }
+
+/* ---------- pieces the mockup doesn't draw, in its language ---------- */
+.ph .mute { color: var(--ink-2) }
+.ph .err { color: #ff9a9d; font-size: 14px; font-weight: 600 }
+.empty-note { text-align: center; padding: 28px 24px; display: grid; gap: 10px; justify-items: center }
+.empty-note b { font-size: 19px; letter-spacing: -.01em }
+.empty-note p { color: var(--ink-2); max-width: 30ch }
+.empty-note .solid { width: auto; padding: 0 24px }
+
+/* ---------- shared screen parts ---------- */
+.head { padding: 4px 16px 0; display: grid; gap: 14px }
+.head-bar { display: flex; justify-content: space-between; align-items: center; margin: 0 -4px }
+.head .title { padding: 0 4px }
+.pad { padding: 0 16px }
+.sec { font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 0 6px; margin: 22px 0 8px }
+.card { border-radius: 28px; padding: 6px 18px }
+.card.rows > * { padding: 12px 0 }
+.scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.45); animation: ph-fade .2s ease-out both }
+.sheet-b.modal { position: fixed; max-width: 544px; margin: 0 auto; bottom: calc(8px + var(--safe-b)); padding: 10px 20px 22px; max-height: 88dvh; overflow: auto;
+  overscroll-behavior: contain; animation: sheet-up .42s cubic-bezier(.32, .72, 0, 1) both }
+@keyframes sheet-up { from { transform: translateY(105%) } }
+@media (prefers-reduced-motion: reduce) { .sheet-b.modal { animation: ph-fade .16s ease-out both } }
+.toast-host { position: fixed; left: 0; right: 0; bottom: calc(100px + var(--safe-b)); display: flex; justify-content: center; pointer-events: none; z-index: 70 }
+.glass.toast { pointer-events: auto; border-radius: 26px; padding: 14px 20px; font-weight: 600; font-size: 15px; max-width: calc(100vw - 32px); color: var(--ink);
+  animation: toast-in .4s cubic-bezier(.22, 1, .36, 1) both }
+.glass.toast.error { background: color-mix(in srgb, #ff5a5f 80%, transparent); color: #fff }
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(.96) } }
+.switch { position: relative; width: 52px; height: 32px; flex: none; border-radius: 16px; border: 0; cursor: pointer;
+  background: color-mix(in srgb, var(--ink) 16%, transparent); transition: background-color .2s }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .35s var(--spring) }
+.switch[aria-checked="true"] { background: var(--s-g) }
+.switch[aria-checked="true"]::after { transform: translateX(20px) }
+.switch:disabled { opacity: .45 }
+.spinner { border-color: color-mix(in srgb, var(--ink) 18%, transparent); border-top-color: var(--ink) }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.ph.col { display: flex; flex-direction: column }
+.sheet-b.static { position: relative; left: auto; right: auto; bottom: auto; margin: 0 8px 8px }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+
+/* Explore: the results sheet floats over the map; pulled up it runs from under the search to above the tab bar */
+.ph.explore[hidden] { display: none }
+.ph.explore .map .mapboxgl-ctrl-bottom-left, .ph.explore .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 64px) }
+.glass.xs { position: absolute; left: 8px; right: 8px; bottom: calc(100px + var(--safe-b)); border-radius: 40px; padding: 0 18px 12px;
+  display: flex; flex-direction: column; height: auto; max-height: 40%; interpolate-size: allow-keywords; transition: height .5s cubic-bezier(.32, .72, 0, 1) }
+.glass.xs.open { max-height: none; height: calc(100% - max(50px, var(--safe-t)) - 178px - var(--safe-b)) }
+.xs-pull { display: block; width: 100%; padding: 10px 0 0 !important; touch-action: none; cursor: grab }
+.xs-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain }
+.xs:not(.open) .xs-body { overflow: hidden }
+@media (prefers-reduced-motion: reduce) { .glass.xs { transition: none } }
+input[type="search"]::-webkit-search-cancel-button { display: none }
+
+/* Route: the map is the whole screen; the sheet pulls up to just under the back button */
+.glass.rs { bottom: calc(8px + var(--safe-b)); padding: 0 20px 20px; display: flex; flex-direction: column; height: auto; max-height: 62%;
+  interpolate-size: allow-keywords; transition: height .5s cubic-bezier(.32, .72, 0, 1) }
+.glass.rs.open { max-height: none; height: calc(100% - max(50px, var(--safe-t)) - 76px - var(--safe-b)) }
+.glass.rs:not(.open) .xs-body { overflow: hidden }
+@media (prefers-reduced-motion: reduce) { .glass.rs { transition: none } }
+.route-page .map .mapboxgl-ctrl-bottom-left, .route-page .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 60px) }
+/* a segmented control inside a sheet sits on a plain tint, not a second layer of glass */
+.glass.sheet .glass.seg { background: color-mix(in srgb, var(--ink) 8%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none }
+.glass.sheet .glass.seg::before, .glass.sheet .glass.seg::after { content: none }
+.ph input.range, input.range { width: 100%; accent-color: var(--main); height: 28px }
+
+/* ---------- Drive: the night screen; sideways it becomes Delta only in the last sector's colour ---------- */
+.dv { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--night); color: var(--ink); font: 15px/1.4 var(--font);
+  font-variant-numeric: tabular-nums; padding: max(56px, calc(var(--safe-t) + 6px)) 20px calc(var(--safe-b) + 32px); overflow: hidden;
+  -webkit-user-select: none; user-select: none; transition: background-color .28s cubic-bezier(.22, 1, .36, 1), color .28s }
+.dv * { box-sizing: border-box }
+.dv :where(h1, h2, p) { margin: 0; font: inherit }
+.dv :where(button) { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; touch-action: manipulation }
+.dv-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 40px }
+.dv .chip { height: 36px; padding: 0 14px; border-radius: 18px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap }
+.dv .chip.clear { height: 38px; font-size: 15px }
+.dv .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none }
+.dv-center { flex: 1; display: grid; align-content: center; justify-items: center; gap: 14px; text-align: center }
+.dv-sub { max-width: 30ch; font-size: 14px }
+.dv-note { text-align: center; margin-top: 10px }
+.dv-pills { display: grid; gap: 10px; width: 100% }
+.dv-pills .glass { transition: background-color .3s }
+.dv-bottom { margin-top: auto; padding-top: 16px }
+.dv-delta { letter-spacing: -.05em; transition: color .3s }
+.dv-delta-big { font-size: clamp(110px, 24vw, 220px); letter-spacing: -.05em; line-height: .95 }
+.dv.turn-cw .dv-delta-big, .dv.turn-ccw .dv-delta-big { font-size: clamp(110px, 24vh, 220px) }
+.dv.delta { background: radial-gradient(70% 90% at 30% 10%, rgba(255,255,255,.28), transparent 70%), var(--flag, var(--s-g)); color: #04210f; padding-left: 52px; padding-right: 52px; padding-bottom: calc(var(--safe-b) + 22px) }
+.dv.delta.flag-purple { --flag: var(--s-p); color: #fff }
+.dv.delta.flag-yellow { --flag: var(--s-y); color: #1b1300 }
+.dv.delta:not(.flag-purple):not(.flag-green):not(.flag-yellow) { --flag: var(--night); color: var(--ink) }
+.dv.turn-cw, .dv.turn-ccw { inset: auto; top: 0; left: 0; width: 100vh; height: 100vw; transform-origin: top left; padding-top: 22px }
+.dv.turn-cw { transform: translateX(100vw) rotate(90deg) }
+.dv.turn-ccw { transform: translateY(100vh) rotate(-90deg) }
+.dv-banner { position: absolute; left: 12px; right: 12px; top: max(104px, calc(var(--safe-t) + 54px)); border-radius: 28px; padding: 16px 18px; display: flex; gap: 12px; align-items: center;
+  color: var(--ink); background: color-mix(in srgb, #ff5a5f 70%, transparent) !important; animation: toast-in .4s cubic-bezier(.22, 1, .36, 1) both; z-index: 5 }
+.dv-lights { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 320px }
+.dv-lights span { width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 12%, transparent); transition: background-color .08s, box-shadow .08s }
+.dv-lights span.on { background: #ff3b30; box-shadow: 0 0 18px #ff3b30 }
+.dv-hold { position: relative; width: 100%; height: 58px; border-radius: 29px; font-weight: 600; font-size: 17px; overflow: hidden; -webkit-touch-callout: none }
+.dv-hold.compact { width: auto; height: 48px; padding: 0 22px !important; border-radius: 24px; font-size: 15px }
+.dv-fill { position: absolute; inset: 0; background: color-mix(in srgb, currentColor 22%, transparent); transform: scaleX(0); transform-origin: left; border-radius: inherit }
+.dv-hold.holding .dv-fill { transform: scaleX(1); transition: transform .8s linear }
+.dv-hold:active { transform: scale(.98) }
+@media (prefers-reduced-motion: reduce) { .dv { transition: none } }
+.result-sheet { max-height: calc(100% - max(50px, var(--safe-t)) - 76px); overflow-y: auto; overscroll-behavior: contain }
+.result .map .mapboxgl-ctrl-bottom-left, .result .map .mapboxgl-ctrl-bottom-right, .ready .map .mapboxgl-ctrl-bottom-left, .ready .map .mapboxgl-ctrl-bottom-right,
+.builder .map .mapboxgl-ctrl-bottom-left, .builder .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 60px) }
+
+/* Lap detail: the main action stays in reach at the bottom while the page scrolls */
+.lap-cta { margin-top: auto; position: sticky; bottom: calc(24px + var(--safe-b)); padding: 24px 20px 0; z-index: 4 }
+.lap-map { position: fixed; inset: 0; z-index: 40; background: var(--night); isolation: isolate; animation: ph-fade .2s ease-out both }
+.lap-map[hidden] { display: none }
+.lap-map .map .mapboxgl-ctrl-bottom-left, .lap-map .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 150px) }
+.bar i.p { background: var(--s-p) } .bar i.g { background: var(--s-g) } .bar i.y { background: var(--s-y) }
+
+/* Profile: the home course on the map at the top, the profile a glass sheet that scrolls up over it */
+.profile-map { position: absolute; left: 0; right: 0; top: 0; height: 320px; z-index: -1; overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent) }
+.profile-map > * { width: 100%; height: 100%; border-radius: 0 !important; margin: 0 !important }
+.profile-map svg path { stroke: #fff }
+.glass.profile-sheet { margin: 140px 8px 0; border-radius: 40px; padding: 20px; min-height: 50dvh }
+
+/* Admin: the mockup's cards and rows */
+.glass.admin-card { border-radius: 28px; padding: 16px 18px; margin: 10px 16px 0 }
+.admin-sec { display: block; padding: 18px 22px 4px; margin: 0 }
+.ph > .rows, .ph > section > .rows, .ph > div > .rows:not(.glass) { padding-left: 24px; padding-right: 24px }
+.rows > .admin-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap }
+.chip.admin-badge { height: 26px; padding: 0 10px; font-size: 12px; background: color-mix(in srgb, var(--ink) 10%, transparent) }
+.chip.admin-badge.red { color: #ff9a9d } .chip.admin-badge.green { color: var(--s-g) }
+.ph .grow { flex: 1; min-width: 0 }
+.ph .row { display: flex; align-items: center; gap: 8px }
+/* a modal sheet is a heavier material than the glass it covers, so the screen behind can't bleed into its text */
+.glass.sheet.modal { background: color-mix(in srgb, var(--deep) 90%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4) }
+.rows > button, .rows > a { width: 100%; text-align: left }

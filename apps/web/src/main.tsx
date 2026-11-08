@@ -7,7 +7,7 @@ import './lib/install'; // catches the install prompt, which can fire before the
 import './styles/global.css';
 import './styles/screens.css';
 import './styles/themes.css';
-import './styles/glass.css';
+import './styles/tiles.css';
 import { applyTheme, storedTheme } from './lib/theme';
 
 // Deploys install in the background, but an open app keeps running the old code

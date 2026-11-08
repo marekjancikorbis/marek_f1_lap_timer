@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { SectorColourName, Route } from '../lib/types';
 import { sectorLines } from '../lib/geo';
 import { allowStaticMap, staticMapFit } from '../lib/staticMap';
@@ -176,6 +176,18 @@ export function RouteThumb({ route }: { route: Props['route'] }) {
         <path key={i} d={d} fill="none" stroke="#ffffff" strokeWidth={35} strokeLinecap="round" strokeLinejoin="round" />
       ))}
       {!route.isLoop && <circle cx={g.start[0]} cy={g.start[1]} r={40} fill="#ffffff" />}
+    </svg>
+  );
+}
+
+/** The route as a bare line (the mockup's #route glyph): one path, stroked in currentColor by the caller. */
+export function RouteGlyph({ route, style, strokeWidth = 40 }: { route: Props['route']; style?: CSSProperties; strokeWidth?: number }) {
+  const g = useMemo(() => shapeGeometry(route, 1000, 1000, 40), [route]);
+  if (!g) return null;
+  const d = g.lines.map((l) => 'M' + l.map(([x, y]) => `${x.toFixed(0)} ${y.toFixed(0)}`).join('L')).join('');
+  return (
+    <svg viewBox={`0 0 ${g.W} ${g.H}`} aria-hidden="true" style={{ fill: 'none', stroke: 'currentColor', strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round', ...style }}>
+      <path d={d} />
     </svg>
   );
 }

@@ -8,21 +8,16 @@ export function LimitScreen({ usage }: { usage: UsageState }) {
   const when = usage.resetsAt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
   const time = usage.resetsAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   return (
-    <main className="limit navy">
-      <span className="livery" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </span>
-      <div className="limit-body">
-        <div className="num limit-day">{usage.resetsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
-        <div className="cap">Maps back on · {time}</div>
-        <h1>Monthly limit reached</h1>
-        <p>
-          The map service is shared by everyone and capped to stay free. This month's free map {usage.exhausted === 'directions' ? 'routing' : 'loads'} are used up; it
-          resets on {when}.
+    <main className="ph soft col">
+      <div className="sb" />
+      <div style={{ margin: 'auto 28px', textAlign: 'center' }}>
+        <div className="lbl" style={{ fontSize: 15 }}>Maps back on · {time}</div>
+        <div className="t acc" style={{ fontSize: 96, marginTop: 10 }}>{usage.resetsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+        <h1 className="title" style={{ marginTop: 28, fontSize: 26 }}>Monthly limit reached</h1>
+        <p className="lbl" style={{ fontSize: 15, marginTop: 10 }}>
+          Your laps and routes are safe. The map service is shared by everyone and capped to stay free: this month&rsquo;s free map{' '}
+          {usage.exhausted === 'directions' ? 'routing is' : 'loads are'} used up. It resets on {when}.
         </p>
-        <p>Your laps and routes are safe.</p>
       </div>
     </main>
   );

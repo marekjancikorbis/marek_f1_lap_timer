@@ -76,7 +76,8 @@ export default function LapDetail() {
   if (post === undefined) return <Loading />;
   if (!post)
     return (
-      <main className="screen">
+      <main className="ph soft">
+        <div className="sb" />
         <ScreenHead back />
         <Empty title="Lap not available">The post was removed or its route is hidden.</Empty>
       </main>
@@ -85,7 +86,7 @@ export default function LapDetail() {
   const mine = post.userId === profile.id;
 
   return (
-    <main className="screen">
+    <main className="ph soft col">
       <LapView
         lap={post}
         colours={post.sectorColours}
@@ -93,35 +94,31 @@ export default function LapDetail() {
         posts={posts}
         reference={against}
         onOpen={() => setOpened(true)}
-        badges={post.isPB && <span className="badge ink">PB when posted</span>}
+        badges={post.isPB && <span>PB when posted</span>}
         meta={post.car}
-        caption={post.caption && <p className="lap-hero-caption">{post.caption}</p>}
+        caption={post.caption && <p style={{ fontSize: 15 }}>{post.caption}</p>}
         actions={
-          <div className="btns lap-panel-btns">
-            <Link className="btn primary grow" to={`/drive/${post.routeId}?ref=post:${post.id}`}>
-              Race this lap
-            </Link>
-          </div>
+          <Link className="solid" to={`/drive/${post.routeId}?ref=post:${post.id}`}>
+            Race this lap
+          </Link>
         }
         menu={
           <>
             {driven && (
-              <Link className="btn block" to={`/compare/${post.routeId}?a=best&b=post:${post.id}`}>
+              <Link className="solid quiet" to={`/compare/${post.routeId}?a=best&b=post:${post.id}`}>
                 Compare with my best
               </Link>
             )}
-            <Link className="btn block" to={`/compare/${post.routeId}?a=post:${post.id}&b=record`}>
+            <Link className="solid quiet" to={`/compare/${post.routeId}?a=post:${post.id}&b=record`}>
               Compare with…
             </Link>
           </>
         }
       >
         {mine && (
-          <div className="row" style={{ marginTop: 24 }}>
-            <button className="btn grow" onClick={editCaption}>
-              Edit text
-            </button>
-            <button className="btn danger grow" onClick={remove}>
+          <div className="lbl" style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 22 }}>
+            <button onClick={editCaption}>Edit text</button>
+            <button onClick={remove} style={{ color: '#ff9a9d' }}>
               Remove post
             </button>
           </div>

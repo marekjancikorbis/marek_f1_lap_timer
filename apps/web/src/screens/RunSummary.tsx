@@ -3,12 +3,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { PostSheet } from '../components/PostSheet';
 import { LapView, useSectorTable } from '../components/LapView';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
+import { Empty, errorMessage, I, Loading, ScreenHead, useToast } from '../components/ui';
+import { RouteMap } from '../components/RouteMap';
 import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 import { coloursFor, notCounted, pbsBefore, recordsExcluding, resolveLap, runToLap, sameSectors, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
-import { ChevronRight, Clock, Flag, Share2, User, X } from 'lucide-react';
 import { shareLap } from '../lib/shareImage';
 import type { Post, Route, Run } from '../lib/types';
 
@@ -130,9 +130,10 @@ export default function RunSummary() {
   if (run === undefined) return <Loading />;
   if (!run)
     return (
-      <main className="screen">
+      <main className="ph soft">
+        <div className="sb" />
         <ScreenHead back />
-        <Empty title="Lap not found">It may have been deleted, or it's still syncing.</Empty>
+        <Empty title="Lap not found">It may have been deleted, or it&rsquo;s still syncing.</Empty>
       </main>
     );
 
@@ -140,111 +141,100 @@ export default function RunSummary() {
 
   const gap = against && !run.partial && !against.partial ? run.totalMs - against.totalMs : null;
   const newPb = run.valid && !run.replay && (pbBefore == null || run.totalMs < pbBefore);
-  const cap = stage
-    ? `${run.routeName} · stage${route ? ` · ${formatDistance(route.lengthM)}` : ''}`
-    : `${run.routeName} · lap ${run.lap + 1}${session.length > 1 ? ` of ${session.length}` : ''}`;
+  const INK: Record<string, string> = { purple: 'var(--s-p)', green: 'var(--s-g)', yellow: 'var(--s-y)' };
+  const quiet = { background: 'color-mix(in srgb, var(--ink) 10%, transparent)' };
+  const status = newPb
+    ? 'New best'
+    : run.replay
+      ? 'Simulated'
+      : notCounted(run)
+        ? notCounted(run)
+        : stage
+          ? `${run.routeName} · stage`
+          : `Lap ${run.lap + 1}${session.length > 1 ? ` of ${session.length}` : ''}`;
 
   if (!details)
     return (
-      <main className="screen">
-        <section className="top-panel navy run-panel">
-          <span className="livery" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
-          <Link to={`/r/${run.routeId}`} className="icon-btn back" aria-label="Close">
-            <X size={24} />
+      <main className="ph fixed result">
+        <div className="map">{route && <RouteMap route={route} height="100%" padding={{ top: 130, bottom: 420, left: 40, right: 40 }} extra={traceLayer} />}</div>
+        <div className="edge" />
+        <div className="sb" />
+        <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
+          <Link to={`/r/${run.routeId}`} className="glass ib" aria-label="Close">
+            <I n="x" />
           </Link>
-          <div className="run-panel-body">
-            <span className="cap">{cap}</span>
-            <span className="num run-panel-time">{run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}</span>
-            <span className="row wrap" style={{ gap: 8 }}>
-              {gap != null && (
-                <span className={`num run-panel-gap ${gap <= 0 ? 'faster' : 'slower'}`}>
-                  {formatDelta(gap, 2)} vs {against!.label}
-                </span>
-              )}
-              {newPb && <span className="badge green">New PB</span>}
-              {run.replay && <span className="badge outline">Simulated</span>}
-              {run.posted && <span className="badge ink">Posted</span>}
-              {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
-              {run.penaltyMs > 0 && <span className="badge red">+{formatSeconds(run.penaltyMs, 0)}</span>}
+          {route && !run.partial && (
+            <button className="glass ib" aria-label="Share as an image" onClick={share}>
+              <I n="share" />
+            </button>
+          )}
+        </div>
+        <div className="glass sheet sheet-b result-sheet" style={{ paddingTop: 22, bottom: 'calc(8px + var(--safe-b))' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <span className={`chip${newPb ? ' acc' : ''}`} style={{ background: newPb ? 'color-mix(in srgb, var(--accent) 16%, transparent)' : quiet.background }}>
+              {status}
             </span>
+            {run.posted && <span className="chip" style={quiet}>Posted</span>}
+            {run.penaltyMs > 0 && <span className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }}>+{formatSeconds(run.penaltyMs, 0)}</span>}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 12, gap: 12 }}>
+            <span className="t" style={{ fontSize: 64 }}>{run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}</span>
+            {gap != null && (
+              <span className="t" style={{ fontSize: 24, color: gap <= 0 ? 'var(--s-g)' : 'var(--s-y)' }} aria-label={`${formatDelta(gap, 2)} versus ${against!.label}`}>
+                {formatDelta(gap, 2)}
+              </span>
+            )}
           </div>
           {table && (
-            <div className="run-stripe" role="img" aria-label={table.map((t) => `${t.row.name} ${t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : formatLap(t.row.ms)}`).join(', ')}>
+            <div className="rows" style={{ marginTop: 10 }}>
               {table.map((t) => (
-                <b key={t.row.name} className={t.row.colour ? `flag-${t.row.colour}` : 'empty'}>
-                  <span>
-                    {t.row.name} {t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : ''}
+                <div key={t.row.name} style={{ gridTemplateColumns: '12px 1fr auto 60px' }}>
+                  <span className="dot" style={{ background: t.row.colour ? INK[t.row.colour] : 'color-mix(in srgb, var(--ink) 20%, transparent)' }} />
+                  <span className="lbl">{t.row.name}</span>
+                  <span className="t" style={{ fontSize: 19 }}>{t.row.ms != null ? formatLap(t.row.ms) : '–'}</span>
+                  <span className="t" style={{ fontSize: 15, textAlign: 'right', color: t.row.colour ? INK[t.row.colour] : 'var(--ink-2)' }}>
+                    {t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : ''}
                   </span>
-                </b>
+                </div>
               ))}
             </div>
           )}
-          <div className="row run-panel-actions">
-            {canPost && !run.posted && (
-              <button className="btn primary grow" onClick={() => setPosting(true)}>
-                <Share2 size={16} aria-hidden="true" /> {stage ? 'Post time' : 'Post lap'}
-              </button>
-            )}
-            <button className="btn" onClick={() => setParams({ view: 'details' })}>
-              Details
-            </button>
-          </div>
-        </section>
-
-        {run.replay && route?.isPublic && <p className="mute small-text" style={{ marginTop: 12 }}>Simulated laps can't be posted.</p>}
-        {!run.valid && (
-          <p className="mute small-text" style={{ marginTop: 12 }}>
-            {run.partial ? 'The GPS signal dropped out before the finish.' : `No GPS signal for ${formatSeconds(run.gpsGapMs ?? 0, 0)}.`} It can be compared but can't be posted or set a best.
-          </p>
-        )}
-
-        {stage && run.valid && <StageCompare run={run} prev={prev} userId={profile.id} posts={route?.isPublic ? posts : []} />}
-        {stage && (
-          <div className="list" style={{ marginTop: 10 }}>
-            <Link to={`/r/${run.routeId}/history`} className="list-item">
-              <Clock size={22} aria-hidden="true" />
-              <span className="grow">
-                <strong>All your times on this stage</strong>
-                <span className="mute small-text">
-                  {runs.length} {runs.length === 1 ? 'run' : 'runs'} · newest first or fastest
-                </span>
-              </span>
-              <ChevronRight size={22} aria-hidden="true" />
-            </Link>
-          </div>
-        )}
-
-        {session.length > 1 && (
-          <>
-            <h2 className="section-title row between">
-              This session <span className="mute small-text">{session.length} laps</span>
-            </h2>
-            <div className="list">
+          {!run.valid && (
+            <p className="lbl" style={{ marginTop: 10 }}>
+              {run.partial ? 'The GPS signal dropped out before the finish.' : `No GPS signal for ${formatSeconds(run.gpsGapMs ?? 0, 0)}.`} It can be compared but can&rsquo;t be posted or set a best.
+            </p>
+          )}
+          {session.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginTop: 12, paddingBottom: 2 }} aria-label="This session">
               {session.map((r) => (
-                <Link key={r.id} to={`/run/${r.id}`} className={`list-item ${r.id === run.id ? 'current' : ''}`} aria-current={r.id === run.id}>
-                  <span className="pos num">{r.lap + 1}</span>
-                  <span className="grow row" style={{ gap: 6 }}>
-                    <strong className="num lap-row-time">{r.partial ? formatDistance(route?.boundaries[r.splitTimesMs.length - 1] ?? 0) : formatLap(r.totalMs)}</strong>
-                    {r.penaltyMs > 0 && <span className="badge red">+5 s</span>}
-                    {notCounted(r) && <span className="badge outline">{notCounted(r)}</span>}
-                  </span>
+                <Link key={r.id} to={`/run/${r.id}`} replace className="chip" aria-current={r.id === run.id} style={r.id === run.id ? { background: 'var(--main)', color: 'var(--on-main)' } : quiet}>
+                  {r.lap + 1} · {r.partial ? '–' : formatLap(r.totalMs)}
                 </Link>
               ))}
             </div>
-          </>
-        )}
-
-        <div className="row" style={{ marginTop: 14 }}>
-          <Link className="btn primary grow" to={`/drive/${run.routeId}${run.referenceRef ? `?ref=${run.referenceRef}` : ''}`}>
-            {stage ? 'Drive it again' : 'Drive again'}
-          </Link>
-          <button className="btn danger" onClick={discard}>
-            Discard
-          </button>
+          )}
+          {stage && run.valid && <StageCompare run={run} prev={prev} userId={profile.id} posts={route?.isPublic ? posts : []} />}
+          <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+            <Link className="solid quiet" to={`/drive/${run.routeId}${run.referenceRef ? `?ref=${run.referenceRef}` : ''}`}>
+              Again
+            </Link>
+            {canPost && !run.posted ? (
+              <button className="solid" onClick={() => setPosting(true)}>
+                Post
+              </button>
+            ) : (
+              <button className="solid" onClick={() => setParams({ view: 'details' })}>
+                Details
+              </button>
+            )}
+          </div>
+          <div className="lbl" style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 12 }}>
+            {canPost && !run.posted && <button onClick={() => setParams({ view: 'details' })}>Details</button>}
+            <Link to={`/r/${run.routeId}/history`}>All my times</Link>
+            <button onClick={discard} style={{ color: '#ff9a9d' }}>
+              Discard
+            </button>
+          </div>
         </div>
 
         {route && <PostSheet open={posting} onClose={() => setPosting(false)} run={run} route={route} myRuns={runs} onPosted={() => setRun({ ...run, posted: true })} />}
@@ -252,7 +242,7 @@ export default function RunSummary() {
     );
 
   return (
-    <main className="screen">
+    <main className="ph soft col">
       <LapView
         lap={{ ...run, profile: run.profile ?? null, username: profile.username, userId: profile.id, avatarHue: profile.avatarHue }}
         colours={colours}
@@ -263,20 +253,20 @@ export default function RunSummary() {
         mapExtra={traceLayer}
         badges={
           <>
-            {session.length > 1 && <span className="badge outline">Lap {run.lap + 1}</span>}
-            {run.replay && <span className="badge outline">Simulated</span>}
-            {run.posted && <span className="badge ink">Posted</span>}
-            {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
+            {session.length > 1 && <span>Lap {run.lap + 1}</span>}
+            {run.replay && <span>Simulated</span>}
+            {run.posted && <span>Posted</span>}
+            {notCounted(run) && <span>{notCounted(run)}</span>}
           </>
         }
         caption={
           <>
-            <p className="lap-hero-caption mute" style={{ fontSize: 13 }}>
+            <p className="lbl">
               GPS ±{run.gpsAvgAccuracyM} m · {run.gpsRateHz} Hz
               {run.jumpDistanceM != null && ` · moved ${run.jumpDistanceM} m before GO`}
             </p>
             {!run.valid && (
-              <p className="lap-hero-caption mute" style={{ fontSize: 13 }}>
+              <p className="lbl">
                 {run.partial
                   ? `Stopped before the finish${run.splitTimesMs.length ? ` after ${run.splitTimesMs.length} of ${route?.boundaries.length ?? '?'} minisectors` : ''}.`
                   : `No GPS signal for ${formatSeconds(run.gpsGapMs ?? 0, 0)}.`}{' '}
@@ -286,38 +276,30 @@ export default function RunSummary() {
           </>
         }
         actions={
-          <div className="stack" style={{ marginTop: 16 }}>
+          <div style={{ display: 'grid', gap: 10 }}>
             {canPost && !run.posted && (
-              <button className="btn primary lg block" onClick={() => setPosting(true)}>
+              <button className="solid" onClick={() => setPosting(true)}>
                 Post to leaderboard
               </button>
             )}
-            {run.replay && route?.isPublic && <p className="mute" style={{ fontSize: 13, textAlign: 'center' }}>Simulated laps can't be posted.</p>}
-            <div className="row">
+            <div style={{ display: 'flex', gap: 10 }}>
               {run.referenceRef && (
-                <Link className="btn grow" to={`/compare/${run.routeId}?a=run:${run.id}&b=${run.referenceRef}`}>
+                <Link className="solid quiet" to={`/compare/${run.routeId}?a=run:${run.id}&b=${run.referenceRef}`}>
                   Compare
                 </Link>
               )}
-              <Link className="btn grow" to={`/drive/${run.routeId}?ref=run:${run.id}`}>
+              <Link className={canPost && !run.posted ? 'solid quiet' : 'solid'} to={`/drive/${run.routeId}?ref=run:${run.id}`}>
                 Race again
               </Link>
-              {route && !run.partial && (
-                <button className="btn grow" onClick={share}>
-                  Share image
-                </button>
-              )}
             </div>
           </div>
         }
       >
-        {run.posted && (
-          <div className="row" style={{ marginTop: 24 }}>
-            <button className="btn grow" onClick={unpost}>
-              Remove post
-            </button>
-          </div>
-        )}
+        <div className="lbl" style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 22 }}>
+          {route && !run.partial && <button onClick={share}>Share image</button>}
+          {run.posted && <button onClick={unpost}>Remove post</button>}
+          {run.replay && route?.isPublic && <span>Simulated laps can&rsquo;t be posted</span>}
+        </div>
       </LapView>
 
       {route && <PostSheet open={posting} onClose={() => setPosting(false)} run={run} route={route} myRuns={runs} onPosted={() => setRun({ ...run, posted: true })} />}
@@ -335,45 +317,37 @@ function StageCompare({ run, prev, userId, posts }: { run: Run; prev: Run | null
   const place = [...bestBy.values()].filter((t) => t < run.totalMs).length + 1;
   if (!prev && !record) return null;
   return (
-    <>
-      <h2 className="section-title">How it compares</h2>
-      <div className="list">
-        {prev && (
-          <div className="list-item">
-            <User size={22} aria-hidden="true" />
-            <span className="grow">
-              <strong>Your best before</strong>
-              <span className="mute small-text">
-                {formatLap(prev.totalMs)} · {formatDate(prev.startedAt)}
-              </span>
-            </span>
-            <strong className={`num compare-delta ${run.totalMs <= prev.totalMs ? 'faster' : 'slower'}`}>{formatDelta(run.totalMs - prev.totalMs, 2)}</strong>
+    <div className="rows" style={{ marginTop: 6 }}>
+      {prev && (
+        <div style={{ gridTemplateColumns: '1fr auto' }}>
+          <div>
+            <b>Your best before</b>
+            <div className="lbl">
+              {formatLap(prev.totalMs)} · {formatDate(prev.startedAt)}
+            </div>
           </div>
-        )}
-        {record && (
-          <div className="list-item">
-            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="fastest" aria-hidden="true">
-              <path d="M9 20V8h6v12M3 20v-7h6M15 20v-9h6v9M2 20h20" />
-            </svg>
-            <span className="grow">
-              <strong>Route record</strong>
-              <span className="mute small-text">
-                {record.username} · {formatLap(record.totalMs)}
-              </span>
-            </span>
-            <strong className={`num compare-delta ${run.totalMs <= record.totalMs ? 'fastest' : 'slower'}`}>{formatDelta(run.totalMs - record.totalMs, 2)}</strong>
+          <span className="t" style={{ fontSize: 19, color: run.totalMs <= prev.totalMs ? 'var(--s-g)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - prev.totalMs, 2)}</span>
+        </div>
+      )}
+      {record && (
+        <div style={{ gridTemplateColumns: '1fr auto' }}>
+          <div>
+            <b>Route record</b>
+            <div className="lbl">
+              {record.username} · {formatLap(record.totalMs)}
+            </div>
           </div>
-        )}
-        {record && !run.replay && (
-          <div className="list-item">
-            <Flag size={22} aria-hidden="true" />
-            <strong className="grow">{run.posted ? 'Leaderboard' : 'Leaderboard if posted'}</strong>
-            <strong className="compare-place">
-              P{place} of {bestBy.size + 1}
-            </strong>
-          </div>
-        )}
-      </div>
-    </>
+          <span className="t" style={{ fontSize: 19, color: run.totalMs <= record.totalMs ? 'var(--s-p)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - record.totalMs, 2)}</span>
+        </div>
+      )}
+      {record && !run.replay && (
+        <div style={{ gridTemplateColumns: '1fr auto' }}>
+          <b>{run.posted ? 'Leaderboard' : 'Leaderboard if posted'}</b>
+          <span className="t" style={{ fontSize: 19 }}>
+            P{place} of {bestBy.size + 1}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

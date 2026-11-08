@@ -1,12 +1,9 @@
-import { Check, ChevronRight, Home, LayoutGrid, Lock, Route as RouteIcon, Settings as SettingsIcon, Shield } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { FollowButton } from '../components/FollowButton';
-import { LapCard } from '../components/LapCard';
-import { RouteShape } from '../components/RouteShape';
-import { SkeletonRows } from '../components/Skeleton';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
+import { RouteGlyph, RouteShape } from '../components/RouteShape';
+import { postBigColours } from '../lib/laps';
+import { Avatar, Empty, errorMessage, I, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
 import {
   allMyRuns,
   backfillActivity,
@@ -152,232 +149,122 @@ export default function UserPage() {
   if (user === undefined || (user && !ready)) return <Loading />;
   if (user === null)
     return (
-      <main className="screen">
+      <main className="ph soft">
+        <div className="sb" />
         <ScreenHead back />
         <Empty title="Driver not found">There's no driver called "{username}".</Empty>
       </main>
     );
 
   const name = nameOf(user);
-  const tabs: { id: Tab; label: string; icon: typeof Lock }[] = [
-    { id: 'posts', label: 'Posts', icon: LayoutGrid },
-    { id: 'routes', label: 'Routes', icon: RouteIcon },
-    ...(isMe ? [{ id: 'laps' as const, label: 'Laps', icon: Lock }] : []),
-  ];
+
+  const stats = [
+    `${posts.length} ${posts.length === 1 ? 'lap' : 'laps'}`,
+    role !== 'driver' ? ROLE_LABEL[role].toLowerCase() : null,
+    wins > 0 ? `${wins}× P1` : null,
+  ].filter(Boolean);
+  const row = (pb: Post, rank?: number) => {
+    const route = routes.get(pb.routeId);
+    return (
+      <Link key={pb.id} to={`/lap/${pb.id}`} style={{ gridTemplateColumns: '1fr auto' }}>
+        <div style={{ minWidth: 0 }}>
+          <div className="lbl ellipsis">
+            {pb.routeName}
+            {rank ? ` · P${rank}` : ''}
+          </div>
+          <div className={`t${rank === 1 ? ' acc' : ''}`} style={{ fontSize: 24, marginTop: 3 }}>{formatLap(pb.totalMs)}</div>
+        </div>
+        <SectorStrip colours={postBigColours(pb, route)} />
+      </Link>
+    );
+  };
 
   return (
-    <main className="screen">
-      {/* The navy panel: roundel, name, counts and home course. Settings for you, Follow for anyone else. */}
-      <section className="top-panel navy profile-panel">
-        <span className="livery thin" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
-        <div className="row between profile-panel-bar">
-          {!isMe ? <ScreenHead back /> : <span />}
-          {isMe ? (
-            <div className="row" style={{ gap: 0 }}>
-              {isAdmin && (
-                <Link to="/admin" className="icon-btn" aria-label="Admin">
-                  <Shield size={22} />
-                </Link>
-              )}
-              <Link to="/settings" className="icon-btn" aria-label="Settings">
-                <SettingsIcon size={22} />
+    <main className="ph soft docked profile">
+      <div className="profile-map" aria-hidden={!home?.isPublic}>
+        {home?.isPublic && <RouteShape route={home} map height={300} ticks={false} label={`${name}'s home course, ${home.name}`} />}
+      </div>
+      <div className="sb" />
+      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
+        {!isMe ? <ScreenHead back /> : <span />}
+        {isMe && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            {isAdmin && (
+              <Link to="/admin" className="glass ib" aria-label="Admin">
+                <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" />
+                </svg>
               </Link>
-            </div>
-          ) : (
-            <FollowButton userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />
-          )}
-        </div>
-        <div className="row" style={{ gap: 16 }}>
-          <Avatar name={name} hue={user.avatarHue} size={84} uid={user.id} />
-          <div className="grow">
-            <h1 className="profile-name">{name}</h1>
-            <span className="mute small-text">
-              @{user.username}
-              {role !== 'driver' && ` · ${ROLE_LABEL[role].toLowerCase()}`}
-              {wins > 0 && ` · ${wins}× P1`}
-            </span>
-            <span className="row profile-counts">
-              <Link to={`/u/${user.username}/following`}>
-                <strong>{counts?.following ?? '–'}</strong> following
-              </Link>
-              <Link to={`/u/${user.username}/followers`}>
-                <strong>{counts?.followers ?? '–'}</strong> {counts?.followers === 1 ? 'follower' : 'followers'}
-              </Link>
-            </span>
+            )}
+            <Link to="/settings" className="glass ib" aria-label="Settings">
+              <I n="gear" />
+            </Link>
           </div>
+        )}
+      </div>
+      <div className="glass sheet profile-sheet">
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <span style={{ flex: 'none' }}>
+            <Avatar name={name} hue={user.avatarHue} size={64} uid={user.id} />
+          </span>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h1 className="ellipsis" style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-.02em' }}>{name}</h1>
+            <div className="lbl" style={{ marginTop: 2 }}>
+              {name !== user.username && <>@{user.username} · </>}
+              {stats.join(' · ')}
+            </div>
+            <div className="lbl" style={{ marginTop: 2, display: 'flex', gap: 10 }}>
+              <Link to={`/u/${user.username}/followers`}>
+                {counts?.followers ?? '–'} {counts?.followers === 1 ? 'follower' : 'followers'}
+              </Link>
+              <Link to={`/u/${user.username}/following`}>{counts?.following ?? '–'} following</Link>
+            </div>
+          </div>
+          {!isMe && <FollowButton userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />}
         </div>
         {home?.isPublic ? (
-          <Link to={`/r/${home.id}`} className="profile-home">
-            <Home size={20} aria-hidden="true" />
-            <span className="grow">
-              <span className="cap">Home course</span>
-              <strong className="ellipsis">{home.name}</strong>
-            </span>
-            {homeBest && <strong className="num">{formatLap(homeBest.totalMs)}</strong>}
+          <Link to={`/r/${home.id}`} className="lbl" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
+            <span>Home course · {home.name}</span>
+            {homeBest && <span>{formatLap(homeBest.totalMs)}</span>}
           </Link>
         ) : (
           isMe && (
-            <p className="mute small-text" style={{ marginTop: 14 }}>
-              No home course yet. Pick one on a route's page in <Link to="/explore">Explore</Link>.
+            <p className="lbl" style={{ marginTop: 14 }}>
+              No home course yet. Pick one on a route&rsquo;s page in <Link to="/explore" style={{ textDecoration: 'underline' }}>Explore</Link>.
             </p>
           )
         )}
-      </section>
-
-      <div style={{ marginTop: 14 }}>
-        <Segmented label="Profile" value={tab} onChange={setTab} options={tabs.map(({ id, label }) => ({ value: id, label }))} />
-      </div>
-
-      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === 'posts' &&
-          (newest.length === 0 ? (
-            <>
-              {activity && <ActivityHeatmap days={activity} />}
-              <p className="mute profile-empty">{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn't posted a lap yet.`}</p>
-            </>
-          ) : (
-            <>
-              {activity && <ActivityHeatmap days={activity} />}
-              <div className="list" style={{ marginTop: 10 }}>
-                {newest.map((p) => (
-                  <LapCard key={p.id} post={p} route={routes.get(p.routeId)} showAuthor={false} />
-                ))}
-              </div>
-            </>
-          ))}
-
-        {tab === 'routes' && (
+        {best.length > 0 ? (
+          <div className="rows" style={{ marginTop: 10 }}>{best.map(({ pb, rank }) => row(pb, rank))}</div>
+        ) : (
+          <p className="lbl" style={{ marginTop: 18 }}>{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn\u2019t posted a lap yet.`}</p>
+        )}
+        {newest.length > best.length && (
           <>
-            {best.length > 0 && (
-              <>
-                <h2 className="section-title">Best on</h2>
-                <div className="list">
-                  {best.map(({ pb, rank, count }) => {
-                    const route = routes.get(pb.routeId);
-                    return (
-                      <Link key={pb.routeId} to={`/r/${pb.routeId}`} className="list-item">
-                        <span className="logbook-shape" aria-hidden="true">
-                          {route && <RouteShape route={route} height={44} ticks={false} />}
-                        </span>
-                        <span className="grow" style={{ minWidth: 0 }}>
-                          <strong className="ellipsis">{pb.routeName}</strong>
-                          <span className="mute ellipsis small-text">
-                            {[route && formatDistance(route.lengthM), `${count} ${count === 1 ? 'lap' : 'laps'} posted`].filter(Boolean).join(' · ')}
-                          </span>
-                        </span>
-                        <span className="trophy-time">
-                          <strong className={`num ${rank === 1 ? 'fastest' : ''}`}>{formatLap(pb.totalMs)}</strong>
-                          {rank && <span className={`badge ${rank === 1 ? 'purple' : ''}`}>P{rank}</span>}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-            {publicRoutes.length > 0 && (
-              <>
-                <h2 className="section-title">Built by {name}</h2>
-                <div className="list">
-                  {publicRoutes.map((r) => (
-                    <Link key={r.id} to={`/r/${r.id}`} className="list-item">
-                      <span className="logbook-shape" aria-hidden="true">
-                        <RouteShape route={r} height={44} ticks={false} />
-                      </span>
-                      <span className="grow" style={{ minWidth: 0 }}>
-                        <strong className="ellipsis">{r.name}</strong>
-                        <span className="mute ellipsis small-text">
-                          {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : 'A to B'}
-                        </span>
-                      </span>
-                      <span className="section-link row" style={{ gap: 2 }}>
-                        Leaderboard <ChevronRight size={16} aria-hidden="true" />
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </>
-            )}
-            {best.length === 0 && publicRoutes.length === 0 && (
-              <p className="mute profile-empty">{isMe ? 'Routes you post a lap on, or build, appear here.' : `${name} hasn't posted on or built a route yet.`}</p>
-            )}
+            <div className="lbl" style={{ marginTop: 18 }}>Latest laps</div>
+            <div className="rows">{newest.slice(0, 10).map((p) => row(p))}</div>
           </>
         )}
-
-        {tab === 'laps' && isMe && (
+        {publicRoutes.length > 0 && (
           <>
-            <p className="mute profile-private">
-              <Lock size={14} aria-hidden="true" /> Only you see this tab
-            </p>
-            {laps === null ? (
-              <SkeletonRows count={4} />
-            ) : laps.length === 0 ? (
-              <Empty title="No laps yet" action={<Link to="/drive" className="btn primary lg">Start a drive</Link>}>
-                Every lap you drive is saved here, grouped by route.
-              </Empty>
-            ) : (
-              <div className="stack">
-                {laps.map(({ route, runs }) => (
-                  <RouteLaps key={route.id} route={route} runs={runs} />
-                ))}
-              </div>
-            )}
+            <div className="lbl" style={{ marginTop: 18 }}>Built by {name}</div>
+            <div className="rows">
+              {publicRoutes.map((r) => (
+                <Link key={r.id} to={`/r/${r.id}`} style={{ gridTemplateColumns: '64px 1fr auto' }}>
+                  <RouteGlyph route={r} style={{ width: 64, height: 44, color: '#fff' }} strokeWidth={56} />
+                  <div style={{ minWidth: 0 }}>
+                    <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
+                    <div className="lbl">
+                      {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : r.startType}
+                    </div>
+                  </div>
+                  <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+                </Link>
+              ))}
+            </div>
           </>
         )}
       </div>
     </main>
-  );
-}
-
-/** One route's newest laps, its PB and the way to all of them. */
-function RouteLaps({ route, runs }: { route: Route; runs: Run[] }) {
-  const colours = useMemo(() => historyColours(runs, route), [runs, route]);
-  const pb = runs.filter((r) => r.valid).reduce<number | null>((m, r) => (m == null || r.totalMs < m ? r.totalMs : m), null);
-  // Only a public route takes posts.
-  const postable = route.isPublic && !route.hidden;
-  return (
-    <section className="list" aria-label={route.name}>
-      <Link to={`/r/${route.id}/history`} className="list-item">
-        <strong className="grow ellipsis">{route.name}</strong>
-        <span className="mute small-text">
-          {pb != null && (
-            <>
-              PB <strong className="num">{formatLap(pb)}</strong> ·{' '}
-            </>
-          )}
-          {runs.length} {runs.length === 1 ? 'lap' : 'laps'}
-        </span>
-        <ChevronRight size={16} aria-hidden="true" />
-      </Link>
-      {runs.slice(0, 3).map((run) => (
-        <div key={run.id} className="list-item">
-          <Link to={`/run/${run.id}`} className="grow lap-row-main">
-            <span className="row" style={{ gap: 8, alignItems: 'baseline' }}>
-              <strong className="num lap-row-time">{formatLap(run.totalMs)}</strong>
-              <span className="mute small-text">{formatDate(run.startedAt)}</span>
-            </span>
-            <span style={{ maxWidth: 150 }}>
-              <SectorStrip colours={colours(run)} height={4} />
-            </span>
-          </Link>
-          {run.posted ? (
-            <span className="mute small-text row" style={{ gap: 4 }}>
-              <Check size={14} aria-hidden="true" /> Posted
-            </span>
-          ) : (
-            postable &&
-            run.valid && (
-              <Link to={`/run/${run.id}`} className="btn sm">
-                Post
-              </Link>
-            )
-          )}
-        </div>
-      ))}
-    </section>
   );
 }

@@ -1,10 +1,9 @@
 import { computeSectorBoundaries, polylineLengthM, PreparedRoute, type LatLon } from '@laptimer/timing';
 import mapboxgl from 'mapbox-gl';
-import { Crosshair, Trash2, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MapView, setSource } from '../components/MapView';
-import { errorMessage, Loading, ScreenHead, Segmented, Switch, useToast } from '../components/ui';
+import { errorMessage, I, Loading, Segmented, Sheet, useToast } from '../components/ui';
 import { createRoute, getRoute, updateRoute } from '../lib/data';
 import { formatDistance } from '../lib/format';
 import { bboxOf, flatToLatLon, latLonToFlat, simplify } from '../lib/geo';
@@ -18,6 +17,7 @@ export default function RouteBuilder() {
   const { routeId } = useParams();
   const { profile, isAdmin } = useMe();
   const nav = useNavigate();
+  const [tuning, setTuning] = useState(false);
   const toast = useToast();
   const [waypoints, setWaypoints] = useState<LatLon[]>([]);
   const [snapped, setSnapped] = useState<LatLon[]>([]);
@@ -212,87 +212,98 @@ export default function RouteBuilder() {
 
   if (routeId && !orig) return <Loading />;
 
+  const kind = loop ? 'lap' : startType;
+  const setKind = (k: 'standing' | 'rolling' | 'lap') => {
+    setLoop(k === 'lap');
+    setStartType(k === 'standing' ? 'standing' : 'rolling');
+  };
+  const km = lengthM / 1000;
   return (
-    <main className="screen builder">
-      <ScreenHead back title={orig ? 'Edit route' : 'New route'} />
-      <div className="builder-map">
+    <main className="ph fixed builder">
+      <div className="map">
         {center && <MapView onReady={onReady} center={center} zoom={14} height="100%" label="Route builder map. Tap to add waypoints." />}
-        <div className="builder-tools">
-          <button className="icon-btn map-btn" onClick={locate} aria-label="Go to my location">
-            <Crosshair size={20} />
-          </button>
-          <button className="icon-btn map-btn" onClick={() => setWaypoints((w) => w.slice(0, -1))} disabled={!waypoints.length} aria-label="Undo last waypoint">
-            <Undo2 size={20} />
-          </button>
-          <button className="icon-btn map-btn" onClick={() => setWaypoints([])} disabled={!waypoints.length} aria-label="Clear all waypoints">
-            <Trash2 size={20} />
-          </button>
-        </div>
-        <div className="builder-status" aria-live="polite">
-          {waypoints.length === 0
-            ? 'Tap the map to place the start'
-            : waypoints.length === 1
-              ? 'Tap to add the next point'
-              : snapping
-                ? 'Snapping to roads…'
-                : `${formatDistance(lengthM)} · ${boundaries.length} sectors`}
-        </div>
       </div>
-      {snapError && <p className="notice error" style={{ marginTop: 12 }}>{snapError}</p>}
-
-      <div className="stack" style={{ marginTop: 16 }}>
-        <div className="panel row between">
-          <span>
-            <strong>Lap (loop)</strong>
-            <span className="mute" style={{ display: 'block', fontSize: 13 }}>
-              Finish where you start; laps run back to back
-            </span>
-          </span>
-          <Switch label="Loop route" checked={loop} onChange={setLoop} />
-        </div>
-
-        <div className="panel stack">
-          <label className="field">
-            <span>
-              Sector length: <strong className="num" style={{ fontSize: 18 }}>{sectorM} m</strong>
-            </span>
-            <input type="range" min={50} max={1000} step={50} value={sectorM} onChange={(e) => setSectorM(Number(e.target.value))} />
-          </label>
-          <small className="mute">The white ticks on the map show where each sector ends. A short last sector merges into the one before.</small>
-        </div>
-
-        <div className="panel stack">
-          <span style={{ fontWeight: 500 }}>Start</span>
-          <Segmented
-            label="Start type"
-            value={startType}
-            onChange={setStartType}
-            options={[
-              { value: 'rolling', label: 'Rolling' },
-              { value: 'standing', label: 'Standing' },
-            ]}
-          />
-          <small className="mute">
-            {startType === 'rolling'
-              ? 'The timer starts when you cross the start line.'
-              : 'Stop at the start, then a 3–10 s countdown. Moving more than 10 m early costs +5 s.'}
-          </small>
-        </div>
-
-        <label className="field">
-          <span>Name</span>
-          <input className="input" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Brno Circuit, full lap" />
-        </label>
-
-        <button className="btn primary lg block" disabled={saving || snapping || snapped.length < 2 || !name.trim()} onClick={save}>
-          {saving ? 'Saving…' : orig ? 'Save changes' : 'Save route'}
+      <div className="edge" />
+      <div className="sb" />
+      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/routes'))}>
+          <I n="back" />
         </button>
-        <p className="mute" style={{ fontSize: 13, textAlign: 'center' }}>
-          {orig
-            ? 'Changing the shape, sectors or start resets the laps timed on this route.'
-            : 'New routes are private. Once a route has been published, its shape and sectors are locked.'}
-        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="glass ib" onClick={locate} aria-label="Go to my location">
+            <I n="loc" />
+          </button>
+          <button className="glass ib" onClick={() => setWaypoints((w) => w.slice(0, -1))} disabled={!waypoints.length} aria-label="Undo last waypoint">
+            <I n="undo" />
+          </button>
+        </div>
       </div>
+      <div className="glass sheet sheet-b" style={{ paddingTop: 20, display: 'grid', gap: 10, bottom: 'calc(8px + var(--safe-b))' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }} aria-live="polite">
+          <span className="t" style={{ fontSize: 40 }}>
+            {km.toFixed(2)}
+            <span className="lbl"> km</span>
+          </span>
+          <button className="lbl" onClick={() => setTuning(true)} aria-label={`${boundaries.length} sectors of ${sectorM} m. Change`}>
+            {waypoints.length === 0
+              ? 'Tap the map to start'
+              : waypoints.length === 1
+                ? 'Tap the next point'
+                : snapping
+                  ? 'Snapping to roads…'
+                  : `${boundaries.length} sectors`}
+          </button>
+        </div>
+        {snapError && <p className="err">{snapError}</p>}
+        <label className="field">
+          <span className="visually-hidden">Name</span>
+          <input maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="Route name" enterKeyHint="done" />
+        </label>
+        <Segmented
+          label="Start"
+          value={kind}
+          onChange={setKind}
+          options={[
+            { value: 'standing', label: 'Standing' },
+            { value: 'rolling', label: 'Rolling' },
+            { value: 'lap', label: 'Lap' },
+          ]}
+        />
+        <button className="solid" style={{ marginTop: 4 }} disabled={saving || snapping || snapped.length < 2 || !name.trim()} onClick={save}>
+          {saving ? 'Saving…' : orig ? 'Save changes' : 'Save'}
+        </button>
+      </div>
+      <Sheet open={tuning} onClose={() => setTuning(false)} label="Sectors">
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <h2 className="title" style={{ fontSize: 24 }}>Sectors</h2>
+            <span className="t" style={{ fontSize: 28 }}>{sectorM} m</span>
+          </div>
+          <input className="range" type="range" min={50} max={1000} step={50} value={sectorM} onChange={(e) => setSectorM(Number(e.target.value))} aria-label="Sector length" />
+          <p className="lbl" style={{ fontSize: 14 }}>
+            The ticks on the map show where each sector ends. A short last sector merges into the one before.{' '}
+            {startType === 'rolling' ? 'The timer starts when you cross the start line.' : 'Standing: stop at the start, then a 3–10 s countdown; moving more than 10 m early costs +5 s.'}
+          </p>
+          <p className="lbl" style={{ fontSize: 14 }}>
+            {orig
+              ? 'Changing the shape, sectors or start resets the laps timed on this route.'
+              : 'New routes are private. Once a route has been published, its shape and sectors are locked.'}
+          </p>
+          <button
+            className="solid danger"
+            disabled={!waypoints.length}
+            onClick={() => {
+              setWaypoints([]);
+              setTuning(false);
+            }}
+          >
+            Clear the route
+          </button>
+          <button className="solid quiet" onClick={() => setTuning(false)}>
+            Done
+          </button>
+        </div>
+      </Sheet>
     </main>
   );
 }

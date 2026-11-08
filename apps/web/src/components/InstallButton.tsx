@@ -8,7 +8,7 @@ import { Sheet, useToast } from './ui';
  * otherwise a sheet with the steps for iOS or an Android browser without it.
  * Renders nothing once installed or where installing isn't possible.
  */
-export function InstallButton({ className = 'btn block' }: { className?: string }) {
+export function InstallButton({ className = 'solid quiet' }: { className?: string }) {
   const { way, install } = useInstall();
   const toast = useToast();
   const [help, setHelp] = useState(false);
@@ -30,11 +30,11 @@ export function InstallButton({ className = 'btn block' }: { className?: string 
         Add to home screen
       </button>
       <Sheet open={help} onClose={() => setHelp(false)} label="Add to home screen">
-        <div className="stack">
-          <h2>Add to home screen</h2>
-          <p className="mute">Purple Sector then opens full screen like an app, and keeps working with poor signal at the track.</p>
+        <div style={{ display: 'grid', gap: 12 }}>
+          <h2 className="title" style={{ fontSize: 24 }}>Add to home screen</h2>
+          <p className="lbl" style={{ fontSize: 15 }}>Purple Sector then opens full screen like an app, and keeps working with poor signal at the track.</p>
           {way === 'ios' ? (
-            <ol className="install-steps">
+            <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
               <li>
                 Tap Share <ShareIcon /> in Safari's toolbar (in Chrome, it's in the address bar).
               </li>
@@ -46,7 +46,7 @@ export function InstallButton({ className = 'btn block' }: { className?: string 
               </li>
             </ol>
           ) : (
-            <ol className="install-steps">
+            <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
               <li>
                 Open the browser menu <strong aria-label="three dots">⋮</strong>.
               </li>
@@ -55,10 +55,10 @@ export function InstallButton({ className = 'btn block' }: { className?: string 
               </li>
             </ol>
           )}
-          <p className="mute" style={{ fontSize: 14 }}>
+          <p className="lbl">
             Don't see it? Open this page in {way === 'ios' ? 'Safari' : 'Chrome'} rather than inside another app.
           </p>
-          <button type="button" className="btn primary block" onClick={() => setHelp(false)}>
+          <button type="button" className="solid" onClick={() => setHelp(false)}>
             Got it
           </button>
         </div>
@@ -71,7 +71,7 @@ export function InstallButton({ className = 'btn block' }: { className?: string 
 const APK_URL = 'https://github.com/marekjancikorbis/marek_f1_lap_timer/releases/latest/download/purple-sector.apk';
 
 /** Download the Android app: shown on Android phones, but not inside the app itself. */
-export function AndroidAppButton({ className = 'btn block' }: { className?: string }) {
+export function AndroidAppButton({ className = 'solid quiet' }: { className?: string }) {
   if (Capacitor.isNativePlatform() || !/Android/.test(navigator.userAgent)) return null;
   return (
     <a className={className} href={APK_URL}>

@@ -1,12 +1,12 @@
 import { compareLaps, type LapComparison } from '@laptimer/timing';
-import { ArrowDownUp, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { DeltaGraph } from '../components/Charts';
-import { SectorList, useSectorTable } from '../components/LapView';
-import { Empty, errorMessage, Loading, ScreenHead, Sheet } from '../components/ui';
+import { useSectorTable } from '../components/LapView';
+import { RouteMap } from '../components/RouteMap';
+import { Empty, errorMessage, I, Loading, ScreenHead, Sheet } from '../components/ui';
 import { getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
-import { formatDate, formatLap, formatSeconds } from '../lib/format';
+import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
 import { bigRoute, notCounted, resolveLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
@@ -17,6 +17,7 @@ export default function Compare() {
   const { routeId = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const { profile } = useMe();
+  const nav = useNavigate();
   const [route, setRoute] = useState<Route | null | undefined>(undefined);
   const [a, setA] = useState<ResolvedLap | null | undefined>(undefined);
   const [b, setB] = useState<ResolvedLap | null | undefined>(undefined);
@@ -66,56 +67,85 @@ export default function Compare() {
   if (route === undefined || a === undefined || b === undefined) return <Loading />;
   if (!route)
     return (
-      <main className="screen">
+      <main className="ph soft">
+        <div className="sb" />
         <ScreenHead back />
         <Empty title="Route not available" />
       </main>
     );
   if (!a || !b || !cmp)
     return (
-      <main className="screen">
+      <main className="ph soft">
+        <div className="sb" />
         <ScreenHead back title="Compare" />
         <Empty title="Nothing to compare yet">
-          {!a ? "One of the laps isn't available. " : ''}
-          {aRef === 'best' && !a ? 'Your theoretical best needs at least one lap on this route. ' : ''}
+          {!a ? 'One of the laps isn\u2019t available. ' : ''}
+          {aRef === 'best' && !a ? 'Your ideal lap needs at least one lap on this route. ' : ''}
           Drive this route to compare against it.
         </Empty>
-        {error && <p className="notice error">{error}</p>}
+        {error && <p className="err" style={{ textAlign: 'center' }}>{error}</p>}
       </main>
     );
 
   const aLabel = label(a);
   const bLabel = label(b);
+  // The map: each minisector in the colour of whoever was faster through it.
+  const who = sectorTable?.flatMap((t) => t.kids.map((k) => (k.deltaMs == null ? null : k.deltaMs <= 0 ? ('green' as const) : ('yellow' as const)))) ?? [];
+  const gap = cmp.gapMs;
 
   return (
-    <main className="screen">
-      <ScreenHead back title={`Compare · ${route.name}`} />
-
-      {/* A and B side by side, the swap between them; B is what A is measured against. */}
-      <section className="cmp-cards">
-        <LapHead lap={a} label={a.username || a.label} tag="A" />
-        <button className="icon-btn cmp-swap" aria-label="Swap A and B" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
-          <ArrowDownUp size={22} />
+    <main className="ph fixed compare">
+      <div className="map">
+        <RouteMap route={route} colours={who} height="100%" padding={{ top: 120, bottom: 380, left: 40, right: 40 }} />
+      </div>
+      <div className="edge" />
+      <div className="sb" />
+      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
+        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav(`/r/${route.id}`))}>
+          <I n="back" />
         </button>
-        <LapHead lap={b} label={b.username || b.label} tag="B" record={bRef === 'record'} />
-      </section>
-      <button className="cmp-with" onClick={() => setPicker(true)}>
-        <span className="mute">Compare with</span>
-        <strong className="grow ellipsis" style={{ textAlign: 'right' }}>
-          {bLabel}
-        </strong>
-        <ChevronRight size={18} aria-hidden="true" />
-      </button>
-      <h2 className="section-title row between">
-        Sectors
-        <span className="section-sub">A against B</span>
-      </h2>
-      <SectorList table={sectorTable} refLabel={bLabel} totalMs={cmp.gapMs} who="A" />
-
-      <section className="panel chart-panel cmp-gap-card">
-        <span className="cap">Gap over the lap</span>
-        <DeltaGraph data={cmp.delta} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} />
-      </section>
+        <button className="glass ib" aria-label="Swap the two laps" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
+          <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />
+          </svg>
+        </button>
+      </div>
+      <div className="glass sheet sheet-b" style={{ paddingTop: 20, bottom: 'calc(8px + var(--safe-b))' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'end', gap: 8 }}>
+          <div style={{ minWidth: 0 }}>
+            <div className="lbl" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <i className="dot" style={{ background: 'var(--s-g)' }} />
+              <span className="ellipsis">{a.username || (a.label === 'Your lap' ? 'You' : a.label)}</span>
+            </div>
+            <div className="t" style={{ fontSize: 26, marginTop: 6 }}>{formatLap(a.totalMs)}</div>
+          </div>
+          <span className={`t${gap > 0 ? ' acc' : ''}`} style={{ fontSize: 18, paddingBottom: 4, color: gap <= 0 ? 'var(--s-g)' : undefined }}>
+            {formatDelta(gap, 2)}
+          </span>
+          <button style={{ textAlign: 'right', minWidth: 0 }} onClick={() => setPicker(true)} aria-label={`Compared with ${bLabel}. Change`}>
+            <div className="lbl" style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <span className="ellipsis">{b.username || b.label}</span>
+              <i className="dot" style={{ background: 'var(--s-y)' }} />
+            </div>
+            <div className="t" style={{ fontSize: 26, marginTop: 6 }}>{formatLap(b.totalMs)}</div>
+          </button>
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <DeltaGraph data={cmp.delta} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} />
+        </div>
+        {sectorTable && (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sectorTable.length}, 1fr)`, marginTop: 6 }} className="lbl">
+            {sectorTable.map((t, i) => (
+              <span key={t.row.name} style={{ textAlign: i === 0 ? 'left' : i === sectorTable.length - 1 ? 'right' : 'center' }}>
+                {t.row.name} {t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : '–'}
+              </span>
+            ))}
+          </div>
+        )}
+        <Link className="solid" style={{ marginTop: 16 }} to={`/drive/${route.id}?ref=${bRef}`}>
+          Race {b.username || (bRef === 'record' ? 'the record' : bRef === 'best' ? 'your ideal lap' : 'this lap')}
+        </Link>
+      </div>
 
       <Sheet open={picker} onClose={() => setPicker(false)} label="Compare with">
         <LapPicker
@@ -151,27 +181,27 @@ function LapPicker({ route, runs, posts, exclude, onPick }: { route: Route; runs
   const board = leaderboardFrom(posts);
   const item = (ref: string, title: string, sub: string, ms: number | null) =>
     ref === exclude ? null : (
-      <button key={ref} className="ref-option" onClick={() => onPick(ref)}>
-        <span className="grow" style={{ minWidth: 0 }}>
-          <strong className="ellipsis">{title}</strong>
-          <span className="mute ellipsis" style={{ display: 'block', fontSize: 13 }}>
-            {sub}
-          </span>
-        </span>
-        {ms != null && <span className="num" style={{ fontSize: 20 }}>{formatLap(ms)}</span>}
+      <button key={ref} onClick={() => onPick(ref)} style={{ gridTemplateColumns: '1fr auto', textAlign: 'left' }}>
+        <div style={{ minWidth: 0 }}>
+          <b className="ellipsis" style={{ display: 'block' }}>{title}</b>
+          <div className="lbl ellipsis">{sub}</div>
+        </div>
+        {ms != null && <span className="t" style={{ fontSize: 19 }}>{formatLap(ms)}</span>}
       </button>
     );
   return (
-    <div className="stack" style={{ gap: 8 }}>
-      <h2>Compare with</h2>
-      {runs.some((r) => r.valid) && item('best', 'Your theoretical best', 'Best time in each sector', null)}
+    <div>
+      <h2 className="title" style={{ fontSize: 24 }}>Compare with</h2>
+      <div className="rows">
+      {runs.some((r) => r.valid) && item('best', 'Your ideal lap', 'Best time in each sector', null)}
       {posts.length > 0 && item('record', 'Route record', 'All purple sectors', null)}
       {/* Your fastest laps, then your newest that don't count (partial or signal lost) */}
       {[...runs.filter((r) => r.valid).sort((x, y) => x.totalMs - y.totalMs).slice(0, 10), ...runs.filter((r) => !r.valid).sort((x, y) => y.startedAt - x.startedAt).slice(0, 5)].map((r) =>
         item(`run:${r.id}`, notCounted(r) ? `Your lap · ${notCounted(r)}` : 'Your lap', formatDate(r.startedAt), r.partial ? null : r.totalMs),
       )}
       {board.slice(0, 20).map(({ rank, post }) => item(`post:${post.id}`, `P${rank} ${post.username}`, post.car ?? formatDate(post.startedAt), post.totalMs))}
-      {!runs.length && !posts.length && <p className="mute">No other laps on {route.name} yet.</p>}
+      {!runs.length && !posts.length && <p className="lbl">No other laps on {route.name} yet.</p>}
+      </div>
     </div>
   );
 }

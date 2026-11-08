@@ -1,13 +1,13 @@
 import { serverTimestamp } from 'firebase/firestore';
-import { ChevronDown, ChevronLeft, ChevronRight, Clock, Flag, Shield, User as UserIcon, Volume2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Avatar, Empty, errorMessage, Loading, ScreenHead, Segmented, Sheet, Switch, useToast } from '../components/ui';
+import { Avatar, Empty, errorMessage, I, Loading, ScreenHead, Sheet, Switch, useToast } from '../components/ui';
+import { RouteMap } from '../components/RouteMap';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getPost, getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom, updateMyProfile } from '../lib/data';
 import { formatLap } from '../lib/format';
 import { bigColoursFor, bigRecords, postBigColours, racedSplits, resolveLap, toBig, type ResolvedLap } from '../lib/laps';
-import { bestSectors } from '@laptimer/timing';
+import { bestSectors, theoreticalBest } from '@laptimer/timing';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run, SectorColourName } from '../lib/types';
 import { listLogs } from '../drive/gpslogs';
@@ -76,6 +76,7 @@ export default function PreDrive() {
   const records = useMemo(() => (route?.isPublic ? sectorRecordsFrom(posts, route.boundaries.length) : null), [posts, route]);
   const pbs = useMemo(() => bestSectors(runs.filter((r) => route && r.splitTimesMs.length === route.boundaries.length)), [runs, route]);
   const bigRecs = useMemo(() => (route?.isPublic ? bigRecords(posts, route) : null), [posts, route]);
+  const ideal = useMemo(() => theoreticalBest(runs.filter((r) => route && r.splitTimesMs.length === route.boundaries.length)), [runs, route]);
   const bigPbs = useMemo(() => (route ? bestSectors(toBig(runs, route)) : []), [runs, route]);
 
   const options = useMemo(() => {
@@ -166,161 +167,184 @@ export default function PreDrive() {
   if (route === undefined) return <Loading />;
   if (route === null)
     return (
-      <main className="screen">
+      <main className="ph soft">
+        <div className="sb" />
         <ScreenHead back />
         <Empty title="Route not available" />
       </main>
     );
 
-  const icon = (o: Option) =>
-    o.ref.startsWith('run:') ? (
-      <UserIcon size={22} aria-hidden="true" />
-    ) : o.who ? (
-      <Avatar name={o.who.name} hue={o.who.hue} size={32} />
-    ) : o.ref === 'record' ? (
-      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="fastest" aria-hidden="true">
-        <path d="M9 20V8h6v12M3 20v-7h6M15 20v-9h6v9M2 20h20" />
-      </svg>
-    ) : o.ref === 'best' ? (
-      <Clock size={22} aria-hidden="true" />
-    ) : o.ref === '' ? (
-      <X size={22} aria-hidden="true" />
-    ) : (
-      <UserIcon size={22} aria-hidden="true" />
-    );
-  const renderOption = (o: Option) => (
-    <button key={o.ref} className={`list-item ref-row ${ref === o.ref ? 'on' : ''}`} onClick={() => setRef(o.ref)} aria-pressed={ref === o.ref}>
-      <span className="ref-icon">{icon(o)}</span>
-      <span className="grow" style={{ minWidth: 0 }}>
-        <strong className="ellipsis">{o.title}</strong>
-        <span className="mute ellipsis small-text">
-          {o.totalMs != null ? `${formatLap(o.totalMs)} · ${o.sub}` : o.sub}
-        </span>
-      </span>
-      <span className="radio" aria-hidden="true" />
-    </button>
-  );
-
   const all = [...options.mine, ...options.theirs];
+  const recordMs = records && records.length && records.every((x) => x != null) ? (records as number[]).reduce((a, b) => a + b, 0) : null;
+  const idealMs = ideal ? ideal[ideal.length - 1] : null;
+  const picked = all.find((x) => x.ref === ref);
+  // The second tile is your best, or the lap you came here to race (Race on someone's lap).
+  const lapTile = picked && picked !== options.mine[0] ? picked : options.mine[0];
   const chosen =
     ref === ''
       ? 'just the clock'
       : ref === 'best'
-        ? 'your theoretical best'
+        ? 'your ideal lap'
         : ref === 'record'
           ? 'the route record'
-          : (() => {
-              const o = all.find((x) => x.ref === ref);
-              return o ? `${o.ref.startsWith('run:') ? o.title.toLowerCase() : o.title}, ${formatLap(o.totalMs)}` : 'the chosen lap';
-            })();
+          : picked
+            ? `${picked.ref.startsWith('run:') ? picked.title.toLowerCase() : picked.title}, ${formatLap(picked.totalMs)}`
+            : 'the chosen lap';
+  const tint = 'color-mix(in srgb, var(--ink) 8%, transparent)';
+  const tile = (key: string, label: string, ms: number | null, opts: { acc?: boolean; enabled?: boolean } = {}) => {
+    const on = ref === key;
+    const enabled = opts.enabled ?? true;
+    return (
+      <button
+        key={label}
+        className="ready-tile"
+        disabled={!enabled}
+        aria-pressed={on}
+        onClick={() => setRef(key)}
+        style={{
+          padding: 14,
+          borderRadius: 20,
+          textAlign: 'left',
+          background: on ? 'color-mix(in srgb, var(--main) 35%, transparent)' : tint,
+          boxShadow: on ? 'inset 0 0 0 2px var(--main-hi)' : 'none',
+          opacity: enabled ? 1 : 0.5,
+        }}
+      >
+        <div className="lbl ellipsis" style={on ? { color: 'var(--ink)' } : undefined}>{label}</div>
+        <div className={`t${opts.acc ? ' acc' : ''}`} style={{ fontSize: 26, marginTop: 6, color: ms == null ? 'var(--ink-2)' : undefined }}>
+          {ms == null ? '—' : formatLap(ms)}
+        </div>
+      </button>
+    );
+  };
 
   return (
-    <main className="screen predrive with-cta">
-      <ScreenHead back title={route.name} />
-
-      <h2 className="section-title">Race against</h2>
-      <div className="list">
-        {posts.length > 0 && renderOption({ ref: 'record', title: 'Route record', sub: 'Fastest in every sector', totalMs: null, splits: null, fastest: true })}
-        {options.mine.slice(0, 1).map(renderOption)}
-        {/* A lap picked elsewhere (Race on a feed card) stays in view. */}
-        {[...options.mine.slice(1), ...options.theirs].filter((o) => o.ref === ref).map(renderOption)}
-        {options.mine.length > 1 && renderOption({ ref: 'best', title: 'Theoretical best', sub: 'Your best time in each sector', totalMs: null, splits: null, fastest: false })}
-        {renderOption({ ref: '', title: 'No reference', sub: 'Just the clock', totalMs: null, splits: null })}
-        {moreLaps && [...options.mine.slice(1, 6), ...options.theirs].filter((o) => o.ref !== ref).map(renderOption)}
-        {!moreLaps && options.mine.length + options.theirs.length > 1 && (
-          <button className="list-item ref-more" onClick={() => setMoreLaps(true)}>
-            <span className="grow mute">Other laps and drivers</span>
-            <ChevronDown size={18} aria-hidden="true" />
-          </button>
-        )}
+    <main className="ph fixed ready">
+      <div className="map">
+        <RouteMap route={route} height="100%" padding={{ top: 130, bottom: 440, left: 40, right: 40 }} />
       </div>
-
-      <h2 className="section-title">Setup</h2>
-      <div className="list">
-        {route.startType === 'standing' && (
-          <div className="list-item">
-            <span className="grow">
-              <strong>Countdown</strong>
-              <span className="mute small-text">Lights go out this long after Start</span>
-            </span>
-            <span className="stepper" role="group" aria-label="Countdown seconds">
-              <button className="icon-btn" aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
-                <ChevronLeft size={18} />
-              </button>
-              <strong>{countdown} s</strong>
-              <button className="icon-btn" aria-label="Longer" disabled={countdown >= 10} onClick={() => setCountdown(countdown + 1)}>
-                <ChevronRight size={18} />
-              </button>
-            </span>
-          </div>
-        )}
-        <div className="list-item predrive-screen">
-          <strong>Screen</strong>
-          <Segmented
-            label="Drive screen"
-            value={mode}
-            onChange={setMode}
-            options={[
-              { value: 'hud', label: 'Full HUD' },
-              { value: 'delta', label: 'Delta only' },
-            ]}
-          />
-        </div>
-        <div className="list-item">
-          <Volume2 size={22} aria-hidden="true" />
-          <span className="grow">
-            <strong>Voice callouts</strong>
-            <span className="mute small-text">“Sector 2, minus zero point four”</span>
-          </span>
-          <Switch label="Voice callouts" checked={voice} onChange={setVoice} />
-        </div>
-        <div className="list-item">
-          <span className="grow">
-            <strong>Simulate the drive</strong>
-            <span className="mute small-text">Desk test with a generated GPS trace. Simulated laps can't be posted.</span>
-          </span>
-          <Switch label="Simulate the drive" checked={replay} onChange={setReplay} />
-        </div>
-      </div>
-      {replay && routeLogs.length > 0 && (
-        <div className="stack" style={{ gap: 8, marginTop: 12 }}>
-          {[{ recordedAt: 0, fixes: [] }, ...routeLogs].map((l) => (
-            <button key={l.recordedAt} className={`ref-option ${logAt === l.recordedAt ? 'on' : ''}`} onClick={() => setLogAt(l.recordedAt)} aria-pressed={logAt === l.recordedAt}>
-              <span className="radio" aria-hidden="true" />
-              <span className="grow">
-                <strong>{l.recordedAt ? `Recorded ${new Date(l.recordedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}` : 'Generated drive'}</strong>
-                <span className="mute small-text">{l.recordedAt ? `Replays your real GPS log · ${l.fixes.length} fixes` : 'A synthetic trace along the route'}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="sticky-cta predrive-cta">
-        <button className="btn primary xl block" disabled={starting} onClick={go} aria-label={`Start, racing ${chosen}`}>
-          {starting ? 'Getting GPS…' : 'Start'}
+      <div className="edge" />
+      <div className="sb" />
+      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <button className="glass ib" aria-label="Close" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/drive'))}>
+          <I n="x" />
         </button>
+        <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, maxWidth: '70%' }}>
+          {route.name}
+        </span>
       </div>
+      <div className="glass sheet sheet-b" style={{ paddingTop: 18, bottom: 'calc(8px + var(--safe-b))' }}>
+        <div className="lbl">Race against</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+          {tile('record', 'Record', recordMs, { acc: true, enabled: posts.length > 0 })}
+          {lapTile ? tile(lapTile.ref, lapTile.ref.startsWith('run:') ? lapTile.title : lapTile.title, lapTile.totalMs) : tile('none', 'Your best', null, { enabled: false })}
+          {tile('best', 'Ideal', idealMs, { enabled: options.mine.length > 1 })}
+          {tile('', 'Clock only', null)}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '4px 6px 4px 16px', borderRadius: 26, background: tint }}>
+          {route.startType === 'standing' ? (
+            <>
+              <span className="lbl" style={{ flex: 1 }}>Lights</span>
+              <button className="ib" aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
+                <I n="minus" />
+              </button>
+              <b className="t" style={{ fontSize: 22, width: 36, textAlign: 'center' }} aria-live="polite">
+                {countdown}s
+              </b>
+              <button className="ib" aria-label="Longer" disabled={countdown >= 10} onClick={() => setCountdown(countdown + 1)}>
+                <I n="plus" />
+              </button>
+              <span style={{ width: 1, height: 26, background: 'color-mix(in srgb, var(--ink) 16%, transparent)' }} />
+            </>
+          ) : (
+            <span className="lbl" style={{ flex: 1 }}>Rolling start</span>
+          )}
+          <button className="ib" aria-label={voice ? 'Voice callouts on' : 'Voice callouts off'} aria-pressed={voice} style={{ color: voice ? 'var(--main-hi)' : 'var(--ink-2)' }} onClick={() => setVoice(!voice)}>
+            <I n={voice ? 'vol' : 'mute'} />
+          </button>
+          <button className="ib" aria-label="More options" style={{ color: 'var(--ink-2)' }} onClick={() => setMoreLaps(true)}>
+            <I n="gear" />
+          </button>
+        </div>
+        <div style={{ display: 'grid', justifyItems: 'center', marginTop: 18 }}>
+          <button className="solid start-btn" style={{ width: 112, height: 112, borderRadius: '50%', fontSize: 21 }} disabled={starting} onClick={go} aria-label={`Start, racing ${chosen}`}>
+            {starting ? 'GPS…' : 'Start'}
+          </button>
+        </div>
+      </div>
+
+      <Sheet open={moreLaps} onClose={() => setMoreLaps(false)} label="More options">
+        <div style={{ display: 'grid', gap: 4 }}>
+          <h2 className="title" style={{ fontSize: 24 }}>Race against</h2>
+          <div className="rows">
+            {all.map((o) => (
+              <button key={o.ref} onClick={() => setRef(o.ref)} aria-pressed={ref === o.ref} style={{ gridTemplateColumns: '36px 1fr auto', textAlign: 'left' }}>
+                {o.who ? <Avatar name={o.who.name} hue={o.who.hue} /> : <span className="av" style={{ background: 'var(--main)', color: 'var(--on-main)' }}>ME</span>}
+                <div style={{ minWidth: 0 }}>
+                  <b className="ellipsis" style={{ display: 'block' }}>{o.title}</b>
+                  <div className="lbl ellipsis">{o.sub}</div>
+                </div>
+                <span className={`t${ref === o.ref ? ' acc' : ''}`} style={{ fontSize: 19 }}>
+                  {formatLap(o.totalMs)} {ref === o.ref && '✓'}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="lbl" style={{ marginTop: 14 }}>Setup</div>
+          <div className="rows">
+            <div style={{ gridTemplateColumns: '1fr auto' }}>
+              <div>
+                <b>Start in delta only</b>
+                <div className="lbl">Or turn the phone sideways while driving</div>
+              </div>
+              <Switch label="Start in delta only" checked={mode === 'delta'} onChange={(v) => setMode(v ? 'delta' : 'hud')} />
+            </div>
+            <div style={{ gridTemplateColumns: '1fr auto' }}>
+              <div>
+                <b>Simulate the drive</b>
+                <div className="lbl">Desk test with a generated GPS trace. Simulated laps can&rsquo;t be posted.</div>
+              </div>
+              <Switch label="Simulate the drive" checked={replay} onChange={setReplay} />
+            </div>
+            {replay &&
+              [{ recordedAt: 0, fixes: [] as unknown[] }, ...routeLogs].map((l) => (
+                <button key={l.recordedAt} onClick={() => setLogAt(l.recordedAt)} aria-pressed={logAt === l.recordedAt} style={{ gridTemplateColumns: '1fr auto', textAlign: 'left' }}>
+                  <div>
+                    <b>{l.recordedAt ? `Recorded ${new Date(l.recordedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}` : 'Generated drive'}</b>
+                    <div className="lbl">{l.recordedAt ? `Replays your real GPS log · ${l.fixes.length} fixes` : 'A synthetic trace along the route'}</div>
+                  </div>
+                  <span>{logAt === l.recordedAt ? '✓' : ''}</span>
+                </button>
+              ))}
+          </div>
+          <button className="solid" style={{ marginTop: 12 }} onClick={() => setMoreLaps(false)}>
+            Done
+          </button>
+        </div>
+      </Sheet>
 
       <Sheet open={terms} onClose={() => setTerms(false)} label="Before your first drive">
-        <div className="stack">
-          <h2 className="terms-title">Before your first drive</h2>
-          <p className="terms-lead">Purple Sector is for track days and rally events.</p>
-          <div className="list">
-            <p className="list-item terms-row">
-              <Flag size={22} aria-hidden="true" /> Only time yourself where timed driving is allowed and the road is closed to traffic.
-            </p>
-            <p className="list-item terms-row">
-              <Shield size={22} aria-hidden="true" /> You drive at your own risk and are responsible for following the rules of the venue and the law.
-            </p>
-            <p className="list-item terms-row">
-              <Clock size={22} aria-hidden="true" /> Timing starts when you move off after GO. Moving more than 10 m before GO adds 5 s.
-            </p>
+        <div style={{ display: 'grid', gap: 12 }}>
+          <h2 className="title" style={{ fontSize: 24 }}>Before your first drive</h2>
+          <p className="lbl" style={{ fontSize: 15 }}>Purple Sector is for track days and rally events.</p>
+          <div className="rows">
+            <div style={{ gridTemplateColumns: '24px 1fr' }}>
+              <I n="flag" />
+              <span>Only time yourself where timed driving is allowed and the road is closed to traffic.</span>
+            </div>
+            <div style={{ gridTemplateColumns: '24px 1fr' }}>
+              <I n="user" />
+              <span>You drive at your own risk and are responsible for following the rules of the venue and the law.</span>
+            </div>
+            <div style={{ gridTemplateColumns: '24px 1fr' }}>
+              <I n="watch" />
+              <span>Timing starts when you move off after GO. Moving more than 10 m before GO adds 5 s.</span>
+            </div>
           </div>
-          <button className="btn primary lg block" onClick={acceptTerms}>
+          <button className="solid" onClick={acceptTerms}>
             I agree
           </button>
-          <button className="btn lg block" onClick={() => setTerms(false)}>
+          <button className="solid quiet" onClick={() => setTerms(false)}>
             Not now
           </button>
         </div>

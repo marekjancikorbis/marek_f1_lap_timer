@@ -1,8 +1,7 @@
-import { ListFilter } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PostSheet } from '../components/PostSheet';
-import { Empty, errorMessage, Loading, ScreenHead, SectorStrip, Segmented, useToast } from '../components/ui';
+import { Empty, errorMessage, I, Loading, SectorStrip, useToast } from '../components/ui';
 import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
 import { historyColours, notCounted } from '../lib/laps';
@@ -103,106 +102,114 @@ export default function RunHistory() {
   const day = (t: number) =>
     `${new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 
+  const quiet = { background: 'color-mix(in srgb, var(--ink) 10%, transparent)' };
   return (
-    <main className="screen">
-      <ScreenHead
-        back
-        title={`My laps · ${route?.name ?? 'Route'}`}
-        right={
-          runs.length > 0 && (
-            <button className="icon-btn" aria-label={editing ? 'Done' : 'Select laps to compare, post or delete'} aria-pressed={editing} onClick={() => setEditing((e) => !e)}>
-              <ListFilter size={22} />
+    <main className="ph soft docked">
+      <div className="sb" />
+      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/routes'))}>
+          <I n="back" />
+        </button>
+        {runs.length > 0 && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="glass chip" style={{ height: 48, borderRadius: 24, padding: '0 16px' }} onClick={() => changeSort(sort === 'time' ? 'date' : 'time')} aria-label={`Sorted by ${sort === 'time' ? 'fastest' : 'newest'}. Change`}>
+              {sort === 'time' ? 'Fastest' : 'Newest'}
             </button>
-          )
-        }
-      />
+            <button className="glass chip" style={{ height: 48, borderRadius: 24, padding: '0 16px' }} aria-pressed={editing} onClick={() => setEditing((e) => !e)}>
+              {editing ? 'Done' : 'Select'}
+            </button>
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '12px 20px 0' }}>
+        <h1 className="title">{route?.name ?? 'Route'}</h1>
+        <div className="lbl">
+          {route ? `${formatDistance(route.lengthM)} · ` : ''}
+          {runs.length} {runs.length === 1 ? 'lap' : 'laps'}
+        </div>
+      </div>
       {runs.length === 0 ? (
-        <Empty title="No laps yet" action={<Link className="btn primary" to={`/drive/${routeId}`}>Drive it</Link>} />
+        <Empty title="No laps yet" action={<Link className="solid" to={`/drive/${routeId}`}>Drive it</Link>} />
       ) : (
         <>
           {theoretical && counted.length > 1 && (
-            <section className="panel navy history-best">
-              <span className="livery thin" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span className="cap">Theoretical best</span>
-              <strong className="num history-best-time">{formatLap(theoretical[theoretical.length - 1])}</strong>
-              <span className="mute">
-                Your best time in each sector added up
-                {best && best.totalMs > theoretical[theoretical.length - 1] &&
-                  ` · ${((best.totalMs - theoretical[theoretical.length - 1]) / 1000).toFixed(2)} under your best`}
-              </span>
-            </section>
+            <div style={{ padding: '16px 16px 0' }}>
+              <div className="glass lift" style={{ borderRadius: 28, padding: '18px 20px' }}>
+                <div className="lbl">Ideal</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 8 }}>
+                  <span className="t acc" style={{ fontSize: 46 }}>{formatLap(theoretical[theoretical.length - 1])}</span>
+                  {best && best.totalMs > theoretical[theoretical.length - 1] && <span className="lbl">−{((best.totalMs - theoretical[theoretical.length - 1]) / 1000).toFixed(2)}</span>}
+                </div>
+              </div>
+            </div>
           )}
-          <div style={{ marginTop: 12 }}>
-            <Segmented
-              label="Sort laps"
-              value={sort}
-              onChange={changeSort}
-              options={[
-                { value: 'time', label: 'Fastest' },
-                { value: 'date', label: 'Newest' },
-              ]}
-            />
-          </div>
-          {editing && <p className="mute small-text" style={{ marginTop: 10 }}>Select two laps to compare them.</p>}
-          <div className="list" style={{ marginTop: 10 }}>
-            {(sorted ?? []).map((run) => (
-              <article key={run.id} className={`history-row ${selected.includes(run.id) ? 'selected' : ''}`}>
-                {editing && (
-                  <button className="run-select" onClick={() => toggle(run.id)} aria-pressed={selected.includes(run.id)} aria-label={`Select lap ${formatLap(run.totalMs)}`}>
-                    <span className="check" />
-                  </button>
-                )}
-                <Link to={`/run/${run.id}`} className="history-main">
-                  <span className="grow">
-                    <span className="history-line">
-                      {/* A partial lap has no finish time: show how far it got. */}
-                      <strong className={`num history-time ${run.partial ? 'partial-dist' : ''}`}>
-                        {run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}
-                      </strong>
-                      {run.id === pbId && <span className="badge green">PB</span>}
-                      {run.posted && <span className="badge ink">Posted</span>}
-                      {run.penaltyMs > 0 && <span className="badge red">+5 s</span>}
-                      {run.replay && <span className="badge outline">Sim</span>}
-                      {notCounted(run) && <span className="badge outline">{notCounted(run)}</span>}
+          {editing && <p className="lbl" style={{ padding: '12px 24px 0' }}>Select two laps to compare them.</p>}
+          <div className="rows" style={{ padding: '10px 24px 0' }}>
+            {(sorted ?? []).map((run) => {
+              const chip =
+                run.id === pbId ? (
+                  <span className="chip" style={{ background: 'var(--main)', color: 'var(--on-main)' }}>PB</span>
+                ) : run.penaltyMs > 0 ? (
+                  <span className="chip" style={quiet}>+5 s</span>
+                ) : run.replay ? (
+                  <span className="chip" style={quiet}>Sim</span>
+                ) : notCounted(run) ? (
+                  <span className="chip" style={quiet}>{notCounted(run)}</span>
+                ) : run.posted ? (
+                  <span className="chip" style={quiet}>Posted</span>
+                ) : null;
+              const picked = selected.includes(run.id);
+              return (
+                <div key={run.id} style={{ gridTemplateColumns: editing ? '28px 1fr auto auto' : '1fr auto auto', display: 'grid' }}>
+                  {editing && (
+                    <button
+                      onClick={() => toggle(run.id)}
+                      aria-pressed={picked}
+                      aria-label={`Select lap ${formatLap(run.totalMs)}`}
+                      style={{ width: 24, height: 24, borderRadius: 12, display: 'grid', placeItems: 'center', background: picked ? 'var(--main)' : 'transparent', color: 'var(--on-main)', boxShadow: picked ? 'none' : 'inset 0 0 0 2px var(--ink-2)' }}
+                    >
+                      {picked && <I n="check" size={16} />}
+                    </button>
+                  )}
+                  <Link to={`/run/${run.id}`} style={{ minWidth: 0 }}>
+                    {/* A partial lap has no finish time: show how far it got. */}
+                    <span className="t" style={{ fontSize: 22, opacity: run.partial ? 0.6 : 1 }}>
+                      {run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}
                     </span>
-                    <span className="mute small-text" style={{ marginTop: 4 }}>
+                    <div className="lbl">
                       {day(run.startedAt)}
                       {run.partial && ` · GPS lost in S${run.splitTimesMs.length + 1}`}
-                    </span>
-                  </span>
-                  <span className="history-stripe">
-                    <SectorStrip colours={colours(run)} />
-                  </span>
-                </Link>
-                {editing && (
-                  <div className="run-actions">
-                    {route?.isPublic && run.valid && !run.replay && (run.posted ? (
-                      <button className="btn sm" onClick={() => unpost(run)}>
-                        Unpost
+                    </div>
+                  </Link>
+                  {chip ?? <span />}
+                  <SectorStrip colours={colours(run)} />
+                  {editing && (
+                    <div style={{ gridColumn: '2 / -1', display: 'flex', gap: 8 }}>
+                      {route?.isPublic && run.valid && !run.replay &&
+                        (run.posted ? (
+                          <button className="chip" style={quiet} onClick={() => unpost(run)}>
+                            Unpost
+                          </button>
+                        ) : (
+                          <button className="chip" style={{ background: 'var(--main)', color: 'var(--on-main)' }} onClick={() => setPosting(run)}>
+                            Post
+                          </button>
+                        ))}
+                      <button className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }} onClick={() => remove(run)} aria-label="Delete lap">
+                        Delete
                       </button>
-                    ) : (
-                      <button className="btn sm primary" onClick={() => setPosting(run)}>
-                        Post
-                      </button>
-                    ))}
-                    <button className="btn sm danger" onClick={() => remove(run)} aria-label="Delete lap">
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </article>
-            ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
 
       {selected.length === 2 && (
-        <div className="floating-cta">
-          <button className="btn primary lg block" onClick={() => nav(`/compare/${routeId}?a=run:${selected[0]}&b=run:${selected[1]}`)}>
+        <div style={{ position: 'fixed', left: 16, right: 16, bottom: 'calc(100px + var(--safe-b))', zIndex: 20, maxWidth: 528, margin: '0 auto' }}>
+          <button className="solid" onClick={() => nav(`/compare/${routeId}?a=run:${selected[0]}&b=run:${selected[1]}`)}>
             Compare selected laps
           </button>
         </div>

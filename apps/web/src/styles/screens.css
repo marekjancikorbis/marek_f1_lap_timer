@@ -2084,26 +2084,7 @@
   padding-bottom: 2px;
 }
 
-.chip {
-  flex: none;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--card);
-  color: var(--ink-2);
-  font: 800 12px/1 var(--font-ui);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background-color 150ms, color 150ms;
-}
 
-.chip[aria-pressed='true'] {
-  /* Solid: chips sit over the map. */
-  background: var(--navy);
-  color: var(--on-navy);
-}
 
 .section-link {
   font: 700 0.8125rem/1 var(--font-ui);
@@ -2663,14 +2644,7 @@
   font-size: 1.25rem;
 }
 
-.heat {
-  margin-top: 12px;
-  padding: 14px;
-}
 
-.heat .cap {
-  color: var(--mute);
-}
 
 .heat-weeks {
   display: grid;
@@ -2700,10 +2674,6 @@
   letter-spacing: 0;
 }
 
-.btn.xl {
-  min-height: 60px;
-  font-size: 1.1875rem;
-}
 
 /* Pre-drive: who to race, as rows with the radio on the right. */
 .ref-row {

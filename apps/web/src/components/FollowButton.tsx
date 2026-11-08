@@ -41,7 +41,8 @@ export function FollowButton({ userId, size = 'sm', onChange, back }: { userId: 
 
   return (
     <button
-      className={`btn ${size === 'sm' ? 'sm' : ''} ${following ? '' : 'primary'}`}
+      className={size === 'lg' ? 'solid' : 'chip'}
+      style={following ? { background: 'color-mix(in srgb, var(--ink) 10%, transparent)', color: 'var(--ink)' } : { background: 'var(--main)', color: 'var(--on-main)' }}
       onClick={toggle}
       disabled={busy || following === null}
       aria-pressed={!!following}
