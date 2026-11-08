@@ -142,6 +142,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
   <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
   <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="routes" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19h8a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7h8"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="loc" viewBox="0 0 24 24"><path d="M12 2 4 21l8-4 8 4z"/></symbol>
 </svg>
@@ -214,7 +215,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
     <div class="glass lift pill"><span class="av" style="background:#a9c2ff">JK</span><div><div class="lbl">jan.k · Most</div><div class="t" style="font-size:22px;margin-top:2px">1:38.902</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Race</span></div>
   </div>
   <div class="tabbar">
-    <nav class="glass tabs"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <nav class="glass tabs"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
     <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
   </div>
 </div>
@@ -243,7 +244,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
     </div>
   </div>
   <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
     <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
   </div>
 </div>
@@ -257,11 +258,11 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
   <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center"><div class="title">Routes</div><button class="glass round ib" aria-label="Build a route"><svg class="i"><use href="#plus"/></svg></button></div>
   <div style="padding:14px 16px 0"><div class="glass seg"><span class="on">Built</span><span>My laps</span></div></div>
   <div style="padding:14px 16px 0;display:grid;gap:10px">
-    <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:var(--main-hi);stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Ecce Homo</b><div class="lbl">3.42 km · standing</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Public</span></div>
-    <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:var(--main-hi);stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Club sprint</b><div class="lbl">2.10 km · lap</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Private</span></div>
+    <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:#fff;stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Ecce Homo</b><div class="lbl">3.42 km · standing</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Public</span></div>
+    <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:#fff;stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Club sprint</b><div class="lbl">2.10 km · lap</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Private</span></div>
   </div>
   <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab on"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
     <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
   </div>
 </div>
@@ -357,7 +358,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
     <div style="grid-template-columns:1fr auto"><div><b>Club sprint</b><div class="lbl">19 Oct</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
   </div>
   <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
     <button class="glass round go" style="box-shadow:0 0 0 3px var(--main-hi)" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
   </div>
 </div>
@@ -559,7 +560,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
     <div><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><b>ondra_m</b><div class="lbl">Followed you · Sat</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Following</span></div>
   </div>
   <div class="tabbar">
-    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab on"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
     <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
   </div>
 </div>
