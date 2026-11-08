@@ -164,12 +164,17 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
 
 /* ---------- the bento as glass ---------- */
 .ph.sl::after { opacity: .08 }
-/* background: a still gradient in the palette's blob colours (an optional third colour glows in the middle) */
+/* background: a gradient in the palette's blob colours (an optional third colour glows in the middle) that drifts
+   slowly, so the glass tiles visibly bend something moving; each layer is oversized and slides on its own path */
 .ph.sl { background:
   radial-gradient(60% 32% at 62% 46%, color-mix(in srgb, var(--blob-c, transparent) 70%, transparent), transparent 100%),
   radial-gradient(90% 55% at 15% 12%, color-mix(in srgb, var(--blob-a) 75%, transparent), transparent 100%),
   radial-gradient(90% 55% at 90% 88%, color-mix(in srgb, var(--blob-b) 80%, transparent), transparent 100%),
-  var(--sea) }
+  var(--sea);
+  background-size: 150% 150%, 150% 150%, 150% 150%, auto; background-position: 50% 50%, 0% 0%, 100% 100%, 0 0;
+  animation: drift 14s ease-in-out infinite alternate }
+@keyframes drift { to { background-position: 30% 70%, 70% 30%, 20% 60%, 0 0 } }
+@media (prefers-reduced-motion: reduce) { .ph.sl { animation: none } }
 .ph.sl .glass.tl, .ph.sl .glass.ib, .ph.sl .glass.tab { background: color-mix(in srgb, var(--sheet) 60%, transparent);
   -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
 html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.tab { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
