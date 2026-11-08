@@ -116,6 +116,8 @@ html.lens .dock { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); 
 .dock .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .dock .tab.go { width: 54px; height: 54px; justify-self: center; border-radius: 50%; background: var(--red); color: var(--on-red) }
 @media (prefers-reduced-transparency: reduce) { .dock, html.lens .dock { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
+/* a sheet pulled up over the map turns thicker, so the route underneath doesn't run through the list */
+.glass.sheet.up { background: color-mix(in srgb, var(--night) 85%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
 
 /* ---------- screens without a map sit on Home's moving gradient (defined with Home below); lists sit on it directly ---------- */
@@ -317,6 +319,37 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
 <figcaption>Explore</figcaption>
 </figure>
 
+<!-- EXPLORE: SHEET PULLED UP -->
+<figure>
+<div class="ph soft">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
+    <path d="{{full.all}}" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="{{full.all}}" stroke="var(--main-hi)" stroke-width="5"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px"><div class="glass field" style="color:var(--ink-2);gap:10px"><svg class="i" style="width:18px"><use href="#search"/></svg>Routes and drivers</div></div>
+  <div class="glass sheet up" style="position:absolute;left:8px;right:8px;top:128px;bottom:100px;border-radius:34px;padding:10px 18px 12px">
+    <div class="grab"></div>
+    <div class="lbl">Routes nearby</div>
+    <div class="rows">
+      <div style="grid-template-columns:1fr auto"><div><b>Ecce Homo</b><div class="lbl">3.42 km · Official</div></div><span class="t acc" style="font-size:20px">2:11.47</span></div>
+      <div style="grid-template-columns:1fr auto"><div><b>Autodrom Most</b><div class="lbl">4.21 km · lap</div></div><span class="t" style="font-size:20px">1:38.902</span></div>
+      <div style="grid-template-columns:1fr auto"><div><b>Club sprint</b><div class="lbl">2.10 km · lap</div></div><span class="t" style="font-size:20px">0:48.115</span></div>
+      <div style="grid-template-columns:1fr auto"><div><b>Vysoké Mýto</b><div class="lbl">1.90 km · standing</div></div><span class="t" style="font-size:20px">0:49.02</span></div>
+    </div>
+    <div class="lbl" style="margin-top:12px">Drivers</div>
+    <div class="rows">
+      <div style="grid-template-columns:36px 1fr auto"><span class="av" style="background:#ffc49b">PR</span><div><b>petra_r</b><div class="lbl">12 records</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
+      <div style="grid-template-columns:36px 1fr auto"><span class="av" style="background:#b9c8ff">JK</span><div><b>jan.k</b><div class="lbl">Ecce Homo · 2:13.98</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
+    </div>
+  </div>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Explore, sheet pulled up</figcaption>
+</figure>
+
 <!-- MY ROUTES -->
 <figure>
 <div class="ph soft">
@@ -383,6 +416,41 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   </div>
 </div>
 <figcaption>Route</figcaption>
+</figure>
+
+<!-- ROUTE: SHEET PULLED UP -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
+    <path d="{{full.all}}" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="{{full.s1}}" stroke="var(--s-p)" stroke-width="5"/><path d="{{full.s2}}" stroke="var(--s-g)" stroke-width="5"/><path d="{{full.s3}}" stroke="var(--s-y)" stroke-width="5"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass round ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="glass sheet sheet-b up" style="top:118px">
+    <div class="grab"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:22px;letter-spacing:-.02em">Ecce Homo</b><span class="lbl">3.42 km · standing</span></div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-top:12px"><span class="t acc" style="font-size:44px">2:11.47</span><span class="lbl">petra_r</span></div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr)" class="lbl">
+      <span style="display:flex;gap:6px;align-items:center"><i class="dot" style="background:var(--s-p)"></i>0:40.19</span>
+      <span style="display:flex;gap:6px;align-items:center;justify-content:center"><i class="dot" style="background:var(--s-g)"></i>0:47.69</span>
+      <span style="display:flex;gap:6px;align-items:center;justify-content:flex-end"><i class="dot" style="background:var(--s-y)"></i>0:43.59</span>
+    </div>
+    <div class="rows" style="margin-top:6px">
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">2</span><span>Pavel N.</span><span class="t" style="font-size:19px">2:12.90</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">3</span><span>Ondra M.</span><span class="t" style="font-size:19px">2:13.55</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">4</span><span>jan.k</span><span class="t" style="font-size:19px">2:13.98</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">5</span><span>Lukáš V.</span><span class="t" style="font-size:19px">2:14.10</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">6</span><span>marek_j</span><span class="t" style="font-size:19px">2:14.62</span></div>
+      <div style="grid-template-columns:20px 1fr auto;color:var(--main-hi)"><span class="lbl" style="color:inherit">7</span><b>You</b><span class="t" style="font-size:19px">2:14.83</span></div>
+      <div style="grid-template-columns:20px 1fr auto"><span class="lbl">8</span><span>Eva S.</span><span class="t" style="font-size:19px">2:16.40</span></div>
+    </div>
+    <button class="solid" style="margin-top:12px">Drive</button>
+  </div>
+</div>
+<figcaption>Route, sheet pulled up</figcaption>
 </figure>
 
 <!-- RUN HISTORY -->
@@ -522,6 +590,64 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="solid">Race this lap</button></div>
 </div>
 <figcaption>Lap detail</figcaption>
+</figure>
+
+<!-- LAP DETAIL: GRAPHS TAB -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:16px 20px 0;display:flex;gap:12px;align-items:center"><span class="av" style="width:48px;height:48px;background:#ffc49b">PR</span><div><b style="font-size:18px">petra_r</b><div class="lbl">Ecce Homo · 2 Nov</div></div></div>
+  <div style="padding:14px 20px 0;display:flex;align-items:baseline;gap:12px"><span class="t acc" style="font-size:64px">2:11.47</span><span class="lbl">Record</span></div>
+  <div style="padding:16px 16px 0"><div class="glass seg"><span>Sectors</span><span class="on">Graphs</span><span>Map</span></div></div>
+  <div class="glass lift" style="margin:14px 16px 0;border-radius:30px;padding:16px 18px">
+    <div class="lbl" style="display:flex;justify-content:space-between"><span>Speed, km/h</span><span>Top 118</span></div>
+    <svg viewBox="0 0 318 124" style="width:100%;display:block;margin-top:10px" aria-label="Speed over the lap, coloured by sector">
+      <defs><linearGradient id="spd" gradientUnits="userSpaceOnUse" x1="0" x2="318" y1="0" y2="0">
+        <stop offset=".33" stop-color="var(--s-p)"/><stop offset=".33" stop-color="var(--s-g)"/><stop offset=".66" stop-color="var(--s-g)"/><stop offset=".66" stop-color="var(--s-y)"/></linearGradient></defs>
+      <line x1="106" y1="0" x2="106" y2="124" stroke="var(--ink)" stroke-opacity=".1"/><line x1="212" y1="0" x2="212" y2="124" stroke="var(--ink)" stroke-opacity=".1"/>
+      <path d="M0 118 C14 70 30 44 52 40 S80 92 100 98 S124 36 150 30 S178 96 196 104 S226 52 248 44 S276 72 292 66 S310 40 318 36" fill="none" stroke="url(#spd)" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);margin-top:6px" class="lbl"><span>S1</span><span style="text-align:center">S2</span><span style="text-align:right">S3</span></div>
+  </div>
+  <div class="glass lift" style="margin:10px 16px 0;border-radius:30px;padding:16px 18px">
+    <div class="lbl" style="display:flex;justify-content:space-between"><span>Ahead of your best</span><span class="t acc" style="font-size:15px">−3.36</span></div>
+    <svg viewBox="0 0 318 70" style="width:100%;display:block;margin-top:10px" aria-label="Time gained on your best over the lap">
+      <line x1="0" y1="60" x2="318" y2="60" stroke="var(--ink)" stroke-opacity=".2" stroke-dasharray="3 5"/>
+      <path d="M0 60 C30 58 50 50 80 46 S120 40 150 32 S200 26 230 22 S290 14 318 10 L318 60 L0 60Z" fill="var(--accent)" fill-opacity=".16"/>
+      <path d="M0 60 C30 58 50 50 80 46 S120 40 150 32 S200 26 230 22 S290 14 318 10" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    </svg>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="solid">Race this lap</button></div>
+</div>
+<figcaption>Lap detail · Graphs</figcaption>
+</figure>
+
+<!-- LAP DETAIL: MAP TAB -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:16px 20px 0;display:flex;gap:12px;align-items:center"><span class="av" style="width:48px;height:48px;background:#ffc49b">PR</span><div><b style="font-size:18px">petra_r</b><div class="lbl">Ecce Homo · 2 Nov</div></div></div>
+  <div style="padding:14px 20px 0;display:flex;align-items:baseline;gap:12px"><span class="t acc" style="font-size:64px">2:11.47</span><span class="lbl">Record</span></div>
+  <div style="padding:16px 16px 0"><div class="glass seg"><span>Sectors</span><span>Graphs</span><span class="on">Map</span></div></div>
+  <div class="glass lift" style="margin:14px 16px 0;border-radius:30px;height:245px;padding:0;overflow:hidden;position:relative;isolation:isolate">
+    <div class="map" style="--map-img:var(--map-card)"></div>
+    <svg viewBox="0 0 366 250" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;z-index:-2;fill:none;stroke-linecap:round;stroke-linejoin:round" aria-label="The lap on the map, coloured by sector">
+      <path d="{{card.all}}" stroke="var(--night)" stroke-width="9" opacity=".6"/>
+      <path d="{{card.s1}}" stroke="var(--s-p)" stroke-width="4.5"/><path d="{{card.s2}}" stroke="var(--s-g)" stroke-width="4.5"/><path d="{{card.s3}}" stroke="var(--s-y)" stroke-width="4.5"/>
+      <circle cx="{{card.start.0}}" cy="{{card.start.1}}" r="6" fill="var(--accent)" stroke="var(--night)" stroke-width="2.5"/>
+      <circle cx="{{card.finish.0}}" cy="{{card.finish.1}}" r="5" fill="var(--ink)" stroke="var(--night)" stroke-width="2.5"/>
+    </svg>
+  </div>
+  <div style="margin:12px 20px 0;display:grid;grid-template-columns:repeat(3,1fr)">
+    <div><div class="lbl" style="display:flex;gap:6px;align-items:center"><i class="dot" style="background:var(--s-p)"></i>S1</div><div class="t" style="font-size:20px;margin-top:4px">0:40.19</div></div>
+    <div style="text-align:center"><div class="lbl" style="display:flex;gap:6px;align-items:center;justify-content:center"><i class="dot" style="background:var(--s-g)"></i>S2</div><div class="t" style="font-size:20px;margin-top:4px">0:47.69</div></div>
+    <div style="text-align:right"><div class="lbl" style="display:flex;gap:6px;align-items:center;justify-content:flex-end"><i class="dot" style="background:var(--s-y)"></i>S3</div><div class="t" style="font-size:20px;margin-top:4px">0:43.59</div></div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="solid">Race this lap</button></div>
+</div>
+<figcaption>Lap detail · Map</figcaption>
 </figure>
 
 <!-- COMPARE -->
