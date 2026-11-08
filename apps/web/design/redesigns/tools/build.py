@@ -100,7 +100,7 @@ PAGES = {
         'red': '#c6ff3d', 'on-red': '#14112b', 'red-ink': '#2a2350', 'snow': '#ece6ff', 'snow-2': 'rgba(236, 230, 255, .8)',
         'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.4)', 'map-tint': '#1d1f4a', 'map-blend': 'color',
         'sheet': 'rgba(16, 18, 40, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
-        'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6', 'blob-c': '#d8ff2e',
+        'blob-a': '#c4b5ff', 'blob-b': '#6f5bd6', 'blob-c': 'transparent',
         **VIVID, 's-g': '#12c9b8'}, ['#10121c', '#c4b5ff', '#c6ff3d']),
     'bento-crimson': ('bento', 'Glass bento · Crimson', {
         'page': '#5c0816', 'ring': '#2a0409', 'sea': '#7a0c1f', 'tile': '#8a0f24', 'deep': '#5c0816',
