@@ -122,6 +122,10 @@ html.lens .dock { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); 
 .play { width: 56px; height: 56px; border-radius: 50%; border: 0; display: grid; place-items: center; background: var(--main); color: var(--on-main); flex: none }
 .scrub { position: relative; height: 6px; border-radius: 3px; margin-top: 10px; background: linear-gradient(90deg, var(--main-hi) var(--p), color-mix(in srgb, var(--ink) 18%, transparent) var(--p)) }
 .scrub::after { content: ""; position: absolute; left: var(--p); top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.4) }
+/* Delta only (the phone on its side): the screen is the last sector's colour, glass on it is clear and the ink dark */
+.ph.delta { background: radial-gradient(70% 90% at 30% 10%, rgba(255,255,255,.28), transparent 70%), var(--s-g); color: #04210f }
+.glass.clear { background: rgba(255,255,255,.2); color: inherit; -webkit-backdrop-filter: blur(3px) saturate(1.4); backdrop-filter: blur(3px) saturate(1.4) }
+.chip.clear { height: 38px; font-size: 15px }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
 
 /* ---------- screens without a map sit on Home's moving gradient (defined with Home below); lists sit on it directly ---------- */
@@ -576,6 +580,22 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="glass sheet" style="width:100%;height:58px;border-radius:29px;font-weight:600;font-size:17px">Hold to stop</button></div>
 </div>
 <figcaption>Drive</figcaption>
+</figure>
+
+<!-- DRIVE, DELTA ONLY: the phone on its side; the whole screen takes the last sector's colour, one number on it -->
+<figure>
+<div class="ph delta" style="width:844px;height:390px">
+  <div style="padding:22px 52px 0;display:flex;justify-content:space-between;align-items:center">
+    <span class="glass chip clear">Ecce Homo</span>
+    <span class="glass chip clear"><span class="dot" style="background:currentColor"></span>±3 m</span>
+  </div>
+  <div style="text-align:center;margin-top:6px">
+    <div class="t" style="font-size:190px;letter-spacing:-.05em">−0.41</div>
+    <div style="font-size:17px;font-weight:600;margin-top:6px;opacity:.8">vs your best</div>
+  </div>
+  <div style="position:absolute;left:50%;bottom:22px;width:300px;margin-left:-150px"><button class="glass clear" style="width:100%;height:54px;border-radius:27px;font-weight:600;font-size:17px;color:inherit">Hold to stop</button></div>
+</div>
+<figcaption>Drive · delta only, phone on its side</figcaption>
 </figure>
 
 <!-- RESULT -->
