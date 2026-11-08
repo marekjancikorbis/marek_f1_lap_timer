@@ -102,6 +102,13 @@ PAGES = {
         'sheet': 'rgba(1, 38, 58, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'blob-a': '#0a6a9c', 'blob-b': '#e22c2c',
         **VIVID}, ['#013f60', '#e22c2c', '#f3efe6']),
+    'bento-pine': ('bento', 'Glass tiles · Teal & mint', {
+        'page': '#071f27', 'ring': '#04141a', 'sea': '#0b303c', 'tile': '#134454', 'deep': '#082630',
+        'red': '#cdece2', 'on-red': '#0b303c', 'red-ink': '#0b303c', 'snow': '#e8f6f1', 'snow-2': 'rgba(232, 246, 241, .8)',
+        'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#0f4a5c', 'map-blend': 'color',
+        'sheet': 'rgba(11, 48, 60, .45)', 'clear': 'rgba(205, 236, 226, .07)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
+        'blob-a': '#86b8ab', 'blob-b': '#1b6b6b',
+        **VIVID}, ['#0b303c', '#cdece2']),
     'bento-cobalt': ('bento', 'Glass tiles · Lavender & lime', {
         'page': '#080a12', 'ring': '#05060b', 'sea': '#10121c', 'tile': '#1c1d33', 'deep': '#0b0c15',
         'red': '#c6ff3d', 'on-red': '#14112b', 'red-ink': '#2a2350', 'snow': '#ece6ff', 'snow-2': 'rgba(236, 230, 255, .8)',
