@@ -219,6 +219,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
   <symbol id="play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></symbol>
   <symbol id="routes" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19h8a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7h8"/></symbol>
+  <symbol id="watch" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5M12 2.5V6"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="route" viewBox="0 0 366 250"><path d="{{card.all}}"/></symbol>
   <symbol id="loc" viewBox="0 0 24 24"><path d="M12 2 4 21l8-4 8 4z"/></symbol>
@@ -294,7 +295,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div class="glass tl"><span class="av" style="background:#b9d3ff">JK</span><div class="t" style="font-size:28px;margin-top:12px">1:38.902</div></div>
     <div class="glass tl"><span class="av" style="background:#c9f0d8">OM</span><div class="t" style="font-size:28px;margin-top:12px">0:48.115</div></div>
   </div>
-  <nav class="glass dock"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="glass dock"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Home</figcaption>
 </figure>
@@ -320,7 +321,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
       <div style="grid-template-columns:1fr auto"><div><b>Autodrom Most</b><div class="lbl">4.21 km · lap</div></div><span class="t" style="font-size:20px">1:38.902</span></div>
     </div>
   </div>
-  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Explore</figcaption>
 </figure>
@@ -351,17 +352,53 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
       <div style="grid-template-columns:36px 1fr auto"><span class="av" style="background:#b9c8ff">JK</span><div><b>jan.k</b><div class="lbl">Ecce Homo · 2:13.98</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
     </div>
   </div>
-  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Explore, sheet pulled up</figcaption>
 </figure>
 
-<!-- MY ROUTES -->
+<!-- TIMES: your best on every route you have driven -->
 <figure>
 <div class="ph soft">
   <div class="sb">9:41</div>
-  <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center"><div class="title">Routes</div><button class="glass round ib" aria-label="Build a route"><svg class="i"><use href="#plus"/></svg></button></div>
-  <div style="padding:14px 16px 0"><div class="glass seg"><span class="on">Built</span><span>My laps</span></div></div>
+  <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center;min-height:56px"><div class="title">Times</div></div>
+  <div style="padding:14px 16px 0"><div class="glass seg"><span class="on">Times</span><span>My routes</span></div></div>
+  <div style="padding:14px 16px 0;display:grid;gap:10px">
+    <div class="glass lift" style="border-radius:28px;padding:16px 16px 16px 20px;display:flex;align-items:center;gap:12px"><div style="flex:1"><b>Ecce Homo</b><div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="t acc" style="font-size:28px">2:14.83</span><span class="lbl">PB</span></div><div class="lbl" style="margin-top:4px">Last 2:15.40 · 2 Nov</div></div><span class="st" style="width:56px"><i class="p"></i><i class="g"></i><i class="y"></i></span><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
+    <div class="glass lift" style="border-radius:28px;padding:16px 16px 16px 20px;display:flex;align-items:center;gap:12px"><div style="flex:1"><b>Autodrom Most</b><div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="t acc" style="font-size:28px">1:41.330</span><span class="lbl">PB</span></div><div class="lbl" style="margin-top:4px">Last 1:42.015 · 26 Oct</div></div><span class="st" style="width:56px"><i class="y"></i><i class="g"></i><i class="g"></i></span><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
+    <div class="glass lift" style="border-radius:28px;padding:16px 16px 16px 20px;display:flex;align-items:center;gap:12px"><div style="flex:1"><b>Vysoké Mýto</b><div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="t acc" style="font-size:28px">0:49.02</span><span class="lbl">PB</span></div><div class="lbl" style="margin-top:4px">Last 0:49.88 · 12 Oct</div></div><span class="st" style="width:56px"><i class="g"></i><i class="y"></i><i class="y"></i></span><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
+  </div>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab on"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Times</figcaption>
+</figure>
+
+<!-- TIMES: one route, every lap -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:12px 20px 0"><div class="title">Ecce Homo</div><div class="lbl">3.42 km · 4 laps</div></div>
+  <div style="padding:16px 16px 0">
+    <div class="glass lift" style="border-radius:30px;padding:18px 20px"><div class="lbl">Ideal</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span class="t acc" style="font-size:46px">2:13.91</span><span class="lbl">−0.92</span></div></div>
+  </div>
+  <div class="rows" style="padding:10px 24px 0">
+    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:14.83</span><div class="lbl">2 Nov</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">PB</span><span class="st"><i class="p"></i><i class="g"></i><i class="y"></i></span></div>
+    <div style="grid-template-columns:1fr auto"><div><span class="t" style="font-size:22px">2:15.40</span><div class="lbl">2 Nov</div></div><span class="st"><i class="g"></i><i class="y"></i><i class="y"></i></span></div>
+    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:21.06</span><div class="lbl">26 Oct</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">+5 s</span><span class="st"><i class="y"></i><i class="y"></i><i class="g"></i></span></div>
+    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:18.77</span><div class="lbl">25 Oct</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Sim</span><span class="st"><i class="y"></i><i class="g"></i><i class="y"></i></span></div>
+  </div>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab on"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Times · Ecce Homo</figcaption>
+</figure>
+
+<!-- TIMES: MY ROUTES (only for creators, who can build routes) -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center;min-height:56px"><div class="title">Times</div><button class="glass round ib" aria-label="Build a route"><svg class="i"><use href="#plus"/></svg></button></div>
+  <div style="padding:14px 16px 0"><div class="glass seg"><span>Times</span><span class="on">My routes</span></div></div>
   <div style="padding:14px 16px 0;display:grid;gap:10px">
     <div class="lbl" style="padding:0 4px">Your routes</div>
     <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:#fff;stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Club sprint</b><div class="lbl">2.10 km · lap</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Private</span></div>
@@ -371,9 +408,9 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:#fff;stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Ecce Homo</b><div class="lbl">3.42 km · standing</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Official</span></div>
     <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:#fff;stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Autodrom Most</b><div class="lbl">4.21 km · lap</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Official</span></div>
   </div>
-  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab on"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab on"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
-<figcaption>Routes</figcaption>
+<figcaption>Times · My routes</figcaption>
 </figure>
 
 <!-- ROUTE BUILDER -->
@@ -466,25 +503,6 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
 <figcaption>Route, sheet pulled up</figcaption>
 </figure>
 
-<!-- RUN HISTORY -->
-<figure>
-<div class="ph soft">
-  <div class="sb">9:41</div>
-  <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center"><div class="title">Routes</div><button class="glass round ib" aria-label="Build a route"><svg class="i"><use href="#plus"/></svg></button></div>
-  <div style="padding:14px 16px 0"><div class="glass seg"><span>Built</span><span class="on">My laps</span></div></div>
-  <div style="padding:16px 16px 0">
-    <div class="glass lift" style="border-radius:30px;padding:18px 20px"><div class="lbl">Ecce Homo · Ideal</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span class="t acc" style="font-size:46px">2:13.91</span><span class="lbl">−0.92</span></div></div>
-  </div>
-  <div class="rows" style="padding:10px 24px 0">
-    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:14.83</span><div class="lbl">2 Nov</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">PB</span><span class="st"><i class="p"></i><i class="g"></i><i class="y"></i></span></div>
-    <div style="grid-template-columns:1fr auto"><div><span class="t" style="font-size:22px">2:15.40</span><div class="lbl">2 Nov</div></div><span class="st"><i class="g"></i><i class="y"></i><i class="y"></i></span></div>
-    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:21.06</span><div class="lbl">26 Oct</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">+5 s</span><span class="st"><i class="y"></i><i class="y"></i><i class="g"></i></span></div>
-    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:18.77</span><div class="lbl">25 Oct</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Sim</span><span class="st"><i class="y"></i><i class="g"></i><i class="y"></i></span></div>
-  </div>
-  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab on"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
-</div>
-<figcaption>Routes · My laps</figcaption>
-</figure>
 
 <!-- DRIVE TAB -->
 <figure>
@@ -502,7 +520,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div style="grid-template-columns:1fr auto"><div><b>Autodrom Most</b><div class="lbl">26 Oct</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
     <div style="grid-template-columns:1fr auto"><div><b>Club sprint</b><div class="lbl">19 Oct</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
   </div>
-  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go" style="box-shadow:0 0 0 3px var(--snow)"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go" style="box-shadow:0 0 0 3px var(--snow)"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Drive</figcaption>
 </figure>
@@ -732,7 +750,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
       <div style="grid-template-columns:1fr auto"><div><div class="lbl">Vysoké Mýto</div><div class="t" style="font-size:24px;margin-top:3px">0:49.02</div></div><div class="st"><i class="g"></i><i class="y"></i><i class="y"></i></div></div>
     </div>
   </div>
-  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab on"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg></span><span class="tab on"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Profile, scrolled</figcaption>
 </figure>
@@ -771,7 +789,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div style="grid-template-columns:36px 1fr"><span class="av" style="background:var(--main);color:var(--on-main)">✓</span><div><b>Creator access approved</b><div class="lbl">Mon</div></div></div>
     <div><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><b>ondra_m</b><div class="lbl">Followed you · Sat</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Following</span></div>
   </div>
-  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#routes"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+  <nav class="glass dock"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Notifications</figcaption>
 </figure>
