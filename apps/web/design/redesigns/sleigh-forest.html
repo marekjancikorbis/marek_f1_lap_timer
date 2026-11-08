@@ -60,6 +60,14 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .map { isolation: isolate }
 .map::before { content: ""; position: absolute; inset: 0; background: var(--map-img) center / cover; filter: var(--map-filter); z-index: -2 }
 .map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: var(--map-blend); z-index: -1 }
+
+.field { height: 56px; display: flex; align-items: center; padding: 0 18px; font-weight: 600; font-size: 16px }
+.seg { height: 48px; border-radius: 18px; padding: 4px; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--deep) }
+.seg span { display: grid; place-items: center; border-radius: 14px; font-size: 12px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .06em; color: var(--snow-2) }
+.seg span.on { background: var(--snow); color: var(--sea) }
+.bar { display: grid; grid-template-columns: 28px 1fr 64px; align-items: center; gap: 10px }
+.bar i { height: 14px; border-radius: 3px; justify-self: end }
+.bar b { font-size: 22px; text-align: right }
 </style>
 </head>
 <body>
@@ -72,6 +80,9 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
   <symbol id="back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
   <symbol id="share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 14v6h14v-6"/></symbol>
   <symbol id="vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="route" viewBox="0 0 366 250"><path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0"/></symbol>
 </svg>
@@ -83,6 +94,39 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 </header>
 
 <div class="wall">
+
+<!-- SIGN IN -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="bento" style="padding-top:12px">
+    <div class="tl red w2" style="height:330px;display:flex;flex-direction:column;justify-content:space-between;padding:22px">
+      <span class="wm">Purple Sector</span>
+      <div class="t" style="font-size:66px">Race the lap<br>to beat.</div>
+    </div>
+    <div class="tl w2 field">tomas@example.com</div>
+    <div class="tl w2 field" style="letter-spacing:.2em">••••••••</div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px;display:grid;gap:8px"><button class="btn snow" style="height:60px;font-size:17px">Sign in</button><button class="btn line" style="height:52px">Create account</button></div>
+</div>
+<figcaption>Sign in</figcaption>
+</figure>
+
+<!-- USERNAME -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="bento" style="padding-top:12px">
+    <div class="tl w2" style="padding:22px"><div class="k">Username</div><div class="t" style="font-size:44px;margin-top:14px">Shown on<br>every lap.</div></div>
+    <div class="tl red" style="display:grid;place-items:center;height:170px"><span class="t" style="font-size:64px">TK</span></div>
+    <div class="tl deep" style="height:170px;display:flex;flex-direction:column;justify-content:space-between"><div class="k">Free</div><span class="t" style="font-size:64px;color:var(--s-g)">✓</span></div>
+    <div class="tl snow w2 field" style="justify-content:space-between"><b>@tomas_k</b></div>
+    <div class="k w2" style="padding:2px 6px;letter-spacing:.06em">3–20 letters, numbers, _ and .</div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px;font-size:17px">Continue</button></div>
+</div>
+<figcaption>Pick a username</figcaption>
+</figure>
 
 <!-- HOME -->
 <figure>
@@ -113,6 +157,68 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
   <nav class="tabs"><span class="tab on"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Home</figcaption>
+</figure>
+
+<!-- EXPLORE -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><div class="tl field" style="flex:1;height:44px;padding:0 14px;gap:10px;color:var(--snow-2)"><svg class="i" style="width:18px"><use href="#search"/></svg>Routes and drivers</div></div>
+  <div class="bento">
+    <div class="tl deep w2 map" style="height:330px;padding:0;--map-img:var(--map-card)">
+      <svg viewBox="0 0 366 250" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round" aria-label="Route map">
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--deep)" stroke-width="13"/>
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--snow)" stroke-width="6"/>
+        <circle cx="126.9" cy="170.2" r="8" fill="var(--red)" stroke="var(--snow)" stroke-width="3"/>
+        
+      </svg>
+    </div>
+    <div class="tl"><div class="k">Ecce Homo</div><div class="t" style="font-size:32px;margin-top:12px">2:11.47</div><div class="k" style="margin-top:8px;letter-spacing:.04em">3.42 km</div></div>
+    <div class="tl"><div class="k">Most</div><div class="t" style="font-size:32px;margin-top:12px">1:38.902</div><div class="k" style="margin-top:8px;letter-spacing:.04em">4.21 km · lap</div></div>
+  </div>
+  <nav class="tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Explore</figcaption>
+</figure>
+
+<!-- MY ROUTES -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><span class="wm">Routes</span><button class="ib" aria-label="Build a route"><svg class="i"><use href="#plus"/></svg></button></div>
+  <div class="bento">
+    <div class="w2 seg"><span class="on">Built</span><span>My laps</span></div>
+    <div class="tl w2" style="display:flex;gap:14px;align-items:center"><svg viewBox="40 0 300 250" style="width:58px;stroke:currentColor;fill:none;stroke-width:14;stroke-linecap:round;stroke-linejoin:round;opacity:.85"><use href="#route"/></svg><div style="flex:1"><div class="t" style="font-size:26px">Ecce Homo</div><div class="k" style="margin-top:6px;letter-spacing:.04em">3.42 km · standing</div></div><span class="k" style="color:var(--snow)">Public</span></div>
+    <div class="tl w2" style="display:flex;gap:14px;align-items:center"><svg viewBox="40 0 300 250" style="width:58px;stroke:currentColor;fill:none;stroke-width:14;stroke-linecap:round;stroke-linejoin:round;opacity:.85"><use href="#route"/></svg><div style="flex:1"><div class="t" style="font-size:26px">Club sprint</div><div class="k" style="margin-top:6px;letter-spacing:.04em">2.10 km · lap</div></div><span class="k">Private</span></div>
+    <div class="tl red w2" style="display:flex;justify-content:space-between;align-items:center"><div class="k">9 drivers on Ecce Homo</div><span class="t" style="font-size:28px">→</span></div>
+  </div>
+  <nav class="tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Routes</figcaption>
+</figure>
+
+<!-- ROUTE BUILDER -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="ib" aria-label="Undo"><svg class="i"><use href="#undo"/></svg></button></div>
+  <div class="bento">
+    <div class="tl deep w2 map" style="height:300px;padding:0;--map-img:var(--map-card)">
+      <svg viewBox="0 0 366 250" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round" aria-label="Route map">
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--deep)" stroke-width="13"/>
+        <path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0" stroke="var(--snow)" stroke-width="6"/>
+        <circle cx="126.9" cy="170.2" r="8" fill="var(--red)" stroke="var(--snow)" stroke-width="3"/>
+        <circle cx="239.1" cy="30.0" r="7" fill="var(--snow)" stroke="var(--deep)" stroke-width="3"/>
+      </svg>
+    </div>
+    <div class="tl"><div class="k">Length</div><div class="t" style="font-size:40px;margin-top:12px">3.42<span style="font-size:18px"> km</span></div></div>
+    <div class="tl"><div class="k">Sectors</div><div class="t" style="font-size:40px;margin-top:12px">3</div></div>
+    <div class="tl w2 field">Ecce Homo</div>
+    <div class="w2 seg"><span class="on">Standing</span><span>Rolling</span><span>Lap</span></div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px;font-size:17px">Save</button></div>
+</div>
+<figcaption>Build a route</figcaption>
 </figure>
 
 <!-- ROUTE -->
@@ -146,6 +252,42 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
   <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px;font-size:17px">Drive</button></div>
 </div>
 <figcaption>Route</figcaption>
+</figure>
+
+<!-- RUN HISTORY -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="k" style="color:var(--snow)">Ecce Homo</span></div>
+  <div class="bento">
+    <div class="tl red w2"><div class="k">Ideal</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px"><span class="t" style="font-size:72px">2:13.91</span><span class="t" style="font-size:22px">−0.92</span></div></div>
+    <div class="tl snow"><div class="k">PB · 2 Nov</div><div class="t" style="font-size:34px;margin-top:12px">2:14.83</div></div>
+    <div class="tl"><div class="k">2 Nov</div><div class="t" style="font-size:34px;margin-top:12px">2:15.40</div></div>
+    <div class="tl"><div class="k">26 Oct · +5 s</div><div class="t" style="font-size:34px;margin-top:12px">2:21.06</div></div>
+    <div class="tl deep"><div class="k">25 Oct · Sim</div><div class="t" style="font-size:34px;margin-top:12px;color:var(--snow-2)">2:18.77</div></div>
+  </div>
+</div>
+<figcaption>My laps</figcaption>
+</figure>
+
+<!-- DRIVE TAB -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><span class="wm">Where to?</span></div>
+  <div class="bento">
+    <div class="tl red w2" style="padding:18px">
+      <div class="k">Home course · Ecce Homo</div>
+      <div class="t" style="font-size:86px;margin-top:10px">2:14.83</div>
+      <button class="btn snow" style="width:100%;margin-top:14px">Drive</button>
+    </div>
+    <div class="tl"><div class="k">26 Oct</div><div class="t" style="font-size:26px;margin-top:12px">Autodrom<br>Most</div></div>
+    <div class="tl"><div class="k">19 Oct</div><div class="t" style="font-size:26px;margin-top:12px">Club<br>sprint</div></div>
+    <div class="tl deep w2" style="display:flex;justify-content:space-between;align-items:center"><div class="k" style="color:var(--snow)">Find on the map</div><svg class="i"><use href="#map"/></svg></div>
+  </div>
+  <nav class="tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go on"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Drive</figcaption>
 </figure>
 
 <!-- READY -->
@@ -214,6 +356,29 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 <figcaption>Result</figcaption>
 </figure>
 
+<!-- LAP DETAIL -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div class="bento">
+    <div class="tl red w2" style="padding:18px">
+      <div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#ffc2a8">PR</span><div><div class="k">petra_r · 2 Nov</div><div class="k" style="margin-top:4px">Record</div></div></div>
+      <div class="t" style="font-size:96px;margin-top:14px">2:11.47</div>
+    </div>
+    <div class="w2 seg"><span class="on">Sectors</span><span>Graphs</span><span>Map</span></div>
+    <div class="tl deep w2" style="display:grid;gap:14px">
+      <div class="k" style="display:flex;justify-content:space-between"><span>← Faster</span><span>vs your best</span></div>
+      <div class="bar"><span class="k">S1</span><i class="p" style="width:27%"></i><b class="t">−0.89</b></div>
+      <div class="bar"><span class="k">S2</span><i class="g" style="width:50%"></i><b class="t">−1.68</b></div>
+      <div class="bar"><span class="k">S3</span><i class="y" style="width:24%"></i><b class="t">−0.79</b></div>
+    </div>
+  </div>
+  <div style="position:absolute;left:12px;right:12px;bottom:24px"><button class="btn red" style="width:100%;height:60px;font-size:17px">Race this lap</button></div>
+</div>
+<figcaption>Lap detail</figcaption>
+</figure>
+
 <!-- COMPARE -->
 <figure>
 <div class="ph">
@@ -266,6 +431,88 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
   <nav class="tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab on"><svg class="i"><use href="#user"/></svg></span></nav>
 </div>
 <figcaption>Profile</figcaption>
+</figure>
+
+<!-- FOLLOW LIST -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="k" style="color:var(--snow)">@tomas_k</span></div>
+  <div class="bento">
+    <div class="tl snow"><div class="k">Followers</div><div class="t" style="font-size:44px;margin-top:12px">31</div></div>
+    <div class="tl"><div class="k">Following</div><div class="t" style="font-size:44px;margin-top:12px">12</div></div>
+    <div class="tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 14px"><span class="av" style="background:#ffc2a8">PR</span><div class="t" style="font-size:24px">petra_r</div><button class="btn line" style="padding:0 14px;height:38px;font-size:12px">Following</button></div>
+    <div class="tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 14px"><span class="av" style="background:#b9d3ff">JK</span><div class="t" style="font-size:24px">jan.k</div><button class="btn red" style="padding:0 14px;height:38px;font-size:12px">Follow back</button></div>
+    <div class="tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 14px"><span class="av" style="background:#c9f0d8">OM</span><div class="t" style="font-size:24px">ondra_m</div><button class="btn line" style="padding:0 14px;height:38px;font-size:12px">Following</button></div>
+    <div class="tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 14px"><span class="av" style="background:#f2c4e6">LB</span><div class="t" style="font-size:24px">lucie.b</div><button class="btn red" style="padding:0 14px;height:38px;font-size:12px">Follow back</button></div>
+  </div>
+</div>
+<figcaption>Followers</figcaption>
+</figure>
+
+<!-- NOTIFICATIONS -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><span class="wm">Notifications</span></div>
+  <div class="bento">
+    <div class="tl red w2" style="padding:18px">
+      <div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#ffc2a8">PR</span><div class="k">petra_r beat your time</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:end;margin-top:14px"><div><span class="t" style="font-size:56px">2:11.47</span><div class="t" style="font-size:22px;margin-top:6px">−3.36</div></div><button class="btn snow" style="padding:0 22px">Race</button></div>
+    </div>
+    <div class="tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 14px"><span class="av" style="background:#b9d3ff">JK</span><div class="t" style="font-size:24px">jan.k</div><button class="btn red" style="padding:0 14px;height:38px;font-size:12px">Follow back</button></div>
+    <div class="tl deep w2"><div class="k">Mon</div><div class="t" style="font-size:24px;margin-top:10px">Creator access approved</div></div>
+    <div class="tl w2" style="display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:12px 14px"><span class="av" style="background:#c9f0d8">OM</span><div class="t" style="font-size:24px">ondra_m</div><button class="btn line" style="padding:0 14px;height:38px;font-size:12px">Following</button></div>
+  </div>
+  <nav class="tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab go"><svg class="i"><use href="#flag"/></svg></span><span class="tab on"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+</div>
+<figcaption>Notifications</figcaption>
+</figure>
+
+<!-- SETTINGS -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="wm">Settings</span></div>
+  <div class="bento">
+    <div class="tl red w2" style="display:flex;gap:14px;align-items:center">
+      <span class="av" style="width:64px;height:64px;border-radius:20px;font-size:22px;background:var(--snow);color:var(--red-ink)">TK</span>
+      <div><div class="t" style="font-size:30px">Tomáš Kolář</div><div class="k" style="margin-top:6px">@tomas_k</div></div>
+    </div>
+    <div class="tl"><div class="k">Countdown</div><div class="t" style="font-size:44px;margin-top:12px">5s</div></div>
+    <div class="tl"><div class="k">GPS logs</div><div class="t" style="font-size:44px;margin-top:12px">3</div></div>
+    <div class="tl deep w2"><div class="k">Map use this month</div><div class="t" style="font-size:44px;margin-top:12px">34%</div>
+      <div style="height:8px;border-radius:2px;margin-top:12px;background:var(--tile)"><i style="display:block;width:34%;height:100%;border-radius:2px;background:var(--red)"></i></div></div>
+  </div>
+</div>
+<figcaption>Settings</figcaption>
+</figure>
+
+<!-- ADMIN -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="top-r"><button class="ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="wm">Admin</span></div>
+  <div class="bento">
+    <div class="w2 seg"><span class="on">Requests</span><span>Routes</span><span>Users</span><span>Log</span></div>
+    <div class="tl w2"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#b9d3ff">JK</span><div><div class="t" style="font-size:24px">jan.k</div><div class="k" style="margin-top:4px">2 days ago</div></div></div><div style="margin-top:10px;font-weight:600">“I run our club's rally sprint stages at Most.”</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px"><button class="btn line" style="height:44px">Decline</button><button class="btn red" style="height:44px">Approve</button></div></div>
+    <div class="tl w2"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#f2c4e6">LB</span><div><div class="t" style="font-size:24px">lucie.b</div><div class="k" style="margin-top:4px">Today</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px"><button class="btn line" style="height:44px">Decline</button><button class="btn red" style="height:44px">Approve</button></div></div>
+  </div>
+</div>
+<figcaption>Admin</figcaption>
+</figure>
+
+<!-- LIMIT -->
+<figure>
+<div class="ph">
+  <div class="sb">9:41</div>
+  <div class="bento" style="padding-top:60px">
+    <div class="tl red w2" style="height:300px;display:flex;flex-direction:column;justify-content:space-between;padding:22px"><div class="k">Maps back on</div><div class="t" style="font-size:120px">1 Dec</div></div>
+    <div class="tl w2"><div class="t" style="font-size:34px">Monthly limit reached</div></div>
+    <div class="tl snow w2"><div class="k">Your laps and routes are safe.</div></div>
+  </div>
+</div>
+<figcaption>Monthly limit</figcaption>
 </figure>
 
 </div>

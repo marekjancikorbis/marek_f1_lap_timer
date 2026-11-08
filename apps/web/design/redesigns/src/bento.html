@@ -109,6 +109,20 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .go { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; color: var(--on-main); background: color-mix(in srgb, var(--main) 78%, transparent) }
 .ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 2px; right: 1px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent) }
+
+/* ---------- screens without a map: a still wash of the palette, lists sit on it directly ---------- */
+.ph.soft { background:
+  radial-gradient(90% 50% at 12% 6%, color-mix(in srgb, var(--blob-a) 42%, transparent), transparent 100%),
+  radial-gradient(90% 50% at 95% 96%, color-mix(in srgb, var(--blob-b) 48%, transparent), transparent 100%),
+  var(--night) }
+.title { font-size: 30px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1 }
+.field { height: 52px; border-radius: 26px; padding: 0 18px; display: flex; align-items: center; background: color-mix(in srgb, var(--ink) 8%, transparent); font-size: 16px }
+.seg { height: 44px; border-radius: 22px; padding: 4px; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr }
+.seg span { display: grid; place-items: center; border-radius: 18px; font-size: 14px; font-weight: 600; color: var(--ink-2) }
+.seg span.on { background: color-mix(in srgb, var(--ink) 14%, transparent); color: var(--ink) }
+.bar { display: grid; grid-template-columns: 28px 1fr 56px; align-items: center; gap: 10px }
+.bar i { height: 12px; border-radius: 6px; justify-self: end }
+.bar b { font-size: 17px; text-align: right }
 /* thin tinted glass: enough tint for text, little enough blur that the bent shape shows through */
 .glass.lift { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx) }
 html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--glass-fx); backdrop-filter: var(--lens) blur(3px) var(--glass-fx) }
@@ -179,6 +193,9 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <symbol id="back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
   <symbol id="share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 14v6h14v-6"/></symbol>
   <symbol id="vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="route" viewBox="0 0 366 250"><path d="{{card.all}}"/></symbol>
   <symbol id="loc" viewBox="0 0 24 24"><path d="M12 2 4 21l8-4 8 4z"/></symbol>
@@ -191,6 +208,42 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
 </header>
 
 <div class="wall">
+
+<!-- SIGN IN -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="position:absolute;left:28px;right:28px;top:190px">
+    <div class="t" style="font-size:54px;line-height:.92">Purple<br>Sector</div>
+    <div class="lbl" style="font-size:16px;margin-top:14px">Time your drives. Race the lap to beat.</div>
+  </div>
+  <div class="glass sheet sheet-b" style="padding:24px 20px 20px;display:grid;gap:10px">
+    <div class="field">tomas@example.com</div>
+    <div class="field" style="letter-spacing:.2em">••••••••</div>
+    <button class="solid" style="margin-top:6px">Sign in</button>
+    <button class="solid quiet">Create account</button>
+  </div>
+</div>
+<figcaption>Sign in</figcaption>
+</figure>
+
+<!-- USERNAME -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:40px 24px 0">
+    <div class="title">Pick a username</div>
+    <div class="lbl" style="font-size:15px;margin-top:8px">Shown on every lap you post.</div>
+  </div>
+  <div style="display:grid;justify-items:center;margin-top:56px"><span class="av" style="width:96px;height:96px;font-size:32px;background:var(--main);color:var(--on-main)">TK</span></div>
+  <div style="padding:40px 20px 0;display:grid;gap:8px">
+    <div class="field" style="justify-content:space-between"><span><span style="color:var(--ink-2)">@</span>tomas_k</span><span style="color:var(--s-g)">✓</span></div>
+    <div class="lbl" style="padding-left:18px">3–20 letters, numbers, _ and .</div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="solid">Continue</button></div>
+</div>
+<figcaption>Pick a username</figcaption>
+</figure>
 
 <!-- HOME -->
 <figure>
@@ -223,6 +276,76 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
 <figcaption>Home</figcaption>
 </figure>
 
+<!-- EXPLORE -->
+<figure>
+<div class="ph soft">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Route on the map">
+    <path d="{{full.all}}" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="{{full.all}}" stroke="var(--main-hi)" stroke-width="5"/>
+    <circle cx="{{full.start.0}}" cy="{{full.start.1}}" r="8" fill="var(--accent)" stroke="var(--night)" stroke-width="3"/>
+    
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <span class="glass chip" style="position:absolute;left:calc({{full.start.0}}px - 104px);top:calc({{full.start.1}}px - 17px);height:34px">2:11.47</span>
+  <div style="padding:4px 16px"><div class="glass field" style="color:var(--ink-2);gap:10px"><svg class="i" style="width:18px"><use href="#search"/></svg>Routes and drivers</div></div>
+  <div class="glass sheet" style="position:absolute;left:8px;right:8px;bottom:100px;border-radius:34px;padding:10px 18px 12px">
+    <div class="grab"></div>
+    <div class="rows">
+      <div style="grid-template-columns:1fr auto"><div><b>Ecce Homo</b><div class="lbl">3.42 km · Official</div></div><span class="t acc" style="font-size:20px">2:11.47</span></div>
+      <div style="grid-template-columns:1fr auto"><div><b>Autodrom Most</b><div class="lbl">4.21 km · lap</div></div><span class="t" style="font-size:20px">1:38.902</span></div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab on"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
+  </div>
+</div>
+<figcaption>Explore</figcaption>
+</figure>
+
+<!-- MY ROUTES -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:8px 20px 0;display:flex;justify-content:space-between;align-items:center"><div class="title">Routes</div><button class="glass round ib" aria-label="Build a route"><svg class="i"><use href="#plus"/></svg></button></div>
+  <div style="padding:14px 16px 0"><div class="glass seg"><span class="on">Built</span><span>My laps</span></div></div>
+  <div style="padding:14px 16px 0;display:grid;gap:10px">
+    <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:var(--main-hi);stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Ecce Homo</b><div class="lbl">3.42 km · standing</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Public</span></div>
+    <div class="glass lift" style="border-radius:28px;padding:16px;display:flex;gap:14px;align-items:center"><svg viewBox="0 0 366 250" style="width:64px;height:44px;flex:none;fill:none;stroke:var(--main-hi);stroke-width:14;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="{{card.all}}"/></svg><div style="flex:1"><b>Club sprint</b><div class="lbl">2.10 km · lap</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Private</span></div>
+  </div>
+  <div class="tabbar">
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
+  </div>
+</div>
+<figcaption>Routes</figcaption>
+</figure>
+
+<!-- ROUTE BUILDER -->
+<figure>
+<div class="ph soft">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Route on the map">
+    <path d="{{full.all}}" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="{{full.all}}" stroke="var(--main-hi)" stroke-width="5"/>
+    <circle cx="{{full.start.0}}" cy="{{full.start.1}}" r="8" fill="var(--accent)" stroke="var(--night)" stroke-width="3"/>
+    <circle cx="{{full.finish.0}}" cy="{{full.finish.1}}" r="8" fill="var(--ink)" stroke="var(--night)" stroke-width="3"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass round ib" aria-label="Undo"><svg class="i"><use href="#undo"/></svg></button></div>
+  <div class="glass sheet sheet-b" style="padding-top:20px;display:grid;gap:10px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="t" style="font-size:40px">3.42<span class="lbl"> km</span></span><span class="lbl">3 sectors</span></div>
+    <div class="field">Ecce Homo</div>
+    <div class="seg" style="background:color-mix(in srgb,var(--ink) 8%,transparent)"><span class="on">Standing</span><span>Rolling</span><span>Lap</span></div>
+    <button class="solid" style="margin-top:4px">Save</button>
+  </div>
+</div>
+<figcaption>Build a route</figcaption>
+</figure>
+
 <!-- ROUTE -->
 <figure>
 <div class="ph">
@@ -251,6 +374,49 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   </div>
 </div>
 <figcaption>Route</figcaption>
+</figure>
+
+<!-- RUN HISTORY -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:12px 20px 0"><div class="title">My laps</div><div class="lbl">Ecce Homo</div></div>
+  <div style="padding:16px 16px 0">
+    <div class="glass lift" style="border-radius:30px;padding:18px 20px"><div class="lbl">Ideal</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span class="t acc" style="font-size:46px">2:13.91</span><span class="lbl">−0.92</span></div></div>
+  </div>
+  <div class="rows" style="padding:10px 24px 0">
+    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:14.83</span><div class="lbl">2 Nov</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">PB</span><span class="st"><i class="p"></i><i class="g"></i><i class="y"></i></span></div>
+    <div style="grid-template-columns:1fr auto"><div><span class="t" style="font-size:22px">2:15.40</span><div class="lbl">2 Nov</div></div><span class="st"><i class="g"></i><i class="y"></i><i class="y"></i></span></div>
+    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:21.06</span><div class="lbl">26 Oct</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">+5 s</span><span class="st"><i class="y"></i><i class="y"></i><i class="g"></i></span></div>
+    <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:18.77</span><div class="lbl">25 Oct</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Sim</span><span class="st"><i class="y"></i><i class="g"></i><i class="y"></i></span></div>
+  </div>
+</div>
+<figcaption>My laps</figcaption>
+</figure>
+
+<!-- DRIVE TAB -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:8px 20px 0"><div class="title">Where to?</div></div>
+  <div style="padding:18px 16px 0">
+    <div class="glass lift" style="border-radius:36px;padding:22px 20px 20px">
+      <div style="display:flex;justify-content:space-between" class="lbl"><span>Ecce Homo</span><span>Home course</span></div>
+      <div class="t" style="font-size:56px;margin-top:10px">2:14.83</div>
+      <button class="solid" style="margin-top:18px">Drive</button>
+    </div>
+  </div>
+  <div class="rows" style="padding:16px 24px 0">
+    <div style="grid-template-columns:1fr auto"><div><b>Autodrom Most</b><div class="lbl">26 Oct</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
+    <div style="grid-template-columns:1fr auto"><div><b>Club sprint</b><div class="lbl">19 Oct</div></div><svg class="i" style="transform:scaleX(-1);color:var(--ink-2)"><use href="#back"/></svg></div>
+  </div>
+  <div class="tabbar">
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <button class="glass round go" style="box-shadow:0 0 0 3px var(--main-hi)" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
+  </div>
+</div>
+<figcaption>Drive</figcaption>
 </figure>
 
 <!-- READY -->
@@ -333,6 +499,25 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
 <figcaption>Result</figcaption>
 </figure>
 
+<!-- LAP DETAIL -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:16px 20px 0;display:flex;gap:12px;align-items:center"><span class="av" style="width:48px;height:48px;background:#ffc49b">PR</span><div><b style="font-size:18px">petra_r</b><div class="lbl">Ecce Homo · 2 Nov</div></div></div>
+  <div style="padding:14px 20px 0;display:flex;align-items:baseline;gap:12px"><span class="t acc" style="font-size:64px">2:11.47</span><span class="lbl">Record</span></div>
+  <div style="padding:16px 16px 0"><div class="glass seg"><span class="on">Sectors</span><span>Graphs</span><span>Map</span></div></div>
+  <div class="glass lift" style="margin:14px 16px 0;border-radius:30px;padding:18px 20px;display:grid;gap:16px">
+    <div class="lbl" style="display:flex;justify-content:space-between"><span>← Faster</span><span>vs your best</span></div>
+    <div class="bar"><span class="lbl">S1</span><i class="p" style="width:27%"></i><b class="t">−0.89</b></div>
+    <div class="bar"><span class="lbl">S2</span><i class="g" style="width:50%"></i><b class="t">−1.68</b></div>
+    <div class="bar"><span class="lbl">S3</span><i class="y" style="width:24%"></i><b class="t">−0.79</b></div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="solid">Race this lap</button></div>
+</div>
+<figcaption>Lap detail</figcaption>
+</figure>
+
 <!-- COMPARE -->
 <figure>
 <div class="ph">
@@ -392,6 +577,109 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   </div>
 </div>
 <figcaption>Profile, scrolled</figcaption>
+</figure>
+
+<!-- FOLLOW LIST -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:12px 20px 0"><div class="title">@tomas_k</div></div>
+  <div style="padding:14px 16px 0"><div class="glass seg"><span class="on">31 followers</span><span>12 following</span></div></div>
+  <div class="rows" style="padding:10px 24px 0">
+    <div><span class="av" style="background:#ffc49b">PR</span><div style="min-width:0"><b>petra_r</b><div class="lbl">Petra R.</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Following</span></div>
+    <div><span class="av" style="background:#a9c2ff">JK</span><div style="min-width:0"><b>jan.k</b><div class="lbl">Jan K.</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Follow back</span></div>
+    <div><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><b>ondra_m</b><div class="lbl">Ondřej M.</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Following</span></div>
+    <div><span class="av" style="background:#f2c4e6">LB</span><div style="min-width:0"><b>lucie.b</b><div class="lbl">Lucie B.</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Follow back</span></div>
+  </div>
+</div>
+<figcaption>Followers</figcaption>
+</figure>
+
+<!-- NOTIFICATIONS -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:8px 20px 0"><div class="title">Notifications</div></div>
+  <div style="padding:16px 16px 0">
+    <div class="glass lift" style="border-radius:30px;padding:16px 18px;display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center">
+      <span class="av" style="width:40px;height:40px;background:#ffc49b">PR</span>
+      <div><div class="lbl">petra_r beat you</div><div style="display:flex;gap:8px;align-items:baseline;margin-top:3px"><span class="t" style="font-size:22px">2:11.47</span><span class="t acc" style="font-size:15px">−3.36</span></div></div>
+      <span class="chip" style="background:var(--main);color:var(--on-main)">Race</span>
+    </div>
+  </div>
+  <div class="rows" style="padding:8px 24px 0">
+    <div><span class="av" style="background:#a9c2ff">JK</span><div style="min-width:0"><b>jan.k</b><div class="lbl">Followed you · 5 h</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">Follow back</span></div>
+    <div style="grid-template-columns:36px 1fr"><span class="av" style="background:var(--main);color:var(--on-main)">✓</span><div><b>Creator access approved</b><div class="lbl">Mon</div></div></div>
+    <div><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><b>ondra_m</b><div class="lbl">Followed you · Sat</div></div><span class="chip" style="background:color-mix(in srgb,var(--ink) 10%,transparent)">Following</span></div>
+  </div>
+  <div class="tabbar">
+    <nav class="glass tabs"><span class="tab"><svg class="i"><use href="#home"/></svg></span><span class="tab"><svg class="i"><use href="#map"/></svg></span><span class="tab on"><svg class="i"><use href="#bell"/></svg></span><span class="tab"><svg class="i"><use href="#user"/></svg></span></nav>
+    <button class="glass round go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></button>
+  </div>
+</div>
+<figcaption>Notifications</figcaption>
+</figure>
+
+<!-- SETTINGS -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:12px 20px 0"><div class="title">Settings</div></div>
+  <div style="padding:16px 16px 0;display:grid;gap:12px">
+    <div class="glass lift" style="border-radius:28px;padding:16px 18px;display:flex;gap:14px;align-items:center">
+      <span class="av" style="width:52px;height:52px;font-size:18px;background:var(--main);color:var(--on-main)">TK</span>
+      <div style="flex:1"><b>Tomáš Kolář</b><div class="lbl">@tomas_k</div></div>
+      <span class="lbl">Photo</span>
+    </div>
+    <div class="glass lift rows" style="border-radius:28px;padding:4px 18px">
+      <div style="grid-template-columns:1fr auto"><span>Countdown</span><b class="t" style="font-size:19px">5 s</b></div>
+      <div style="grid-template-columns:1fr auto"><span>GPS logs</span><b class="t" style="font-size:19px">3</b></div>
+    </div>
+    <div class="glass lift" style="border-radius:28px;padding:16px 18px">
+      <div style="display:flex;justify-content:space-between"><span>Map use</span><b class="t" style="font-size:19px">34%</b></div>
+      <div style="height:6px;border-radius:3px;margin-top:12px;background:color-mix(in srgb,var(--ink) 12%,transparent)"><i style="display:block;width:34%;height:100%;border-radius:3px;background:var(--main-hi)"></i></div>
+    </div>
+  </div>
+</div>
+<figcaption>Settings</figcaption>
+</figure>
+
+<!-- ADMIN -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div style="padding:12px 20px 0"><div class="title">Admin</div></div>
+  <div style="padding:14px 16px 0"><div class="glass seg"><span class="on">Requests 2</span><span>Routes</span><span>Users</span><span>Log</span></div></div>
+  <div style="padding:14px 16px 0;display:grid;gap:10px">
+    <div class="glass lift" style="border-radius:28px;padding:16px 18px">
+      <div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#a9c2ff">JK</span><div><b>jan.k</b><div class="lbl">2 days ago</div></div></div>
+      <div style="margin-top:10px">“I run our club's rally sprint stages at Most.”</div>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="solid quiet" style="height:44px">Decline</button><button class="solid" style="height:44px">Approve</button></div>
+    </div>
+    <div class="glass lift" style="border-radius:28px;padding:16px 18px">
+      <div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#f2c4e6">LB</span><div><b>lucie.b</b><div class="lbl">Today</div></div></div>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="solid quiet" style="height:44px">Decline</button><button class="solid" style="height:44px">Approve</button></div>
+    </div>
+  </div>
+</div>
+<figcaption>Admin</figcaption>
+</figure>
+
+<!-- LIMIT -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="position:absolute;left:28px;right:28px;top:250px;text-align:center">
+    <div class="lbl" style="font-size:15px">Maps back on</div>
+    <div class="t acc" style="font-size:96px;margin-top:10px">1 Dec</div>
+    <div class="title" style="margin-top:28px;font-size:26px">Monthly limit reached</div>
+    <div class="lbl" style="font-size:15px;margin-top:10px">Your laps and routes are safe.</div>
+  </div>
+</div>
+<figcaption>Monthly limit</figcaption>
 </figure>
 
 </div>
