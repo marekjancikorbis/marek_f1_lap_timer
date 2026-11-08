@@ -139,12 +139,25 @@ def lookup(key):
     return str(v)
 
 
+def themes(src, current):
+    """The theme picker in Settings: one swatch per palette of this design, each a link to that palette's page."""
+    out = []
+    for page, (s, title, _, sw) in PAGES.items():
+        if s != src:
+            continue
+        stops = ', '.join(f'{c} {i * 100 // len(sw)}% {(i + 1) * 100 // len(sw)}%' for i, c in enumerate(sw))
+        on = page == current
+        out.append(f'<a class="theme{" on" if on else ""}" href="{page}.html#settings"{" aria-current=\"true\"" if on else ""}>'
+                   f'<i style="background:conic-gradient(from 225deg, {stops})"></i><span>{title.split(" · ")[-1]}</span></a>')
+    return ''.join(out)
+
+
 def main():
     for out, (src, name, palette, swatches) in PAGES.items():
         html = (ROOT / 'src' / f'{src}.html').read_text()
         css = ' '.join(f'--{k}: {v};' for k, v in palette.items())
         sw = ''.join(f'<i style="background:{c}"></i>' for c in swatches)
-        html = html.replace('{{palette}}', css).replace('{{name}}', name).replace('{{swatches}}', sw)
+        html = html.replace('{{palette}}', css).replace('{{name}}', name).replace('{{swatches}}', sw).replace('{{themes}}', themes(src, out))
         html = re.sub(r'\{\{([\w.]+)\}\}', lambda m: lookup(m.group(1)), html)
         (ROOT / f'{out}.html').write_text(html)
         print('wrote', out + '.html')
