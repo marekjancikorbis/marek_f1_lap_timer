@@ -147,7 +147,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
 .ph.sl .sb::after { content: ""; width: 66px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
 
 .ph.sl .bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px }
-.ph.sl .tl { background: var(--tile); border-radius: 22px; padding: 16px; position: relative; overflow: hidden; min-width: 0 }
+.ph.sl .tl { background: var(--tile); border-radius: 28px; padding: 16px; position: relative; overflow: hidden; min-width: 0 }
 .ph.sl .tl.deep { background: var(--deep) } .ph.sl .tl.red { background: var(--red); color: var(--on-red) } .ph.sl .tl.snow { background: var(--snow); color: var(--sea) }
 .ph.sl .w2 { grid-column: span 2 }
 .ph.sl .k { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; font-stretch: 125%; color: var(--snow-2) }
@@ -157,13 +157,13 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
 .ph.sl .p { background: var(--s-p) } .ph.sl .g { background: var(--s-g) } .ph.sl .y { background: var(--s-y) }
 .ph.sl .st { display: flex; gap: 4px } .ph.sl .st i { flex: 1; height: 8px; border-radius: 2px }
 .ph.sl button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
-.ph.sl .btn { height: 50px; border-radius: 16px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: transform .1s ease-out }
+.ph.sl .btn { height: 50px; border-radius: 25px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: .04em; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: transform .1s ease-out }
 .ph.sl .btn.snow { background: var(--snow); color: var(--red-ink) } .ph.sl .btn.red { background: var(--red); color: var(--on-red) } .ph.sl .btn.line { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--snow) 30%, transparent) }
 .ph.sl .btn:active, .ph.sl .tl:active, .ph.sl .ib:active { transform: scale(.97) }
-.ph.sl .ib { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
+.ph.sl .ib { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--tile); transition: transform .1s ease-out }
 .ph.sl svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round }
 .ph.sl :focus-visible { outline: 3px solid var(--snow); outline-offset: 2px }
-.ph.sl .av { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--sea); flex: none }
+.ph.sl .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--sea); flex: none }
 .ph.sl .top-r { display: flex; justify-content: space-between; align-items: center; padding: 4px 16px 12px }
 .ph.sl .heat { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px }
 .ph.sl .heat i { aspect-ratio: 1; border-radius: 3px; background: var(--deep) }
@@ -314,7 +314,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div class="sb">9:41</div>
   <span class="glass chip" style="position:absolute;left:calc(108.2px - 104px);top:calc(337.0px - 17px);height:34px">2:11.47</span>
   <div style="padding:4px 16px"><div class="glass field" style="color:var(--ink-2);gap:10px"><svg class="i" style="width:18px"><use href="#search"/></svg>Routes and drivers</div></div>
-  <div class="glass sheet" style="position:absolute;left:8px;right:8px;bottom:100px;border-radius:34px;padding:10px 18px 12px">
+  <div class="glass sheet" style="position:absolute;left:8px;right:8px;bottom:100px;border-radius:40px;padding:10px 18px 12px">
     <div class="grab"></div>
     <div class="rows">
       <div style="grid-template-columns:1fr auto"><div><b>Ecce Homo</b><div class="lbl">3.42 km · Official</div></div><span class="t acc" style="font-size:20px">2:11.47</span></div>
@@ -337,7 +337,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div class="edge"></div>
   <div class="sb">9:41</div>
   <div style="padding:4px 16px"><div class="glass field" style="color:var(--ink-2);gap:10px"><svg class="i" style="width:18px"><use href="#search"/></svg>Routes and drivers</div></div>
-  <div class="glass sheet" style="position:absolute;left:8px;right:8px;top:128px;bottom:100px;border-radius:34px;padding:10px 18px 12px">
+  <div class="glass sheet" style="position:absolute;left:8px;right:8px;top:128px;bottom:100px;border-radius:40px;padding:10px 18px 12px">
     <div class="grab"></div>
     <div class="lbl">Routes nearby</div>
     <div class="rows">
@@ -380,7 +380,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div style="padding:4px 16px;display:flex;justify-content:space-between;align-items:center"><button class="glass round ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
   <div style="padding:12px 20px 0"><div class="title">Ecce Homo</div><div class="lbl">3.42 km · 4 laps</div></div>
   <div style="padding:16px 16px 0">
-    <div class="glass lift" style="border-radius:30px;padding:18px 20px"><div class="lbl">Ideal</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span class="t acc" style="font-size:46px">2:13.91</span><span class="lbl">−0.92</span></div></div>
+    <div class="glass lift" style="border-radius:28px;padding:18px 20px"><div class="lbl">Ideal</div><div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span class="t acc" style="font-size:46px">2:13.91</span><span class="lbl">−0.92</span></div></div>
   </div>
   <div class="rows" style="padding:10px 24px 0">
     <div style="grid-template-columns:1fr auto auto"><div><span class="t" style="font-size:22px">2:14.83</span><div class="lbl">2 Nov</div></div><span class="chip" style="background:var(--main);color:var(--on-main)">PB</span><span class="st"><i class="p"></i><i class="g"></i><i class="y"></i></span></div>
@@ -510,7 +510,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div class="sb">9:41</div>
   <div style="padding:8px 20px 0"><div class="title">Where to?</div></div>
   <div style="padding:18px 16px 0">
-    <div class="glass lift" style="border-radius:36px;padding:22px 20px 20px">
+    <div class="glass lift" style="border-radius:28px;padding:22px 20px 20px">
       <div style="display:flex;justify-content:space-between" class="lbl"><span>Ecce Homo</span><span>Home course</span></div>
       <div class="t" style="font-size:56px;margin-top:10px">2:14.83</div>
       <button class="solid" style="margin-top:18px">Drive</button>
@@ -540,10 +540,10 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div class="glass sheet sheet-b" style="padding-top:18px">
     <div class="lbl">Race against</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Record</div><div class="t acc" style="font-size:26px;margin-top:6px">2:11.47</div></div>
-      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--main) 35%,transparent);box-shadow:inset 0 0 0 2px var(--main-hi)"><div class="lbl" style="color:var(--ink)">Your best</div><div class="t" style="font-size:26px;margin-top:6px">2:14.83</div></div>
-      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Ideal</div><div class="t" style="font-size:26px;margin-top:6px">2:13.91</div></div>
-      <div style="padding:14px;border-radius:22px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Clock only</div><div class="t" style="font-size:26px;margin-top:6px;color:var(--ink-2)">—</div></div>
+      <div style="padding:14px;border-radius:20px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Record</div><div class="t acc" style="font-size:26px;margin-top:6px">2:11.47</div></div>
+      <div style="padding:14px;border-radius:20px;background:color-mix(in srgb,var(--main) 35%,transparent);box-shadow:inset 0 0 0 2px var(--main-hi)"><div class="lbl" style="color:var(--ink)">Your best</div><div class="t" style="font-size:26px;margin-top:6px">2:14.83</div></div>
+      <div style="padding:14px;border-radius:20px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Ideal</div><div class="t" style="font-size:26px;margin-top:6px">2:13.91</div></div>
+      <div style="padding:14px;border-radius:20px;background:color-mix(in srgb,var(--ink) 8%,transparent)"><div class="lbl">Clock only</div><div class="t" style="font-size:26px;margin-top:6px;color:var(--ink-2)">—</div></div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding:4px 6px 4px 16px;border-radius:26px;background:color-mix(in srgb,var(--ink) 8%,transparent)">
       <span class="lbl" style="flex:1">Lights</span>
@@ -613,7 +613,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div style="padding:16px 20px 0;display:flex;gap:12px;align-items:center"><span class="av" style="width:48px;height:48px;background:#ffc49b">PR</span><div><b style="font-size:18px">petra_r</b><div class="lbl">Ecce Homo · 2 Nov</div></div></div>
   <div style="padding:14px 20px 0;display:flex;align-items:baseline;gap:12px"><span class="t acc" style="font-size:64px">2:11.47</span><span class="lbl">Record</span></div>
   <div style="padding:16px 16px 0"><div class="glass seg"><span class="on">Sectors</span><span>Graphs</span><span>Map</span></div></div>
-  <div class="glass lift" style="margin:14px 16px 0;border-radius:30px;padding:18px 20px;display:grid;gap:16px">
+  <div class="glass lift" style="margin:14px 16px 0;border-radius:28px;padding:18px 20px;display:grid;gap:16px">
     <div class="lbl" style="display:flex;justify-content:space-between"><span>← Faster</span><span>vs your best</span></div>
     <div class="bar"><span class="lbl">S1</span><i class="p" style="width:27%"></i><b class="t">−0.89</b></div>
     <div class="bar"><span class="lbl">S2</span><i class="g" style="width:50%"></i><b class="t">−1.68</b></div>
@@ -632,7 +632,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div style="padding:16px 20px 0;display:flex;gap:12px;align-items:center"><span class="av" style="width:48px;height:48px;background:#ffc49b">PR</span><div><b style="font-size:18px">petra_r</b><div class="lbl">Ecce Homo · 2 Nov</div></div></div>
   <div style="padding:14px 20px 0;display:flex;align-items:baseline;gap:12px"><span class="t acc" style="font-size:64px">2:11.47</span><span class="lbl">Record</span></div>
   <div style="padding:16px 16px 0"><div class="glass seg"><span>Sectors</span><span class="on">Graphs</span><span>Map</span></div></div>
-  <div class="glass lift" style="margin:14px 16px 0;border-radius:30px;padding:16px 18px">
+  <div class="glass lift" style="margin:14px 16px 0;border-radius:28px;padding:16px 18px">
     <div class="lbl" style="display:flex;justify-content:space-between"><span>Speed, km/h</span><span>Top 118</span></div>
     <svg viewBox="0 0 318 124" style="width:100%;display:block;margin-top:10px" aria-label="Speed over the lap, coloured by sector">
       <defs><linearGradient id="spd" gradientUnits="userSpaceOnUse" x1="0" x2="318" y1="0" y2="0">
@@ -642,7 +642,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     </svg>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);margin-top:6px" class="lbl"><span>S1</span><span style="text-align:center">S2</span><span style="text-align:right">S3</span></div>
   </div>
-  <div class="glass lift" style="margin:10px 16px 0;border-radius:30px;padding:16px 18px">
+  <div class="glass lift" style="margin:10px 16px 0;border-radius:28px;padding:16px 18px">
     <div class="lbl" style="display:flex;justify-content:space-between"><span>Ahead of your best</span><span class="t acc" style="font-size:15px">−3.36</span></div>
     <svg viewBox="0 0 318 70" style="width:100%;display:block;margin-top:10px" aria-label="Time gained on your best over the lap">
       <line x1="0" y1="60" x2="318" y2="60" stroke="var(--ink)" stroke-opacity=".2" stroke-dasharray="3 5"/>
@@ -778,7 +778,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <div class="sb">9:41</div>
   <div style="padding:8px 20px 0"><div class="title">Notifications</div></div>
   <div style="padding:16px 16px 0">
-    <div class="glass lift" style="border-radius:30px;padding:16px 18px;display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center">
+    <div class="glass lift" style="border-radius:28px;padding:16px 18px;display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center">
       <span class="av" style="width:40px;height:40px;background:#ffc49b">PR</span>
       <div><div class="lbl">petra_r beat you</div><div style="display:flex;gap:8px;align-items:baseline;margin-top:3px"><span class="t" style="font-size:22px">2:11.47</span><span class="t acc" style="font-size:15px">−3.36</span></div></div>
       <span class="chip" style="background:var(--main);color:var(--on-main)">Race</span>
