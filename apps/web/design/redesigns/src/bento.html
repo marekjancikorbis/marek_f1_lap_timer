@@ -224,6 +224,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
   <symbol id="play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></symbol>
   <symbol id="routes" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19h8a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7h8"/></symbol>
   <symbol id="watch" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5M12 2.5V6"/></symbol>
+  <symbol id="phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="route" viewBox="0 0 366 250"><path d="{{card.all}}"/></symbol>
   <symbol id="loc" viewBox="0 0 24 24"><path d="M12 2 4 21l8-4 8 4z"/></symbol>
@@ -577,6 +578,7 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div class="glass tint-g" style="height:84px;border-radius:42px;display:grid;place-items:center"><span class="t" style="font-size:24px">−0.20</span></div>
     <div class="glass" style="height:84px;border-radius:42px;display:grid;place-items:center"><span class="lbl" style="font-size:16px;color:var(--ink)">S3</span></div>
   </div>
+  <div style="position:absolute;left:0;right:0;bottom:104px;display:flex;justify-content:center"><span class="glass chip lift" style="height:36px;font-size:14px;color:var(--ink);background:color-mix(in srgb,var(--night) 82%,transparent)"><svg class="i" style="width:18px;height:18px;transform:rotate(90deg)"><use href="#phone"/></svg>Turn sideways for delta only</span></div>
   <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="glass sheet" style="width:100%;height:58px;border-radius:29px;font-weight:600;font-size:17px">Hold to stop</button></div>
 </div>
 <figcaption>Drive</figcaption>
@@ -593,7 +595,10 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib, html.lens .ph.sl .glass.
     <div class="t" style="font-size:190px;letter-spacing:-.05em">−0.41</div>
     <div style="font-size:17px;font-weight:600;margin-top:6px;opacity:.8">vs your best</div>
   </div>
-  <div style="position:absolute;left:50%;bottom:22px;width:300px;margin-left:-150px"><button class="glass clear" style="width:100%;height:54px;border-radius:27px;font-weight:600;font-size:17px;color:inherit">Hold to stop</button></div>
+  <div style="position:absolute;left:52px;right:52px;bottom:22px;display:flex;justify-content:space-between;align-items:center">
+    <span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;opacity:.8"><svg class="i" style="width:18px;height:18px"><use href="#phone"/></svg>Turn upright for full HUD</span>
+    <button class="glass clear" style="height:48px;padding:0 22px;border-radius:24px;font-weight:600;font-size:15px;color:inherit">Hold to exit</button>
+  </div>
 </div>
 <figcaption>Drive · delta only, phone on its side</figcaption>
 </figure>
