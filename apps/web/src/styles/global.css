@@ -131,8 +131,8 @@ body {
   line-height: 1.4;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
-  /* No pinch or double-tap zoom of the page, like a native app. Maps and graphs handle their own touches. */
-  touch-action: pan-x pan-y;
+  /* No double-tap zoom (taps fire at once); pinch zoom stays for anyone who needs it. Maps and graphs handle their own touches. */
+  touch-action: manipulation;
 }
 
 #root {

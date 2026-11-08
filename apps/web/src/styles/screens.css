@@ -1732,10 +1732,13 @@
   text-decoration: none;
 }
 
-.lap-hero-route:hover {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+/* Hover only where there is a real pointer: on touch it would stick after a tap. */
+@media (hover: hover) and (pointer: fine) {
+  .lap-hero-route:hover {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .lap-hero-time {

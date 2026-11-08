@@ -152,13 +152,13 @@ export default function RouteBuilder() {
     mapRef.current = map;
     map.addSource('route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
     map.addSource('ticks', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-    map.addLayer({ id: 'route-casing', type: 'line', source: 'route', paint: { 'line-color': '#f7f9fc', 'line-width': 9 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
-    map.addLayer({ id: 'route-line', type: 'line', source: 'route', paint: { 'line-color': '#0e1b3d', 'line-width': 5 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    map.addLayer({ id: 'route-casing', type: 'line', source: 'route', paint: { 'line-color': '#0b0b0c', 'line-width': 9 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+    map.addLayer({ id: 'route-line', type: 'line', source: 'route', paint: { 'line-color': '#ffffff', 'line-width': 5 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
     map.addLayer({
       id: 'ticks',
       type: 'circle',
       source: 'ticks',
-      paint: { 'circle-radius': 6, 'circle-color': '#f7f9fc', 'circle-stroke-color': '#0e1b3d', 'circle-stroke-width': 2.5 },
+      paint: { 'circle-radius': 6, 'circle-color': '#ffffff', 'circle-stroke-color': '#0b0b0c', 'circle-stroke-width': 2.5 },
     });
     map.on('click', (e) => setWaypoints((ws) => [...ws, { lat: e.lngLat.lat, lon: e.lngLat.lng }]));
     map.getCanvas().style.cursor = 'crosshair';

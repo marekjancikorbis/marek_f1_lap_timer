@@ -9,6 +9,8 @@ import { useMe, useSession } from '../lib/session';
 import type { CreatorRequest } from '../lib/types';
 import { readUsage, type UsageState } from '../lib/usage';
 import { USAGE_CAP } from '../lib/config';
+import { useTheme } from '../lib/theme';
+import { THEMES } from '../lib/themes';
 import { deleteLog, downloadLog, listLogs } from '../drive/gpslogs';
 
 const HUES = [30, 185, 265, 330, 145, 210];
@@ -102,6 +104,8 @@ export default function Settings() {
 
   const countdown = profile.countdownS ?? DEFAULT_COUNTDOWN_S;
 
+  const [theme, setTheme] = useTheme();
+
   return (
     <main className="screen">
       <ScreenHead back title="Settings" />
@@ -174,6 +178,18 @@ export default function Settings() {
               />
             ))}
           </div>
+        </div>
+      </div>
+
+      <h2 className="section-title">Theme</h2>
+      <div className="list">
+        <div className="themes" role="radiogroup" aria-label="Theme">
+          {THEMES.map((t) => (
+            <button key={t.id} type="button" role="radio" aria-checked={theme === t.id} className="theme-opt" onClick={() => setTheme(t.id)}>
+              <i style={{ background: swatch(t.swatches) }} aria-hidden="true" />
+              {t.name}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -324,4 +340,10 @@ function UsageBar({ label, value, cap }: { label: string; value: number; cap: nu
       </div>
     </div>
   );
+}
+
+/** A theme's colours as one round swatch, split like a pie. */
+function swatch(colours: readonly string[]) {
+  const n = colours.length;
+  return `conic-gradient(from 225deg, ${colours.map((c, i) => `${c} ${(i * 100) / n}% ${((i + 1) * 100) / n}%`).join(', ')})`;
 }

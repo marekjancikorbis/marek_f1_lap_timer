@@ -24,7 +24,7 @@ export function staticMapFit(pts: { lng: number; lat: number }[], W: number, H: 
   const lng = (cx / 512) * 360 - 180;
   const lat = (Math.atan(Math.sinh(Math.PI * (1 - (2 * cy) / 512))) * 180) / Math.PI;
   return {
-    url: `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${lng.toFixed(6)},${lat.toFixed(6)},${z}/${W}x${H}@2x?access_token=${MAPBOX_TOKEN}`,
+    url: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${lng.toFixed(6)},${lat.toFixed(6)},${z}/${W}x${H}@2x?access_token=${MAPBOX_TOKEN}`,
     project: (p: { lng: number; lat: number }) => {
       const [x, y] = merc(p.lng, p.lat);
       return [W / 2 + (x - cx) * k, H / 2 + (y - cy) * k] as const;

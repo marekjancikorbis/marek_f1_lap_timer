@@ -83,7 +83,7 @@ export default function RunSummary() {
       const coords: [number, number][] = [];
       for (let i = 0; i + 4 < run.trace.length; i += 5) coords.push([run.trace[i + 4], run.trace[i + 3]]);
       map.addSource('trace', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } } });
-      map.addLayer({ id: 'trace', type: 'line', source: 'trace', paint: { 'line-color': '#0e1b3d', 'line-width': 1.5, 'line-dasharray': [1, 2] } });
+      map.addLayer({ id: 'trace', type: 'line', source: 'trace', paint: { 'line-color': '#ffffff', 'line-width': 1.5, 'line-dasharray': [1, 2] } });
     },
     [run],
   );

@@ -241,6 +241,11 @@ export default function Drive() {
           </div>
         ) : running || s.phase === 'countdown' ? (
           <>
+            {running && (
+              <span className="rotate-hint hud-hint">
+                <Smartphone size={16} aria-hidden="true" style={{ transform: 'rotate(90deg)' }} /> Turn sideways for delta only
+              </span>
+            )}
             <HoldToStop onStop={stop} label={cfg.route.isLoop && s.laps.length ? 'Hold to finish session' : 'Hold to stop'} />
           </>
         ) : (

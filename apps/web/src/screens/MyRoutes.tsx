@@ -18,7 +18,8 @@ export default function MyRoutes() {
   const [request, setRequest] = useState<CreatorRequest | null | undefined>(undefined);
   const [confirm, setConfirm] = useState<Route | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<'laps' | 'built'>('built');
+  // Times first: your best on each route is what you come back for; building routes is occasional.
+  const [tab, setTab] = useState<'laps' | 'built'>('laps');
 
   const load = useCallback(async () => {
     try {
@@ -85,11 +86,13 @@ export default function MyRoutes() {
   return (
     <main className="screen">
       <ScreenHead
-        title="Routes"
+        title="Times"
         right={
-          <Link to="/routes/new" className="btn primary sm">
-            <Plus size={18} aria-hidden="true" /> Build
-          </Link>
+          tab === 'built' ? (
+            <Link to="/routes/new" className="btn primary sm">
+              <Plus size={18} aria-hidden="true" /> Build
+            </Link>
+          ) : undefined
         }
       />
       <Segmented
@@ -97,8 +100,8 @@ export default function MyRoutes() {
         value={tab}
         onChange={setTab}
         options={[
-          { value: 'built', label: 'Routes I built' },
-          { value: 'laps', label: 'My laps' },
+          { value: 'laps', label: 'Times' },
+          { value: 'built', label: 'My routes' },
         ]}
       />
 

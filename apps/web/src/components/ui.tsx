@@ -123,10 +123,10 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
 export function TabBar() {
   const { profile } = useMe();
   const tabs = [
-    { to: '/', label: 'Feed', icon: 'M4 6h16M4 12h16M4 18h10', end: true },
+    { to: '/', label: 'Home', icon: 'M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z', end: true },
     { to: '/explore', label: 'Explore', icon: 'M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0zM20 20l-4-4' },
     { to: '/drive', label: 'Drive', icon: '', end: true },
-    { to: '/routes', label: 'Routes', icon: 'M5 16a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM19 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 18h7a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h7' },
+    { to: '/routes', label: 'Times', icon: 'M12 13.5m-7.5 0a7.5 7.5 0 1 0 15 0a7.5 7.5 0 1 0-15 0M12 9.5v4l2.5 2M9.5 2.5h5M12 2.5V6' },
     // Your profile's own address, not /me (a redirect), so the tab lights up there.
     { to: `/u/${profile.username}`, label: 'Profile', icon: 'M16 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM4 21c1.2-4.5 14.8-4.5 16 0' },
   ];
@@ -135,16 +135,15 @@ export function TabBar() {
       <nav aria-label="Main">
         {tabs.map(({ to, label, icon, end }) =>
           to === '/drive' ? (
-            // Driving is the main job: a raised button in the middle.
+            // Driving is the main job: a solid circle in the middle of the glass bar.
             <NavLink key={to} to={to} end={end} className="tab-go" aria-label={label}>
               <span className="tab-go-btn" aria-hidden="true">
-                GO
+                <TabIcon d="M5 21V4h12l-2 4 2 4H5" />
               </span>
             </NavLink>
           ) : (
-            <NavLink key={to} to={to} end={end}>
+            <NavLink key={to} to={to} end={end} aria-label={label}>
               <TabIcon d={icon} />
-              {label}
             </NavLink>
           ),
         )}

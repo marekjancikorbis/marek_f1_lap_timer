@@ -9,7 +9,7 @@ import { formatDelta, formatDistance } from '../lib/format';
 /** Series colours, validated for CVD separation and contrast on the dark surface. */
 // a = the lap you're looking at (blue), b = what it's compared with (chalk).
 // This lap navy, the other lap a dashed muted line: they read apart without relying on colour.
-export const SERIES = { a: '#0E1B3D', b: '#7E89A6' };
+export const SERIES = { a: '#f4f4f5', b: '#7E89A6' };
 
 const W = 640;
 const H = 220;

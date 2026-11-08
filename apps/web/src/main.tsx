@@ -6,6 +6,9 @@ import { lockPortrait } from './lib/orientation';
 import './lib/install'; // catches the install prompt, which can fire before the app renders
 import './styles/global.css';
 import './styles/screens.css';
+import './styles/themes.css';
+import './styles/glass.css';
+import { applyTheme, storedTheme } from './lib/theme';
 
 // Deploys install in the background, but an open app keeps running the old code
 // until it reloads. Reload as soon as the new version takes over, except
@@ -31,8 +34,8 @@ if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
 }
 
 lockPortrait();
-// iOS ignores user-scalable=no: block its pinch-zoom of the page (maps still pinch, they use touch events).
-document.addEventListener('gesturestart', (e) => e.preventDefault());
+// The saved theme before the first paint, so the app never flashes the default colours.
+applyTheme(storedTheme());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
