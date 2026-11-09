@@ -137,13 +137,11 @@ export default function RouteDetail() {
 
   const top = board[0];
   const mine = board.find((b) => b.post.userId === profile.id);
-  // Collapsed: P2, P3 and you. Pulled up: the whole board, then the drivers you follow.
-  const shortBoard = board.slice(1, 3).concat(mine && mine.rank > 3 ? [mine] : []);
   const followed = board.filter((b) => following.has(b.post.userId));
-  const row = ({ rank, post }: (typeof board)[number]) => {
+  const row = ({ rank, post }: (typeof board)[number], peek = false) => {
     const me = post.userId === profile.id;
     return (
-      <Link key={post.id} to={`/lap/${post.id}`} style={{ gridTemplateColumns: '20px 1fr auto', ...(me ? { color: 'var(--main-hi)' } : null) }}>
+      <Link key={post.id} to={`/lap/${post.id}`} data-peek={peek || undefined} style={{ gridTemplateColumns: '20px 1fr auto', ...(me ? { color: 'var(--main-hi)' } : null) }}>
         <span className="lbl" style={me ? { color: 'inherit' } : undefined}>{rank}</span>
         {me ? <b>You</b> : <span className="ellipsis"><UserName uid={post.userId} fallback={post.username} /></span>}
         <span className="t" style={{ fontSize: 19 }}>{formatLap(post.totalMs)}</span>
@@ -186,29 +184,29 @@ export default function RouteDetail() {
           {route.isPublic ? (
             top ? (
               <>
-                <Link to={`/lap/${top.post.id}`} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: open ? 12 : 14 }}>
-                  <span className="t acc" style={{ fontSize: open ? 44 : 52 }}>{formatLap(top.post.totalMs)}</span>
+                {/* One layout open or shut (the sheet slides): shut, it shows down to P3. */}
+                <Link to={`/lap/${top.post.id}`} data-peek={board.length < 2 || undefined} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
+                  <span className="t acc" style={{ fontSize: 52 }}>{formatLap(top.post.totalMs)}</span>
                   <span className="lbl">{top.post.userId === profile.id ? 'You' : top.post.username}</span>
                 </Link>
-                {open && <div className="lbl" style={{ marginTop: 14 }}>Leaderboard</div>}
-                <div className="rows" style={{ marginTop: open ? 0 : 10 }}>{(open ? board.slice(1) : shortBoard).map(row)}</div>
-                {open && followed.length > 0 && (
+                {board.length > 1 && <div className="rows" style={{ marginTop: 10 }}>{board.slice(1).map((b, i) => row(b, i === Math.min(1, board.length - 2)))}</div>}
+                {followed.length > 0 && (
                   <>
                     <div className="lbl" style={{ marginTop: 14 }}>Following</div>
-                    <div className="rows">{followed.map(row)}</div>
+                    <div className="rows">{followed.map((b) => row(b))}</div>
                   </>
                 )}
               </>
             ) : (
-              <p className="lbl" style={{ marginTop: 12 }}>No posted laps yet. Drive it and post yours to take P1.</p>
+              <p className="lbl" data-peek style={{ marginTop: 12 }}>No posted laps yet. Drive it and post yours to take P1.</p>
             )
           ) : (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
+            <div data-peek style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
               <span className="t acc" style={{ fontSize: 52 }}>{myBest ? formatLap(myBest.totalMs) : '–'}</span>
               <span className="lbl">{myBest ? 'Your best · private route' : 'Private route · not driven yet'}</span>
             </div>
           )}
-          {open && (
+          {(
             <>
               <div className="lbl" style={{ marginTop: 14 }}>This route</div>
               <div className="rows">
@@ -271,10 +269,13 @@ export default function RouteDetail() {
             </>
           )}
         </div>
-        <Link className="solid" style={{ marginTop: 12, flex: 'none' }} to={`/drive/${route.id}`}>
+      </section>
+      {/* Pinned over the sheet's foot, so it stays put while the sheet slides under it. */}
+      <div className="rs-foot">
+        <Link className="solid" to={`/drive/${route.id}`}>
           Drive
         </Link>
-      </section>
+      </div>
     </main>
   );
 }

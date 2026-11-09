@@ -63,7 +63,7 @@ html.lens .glass { -webkit-backdrop-filter: var(--lens, blur(0px)) blur(.4px) va
   background:
     radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255,255,255, calc(.32 * var(--lit))), transparent 65%),
     radial-gradient(120% 60% at 25% -10%, rgba(255,255,255,.16), transparent 55%) }
-.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.3px; pointer-events: none;
+.glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
   background: conic-gradient(from var(--light), rgba(255,255,255,.95), rgba(255,255,255,.12) 16%, rgba(255,255,255,.06) 40%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.08) 62%, rgba(255,255,255,.12) 84%, rgba(255,255,255,.95));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude }
 .glass.sheet { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
@@ -281,9 +281,12 @@ html[data-nav="back"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animat
 /* Explore: the results sheet floats over the map; pulled up it runs from under the search to above the tab bar */
 .ph.explore[hidden] { display: none }
 .ph.explore .map .mapboxgl-ctrl-bottom-left, .ph.explore .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 64px) }
+/* Pull sheets slide (lib/pullSheet.ts): always full height, lowered by --shut when shut so only the top shows.
+   Moving a laid-out layer is cheap; changing its height re-laid-out the sheet every frame. */
 .glass.xs { position: absolute; left: 8px; right: 8px; bottom: calc(100px + var(--safe-b)); border-radius: 40px; padding: 0 18px 12px;
-  display: flex; flex-direction: column; height: auto; max-height: 40%; interpolate-size: allow-keywords; transition: height .52s var(--spring) }
-.glass.xs.open { max-height: none; height: calc(100% - var(--sbh) - 178px - var(--safe-b)) }
+  display: flex; flex-direction: column; height: calc(100% - var(--sbh) - 178px - var(--safe-b)); --peek-max: .4;
+  transform: translateY(var(--shut, 60%)); transition: transform .52s var(--spring) }
+.glass.xs.open { transform: none }
 .xs-pull { display: block; width: 100%; padding: 10px 0 0 !important; touch-action: none; cursor: grab }
 .xs-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain }
 .xs:not(.open) .xs-body { overflow: hidden }
@@ -291,9 +294,10 @@ html[data-nav="back"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animat
 input[type="search"]::-webkit-search-cancel-button { display: none }
 
 /* Route: the map is the whole screen; the sheet pulls up to just under the back button */
-.glass.rs { bottom: calc(8px + var(--safe-b)); padding: 0 20px 20px; display: flex; flex-direction: column; height: auto; max-height: 62%;
-  interpolate-size: allow-keywords; transition: height .52s var(--spring) }
-.glass.rs.open { max-height: none; height: calc(100% - var(--sbh) - 76px - var(--safe-b)) }
+.glass.rs { bottom: calc(8px + var(--safe-b)); padding: 0 20px 102px; display: flex; flex-direction: column;
+  height: calc(100% - var(--sbh) - 76px - var(--safe-b)); --peek-max: .62;
+  transform: translateY(var(--shut, 50%)); transition: transform .52s var(--spring) }
+.glass.rs.open { transform: none }
 .glass.rs:not(.open) .xs-body { overflow: hidden }
 @media (prefers-reduced-motion: reduce) { .glass.rs { transition: none } }
 .route-page .map .mapboxgl-ctrl-bottom-left, .route-page .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 60px) }
@@ -438,7 +442,7 @@ html.lens .glass, html.lens .dock, html.lens .ph.sl .glass.ib, html.lens .glass.
   background: color-mix(in srgb, var(--sheet) 16%, transparent);
   -webkit-backdrop-filter: var(--lens, blur(0px)) blur(.6px) saturate(1.7) brightness(1.06);
   backdrop-filter: var(--lens, blur(0px)) blur(.6px) saturate(1.7) brightness(1.06);
-  box-shadow: inset 1.5px 1.5px 1px -.5px rgba(255,255,255,.45), inset -1.5px -1.5px 1px -.5px rgba(255,255,255,.18),
+  box-shadow: inset 1px 1px .5px -.5px rgba(255,255,255,.45), inset -1px -1px .5px -.5px rgba(255,255,255,.16),
     inset 0 0 22px rgba(255,255,255,.07), 0 12px 32px -12px rgba(0,0,0,.55) }
 html.lens .ph.sl .glass.tl { background: color-mix(in srgb, var(--sheet) 24%, transparent);
   -webkit-backdrop-filter: var(--lens, blur(0px)) blur(1px) saturate(1.6); backdrop-filter: var(--lens, blur(0px)) blur(1px) saturate(1.6) }
@@ -464,4 +468,10 @@ html.lens .glass.toast.error { background: color-mix(in srgb, #ff5a5f 80%, trans
 
 /* Pull sheets resize every frame of a drag: keep that work inside the sheet (its layout and paint never
    spill onto the page) and tell the compositor it moves. */
-.glass.xs, .glass.rs { contain: layout paint style; will-change: height }
+.glass.xs, .glass.rs { contain: layout paint style; will-change: transform }
+/* The route's Drive button stays at the foot of the screen while the sheet (padded for it) slides under it.
+   Its strip is frosted and fades in from the top: what passes under it fades out (a scroll edge, no divider). */
+.rs-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 30px 28px calc(28px + var(--safe-b));
+  background: color-mix(in srgb, var(--sheet) 55%, transparent); -webkit-backdrop-filter: blur(10px) saturate(1.5); backdrop-filter: blur(10px) saturate(1.5);
+  -webkit-mask-image: linear-gradient(transparent, #000 30px); mask-image: linear-gradient(transparent, #000 30px) }
+@media (prefers-reduced-transparency: reduce) { .rs-foot { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night); -webkit-mask-image: none; mask-image: none } }

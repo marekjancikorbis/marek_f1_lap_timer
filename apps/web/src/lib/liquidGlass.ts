@@ -10,7 +10,7 @@
 
 const NS = 'http://www.w3.org/2000/svg';
 /** Px of background the rim pulls in from at most. */
-const STRENGTH = 26;
+const STRENGTH = 20;
 /** Big surfaces (sheets being dragged) share maps at this step, so a drag doesn't build one per frame. */
 const step = (v: number) => (v > 240 ? 24 : 4);
 const q = (v: number) => Math.max(8, Math.round(v / step(v)) * step(v));
@@ -31,7 +31,8 @@ export function lensMap(w: number, h: number, r: number): ImageData {
   const d = img.data;
   // Neutral everywhere first (128, 128, 128, 255); only the rim band is worked out pixel by pixel.
   new Uint32Array(d.buffer).fill(0xff808080);
-  const bezel = Math.max(6, Math.min(30, Math.min(w, h) * 0.32));
+  // A thin bevel: the bend stays in a narrow band at the rim.
+  const bezel = Math.max(4, Math.min(14, Math.min(w, h) * 0.18));
   const band = Math.ceil(Math.max(bezel, r));
   const cx = w / 2;
   const cy = h / 2;

@@ -375,7 +375,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           <span className="grab" />
         </button>
         <div className="xs-body">
-          {expanded && <div className="lbl">{routes === null ? 'Loading routes…' : term ? 'Matching routes' : 'Routes'}</div>}
+          <div className="lbl">{routes === null ? 'Loading routes…' : term ? 'Matching routes' : 'Routes'}</div>
           {routes === null ? (
             <div style={{ display: 'grid', placeItems: 'center', padding: 20 }}>
               <Spinner />
