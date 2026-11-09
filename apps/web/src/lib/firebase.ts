@@ -18,3 +18,16 @@ if (import.meta.env.VITE_EMULATORS === '1') {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
 }
+
+/**
+ * Whose data the app is showing: the signed-in user, or while Firebase is still confirming the session at
+ * launch, the account saved on this phone (session.tsx, optimistic launch). Signing out removes that copy.
+ */
+export function myUid(): string | null {
+  if (auth.currentUser) return auth.currentUser.uid;
+  try {
+    return (JSON.parse(localStorage.getItem('ps-session') ?? 'null') as { uid?: string } | null)?.uid ?? null;
+  } catch {
+    return null;
+  }
+}

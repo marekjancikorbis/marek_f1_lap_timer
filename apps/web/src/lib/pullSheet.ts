@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 
 /** Where a flick would come to rest (Apple's scroll-deceleration projection), in px from the release point. */
-const project = (vPxPerS: number, rate = 0.998) => ((vPxPerS / 1000) * rate) / (1 - rate);
+export const project = (vPxPerS: number, rate = 0.998) => ((vPxPerS / 1000) * rate) / (1 - rate);
 
 /** Past either end the sheet resists more the further it goes, instead of stopping dead. */
-const band = (over: number, dim = 300, c = 0.55) => (over * dim * c) / (dim + c * Math.abs(over));
+export const band = (over: number, dim = 300, c = 0.55) => (over * dim * c) / (dim + c * Math.abs(over));
 
 const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -13,7 +13,7 @@ const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
  * the settle. Damping 0.85 and response 0.38 s: a sheet that was thrown overshoots a hair and settles; one that
  * was let go slowly just glides in. Returns a stop function, so a new touch can catch it mid-flight.
  */
-function spring(from: number, to: number, v0: number, frame: (x: number) => void, done: () => void) {
+export function spring(from: number, to: number, v0: number, frame: (x: number) => void, done: () => void) {
   if (still()) {
     frame(to);
     done();

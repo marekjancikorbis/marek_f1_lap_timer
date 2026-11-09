@@ -15,7 +15,7 @@ import { deleteLog, downloadLog, listLogs } from '../drive/gpslogs';
 const HUES = [30, 185, 265, 330, 145, 210];
 
 export default function Settings() {
-  const { profile, role, user } = useMe();
+  const { profile, role } = useMe();
   const [adminRequest, setAdminRequest] = useState<CreatorRequest | null | undefined>(undefined);
   const { signOut } = useSession();
   const toast = useToast();

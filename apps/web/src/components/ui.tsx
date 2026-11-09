@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode, type TouchEvent as ReactTouchEvent } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { goBack } from '../lib/navStack';
+import { band, project, spring } from '../lib/pullSheet';
 import { getPhoto, getProfile } from '../lib/data';
 import { useMe } from '../lib/session';
 import { PageSkeleton } from './Skeleton';
@@ -130,8 +131,12 @@ export function TabBar() {
     // Your profile's own address, not /me (a redirect), so the tab lights up there.
     { to: `/u/${profile.username}`, label: 'Profile', icon: 'user' },
   ];
+  const path = useLocation().pathname;
+  const lit = inTimes ? 3 : tabs.findIndex(({ to, end }) => (end ? path === to : path === to || path.startsWith(`${to}/`)));
   return (
-    <nav className="glass dock" aria-label="Main">
+    <nav className="glass dock" aria-label="Main" style={{ '--i': lit } as CSSProperties}>
+      {/* The lit tab's pill slides from tab to tab (Drive has its own button, so none there). */}
+      <span className={`dock-pill${lit < 0 || lit === 2 ? ' off' : ''}`} aria-hidden="true" />
       {tabs.map(({ to, label, icon, end }) => (
         <NavLink
           key={to}
@@ -291,7 +296,8 @@ export function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div className="glass sheet seg" role="group" aria-label={label}>
+    <div className="glass sheet seg" role="group" aria-label={label} style={{ '--i': Math.max(0, options.findIndex((o) => o.value === value)), '--n': options.length } as CSSProperties}>
+      <span className="seg-thumb" aria-hidden="true" />
       {options.map((o) => (
         <button key={o.value} type="button" className={o.value === value ? 'on' : undefined} aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}
@@ -303,8 +309,21 @@ export function Segmented<T extends string>({
 
 // ---------------------------------------------------------------- sheet
 
+/**
+ * A modal sheet. Rises from the bottom and leaves the same way. Drag it down from anywhere (with its content at
+ * the top) to dismiss: it follows the finger 1:1, resists being pulled up, and on release a flick's projected
+ * resting point decides: past half its height it carries on down at the finger's speed, else it springs back.
+ */
 export function Sheet({ open, onClose, children, label }: { open: boolean; onClose: () => void; children: ReactNode; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(open);
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setShown(true);
+      setLeaving(false);
+    } else setLeaving(true);
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -312,10 +331,66 @@ export function Sheet({ open, onClose, children, label }: { open: boolean; onClo
     ref.current?.querySelector<HTMLElement>('input, textarea, button')?.focus();
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
-  if (!open) return null;
+
+  const drag = useRef<{ y0: number; dy: number; on: boolean; trail: { y: number; t: number }[] } | null>(null);
+  const stop = useRef<(() => void) | null>(null);
+  const place = (y: number) => ref.current && (ref.current.style.transform = y ? `translateY(${y}px)` : '');
+  const onTouchStart = (e: ReactTouchEvent) => {
+    stop.current?.();
+    drag.current = { y0: e.touches[0].clientY, dy: 0, on: false, trail: [{ y: e.touches[0].clientY, t: e.timeStamp }] };
+  };
+  const onTouchMove = (e: ReactTouchEvent) => {
+    const d = drag.current;
+    const el = ref.current;
+    if (!d || !el) return;
+    const y = e.touches[0].clientY;
+    const dy = y - d.y0;
+    if (!d.on) {
+      // Only a downward pull with the content at its top takes the sheet; anything else scrolls.
+      if (Math.abs(dy) < 8) return;
+      if (dy < 0 || el.scrollTop > 0) return void (drag.current = null);
+      d.on = true;
+      d.y0 = y;
+    }
+    d.dy = y - d.y0;
+    d.trail = [...d.trail.filter((p) => e.timeStamp - p.t < 100), { y, t: e.timeStamp }];
+    el.style.animation = 'none';
+    place(d.dy < 0 ? -band(-d.dy) : d.dy);
+  };
+  const onTouchEnd = (e: ReactTouchEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    const el = ref.current;
+    if (!d?.on || !el) return;
+    const first = d.trail[0];
+    const v = e.timeStamp > first.t ? ((d.dy - (first.y - d.y0)) / (e.timeStamp - first.t)) * 1000 : 0;
+    const h = el.offsetHeight;
+    const from = Math.max(0, d.dy);
+    const away = from + project(v) > h / 2;
+    stop.current = spring(from, away ? h + 24 : 0, v, place, () => {
+      stop.current = null;
+      if (away) {
+        el.style.setProperty('--y', `${h + 24}px`);
+        onClose();
+      }
+    });
+  };
+
+  if (!shown) return null;
   return (
-    <div className="scrim" onClick={onClose}>
-      <div ref={ref} className="glass sheet sheet-b modal" role="dialog" aria-modal="true" aria-label={label} onClick={(e) => e.stopPropagation()}>
+    <div className={`scrim${leaving ? ' out' : ''}`} onClick={onClose} onAnimationEnd={(e) => leaving && e.target === e.currentTarget && setShown(false)}>
+      <div
+        ref={ref}
+        className={`glass sheet sheet-b modal${leaving ? ' out' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={label}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
+      >
         <div className="grab" />
         {children}
       </div>
@@ -329,18 +404,24 @@ type ToastFn = (message: string, kind?: 'info' | 'error') => void;
 const ToastCtx = createContext<ToastFn>(() => undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<{ id: number; message: string; kind: 'info' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ id: number; message: string; kind: 'info' | 'error'; out?: boolean } | null>(null);
   const show = useCallback<ToastFn>((message, kind = 'info') => {
     const id = Date.now();
     setToast({ id, message, kind });
-    window.setTimeout(() => setToast((t) => (t?.id === id ? null : t)), kind === 'error' ? 5000 : 2800);
+    // Leaves the way it came (down and fading), then goes.
+    window.setTimeout(() => setToast((t) => (t?.id === id ? { ...t, out: true } : t)), kind === 'error' ? 5000 : 2800);
   }, []);
   return (
     <ToastCtx.Provider value={show}>
       {children}
       <div className="toast-host" aria-live="polite">
         {toast && (
-          <div key={toast.id} className={`glass sheet toast ${toast.kind === 'error' ? 'error' : ''}`} role={toast.kind === 'error' ? 'alert' : 'status'}>
+          <div
+            key={toast.id}
+            className={`glass sheet toast${toast.kind === 'error' ? ' error' : ''}${toast.out ? ' out' : ''}`}
+            role={toast.kind === 'error' ? 'alert' : 'status'}
+            onAnimationEnd={() => toast.out && setToast((t) => (t?.id === toast.id ? null : t))}
+          >
             {toast.message}
           </div>
         )}

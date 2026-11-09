@@ -73,7 +73,7 @@ class Crashed extends Component<{ children: ReactNode }, { error: Error | null }
 }
 
 function Gate() {
-  const { user, profile } = useSession();
+  const { user, uid, profile } = useSession();
   const [usage, setUsage] = useState<UsageState | null>(null);
 
   useEffect(() => onUsage(setUsage), []);
@@ -81,9 +81,10 @@ function Gate() {
     if (profile) readUsage().catch(() => undefined);
   }, [profile]);
 
-  if (user === undefined || (user && profile === undefined)) return <Loading />;
-  if (!user) return <AuthScreen />;
-  if (!profile) return <Onboarding />;
+  // Opens on the saved session at once (optimistic launch); Firebase confirms it behind.
+  if (uid === undefined || (uid && profile === undefined)) return <Loading />;
+  if (!uid) return <AuthScreen />;
+  if (!profile) return user ? <Onboarding /> : <Loading />;
   if (usage?.exhausted) return <LimitScreen usage={usage} />;
 
   return (

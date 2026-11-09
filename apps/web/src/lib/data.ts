@@ -24,8 +24,8 @@ import {
   type QueryDocumentSnapshot,
   type WriteBatch,
 } from 'firebase/firestore';
-import { auth, db } from './firebase';
-import type { Timestamp } from 'firebase/firestore';
+import { db, myUid } from './firebase';
+import { Timestamp } from 'firebase/firestore';
 import type { AuditEntry, CreatorRequest, Notice, Post, Profile, Role, Route, Run } from './types';
 
 function withId<T>(snap: DocumentSnapshot | QueryDocumentSnapshot): T {
@@ -52,7 +52,55 @@ const seen = new Set<string>();
  * instead of waiting for the server; null when it has nothing. It counts as already stale,
  * so the next read refreshes it; a screen that must show fresh data now reloads with forget().
  */
+/**
+ * The phone's own copy of the reads that open screens (the reel's "home snapshot"). Firestore's copy on the
+ * phone can't answer until Firebase Auth has checked the session with its server on launch, a round trip
+ * that takes seconds on a slow connection; localStorage answers at once. Only the signed-in user's reads are
+ * kept: clearCache() (sign-out, another account) empties it.
+ */
+const PHONE = 'ps-c:';
+const reviveTimestamps = (_k: string, v: unknown) => {
+  const t = v as { seconds?: unknown; nanoseconds?: unknown } | null;
+  return t && typeof t === 'object' && typeof t.seconds === 'number' && typeof t.nanoseconds === 'number' ? new Timestamp(t.seconds, t.nanoseconds) : v;
+};
+function fromPhone<T>(key: string): T | null {
+  try {
+    const v = localStorage.getItem(PHONE + key);
+    return v ? (JSON.parse(v, reviveTimestamps) as T) : null;
+  } catch {
+    return null;
+  }
+}
+function toPhone(key: string, value: unknown) {
+  try {
+    const v = JSON.stringify(value);
+    // shortcut: big reads (hundreds of laps) stay with Firestore's copy; move to IndexedDB if they need it too.
+    if (v.length < 200_000) localStorage.setItem(PHONE + key, v);
+  } catch {
+    // Full or blocked storage: the next launch reads Firestore's copy instead.
+  }
+}
+function dropFromPhone(match: (key: string) => boolean) {
+  try {
+    for (const k of Object.keys(localStorage)) if (k.startsWith(PHONE) && match(k.slice(PHONE.length))) localStorage.removeItem(k);
+  } catch {
+    // nothing kept
+  }
+}
+if (import.meta.env.DEV) {
+  const t = new Timestamp(5, 6);
+  const back = JSON.parse(JSON.stringify({ t }), reviveTimestamps).t as Timestamp;
+  console.assert(back instanceof Timestamp && back.toMillis() === t.toMillis(), 'phone copy keeps Timestamps');
+}
+
 function cached<T>(key: string, load: () => Promise<T>, disk?: () => Promise<T | null>): Promise<T> {
+  if (disk) {
+    // Reads that may open from the phone: the phone's copy first, and keep each fresh answer for next launch.
+    const firestoreCopy = disk;
+    const fetch = load;
+    disk = async () => fromPhone<T>(key) ?? firestoreCopy();
+    load = () => fetch().then((v) => (toPhone(key, v), v));
+  }
   const hit = cache.get(key);
   const age = hit ? Date.now() - hit.at : Infinity;
   if (hit && age < TTL_MS) return hit.value as Promise<T>;
@@ -88,12 +136,14 @@ function cached<T>(key: string, load: () => Promise<T>, disk?: () => Promise<T |
 /** Drop every cached read whose key starts with one of these. */
 export function forget(...prefixes: string[]) {
   for (const key of [...cache.keys()]) if (prefixes.some((p) => key.startsWith(p))) cache.delete(key);
+  dropFromPhone((key) => prefixes.some((p) => key.startsWith(p)));
 }
 
 /** On sign-out or a user switch. */
 export function clearCache() {
   cache.clear();
   seen.clear();
+  dropFromPhone(() => true);
 }
 
 /**
@@ -440,7 +490,7 @@ export function getRoute(id: string): Promise<Route | null> {
       // The phone's copy is shared by everyone who signed in on it: only what the rules let this user read.
       const snap = await getDocFromCache(doc(db, 'routes', id));
       const r = snap.exists() ? withId<Route>(snap) : null;
-      return r && (r.ownerId === auth.currentUser?.uid || (r.isPublic && !r.hidden)) ? r : null;
+      return r && (r.ownerId === myUid() || (r.isPublic && !r.hidden)) ? r : null;
     },
   );
 }
@@ -681,7 +731,7 @@ export function allMyRuns(uid: string): Promise<Run[]> {
     `runs:all:${uid}`,
     async () => lightRuns(uid, (await getDocs(q)).docs),
     async () => {
-      if (uid !== auth.currentUser?.uid) return null; // only your own laps from the phone's copy
+      if (uid !== myUid()) return null; // only your own laps from the phone's copy
       const snap = await getDocsFromCache(q);
       // Not lightRuns: moving old laps' details waits for the server's copy.
       return snap.empty ? null : snap.docs.map((d) => {
@@ -751,7 +801,7 @@ export function routeStats(uid: string): Promise<RouteStats> {
       return routes;
     },
     async () => {
-      if (uid !== auth.currentUser?.uid) return null;
+      if (uid !== myUid()) return null;
       const snap = await getDocFromCache(statsRef(uid));
       return snap.exists() ? (snap.data().routes as RouteStats) : null;
     },
@@ -807,10 +857,17 @@ function countActivity(uid: string, startedAt: number, by: 1 | -1) {
 }
 
 export function getActivity(uid: string): Promise<Activity | null> {
-  return cached(`activity:${uid}`, async () => {
-    const snap = await getDoc(doc(db, 'activity', uid));
-    return snap.exists() ? (snap.data() as Activity) : null;
-  });
+  return cached(
+    `activity:${uid}`,
+    async () => {
+      const snap = await getDoc(doc(db, 'activity', uid));
+      return snap.exists() ? (snap.data() as Activity) : null;
+    },
+    async () => {
+      const snap = await getDocFromCache(doc(db, 'activity', uid));
+      return snap.exists() ? (snap.data() as Activity) : null;
+    },
+  );
 }
 
 /** Recount every day from your own laps (runs are private, so only you can). */
@@ -917,12 +974,15 @@ export function getPost(id: string): Promise<Post | null> {
 }
 
 export function routePosts(routeId: string, max = 300): Promise<Post[]> {
-  return cached(`posts:route:${routeId}:${max}`, async () => {
-    const snap = await getDocs(
-      query(collection(db, 'posts'), where('routeId', '==', routeId), where('hidden', '==', false), orderBy('totalMs', 'asc'), limit(max)),
-    );
-    return snap.docs.map((d) => withId<Post>(d));
-  });
+  const q = query(collection(db, 'posts'), where('routeId', '==', routeId), where('hidden', '==', false), orderBy('totalMs', 'asc'), limit(max));
+  return cached(
+    `posts:route:${routeId}:${max}`,
+    async () => (await getDocs(q)).docs.map((d) => withId<Post>(d)),
+    async () => {
+      const snap = await getDocsFromCache(q);
+      return snap.empty ? null : snap.docs.map((d) => withId<Post>(d));
+    },
+  );
 }
 
 export interface LeaderRow {

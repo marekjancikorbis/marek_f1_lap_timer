@@ -393,3 +393,34 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .chart-tick { font: 600 11px var(--font); fill: var(--ink-2) }
 /* a map still loading, or one that can't: a glass note in the middle, no Livery card */
 .map-overlay { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--ink-2); font-size: 14px; font-weight: 600; background: var(--night) }
+
+/* ---- motion: one moving highlight per control, exits along the entrance path (apple-design) ---- */
+/* dock: the lit tab's pill slides tab to tab; a CSS transition re-targets from where it is, so taps mid-slide redirect it */
+.dock { position: fixed }
+.dock-pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 5); border-radius: 27px; pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 10%, transparent); transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform .42s cubic-bezier(.34, 1.25, .5, 1), opacity .2s ease-out }
+.dock-pill.off { opacity: 0 }
+.dock .tab.on:not(.go) { background: none }
+.dock .tab { position: relative; z-index: 1 }
+/* segmented controls: the thumb slides to the chosen option */
+.seg { position: relative }
+.seg-thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--n, 2)); border-radius: 18px; pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 14%, transparent); transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform .38s cubic-bezier(.34, 1.2, .5, 1) }
+.seg > button { position: relative; z-index: 1 }
+.seg > .on { background: none }
+/* modal sheets leave the way they came, from wherever a drag left them; the scrim fades with them */
+.sheet-b.modal { touch-action: pan-y }
+.sheet-b.modal.out { animation: sheet-down .3s cubic-bezier(.4, 0, 1, 1) forwards }
+@keyframes sheet-down { from { transform: translateY(var(--y, 0px)) } to { transform: translateY(105%) } }
+.scrim.out { animation: scrim-clear .3s ease-in forwards; pointer-events: none }
+@keyframes scrim-clear { to { background-color: transparent } }
+@keyframes fade-out { to { opacity: 0 } }
+.glass.toast.out { animation: toast-out .24s ease-in forwards }
+@keyframes toast-out { to { opacity: 0; transform: translateY(12px) scale(.96) } }
+@media (prefers-reduced-motion: reduce) {
+  .dock-pill, .seg-thumb { transition: opacity .15s }
+  .sheet-b.modal.out, .glass.toast.out { animation: fade-out .15s ease-out forwards }
+  .scrim.out { animation-duration: .15s }
+}
