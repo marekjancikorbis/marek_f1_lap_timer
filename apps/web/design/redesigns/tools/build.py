@@ -145,6 +145,11 @@ for _name, (_src, _title, _pal, _sw) in list(PAGES.items()):
         base = PAGES.get('glass-' + _name.split('-', 1)[1])  # Mono has no Glass twin: its palette is complete
         PAGES[_name] = (_src, _title, {**(base[2] if base else {}), **_pal}, _sw)
 
+# Telemetry: Glass tiles refined (src/telemetry.html), in the same palettes as Glass tiles.
+for _name, (_src, _title, _pal, _sw) in list(PAGES.items()):
+    if _src == 'bento':
+        PAGES['telemetry-' + _name.split('-', 1)[1]] = ('telemetry', _title.replace('Glass tiles', 'Telemetry'), _pal, _sw)
+
 
 
 def lookup(key):

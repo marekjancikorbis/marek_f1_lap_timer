@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Purple Sector · Telemetry · Indigo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&display=swap">
+<style>
+/* Telemetry: Glass tiles, refined, in glassmorphism. Same screens and palettes; what changed:
+   - glassmorphism instead of liquid glass: frosted panels (20-28 px blur, a light translucent tint, a 1 px light
+     edge, a top highlight and a soft shadow) in three depths; no refraction, no pointer-lit rim, no script;
+   - a more vivid moving gradient underneath, so the frosting has colour to diffuse;
+   - one type scale: four time sizes (.t1-.t4, condensed Archivo) and one label style (.k), body 15/16;
+   - every time carries its sector strip (.sec), every delta its sign and a tinted pill (.dl), never colour alone;
+   - tab bar with labels, Drive raised in the middle; rows end in a real chevron;
+   - a faint telemetry grid under the gradient, so screens without a map still have structure. */
+:root {
+  --page: #060920; --ring: #04061a; --night: #0b1033; --main: #5b4bff; --main-hi: #a79eff; --on-main: #ffffff; --accent: #a79eff; --ink: #eceeff; --ink-2: rgba(236, 238, 255, .74); --sheet: rgba(11, 16, 51, .45); --clear: rgba(243, 239, 230, .06); --glass-fx: saturate(1.3) brightness(1.08); --map-full: url(maps/full-dark.png); --map-drive: url(maps/drive-dark.png); --map-filter: grayscale(1) brightness(1.4); --map-tint: #1a1f66; --map-blend: color; --blob-a: #5b4bff; --blob-b: #1d2a8f; --s-p: #9d5cff; --s-g: #1fd27a; --s-y: #ffbe1a; --sea: #0b1033; --tile: #161c4d; --deep: #080c28; --red: #5b4bff; --on-red: #ffffff; --red-ink: #4a3be0; --snow: #eceeff; --snow-2: rgba(236, 238, 255, .8); --map-card: url(maps/card-dark.png);
+  --font: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --spring: cubic-bezier(.3, 1.4, .5, 1);
+  --out: cubic-bezier(.2, .8, .2, 1);
+  --hair: color-mix(in srgb, var(--ink) 11%, transparent);
+  --fill: color-mix(in srgb, var(--ink) 9%, transparent);
+  --fill-2: color-mix(in srgb, var(--ink) 15%, transparent);
+  /* glass depths: 1 inset panels, 2 cards and controls, 3 sheets and the tab bar */
+  --g1: color-mix(in srgb, var(--sheet) 35%, rgb(255 255 255 / .06));
+  --g2: color-mix(in srgb, var(--sheet) 55%, rgb(255 255 255 / .09));
+  --g3: color-mix(in srgb, var(--sheet) 75%, rgb(255 255 255 / .1));
+  --glass-bg: var(--g2);
+  --edge: rgb(255 255 255 / .16);
+  --edge-hi: rgb(255 255 255 / .34);
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { background: var(--page); color: var(--ink); font: 15px/1.4 var(--font) }
+body { padding-block: 24px 48px }
+header.top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+header.top a { color: var(--ink-2); text-decoration: none; font-size: 14px }
+header.top h1 { font-size: 28px; letter-spacing: -.02em; font-weight: 700 }
+header.top p { flex-basis: 100%; color: var(--ink-2); font-size: 14px; max-width: 70ch }
+.sw { display: flex; gap: 6px } .sw i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2) }
+.wall { display: flex; gap: 36px; overflow-x: auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 12px; scroll-snap-type: x proximity }
+figure { flex: none; scroll-snap-align: center }
+figcaption { margin-top: 14px; font-size: 13px; color: var(--ink-2); text-align: center }
+
+/* ---------- phone, map and the gradient background ---------- */
+.ph { width: 390px; height: 844px; border-radius: 48px; overflow: hidden; position: relative; isolation: isolate; background: var(--night);
+  box-shadow: 0 0 0 9px var(--ring), 0 0 0 10px rgba(255,255,255,.08), 0 40px 80px -30px rgba(0, 0, 0, .8); font-variant-numeric: tabular-nums }
+.ph::after { content: ""; position: absolute; inset: 0; background: var(--grain); opacity: .07; mix-blend-mode: overlay; pointer-events: none; z-index: 50 }
+.map { position: absolute; inset: 0; isolation: isolate; z-index: -3 }
+.map::before { content: ""; position: absolute; inset: 0; background: var(--map-img) center / cover; filter: var(--map-filter) }
+.map::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: var(--map-blend) }
+.route { position: absolute; inset: 0; width: 390px; height: 844px; z-index: -2; fill: none; stroke-linecap: round; stroke-linejoin: round }
+.sb { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 32px 0 36px; font-size: 15px; font-weight: 600 }
+.sb::after { content: ""; width: 66px; height: 12px; border-radius: 4px; background: linear-gradient(90deg, currentColor 0 18px, transparent 18px 23px, currentColor 23px 42px, transparent 42px 47px, currentColor 47px) }
+/* content running under the floating controls fades out */
+.edge { position: absolute; left: 0; right: 0; top: 0; height: 130px; z-index: -1; pointer-events: none;
+  background: linear-gradient(color-mix(in srgb, var(--night) 70%, transparent), transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(#000 30%, transparent); mask-image: linear-gradient(#000 30%, transparent) }
+
+/* screens without a map: the palette's blobs drift on a closed loop (as in Glass tiles), with a faint grid on top */
+@property --orbit { syntax: "<angle>"; inherits: false; initial-value: 0deg }
+.ph.soft { --r: 37%; background:
+  radial-gradient(27% 15% at 50% 50%, color-mix(in srgb, var(--blob-c, transparent) 85%, transparent), transparent 100%),
+  radial-gradient(46% 28% at 50% 50%, color-mix(in srgb, var(--blob-a) 92%, transparent), transparent 100%),
+  radial-gradient(46% 28% at 50% 50%, color-mix(in srgb, var(--blob-b) 95%, transparent), transparent 100%),
+  var(--sea);
+  background-size: 220% 220%, 220% 220%, 220% 220%, auto; background-repeat: no-repeat;
+  background-position:
+    calc(50% + var(--r) * .6 * sin(var(--orbit) * 2)) calc(50% + var(--r) * .6 * cos(var(--orbit))),
+    calc(50% + var(--r) * cos(var(--orbit))) calc(50% + var(--r) * sin(var(--orbit))),
+    calc(50% - var(--r) * cos(var(--orbit))) calc(50% + var(--r) * sin(var(--orbit) * 2)),
+    0 0;
+  animation: orbit 20s linear infinite }
+.ph.soft::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(var(--hair) 1px, transparent 1px) 0 0 / 100% 26px, linear-gradient(90deg, var(--hair) 1px, transparent 1px) 0 0 / 26px 100%;
+  opacity: .5; -webkit-mask-image: radial-gradient(120% 70% at 50% 0%, #000, transparent 75%); mask-image: radial-gradient(120% 70% at 50% 0%, #000, transparent 75%) }
+@keyframes orbit { to { --orbit: 360deg } }
+@media (prefers-reduced-motion: reduce) { .ph.soft { animation: none } }
+
+/* ---------- glassmorphism: frosted panels in three depths ---------- */
+.glass { position: relative; overflow: hidden; isolation: isolate; background: var(--g2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.7); backdrop-filter: blur(20px) saturate(1.7);
+  box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 var(--edge-hi), 0 10px 30px -10px rgba(0,0,0,.45);
+  transition: transform .16s var(--out), background-color .16s var(--out) }
+/* light reflection: a soft diagonal sheen from the top left */
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,0) 45%) }
+.glass.sheet-b, .glass.dock, .glass.deep { background: var(--g3); -webkit-backdrop-filter: blur(28px) saturate(1.8); backdrop-filter: blur(28px) saturate(1.8);
+  box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 var(--edge-hi), 0 18px 48px -14px rgba(0,0,0,.55) }
+.glass.lo { background: var(--g1) }
+button.glass:active, .glass .tab:active { transform: scale(.96) }
+/* coloured glass: the tile that is the next thing to do, and sector tints while driving */
+.glass.hot { background: color-mix(in srgb, var(--red) 80%, transparent); color: var(--on-red) }
+.glass.tint-p { background: color-mix(in srgb, var(--s-p) 78%, transparent); color: #fff }
+.glass.tint-g { background: color-mix(in srgb, var(--s-g) 80%, transparent); color: #03240f }
+.glass.clear { background: rgba(255,255,255,.22); color: inherit }
+@media (prefers-reduced-transparency: reduce) {
+  /* solid instead of frosted, but coloured glass keeps its colour */
+  .glass, .glass.sheet-b, .glass.dock, .glass.deep, .edge { -webkit-backdrop-filter: none; backdrop-filter: none }
+  .glass:not(.hot, .tint-p, .tint-g, .clear), .edge { background: var(--deep, var(--night)) }
+  .glass.hot { background: var(--red) } .glass.tint-p { background: var(--s-p) } .glass.tint-g { background: var(--s-g) }
+  .glass.clear { background: rgba(255,255,255,.3) }
+}
+@media (prefers-reduced-motion: reduce) { .glass { transition: none } button.glass:active, .glass .tab:active { transform: none } }
+
+/* ---------- type: four time sizes, one label, body ---------- */
+.t { font-weight: 700; font-stretch: 75%; letter-spacing: -.01em; line-height: .9; font-variant-numeric: tabular-nums }
+.t1 { font-size: 84px } .t2 { font-size: 52px } .t3 { font-size: 30px } .t4 { font-size: 21px }
+.k { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-stretch: 115%; color: var(--ink-2) }
+.sub { font-size: 14px; color: var(--ink-2) }
+.h1 { font-size: 32px; font-weight: 750; letter-spacing: -.025em; line-height: 1.05 }
+.h2 { font-size: 18px; font-weight: 650; letter-spacing: -.01em }
+.wm { font-weight: 900; font-stretch: 125%; font-size: 15px; text-transform: uppercase; letter-spacing: .04em }
+.acc { color: var(--accent) }
+.hot .k, .hot .sub { color: color-mix(in srgb, var(--on-red) 78%, transparent) }
+
+/* ---------- controls ---------- */
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer }
+:focus-visible { outline: 2px solid var(--main-hi); outline-offset: 3px }
+svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none }
+svg.i.sm { width: 18px; height: 18px }
+.ib { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none }
+.btn { height: 52px; border-radius: 26px; background: var(--main); color: var(--on-main); font-weight: 650; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: transform .15s var(--out), filter .15s }
+.btn.quiet { background: var(--fill-2); color: var(--ink) }
+.btn.inv { background: var(--on-red); color: var(--red) }
+.btn.sm { height: 40px; border-radius: 20px; width: auto; padding: 0 16px; font-size: 14px }
+.btn:active { transform: scale(.97); filter: brightness(1.08) }
+.chip { height: 32px; padding: 0 12px; border-radius: 16px; font-size: 13px; font-weight: 650; display: inline-flex; align-items: center; gap: 6px; background: var(--fill); white-space: nowrap }
+.chip.main { background: var(--main); color: var(--on-main) }
+.field { height: 52px; border-radius: 26px; padding: 0 18px; display: flex; align-items: center; gap: 10px; background: var(--fill); font-size: 16px; box-shadow: inset 0 0 0 1px var(--hair) }
+.seg { height: 44px; border-radius: 22px; padding: 4px; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr }
+.seg span { display: grid; place-items: center; border-radius: 18px; font-size: 14px; font-weight: 650; color: var(--ink-2) }
+.seg span.on { background: var(--ink); color: var(--night) }
+.seg.flat { background: var(--fill) }
+.seg.flat span.on { background: var(--fill-2); color: var(--ink) }
+.av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 750; color: #10131c; flex: none }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none }
+.p { background: var(--s-p) } .g { background: var(--s-g) } .y { background: var(--s-y) }
+/* sector strip: three segments as long as the sectors are, coloured by how each went */
+.sec { display: grid; grid-template-columns: 30fr 37fr 33fr; gap: 3px; height: 5px }
+.sec i { border-radius: 3px }
+.sec.thick { height: 8px }
+/* delta: sign, tint and colour together */
+.dl { display: inline-flex; align-items: center; height: 26px; padding: 0 9px; border-radius: 13px; font-weight: 700; font-stretch: 75%; font-size: 16px; font-variant-numeric: tabular-nums }
+.dl.gain { color: var(--s-g); background: color-mix(in srgb, var(--s-g) 16%, transparent) }
+.dl.best { color: #c9a8ff; background: color-mix(in srgb, var(--s-p) 22%, transparent) }
+.dl.loss { color: var(--s-y); background: color-mix(in srgb, var(--s-y) 16%, transparent) }
+.hot .dl { color: var(--on-red); background: color-mix(in srgb, var(--on-red) 16%, transparent) }
+/* route outline thumbnail */
+svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink); stroke-width: 14; stroke-linecap: round; stroke-linejoin: round }
+
+/* ---------- layout pieces ---------- */
+.hd { min-height: 52px; padding: 4px 16px 0; display: flex; justify-content: space-between; align-items: center; gap: 10px }
+.tt { padding: 12px 20px 0 } .tt .k + .h1 { margin-top: 6px }
+.pad { padding: 16px 16px 0 }
+.stack { display: grid; gap: 10px }
+.card { border-radius: 24px; padding: 18px 20px }
+.sheet-b { position: absolute; left: 8px; right: 8px; bottom: 8px; border-radius: 40px; padding: 10px 20px 20px }
+.grab { width: 36px; height: 5px; border-radius: 3px; background: var(--fill-2); margin: 0 auto 14px }
+.between { display: flex; justify-content: space-between; align-items: baseline; gap: 12px }
+.list > .r { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; min-height: 60px; padding: 8px 0 }
+.list > .r + .r { border-top: 1px solid var(--hair) }
+.list > .r.two { grid-template-columns: 1fr auto }
+.list > .r.me { color: var(--main-hi) }
+.list > .r.me .sub { color: inherit }
+.rank { width: 22px; font-weight: 700; font-stretch: 75%; font-size: 17px; color: var(--ink-2); text-align: right }
+.chev { color: var(--ink-2) }
+
+/* ---------- tab bar: labelled tabs in one capsule, Drive raised in the middle ---------- */
+.dock { position: absolute; left: 12px; right: 12px; bottom: 20px; height: 66px; border-radius: 33px; padding: 5px; display: grid; grid-template-columns: repeat(5, 1fr); z-index: 5 }
+.dock .tab { border-radius: 28px; display: grid; place-items: center; align-content: center; gap: 3px; color: var(--ink-2); font-size: 11px; font-weight: 650 }
+.dock .tab.on { color: var(--ink); background: var(--fill-2) }
+.dock .tab.go { width: 56px; height: 56px; justify-self: center; align-self: center; border-radius: 50%; background: var(--red); color: var(--on-red); box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--red) 80%, transparent) }
+.dock .tab.go.on { box-shadow: 0 0 0 3px var(--ink) }
+
+/* ---------- Home bento ---------- */
+.bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px }
+.bento .tile { border-radius: 28px; padding: 16px; min-width: 0 }
+.bento .w2 { grid-column: span 2 }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; align-items: end; height: 44px; margin-top: 12px }
+.week i { border-radius: 3px; background: var(--fill-2); min-height: 3px }
+.week i.now { background: var(--red) }
+.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 5px; font-size: 10px; font-weight: 700; color: var(--ink-2); text-align: center }
+
+/* ---------- drive ---------- */
+.ring { position: relative }
+.ring svg { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); fill: none; stroke: var(--ink); stroke-width: 3; pointer-events: none }
+.car { position: absolute; left: 0; top: 0; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--night), 0 2px 8px rgba(0,0,0,.5); offset-rotate: 0deg; z-index: -1 }
+.car.ghost { background: var(--night); box-shadow: inset 0 0 0 3px var(--ink), 0 0 0 2px var(--night) }
+.play { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--main); color: var(--on-main); flex: none }
+.scrub { position: relative; height: 6px; border-radius: 3px; margin-top: 12px; background: linear-gradient(90deg, var(--main-hi) var(--p), var(--fill-2) var(--p)) }
+.scrub::after { content: ""; position: absolute; left: var(--p); top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; background: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.4) }
+.ph.delta { background: radial-gradient(70% 90% at 30% 10%, rgba(255,255,255,.28), transparent 70%), var(--s-g); color: #03240f }
+.ph.delta .k { color: inherit; opacity: .75 }
+.bars { display: grid; gap: 14px }
+.bar { display: grid; grid-template-columns: 26px 1fr 64px; align-items: center; gap: 10px }
+.bar i { height: 10px; border-radius: 5px; justify-self: end }
+
+/* theme picker in Settings */
+.themes { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 16px; margin-top: 16px }
+.theme { display: grid; justify-items: center; gap: 7px; color: var(--ink-2); text-decoration: none; font-size: 12px; font-weight: 650; text-align: center }
+.theme i { width: 44px; height: 44px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--fill-2); transition: transform .15s var(--out) }
+.theme.on { color: var(--ink) } .theme.on i { box-shadow: 0 0 0 2px var(--night), 0 0 0 4px var(--ink) }
+.theme:active i { transform: scale(.94) } .theme:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 8px }
+.ndot { position: relative } .ndot::after { content: ""; position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 2px var(--night) }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
+  <symbol id="flag" viewBox="0 0 24 24"><path d="M5 21V4h12l-2 4 2 4H5"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 14v6h14v-6"/></symbol>
+  <symbol id="vol" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="play" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></symbol>
+  <symbol id="watch" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5M12 2.5V6"/></symbol>
+  <symbol id="phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="gps" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5"/></symbol>
+  <symbol id="route" viewBox="0 0 366 250"><path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0"/></symbol>
+</svg>
+
+<header class="top">
+  <a href="index.html">← All designs</a>
+  <h1>Telemetry · Indigo</h1>
+  <span class="sw"><i style="background:#0b1033"></i><i style="background:#5b4bff"></i></span>
+  <p>Glass tiles, refined, in glassmorphism: frosted panels in three depths, one type scale, a sector strip under every time, signed deltas, labelled tabs.</p>
+</header>
+
+<div class="wall">
+
+<!-- SIGN IN -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="position:absolute;left:28px;right:28px;top:170px">
+    <div class="wm" style="color:var(--ink-2)">Lap timer</div>
+    <div class="t" style="font-size:96px;margin-top:12px;line-height:.82;font-stretch:70%;text-transform:uppercase">Purple<br>Sector</div>
+    <div class="sec thick" style="width:200px;margin-top:20px"><i class="p"></i><i class="g"></i><i class="y"></i></div>
+    <div class="sub" style="font-size:16px;margin-top:16px">Time your drives. Race the lap to beat.</div>
+  </div>
+  <div class="glass sheet-b" style="padding:24px 20px 20px;display:grid;gap:10px">
+    <label class="k" style="padding-left:18px">Email</label>
+    <div class="field">tomas@example.com</div>
+    <label class="k" style="padding-left:18px;margin-top:4px">Password</label>
+    <div class="field" style="letter-spacing:.2em">••••••••</div>
+    <button class="btn" style="margin-top:8px">Sign in</button>
+    <button class="btn quiet">Create account</button>
+  </div>
+</div>
+<figcaption>Sign in</figcaption>
+</figure>
+
+<!-- USERNAME -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="tt" style="padding-top:36px"><div class="k">Step 2 of 2</div><div class="h1">Pick a username</div><div class="sub" style="margin-top:8px">Shown on every lap you post.</div></div>
+  <div style="display:grid;justify-items:center;margin-top:52px"><span class="av" style="width:104px;height:104px;font-size:34px;background:var(--main);color:var(--on-main)">TK</span></div>
+  <div style="padding:40px 20px 0;display:grid;gap:8px">
+    <label class="k" style="padding-left:18px">Username</label>
+    <div class="field" style="justify-content:space-between;box-shadow:inset 0 0 0 2px var(--s-g)"><span><span style="color:var(--ink-2)">@</span>tomas_k</span><svg class="i sm" style="color:var(--s-g)" aria-label="Available"><use href="#check"/></svg></div>
+    <div class="sub" style="padding-left:18px"><span style="color:var(--s-g);font-weight:650">Available.</span> 3–20 letters, numbers, _ and .</div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="btn">Continue</button></div>
+</div>
+<figcaption>Pick a username</figcaption>
+</figure>
+
+<!-- HOME -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd" style="padding:0 16px 10px 20px"><div><div class="k">Sun 9 Nov</div><div class="wm" style="margin-top:3px">Purple Sector</div></div><button class="glass ib ndot" aria-label="Notifications, 1 new"><svg class="i"><use href="#bell"/></svg></button></div>
+  <div class="bento">
+    <div class="glass hot tile w2" style="padding:18px 18px 16px">
+      <div class="between"><span class="k">Home course · Ecce Homo</span><span class="k">Your best</span></div>
+      <div class="t t1" style="margin-top:12px">2:14.83</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px"><span class="dl">+3.36</span><span class="sub" style="color:inherit;opacity:.8">to the record</span></div>
+      <svg class="shape" style="position:absolute;right:24px;top:50px;width:78px;height:122px;stroke:var(--on-red);stroke-width:8;opacity:.9" viewBox="112 15 142 220" aria-hidden="true"><path d="M126.9 170.2 L127.7 171.8 L127.6 175.2 L127.5 177.2 L127.9 178.8 L128.7 181.0 L130.3 185.2 L130.9 187.0 L131.7 189.0 L132.3 190.4 L132.3 190.5 L133.0 192.6 L133.3 193.6 L133.5 194.4 L133.7 195.2 L133.8 196.2 L133.8 196.9 L133.8 197.7 L133.9 198.4 L134.1 199.2 L134.2 199.7 L134.3 200.1 L134.5 200.8 L134.7 201.7 L134.5 203.1 L134.4 204.5 L134.2 205.5 L134.0 206.4 L133.8 207.1 L132.6 210.0 L131.1 212.3 L131.0 213.5 L131.4 213.6 L131.8 213.6 L132.4 213.7 L132.9 213.9 L133.3 214.1 L133.7 214.5 L134.0 214.9 L134.4 215.4 L134.7 216.2 L135.6 217.9 L135.8 218.4 L136.2 219.2 L136.5 220.0 L141.3 217.6 L143.2 216.5 L144.9 215.8 L145.9 215.5 L146.8 215.5 L147.9 215.0 L150.0 212.7 L150.7 211.6 L154.7 204.9 L154.9 204.6 L155.0 204.2 L155.0 203.8 L155.0 203.4 L155.0 203.2 L154.6 202.0 L154.4 201.8 L153.8 200.9 L153.2 199.9 L152.9 199.1 L152.7 198.1 L152.6 197.1 L152.7 195.8 L152.8 195.0 L153.0 193.8 L153.3 192.5 L154.0 189.5 L155.0 184.9 L155.7 182.5 L156.1 181.3 L158.7 176.7 L160.4 173.9 L162.4 171.4 L165.1 168.2 L169.0 164.3 L169.2 164.1 L172.7 160.4 L174.0 159.1 L175.6 157.4 L181.8 151.0 L183.6 149.2 L185.1 147.6 L186.0 146.5 L185.7 146.4 L185.4 146.2 L185.0 145.9 L184.6 145.6 L184.1 145.1 L183.8 144.8 L183.6 144.5 L183.3 144.1 L183.0 143.7 L182.8 143.4 L182.7 143.1 L182.5 142.7 L182.4 142.3 L182.2 141.9 L182.1 141.5 L182.1 141.0 L182.0 140.6 L182.0 140.2 L182.1 139.8 L182.1 139.5 L182.2 139.1 L182.3 138.8 L182.4 138.5 L182.5 138.2 L182.7 137.7 L182.9 137.4 L183.3 136.8 L183.7 136.2 L185.8 132.7 L186.1 132.1 L186.3 131.7 L186.7 130.9 L187.0 130.2 L187.3 129.7 L187.5 129.1 L187.7 128.5 L187.9 127.9 L188.0 127.6 L189.0 124.6 L190.7 118.7 L190.9 117.8 L191.2 116.7 L191.5 115.5 L191.7 114.5 L191.8 113.8 L191.8 112.9 L191.8 111.7 L191.7 110.7 L190.8 105.8 L190.8 105.3 L190.7 104.8 L190.8 104.4 L190.8 104.0 L190.9 103.4 L191.0 102.7 L191.1 102.2 L191.3 101.9 L191.5 101.6 L191.7 101.2 L194.2 98.4 L200.6 89.1 L203.2 85.0 L205.7 79.1 L209.7 72.3 L210.3 71.0 L210.8 69.6 L211.0 68.5 L211.2 67.2 L211.1 66.0 L210.7 63.6 L210.6 62.5 L210.6 62.1 L210.8 61.7 L211.1 61.5 L211.4 61.3 L211.9 61.3 L212.3 61.5 L212.6 61.7 L212.8 62.2 L213.3 64.3 L213.3 66.1 L213.2 68.4 L211.9 75.0 L211.4 78.3 L211.8 83.9 L211.8 90.8 L212.0 93.5 L212.3 95.3 L218.8 108.4 L220.6 110.6 L222.1 110.9 L222.8 110.2 L222.7 109.0 L222.3 108.2 L221.6 106.4 L220.8 101.5 L220.2 93.4 L220.4 91.1 L229.0 64.5 L229.2 64.1 L232.4 52.8 L239.1 30.0"/></svg>
+      <button class="btn inv" style="margin-top:16px"><svg class="i sm"><use href="#flag"/></svg>Drive</button>
+    </div>
+    <div class="glass tile"><div class="k">Record</div><div class="t t3" style="margin-top:12px">2:11.47</div><div class="sub" style="margin-top:8px;display:flex;gap:6px;align-items:center"><svg class="i sm" style="width:15px;height:15px"><use href="#trophy"/></svg>petra_r</div></div>
+    <div class="glass tile"><div class="between" style="white-space:nowrap"><span class="k">Week</span><span class="k" style="color:var(--ink)">14 laps</span></div>
+      <div class="week" aria-label="Laps per day this week"><i style="height:30%"></i><i style="height:0"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:0"></i><i class="now" style="height:100%"></i><i style="height:20%"></i></div>
+      <div class="days"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span style="color:var(--ink)">S</span><span>S</span></div></div>
+    <div class="glass tile w2" style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:14px 14px 14px 16px">
+      <span class="av" style="background:#ffc2a8">PR</span>
+      <div style="min-width:0"><div class="sub">petra_r beat you on Ecce Homo</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="t t4">2:11.47</span><span class="dl loss">+3.36</span></div></div>
+      <button class="btn sm">Race</button>
+    </div>
+    <div class="glass tile"><div class="k">Autodrom Most</div><div class="t t4" style="margin-top:10px">1:41.330</div></div>
+    <div class="glass tile"><div class="k">Vysoké Mýto</div><div class="t t4" style="margin-top:10px">0:49.02</div></div>
+  </div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab on" aria-current="page"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Home</figcaption>
+</figure>
+
+<!-- EXPLORE -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Ecce Homo on the map">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="#fff" stroke-width="5"/>
+    <circle cx="108.2" cy="337.0" r="8" fill="var(--accent)" stroke="var(--night)" stroke-width="3"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <span class="glass chip" style="position:absolute;left:calc(108.2px + 16px);top:calc(337.0px - 16px);gap:8px"><svg class="i sm" style="width:14px;height:14px"><use href="#trophy"/></svg>2:11.47</span>
+  <div style="padding:4px 16px"><div class="glass field" style="color:var(--ink-2)"><svg class="i sm"><use href="#search"/></svg>Routes and drivers</div></div>
+  <div class="glass deep" style="position:absolute;left:8px;right:8px;bottom:98px;border-radius:36px;padding:10px 20px 6px">
+    <div class="grab"></div>
+    <div class="k">Nearby</div>
+    <div class="list">
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Ecce Homo</div><div class="sub">3.42 km · Official</div></div><span class="t t4 acc">2:11.47</span></div>
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Autodrom Most</div><div class="sub">4.21 km · Lap</div></div><span class="t t4">1:38.902</span></div>
+    </div>
+  </div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab on" aria-current="page"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Explore</figcaption>
+</figure>
+
+<!-- EXPLORE: SHEET PULLED UP -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="#fff" stroke-width="5"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px"><div class="glass field" style="color:var(--ink-2)"><svg class="i sm"><use href="#search"/></svg>Routes and drivers</div></div>
+  <div class="glass deep" style="position:absolute;left:8px;right:8px;top:124px;bottom:98px;border-radius:36px;padding:10px 20px 6px">
+    <div class="grab"></div>
+    <div class="k">Routes nearby</div>
+    <div class="list">
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Ecce Homo</div><div class="sub">3.42 km · Official</div></div><span class="t t4 acc">2:11.47</span></div>
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Autodrom Most</div><div class="sub">4.21 km · Lap</div></div><span class="t t4">1:38.902</span></div>
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Club sprint</div><div class="sub">2.10 km · Lap</div></div><span class="t t4">0:48.115</span></div>
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Vysoké Mýto</div><div class="sub">1.90 km · Standing</div></div><span class="t t4">0:49.02</span></div>
+    </div>
+    <div class="k" style="margin-top:14px">Drivers</div>
+    <div class="list">
+      <div class="r"><span class="av" style="background:#ffc49b">PR</span><div><div class="h2">petra_r</div><div class="sub">12 records</div></div><svg class="i chev"><use href="#chev"/></svg></div>
+      <div class="r"><span class="av" style="background:#b9c8ff">JK</span><div><div class="h2">jan.k</div><div class="sub">Ecce Homo · 2:13.98</div></div><svg class="i chev"><use href="#chev"/></svg></div>
+    </div>
+  </div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab on" aria-current="page"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Explore, sheet pulled up</figcaption>
+</figure>
+
+<!-- TIMES -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="tt" style="padding-top:8px"><div class="k">Your best on each route</div><div class="h1">Times</div></div>
+  <div class="pad" style="padding-top:14px"><div class="glass seg"><span class="on">Times</span><span>My routes</span></div></div>
+  <div class="pad stack" style="padding-top:14px">
+    <div class="glass card">
+      <div class="between"><span class="h2">Ecce Homo</span><span class="sub">2 Nov</span></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px"><span class="t t3 acc">2:14.83</span><span class="chip main" style="height:24px;font-size:11px;padding:0 8px">PB</span><span style="flex:1"></span><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg></div>
+      <div class="sec" style="margin-top:12px"><i class="p"></i><i class="g"></i><i class="y"></i></div>
+      <div class="sub" style="margin-top:10px">4 laps · last 2:15.40</div>
+    </div>
+    <div class="glass card">
+      <div class="between"><span class="h2">Autodrom Most</span><span class="sub">26 Oct</span></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px"><span class="t t3 acc">1:41.330</span><span class="chip main" style="height:24px;font-size:11px;padding:0 8px">PB</span><span style="flex:1"></span><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg></div>
+      <div class="sec" style="margin-top:12px"><i class="y"></i><i class="g"></i><i class="g"></i></div>
+      <div class="sub" style="margin-top:10px">9 laps · last 1:42.015</div>
+    </div>
+    <div class="glass card">
+      <div class="between"><span class="h2">Vysoké Mýto</span><span class="sub">12 Oct</span></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px"><span class="t t3 acc">0:49.02</span><span class="chip main" style="height:24px;font-size:11px;padding:0 8px">PB</span><span style="flex:1"></span><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg></div>
+      <div class="sec" style="margin-top:12px"><i class="g"></i><i class="y"></i><i class="y"></i></div>
+      <div class="sub" style="margin-top:10px">3 laps · last 0:49.88</div>
+    </div>
+  </div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab on" aria-current="page"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Times</figcaption>
+</figure>
+
+<!-- TIMES: ONE ROUTE -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="tt"><div class="k">3.42 km · 4 laps</div><div class="h1">Ecce Homo</div></div>
+  <div class="pad">
+    <div class="glass card">
+      <div class="between"><span class="k">Ideal lap</span><span class="k">Best sectors combined</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><span class="t t2 acc">2:13.91</span><span class="dl gain">−0.92</span></div>
+      <div class="sec thick" style="margin-top:14px"><i class="p"></i><i class="p"></i><i class="g"></i></div>
+    </div>
+  </div>
+  <div class="k" style="padding:20px 24px 0">Laps</div>
+  <div class="list" style="padding:2px 24px 0">
+    <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4">2:14.83</span><div class="sub">2 Nov</div></div><span class="chip main" style="height:24px;font-size:11px;padding:0 8px">PB</span><div class="sec"><i class="p"></i><i class="g"></i><i class="y"></i></div></div>
+    <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4">2:15.40</span><div class="sub">2 Nov</div></div><span class="dl loss" style="height:24px;font-size:14px">+0.57</span><div class="sec"><i class="g"></i><i class="y"></i><i class="y"></i></div></div>
+    <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4">2:21.06</span><div class="sub">26 Oct</div></div><span class="dl loss" style="height:24px;font-size:14px">+6.23</span><div class="sec"><i class="y"></i><i class="y"></i><i class="g"></i></div></div>
+    <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4">2:18.77</span><div class="sub">25 Oct · simulated</div></div><span class="chip" style="height:24px;font-size:11px;padding:0 8px">Sim</span><div class="sec"><i class="y"></i><i class="g"></i><i class="y"></i></div></div>
+  </div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab on" aria-current="page"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Times · Ecce Homo</figcaption>
+</figure>
+
+<!-- TIMES: MY ROUTES -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="tt" style="padding-top:8px;display:flex;justify-content:space-between;align-items:end"><div><div class="k">Routes you built</div><div class="h1">Times</div></div><button class="glass ib" aria-label="Build a route"><svg class="i"><use href="#plus"/></svg></button></div>
+  <div class="pad" style="padding-top:14px"><div class="glass seg"><span>Times</span><span class="on">My routes</span></div></div>
+  <div class="pad"><div class="glass card" style="padding:6px 18px">
+    <div class="list">
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Club sprint</div><div class="sub">2.10 km · Lap</div></div><span class="chip">Private</span></div>
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Hill loop</div><div class="sub">5.80 km · Lap</div></div><span class="chip">Private</span></div>
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Vysoké Mýto</div><div class="sub">1.90 km · Standing</div></div><span class="chip main">Public</span></div>
+    </div>
+  </div></div>
+  <div class="k" style="padding:20px 24px 0">Official</div>
+  <div class="pad" style="padding-top:8px"><div class="glass card" style="padding:6px 18px">
+    <div class="list">
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Ecce Homo</div><div class="sub">3.42 km · Standing</div></div><svg class="i chev"><use href="#chev"/></svg></div>
+      <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Autodrom Most</div><div class="sub">4.21 km · Lap</div></div><svg class="i chev"><use href="#chev"/></svg></div>
+    </div>
+  </div></div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab on" aria-current="page"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Times · My routes</figcaption>
+</figure>
+
+<!-- ROUTE BUILDER -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="The new route on the map">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="#fff" stroke-width="5"/>
+    <circle cx="108.2" cy="337.0" r="9" fill="var(--s-g)" stroke="var(--night)" stroke-width="3"/>
+    <circle cx="281.8" cy="120.0" r="9" fill="var(--ink)" stroke="var(--night)" stroke-width="3"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px">Tap the map to add a gate</span><button class="glass ib" aria-label="Undo"><svg class="i"><use href="#undo"/></svg></button></div>
+  <div class="glass sheet-b" style="padding-top:20px;display:grid;gap:10px">
+    <div class="between"><span class="t t2">3.42<span class="sub" style="font-size:16px;font-weight:600"> km</span></span><span class="sub">Start · 2 splits · Finish</span></div>
+    <div class="sec thick"><i class="p"></i><i class="g"></i><i class="y"></i></div>
+    <label class="k" style="padding-left:18px;margin-top:6px">Name</label>
+    <div class="field">Ecce Homo</div>
+    <div class="seg flat"><span class="on">Standing</span><span>Rolling</span><span>Lap</span></div>
+    <button class="btn" style="margin-top:4px">Save route</button>
+  </div>
+</div>
+<figcaption>Build a route</figcaption>
+</figure>
+
+<!-- ROUTE -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Route map, three sectors">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="#fff" stroke-width="5"/><path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="#fff" stroke-width="5"/><path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="#fff" stroke-width="5"/>
+    <circle cx="108.2" cy="337.0" r="7" fill="var(--s-g)" stroke="var(--night)" stroke-width="2.5"/>
+    <circle cx="281.8" cy="120.0" r="6" fill="var(--ink)" stroke="var(--night)" stroke-width="2.5"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="glass sheet-b">
+    <div class="grab"></div>
+    <div class="between"><span class="h1" style="font-size:26px">Ecce Homo</span><span class="sub">3.42 km · Standing</span></div>
+    <div class="k" style="margin-top:14px">Record</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="t t2 acc">2:11.47</span><span class="sub">petra_r · 2 Nov</span></div>
+    <div class="list" style="margin-top:8px">
+      <div class="r"><span class="rank">2</span><span>Pavel N.</span><span class="t t4">2:12.90</span></div>
+      <div class="r"><span class="rank">3</span><span>Ondra M.</span><span class="t t4">2:13.55</span></div>
+      <div class="r me"><span class="rank" style="color:inherit">7</span><b>You</b><span class="t t4">2:14.83</span></div>
+    </div>
+    <button class="btn" style="margin-top:10px"><svg class="i sm"><use href="#flag"/></svg>Drive this route</button>
+  </div>
+</div>
+<figcaption>Route</figcaption>
+</figure>
+
+<!-- ROUTE: SHEET PULLED UP -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="#fff" stroke-width="5"/><path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="#fff" stroke-width="5"/><path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="#fff" stroke-width="5"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="glass sheet-b" style="top:112px">
+    <div class="grab"></div>
+    <div class="between"><span class="h1" style="font-size:26px">Ecce Homo</span><span class="sub">3.42 km · Standing</span></div>
+    <div style="margin-top:12px"><div class="glass seg" style="box-shadow:none;background:var(--fill)"><span class="on">Everyone</span><span>Following</span></div></div>
+    <div class="list" style="margin-top:6px">
+      <div class="r"><span class="rank" style="color:var(--accent)">1</span><span>petra_r</span><span class="t t4 acc">2:11.47</span></div>
+      <div class="r"><span class="rank">2</span><span>Pavel N.</span><span class="t t4">2:12.90</span></div>
+      <div class="r"><span class="rank">3</span><span>Ondra M.</span><span class="t t4">2:13.55</span></div>
+      <div class="r"><span class="rank">4</span><span>jan.k</span><span class="t t4">2:13.98</span></div>
+      <div class="r"><span class="rank">5</span><span>Lukáš V.</span><span class="t t4">2:14.10</span></div>
+      <div class="r"><span class="rank">6</span><span>marek_j</span><span class="t t4">2:14.62</span></div>
+      <div class="r me"><span class="rank" style="color:inherit">7</span><b>You</b><span class="t t4">2:14.83</span></div>
+      <div class="r"><span class="rank">8</span><span>Eva S.</span><span class="t t4">2:16.40</span></div>
+    </div>
+    <button class="btn" style="position:absolute;left:20px;right:20px;bottom:20px;width:auto"><svg class="i sm"><use href="#flag"/></svg>Drive this route</button>
+  </div>
+</div>
+<figcaption>Route, sheet pulled up</figcaption>
+</figure>
+
+<!-- DRIVE TAB -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="tt" style="padding-top:8px"><div class="k">Drive</div><div class="h1">Where to?</div></div>
+  <div class="pad" style="padding-top:18px">
+    <div class="glass hot card" style="border-radius:28px;padding:20px">
+      <div class="between"><span class="k">Home course</span><span class="k">3.42 km</span></div>
+      <div class="h2" style="margin-top:8px;font-size:22px">Ecce Homo</div>
+      <div class="between" style="margin-top:12px;align-items:center"><span class="t t2">2:14.83</span><svg class="shape" style="stroke:var(--on-red);width:76px;height:52px" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg></div>
+      <div class="sec" style="margin-top:12px"><i class="p"></i><i class="g"></i><i class="y"></i></div>
+      <button class="btn inv" style="margin-top:18px"><svg class="i sm"><use href="#flag"/></svg>Drive</button>
+    </div>
+  </div>
+  <div class="k" style="padding:22px 24px 0">Recent</div>
+  <div class="list" style="padding:2px 24px 0">
+    <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Autodrom Most</div><div class="sub">26 Oct · best 1:41.330</div></div><svg class="i chev"><use href="#chev"/></svg></div>
+    <div class="r"><svg class="shape" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg><div><div class="h2">Club sprint</div><div class="sub">19 Oct · best 0:48.115</div></div><svg class="i chev"><use href="#chev"/></svg></div>
+  </div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go on" aria-label="Drive" aria-current="page"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Drive</figcaption>
+</figure>
+
+<!-- READY -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="#fff" stroke-width="4" opacity=".7"/>
+    <circle cx="108.2" cy="337.0" r="18" fill="var(--s-g)" opacity=".25"/>
+    <circle cx="108.2" cy="337.0" r="7" fill="var(--s-g)" stroke="var(--night)" stroke-width="2.5"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px"><span class="dot g"></span>GPS ±3 m</span></div>
+  <div class="glass sheet-b" style="padding-top:20px">
+    <div class="between"><span class="k">Race against</span><span class="sub">Ecce Homo</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <div style="padding:14px;border-radius:20px;background:var(--fill)"><div class="k">Record</div><div class="t t3 acc" style="margin-top:8px">2:11.47</div></div>
+      <div style="padding:14px;border-radius:20px;background:color-mix(in srgb,var(--main) 28%,transparent);box-shadow:inset 0 0 0 2px var(--main-hi)" aria-selected="true"><div class="k" style="color:var(--ink);display:flex;justify-content:space-between">Your best<svg class="i sm" style="width:14px;height:14px"><use href="#check"/></svg></div><div class="t t3" style="margin-top:8px">2:14.83</div></div>
+      <div style="padding:14px;border-radius:20px;background:var(--fill)"><div class="k">Ideal</div><div class="t t3" style="margin-top:8px">2:13.91</div></div>
+      <div style="padding:14px;border-radius:20px;background:var(--fill)"><div class="k">Clock only</div><div class="t t3" style="margin-top:8px;color:var(--ink-2)">—</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;margin-top:10px;padding:4px 4px 4px 16px;border-radius:26px;background:var(--fill)">
+      <span class="k" style="flex:1">Lights</span>
+      <button class="ib" aria-label="Shorter countdown"><svg class="i sm"><use href="#minus"/></svg></button><b class="t t4" style="width:34px;text-align:center">5 s</b><button class="ib" aria-label="Longer countdown"><svg class="i sm"><use href="#plus"/></svg></button>
+      <span style="width:1px;height:24px;background:var(--hair);margin:0 4px"></span>
+      <button class="ib" aria-label="Voice on" aria-pressed="true" style="color:var(--main-hi);background:var(--fill)"><svg class="i sm"><use href="#vol"/></svg></button>
+    </div>
+    <div style="display:grid;justify-items:center;margin-top:18px"><button class="btn" style="width:112px;height:112px;border-radius:50%;font-size:20px;box-shadow:0 0 0 8px color-mix(in srgb,var(--main) 20%,transparent)">Start</button></div>
+  </div>
+</div>
+<figcaption>Ready</figcaption>
+</figure>
+
+<!-- DRIVE -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-drive);top:230px;-webkit-mask-image:linear-gradient(transparent,#000 24%);mask-image:linear-gradient(transparent,#000 24%)"></div>
+  <span style="position:absolute;left:203px;top:584px;width:24px;height:24px;border-radius:50%;background:var(--main);box-shadow:0 0 0 4px var(--ink),0 6px 14px rgba(0,0,0,.5);z-index:-1"></span>
+  <div class="sb">9:41</div>
+  <div class="hd" style="padding:4px 20px 0"><span class="glass chip" style="height:40px;border-radius:20px"><span class="dot g"></span>±3 m</span><span><span class="t t3">118</span><span class="k"> km/h</span></span></div>
+  <div style="text-align:center;padding-top:18px">
+    <div class="k">vs your best</div>
+    <div class="t" style="font-size:148px;color:var(--s-g);margin-top:8px;letter-spacing:-.03em">−0.41</div>
+    <div style="margin-top:12px"><span class="k">Lap </span><span class="t t3">1:38.4</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:20px 16px 0">
+    <div class="glass tint-p" style="height:76px;border-radius:38px;display:grid;place-items:center;align-content:center;gap:4px"><span class="k" style="color:inherit;opacity:.8">S1</span><span class="t t4">−0.28</span></div>
+    <div class="glass tint-g" style="height:76px;border-radius:38px;display:grid;place-items:center;align-content:center;gap:4px"><span class="k" style="color:inherit;opacity:.8">S2</span><span class="t t4">−0.20</span></div>
+    <div class="glass" style="height:76px;border-radius:38px;display:grid;place-items:center;align-content:center;gap:4px;box-shadow:inset 0 0 0 2px var(--ink)"><span class="k" style="color:var(--ink)">S3</span><span class="t t4" style="color:var(--ink-2)">now</span></div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:104px;display:flex;justify-content:center"><span class="glass chip" style="height:36px"><svg class="i sm" style="width:16px;height:16px;transform:rotate(90deg)"><use href="#phone"/></svg>Turn sideways for delta only</span></div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="glass" style="width:100%;height:58px;border-radius:29px;font-weight:650;font-size:17px;background:linear-gradient(90deg,color-mix(in srgb,var(--ink) 22%,transparent) 0 30%,var(--glass-bg) 30%)">Hold to stop</button></div>
+</div>
+<figcaption>Drive</figcaption>
+</figure>
+
+<!-- DRIVE, DELTA ONLY -->
+<figure>
+<div class="ph delta" style="width:844px;height:390px">
+  <div style="padding:22px 52px 0;display:flex;justify-content:space-between;align-items:center">
+    <span class="glass chip clear" style="height:38px;font-size:15px">Ecce Homo · S2</span>
+    <span class="glass chip clear" style="height:38px;font-size:15px"><span class="dot" style="background:currentColor"></span>±3 m</span>
+  </div>
+  <div style="text-align:center;margin-top:4px">
+    <div class="t" style="font-size:200px;letter-spacing:-.04em">−0.41</div>
+    <div class="k" style="font-size:13px;margin-top:6px">vs your best</div>
+  </div>
+  <div style="position:absolute;left:52px;right:52px;bottom:22px;display:flex;justify-content:space-between;align-items:center">
+    <span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:650;opacity:.8"><svg class="i sm"><use href="#phone"/></svg>Turn upright for the full HUD</span>
+    <button class="glass clear" style="height:48px;padding:0 22px;border-radius:24px;font-weight:650;font-size:15px">Hold to exit</button>
+  </div>
+</div>
+<figcaption>Drive · delta only, phone on its side</figcaption>
+</figure>
+
+<!-- RESULT -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Your lap, coloured by sector">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="var(--s-p)" stroke-width="5"/><path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="var(--s-g)" stroke-width="5"/><path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--s-y)" stroke-width="5"/>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Close"><svg class="i"><use href="#x"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div class="glass sheet-b" style="padding-top:22px">
+    <div class="between"><span class="chip" style="background:color-mix(in srgb,var(--s-g) 18%,transparent);color:var(--s-g)"><svg class="i sm" style="width:14px;height:14px"><use href="#trophy"/></svg>New personal best</span><span class="sub">Ecce Homo</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px"><span class="t t1" style="font-size:72px">2:13.62</span><span class="dl gain" style="height:32px;font-size:20px;padding:0 12px">−1.21</span></div>
+    <div class="sec thick" style="margin-top:16px"><i class="p"></i><i class="g"></i><i class="y"></i></div>
+    <div class="list" style="margin-top:6px">
+      <div class="r" style="grid-template-columns:10px 1fr auto 70px"><span class="dot p"></span><span><b>S1</b> <span class="sub">fastest ever</span></span><span class="t t4">0:41.08</span><span class="dl best" style="justify-self:end">−0.62</span></div>
+      <div class="r" style="grid-template-columns:10px 1fr auto 70px"><span class="dot g"></span><span><b>S2</b> <span class="sub">your best</span></span><span class="t t4">0:48.37</span><span class="dl gain" style="justify-self:end">−0.71</span></div>
+      <div class="r" style="grid-template-columns:10px 1fr auto 70px"><span class="dot y"></span><span><b>S3</b> <span class="sub">slower</span></span><span class="t t4">0:44.17</span><span class="dl loss" style="justify-self:end">+0.12</span></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px"><button class="btn quiet">Drive again</button><button class="btn">Post lap</button></div>
+  </div>
+</div>
+<figcaption>Result</figcaption>
+</figure>
+
+<!-- LAP DETAIL -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div style="padding:12px 20px 0;display:flex;gap:12px;align-items:center"><span class="av" style="width:48px;height:48px;background:#ffc49b">PR</span><div><div class="h2">petra_r</div><div class="sub">Ecce Homo · 2 Nov</div></div></div>
+  <div style="padding:16px 20px 0"><div class="k">Record</div><div style="display:flex;align-items:center;gap:12px;margin-top:6px"><span class="t t1 acc" style="font-size:72px">2:11.47</span></div><div class="sec thick" style="margin-top:14px"><i class="p"></i><i class="g"></i><i class="y"></i></div></div>
+  <div class="pad" style="padding-top:18px"><div class="glass seg"><span class="on">Sectors</span><span>Graphs</span><span>Map</span></div></div>
+  <div class="pad"><div class="glass card">
+    <div class="between"><span class="k">vs your best</span><span class="k">Total −3.36</span></div>
+    <div class="bars" style="margin-top:16px">
+      <div class="bar"><span class="k" style="color:var(--ink)">S1</span><i class="p" style="width:27%"></i><span class="dl gain" style="justify-self:end">−0.89</span></div>
+      <div class="bar"><span class="k" style="color:var(--ink)">S2</span><i class="g" style="width:50%"></i><span class="dl gain" style="justify-self:end">−1.68</span></div>
+      <div class="bar"><span class="k" style="color:var(--ink)">S3</span><i class="y" style="width:24%"></i><span class="dl gain" style="justify-self:end">−0.79</span></div>
+    </div>
+    <div class="sub" style="margin-top:14px">Biggest gain in S2.</div>
+  </div></div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="btn"><svg class="i sm"><use href="#flag"/></svg>Race this lap</button></div>
+</div>
+<figcaption>Lap detail</figcaption>
+</figure>
+
+<!-- LAP DETAIL: GRAPHS -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><button class="glass ib" aria-label="Share"><svg class="i"><use href="#share"/></svg></button></div>
+  <div style="padding:12px 20px 0;display:flex;gap:12px;align-items:center"><span class="av" style="width:48px;height:48px;background:#ffc49b">PR</span><div><div class="h2">petra_r</div><div class="sub">Ecce Homo · 2 Nov</div></div><span style="flex:1"></span><span class="t t3 acc">2:11.47</span></div>
+  <div class="pad" style="padding-top:18px"><div class="glass seg"><span>Sectors</span><span class="on">Graphs</span><span>Map</span></div></div>
+  <div class="pad stack">
+    <div class="glass card" style="padding:16px 18px">
+      <div class="between"><span class="k">Speed · km/h</span><span class="k">Top <b style="color:var(--ink)">118</b></span></div>
+      <svg viewBox="0 0 318 130" style="width:100%;display:block;margin-top:12px" aria-label="Speed over the lap, coloured by sector">
+        <defs><linearGradient id="spd" gradientUnits="userSpaceOnUse" x1="0" x2="318" y1="0" y2="0">
+          <stop offset=".3" stop-color="var(--s-p)"/><stop offset=".3" stop-color="var(--s-g)"/><stop offset=".67" stop-color="var(--s-g)"/><stop offset=".67" stop-color="var(--s-y)"/></linearGradient>
+          <linearGradient id="spdf" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--ink)" stop-opacity=".14"/><stop offset="1" stop-color="var(--ink)" stop-opacity="0"/></linearGradient></defs>
+        <g stroke="var(--ink)" stroke-opacity=".1"><line x1="0" y1="20" x2="318" y2="20"/><line x1="0" y1="65" x2="318" y2="65"/><line x1="0" y1="110" x2="318" y2="110"/></g>
+        <g stroke="var(--ink)" stroke-opacity=".28" stroke-dasharray="2 4"><line x1="95" y1="0" x2="95" y2="124"/><line x1="213" y1="0" x2="213" y2="124"/></g>
+        <path d="M0 118 C14 70 30 44 52 40 S80 92 100 98 S124 36 150 30 S178 96 196 104 S226 52 248 44 S276 72 292 66 S310 40 318 36 L318 124 L0 124Z" fill="url(#spdf)"/>
+        <path d="M0 118 C14 70 30 44 52 40 S80 92 100 98 S124 36 150 30 S178 96 196 104 S226 52 248 44 S276 72 292 66 S310 40 318 36" fill="none" stroke="url(#spd)" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="150" cy="30" r="4" fill="var(--ink)"/>
+      </svg>
+      <div style="display:grid;grid-template-columns:30fr 37fr 33fr;margin-top:6px" class="k"><span>S1</span><span style="text-align:center">S2</span><span style="text-align:right">S3</span></div>
+    </div>
+    <div class="glass card" style="padding:16px 18px">
+      <div class="between"><span class="k">Gap to your best</span><span class="dl best">−3.36</span></div>
+      <svg viewBox="0 0 318 74" style="width:100%;display:block;margin-top:12px" aria-label="Time gained on your best over the lap">
+        <line x1="0" y1="8" x2="318" y2="8" stroke="var(--ink)" stroke-opacity=".25" stroke-dasharray="3 5"/>
+        <path d="M0 8 C30 10 50 18 80 22 S120 28 150 36 S200 42 230 46 S290 54 318 66 L318 8 L0 8Z" fill="var(--s-p)" fill-opacity=".22"/>
+        <path d="M0 8 C30 10 50 18 80 22 S120 28 150 36 S200 42 230 46 S290 54 318 66" fill="none" stroke="#c9a8ff" stroke-width="2.5"/>
+      </svg>
+      <div class="sub" style="margin-top:6px">Line below zero: petra_r ahead.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="btn"><svg class="i sm"><use href="#flag"/></svg>Race this lap</button></div>
+</div>
+<figcaption>Lap detail · Graphs</figcaption>
+</figure>
+
+<!-- LAP DETAIL: MAP -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="The lap on the map, coloured by sector">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="var(--s-p)" stroke-width="5"/><path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="var(--s-g)" stroke-width="5"/><path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--s-y)" stroke-width="5"/>
+  </svg>
+  <i class="car ghost" style="offset-path:path('M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0');offset-distance:45%" aria-label="Your best"></i>
+  <i class="car" style="offset-path:path('M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0');offset-distance:48%" aria-label="petra_r"></i>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div style="padding:4px 16px;display:flex;gap:10px;align-items:center">
+    <button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button>
+    <div class="glass" style="flex:1;height:48px;border-radius:24px;padding:0 14px 0 5px;display:flex;align-items:center;gap:10px">
+      <span class="av" style="width:38px;height:38px;background:#ffc49b">PR</span><b style="flex:1">petra_r</b><span class="t t4 acc">2:11.47</span>
+    </div>
+  </div>
+  <div style="padding:10px 16px 0"><div class="glass seg"><span>Sectors</span><span>Graphs</span><span class="on">Map</span></div></div>
+  <div style="padding:10px 16px 0;display:flex;gap:6px">
+    <span class="glass chip" style="font-size:12px"><i class="dot p"></i>Fastest ever</span>
+    <span class="glass chip" style="font-size:12px"><i class="dot g"></i>Your best</span>
+    <span class="glass chip" style="font-size:12px"><i class="dot y"></i>Slower</span>
+  </div>
+  <div class="glass sheet-b">
+    <div class="grab"></div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <button class="play" aria-label="Play the lap"><svg class="i" style="fill:currentColor;stroke:none;margin-left:3px"><use href="#play"/></svg></button>
+      <div style="flex:1">
+        <div class="between" style="align-items:center"><span class="t t3">1:03.20</span><span class="dl best">−1.21</span></div>
+        <div class="scrub" style="--p:48%" role="slider" aria-label="Time into the lap" aria-valuenow="48"></div>
+      </div>
+      <button class="chip" style="height:44px;border-radius:22px;padding:0 14px">1×</button>
+    </div>
+    <div class="sub" style="display:flex;gap:16px;margin-top:14px"><span style="display:flex;gap:6px;align-items:center"><i class="dot" style="background:var(--ink)"></i>petra_r</span><span style="display:flex;gap:6px;align-items:center"><i class="dot" style="box-shadow:inset 0 0 0 2px var(--ink)"></i>Your best</span></div>
+    <div class="k" style="margin-top:16px">Camera follows</div>
+    <div class="seg flat" style="margin-top:8px"><span>Whole route</span><span class="on">petra_r</span><span>Your best</span></div>
+  </div>
+</div>
+<figcaption>Lap detail · Map</figcaption>
+</figure>
+
+<!-- COMPARE -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-label="Map coloured by who was faster">
+    <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="var(--night)" stroke-width="10" opacity=".6"/>
+    <g stroke-width="5">
+      <path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.0 384.4" stroke="var(--main-hi)"/><path d="M120.0 384.4 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L135.9 407.5" stroke="var(--accent)"/><path d="M135.9 407.5 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L150.2 366.3" stroke="var(--accent)"/>
+      <path d="M150.2 366.3 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L175.9 325.2" stroke="var(--main-hi)"/><path d="M175.9 325.2 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.1 287.8" stroke="var(--accent)"/><path d="M194.1 287.8 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.8 241.4" stroke="var(--accent)"/>
+      <path d="M207.8 241.4 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L229.0 198.5" stroke="var(--accent)"/><path d="M229.0 198.5 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L241.0 183.3" stroke="var(--main-hi)"/><path d="M241.0 183.3 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L245.4 231.3" stroke="var(--accent)"/>
+      <path d="M245.4 231.3 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.6" stroke="var(--accent)"/><path d="M252.9 214.6 L252.9 214.5 L266.2 173.4 L266.5 172.7 L268.0 167.5" stroke="var(--accent)"/><path d="M268.0 167.5 L271.4 155.3 L281.8 120.0" stroke="var(--accent)"/>
+    </g>
+  </svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px">Line colour: who was faster</span></div>
+  <div class="glass sheet-b" style="padding-top:20px">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:8px">
+      <div><div class="k" style="display:flex;gap:6px;align-items:center"><i class="dot" style="background:var(--main-hi)"></i>You</div><div class="t t3" style="margin-top:8px">2:13.62</div></div>
+      <span class="dl loss" style="margin-bottom:2px">+2.15</span>
+      <div style="text-align:right"><div class="k" style="display:flex;gap:6px;align-items:center;justify-content:flex-end">petra_r<i class="dot" style="background:var(--accent)"></i></div><div class="t t3" style="margin-top:8px">2:11.47</div></div>
+    </div>
+    <svg viewBox="0 0 334 110" style="width:100%;display:block;margin-top:16px" aria-label="Your gap to petra_r over the lap">
+      <line x1="0" y1="20" x2="334" y2="20" stroke="var(--ink)" stroke-opacity=".25" stroke-dasharray="3 5"/>
+      <g stroke="var(--ink)" stroke-opacity=".28" stroke-dasharray="2 4"><line x1="100" y1="0" x2="100" y2="110"/><line x1="224" y1="0" x2="224" y2="110"/></g>
+      <path d="M0 20 C30 18 50 26 80 36 S120 40 150 54 S200 68 230 62 S290 92 334 98 L334 20Z" fill="var(--accent)" fill-opacity=".16"/>
+      <path d="M0 20 C30 18 50 26 80 36 S120 40 150 54 S200 68 230 62 S290 92 334 98" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    </svg>
+    <div style="display:grid;grid-template-columns:30fr 37fr 33fr;margin-top:8px;gap:6px">
+      <div><div class="k">S1</div><div class="t t4" style="margin-top:4px">+0.57</div></div>
+      <div style="text-align:center"><div class="k">S2</div><div class="t t4" style="margin-top:4px">+0.73</div></div>
+      <div style="text-align:right"><div class="k">S3</div><div class="t t4" style="margin-top:4px">+0.85</div></div>
+    </div>
+    <button class="btn" style="margin-top:16px"><svg class="i sm"><use href="#flag"/></svg>Race petra_r</button>
+  </div>
+</div>
+<figcaption>Compare</figcaption>
+</figure>
+
+<!-- PROFILE -->
+<figure>
+<div class="ph">
+  <div class="map" style="--map-img:var(--map-full)"></div>
+  <svg class="route" viewBox="0 0 390 844" aria-hidden="true"><path d="M108.2 337.0 L109.4 339.5 L109.2 344.6 L109.1 347.7 L109.8 350.2 L110.9 353.6 L113.5 360.2 L114.4 362.9 L115.6 366.0 L116.5 368.1 L116.6 368.4 L117.6 371.6 L118.1 373.1 L118.5 374.4 L118.7 375.7 L118.9 377.1 L118.9 378.2 L118.9 379.5 L119.0 380.5 L119.3 381.8 L119.5 382.6 L119.7 383.2 L120.0 384.3 L120.2 385.6 L120.0 387.8 L119.7 390.0 L119.6 391.6 L119.2 393.0 L118.9 394.0 L117.0 398.5 L114.7 402.1 L114.5 404.0 L115.1 404.0 L115.8 404.1 L116.7 404.3 L117.5 404.5 L118.1 404.9 L118.7 405.4 L119.2 406.1 L119.7 406.9 L120.3 408.1 L121.6 410.7 L122.0 411.5 L122.6 412.8 L123.1 414.0 L130.4 410.2 L133.4 408.7 L136.0 407.5 L137.5 407.1 L139.0 407.1 L140.6 406.3 L144.0 402.6 L145.1 401.0 L151.3 390.7 L151.5 390.1 L151.7 389.6 L151.7 389.0 L151.7 388.4 L151.7 388.0 L151.0 386.2 L150.8 385.8 L149.9 384.5 L148.9 382.9 L148.4 381.6 L148.1 380.1 L147.9 378.5 L148.1 376.6 L148.3 375.3 L148.6 373.4 L149.0 371.5 L150.1 366.8 L151.6 359.7 L152.7 356.0 L153.4 354.1 L157.5 347.0 L160.1 342.7 L163.1 338.8 L167.2 333.9 L173.4 327.9 L173.7 327.5 L179.1 321.9 L181.0 319.8 L183.5 317.1 L193.1 307.2 L195.9 304.4 L198.2 302.0 L199.7 300.3 L199.2 300.1 L198.7 299.8 L198.1 299.4 L197.5 298.8 L196.8 298.2 L196.2 297.6 L195.9 297.1 L195.5 296.6 L195.1 296.0 L194.7 295.4 L194.5 295.0 L194.2 294.4 L194.0 293.8 L193.8 293.1 L193.7 292.5 L193.6 291.8 L193.5 291.2 L193.5 290.5 L193.6 289.9 L193.6 289.4 L193.7 288.9 L193.8 288.4 L194.0 288.0 L194.2 287.4 L194.6 286.7 L194.9 286.1 L195.4 285.3 L196.0 284.3 L199.3 278.9 L199.7 278.0 L200.1 277.3 L200.7 276.2 L201.2 275.1 L201.6 274.3 L202.0 273.3 L202.3 272.4 L202.6 271.6 L202.8 271.0 L204.2 266.3 L206.9 257.2 L207.2 255.9 L207.7 254.1 L208.1 252.4 L208.4 250.8 L208.6 249.6 L208.6 248.3 L208.6 246.5 L208.4 244.8 L207.1 237.4 L207.0 236.6 L207.0 235.8 L207.0 235.1 L207.0 234.5 L207.2 233.7 L207.4 232.4 L207.6 231.8 L207.9 231.2 L208.1 230.8 L208.5 230.2 L212.4 225.8 L222.2 211.4 L226.3 205.1 L230.1 196.0 L236.3 185.4 L237.3 183.4 L238.0 181.3 L238.4 179.5 L238.6 177.5 L238.5 175.7 L237.9 172.1 L237.7 170.3 L237.8 169.7 L238.1 169.1 L238.5 168.7 L239.0 168.5 L239.7 168.4 L240.4 168.7 L240.8 169.1 L241.1 169.9 L241.8 173.0 L242.0 175.9 L241.7 179.4 L239.7 189.7 L239.0 194.8 L239.6 203.4 L239.6 214.1 L239.8 218.2 L240.4 221.1 L250.4 241.4 L253.2 244.8 L255.5 245.1 L256.5 244.1 L256.4 242.3 L255.8 240.9 L254.8 238.2 L253.5 230.6 L252.6 218.1 L252.9 214.5 L266.2 173.4 L266.5 172.7 L271.4 155.3 L281.8 120.0" stroke="#fff" stroke-width="4" opacity=".8"/></svg>
+  <div class="edge"></div>
+  <div class="sb">9:41</div>
+  <div class="hd" style="justify-content:flex-end"><button class="glass ib" aria-label="Settings"><svg class="i"><use href="#gear"/></svg></button></div>
+  <div class="glass deep" style="position:absolute;left:8px;right:8px;top:226px;bottom:98px;border-radius:36px;padding:20px">
+    <div style="display:flex;gap:14px;align-items:center">
+      <span class="av" style="width:64px;height:64px;font-size:22px;background:var(--main);color:var(--on-main)">MJ</span>
+      <div style="flex:1"><div class="h1" style="font-size:24px">Marek J.</div><div class="sub" style="margin-top:2px">@marek_j</div></div>
+      <button class="btn sm quiet">Edit</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);margin-top:18px;padding:14px 0;border-block:1px solid var(--hair);text-align:center">
+      <div><div class="t t3">48</div><div class="k" style="margin-top:6px">Laps</div></div>
+      <div><div class="t t3">12</div><div class="k" style="margin-top:6px">Followers</div></div>
+      <div><div class="t t3">9</div><div class="k" style="margin-top:6px">Following</div></div>
+    </div>
+    <div class="k" style="margin-top:16px">Best times</div>
+    <div class="list">
+      <div class="r two"><div><div class="sub">Ecce Homo</div><div class="t t4" style="margin-top:4px">2:13.62</div></div><div class="sec" style="width:76px"><i class="p"></i><i class="g"></i><i class="y"></i></div></div>
+      <div class="r two"><div><div class="sub">Autodrom Most</div><div class="t t4" style="margin-top:4px">1:41.330</div></div><div class="sec" style="width:76px"><i class="y"></i><i class="g"></i><i class="g"></i></div></div>
+      <div class="r two"><div><div class="sub">Vysoké Mýto</div><div class="t t4" style="margin-top:4px">0:49.02</div></div><div class="sec" style="width:76px"><i class="g"></i><i class="y"></i><i class="y"></i></div></div>
+    </div>
+  </div>
+  <nav class="glass dock" aria-label="Tabs"><span class="tab"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab on" aria-current="page"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
+</div>
+<figcaption>Profile</figcaption>
+</figure>
+
+<!-- FOLLOW LIST -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div class="tt"><div class="k">Tomáš Kolář</div><div class="h1">@tomas_k</div></div>
+  <div class="pad" style="padding-top:14px"><div class="glass seg"><span class="on">31 followers</span><span>12 following</span></div></div>
+  <div class="list" style="padding:8px 24px 0">
+    <div class="r"><span class="av" style="background:#ffc49b">PR</span><div style="min-width:0"><div class="h2">petra_r</div><div class="sub">Petra R.</div></div><button class="btn sm quiet">Following</button></div>
+    <div class="r"><span class="av" style="background:#a9c2ff">JK</span><div style="min-width:0"><div class="h2">jan.k</div><div class="sub">Jan K.</div></div><button class="btn sm">Follow back</button></div>
+    <div class="r"><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><div class="h2">ondra_m</div><div class="sub">Ondřej M.</div></div><button class="btn sm quiet">Following</button></div>
+    <div class="r"><span class="av" style="background:#f2c4e6">LB</span><div style="min-width:0"><div class="h2">lucie.b</div><div class="sub">Lucie B.</div></div><button class="btn sm">Follow back</button></div>
+  </div>
+</div>
+<figcaption>Followers</figcaption>
+</figure>
+
+<!-- NOTIFICATIONS -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div class="tt"><div class="k">1 new</div><div class="h1">Notifications</div></div>
+  <div class="pad">
+    <div class="glass card" style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:16px">
+      <span class="av" style="background:#ffc49b">PR</span>
+      <div><div class="sub"><b style="color:var(--ink)">petra_r</b> beat your Ecce Homo</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="t t4">2:11.47</span><span class="dl loss" style="height:22px;font-size:14px">+3.36</span></div></div>
+      <button class="btn sm">Race</button>
+    </div>
+  </div>
+  <div class="k" style="padding:20px 24px 0">Earlier</div>
+  <div class="list" style="padding:2px 24px 0">
+    <div class="r"><span class="av" style="background:#a9c2ff">JK</span><div style="min-width:0"><div class="h2">jan.k</div><div class="sub">Followed you · 5 h</div></div><button class="btn sm">Follow back</button></div>
+    <div class="r" style="grid-template-columns:40px 1fr"><span class="av" style="background:var(--main);color:var(--on-main)"><svg class="i sm"><use href="#check"/></svg></span><div><div class="h2">Creator access approved</div><div class="sub">Mon · you can build routes now</div></div></div>
+    <div class="r"><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><div class="h2">ondra_m</div><div class="sub">Followed you · Sat</div></div><button class="btn sm quiet">Following</button></div>
+  </div>
+</div>
+<figcaption>Notifications</figcaption>
+</figure>
+
+<!-- SETTINGS -->
+<figure id="settings">
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div class="tt"><div class="h1">Settings</div></div>
+  <div class="pad stack">
+    <div class="glass card" style="display:flex;gap:14px;align-items:center;padding:16px 18px">
+      <span class="av" style="width:52px;height:52px;font-size:18px;background:var(--main);color:var(--on-main)">TK</span>
+      <div style="flex:1"><div class="h2">Tomáš Kolář</div><div class="sub">@tomas_k</div></div>
+      <svg class="i chev"><use href="#chev"/></svg>
+    </div>
+    <div class="glass card" style="padding:16px 18px">
+      <div class="between"><span class="k" style="color:var(--ink)">Theme</span><span class="sub">Colours the whole app</span></div>
+      <div class="themes"><a class="theme" href="telemetry-mono.html#settings"><i style="background:conic-gradient(from 225deg, #141416 0% 50%, #f4f4f5 50% 100%)"></i><span>Mono</span></a><a class="theme" href="telemetry-sleigh.html#settings"><i style="background:conic-gradient(from 225deg, #013f60 0% 33%, #e22c2c 33% 66%, #f3efe6 66% 100%)"></i><span>Navy &amp; red</span></a><a class="theme" href="telemetry-pine.html#settings"><i style="background:conic-gradient(from 225deg, #0b303c 0% 50%, #cdece2 50% 100%)"></i><span>Teal &amp; mint</span></a><a class="theme" href="telemetry-cobalt.html#settings"><i style="background:conic-gradient(from 225deg, #10121c 0% 33%, #c4b5ff 33% 66%, #c6ff3d 66% 100%)"></i><span>Lavender &amp; lime</span></a><a class="theme" href="telemetry-crimson.html#settings"><i style="background:conic-gradient(from 225deg, #a3122a 0% 33%, #7a0c1f 33% 66%, #ffe03a 66% 100%)"></i><span>Red &amp; yellow</span></a><a class="theme on" href="telemetry-midnight.html#settings" aria-current="true"><i style="background:conic-gradient(from 225deg, #0b1033 0% 50%, #5b4bff 50% 100%)"></i><span>Indigo</span></a><a class="theme" href="telemetry-forest.html#settings"><i style="background:conic-gradient(from 225deg, #0e4d3a 0% 50%, #9be15d 50% 100%)"></i><span>Green</span></a></div>
+    </div>
+    <div class="glass card" style="padding:4px 18px">
+      <div class="list">
+        <div class="r two"><span>Countdown</span><b class="t t4">5 s</b></div>
+        <div class="r two"><span>GPS logs</span><span style="display:flex;gap:6px;align-items:center"><b class="t t4">3</b><svg class="i chev"><use href="#chev"/></svg></span></div>
+      </div>
+    </div>
+    <div class="glass card" style="padding:16px 18px">
+      <div class="between"><span>Map use this month</span><b class="t t4">34%</b></div>
+      <div style="height:6px;border-radius:3px;margin-top:12px;background:var(--fill-2)"><i style="display:block;width:34%;height:100%;border-radius:3px;background:var(--main-hi)"></i></div>
+    </div>
+  </div>
+</div>
+<figcaption>Settings</figcaption>
+</figure>
+
+<!-- ADMIN -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button></div>
+  <div class="tt"><div class="h1">Admin</div></div>
+  <div class="pad" style="padding-top:14px"><div class="glass seg"><span class="on">Requests · 2</span><span>Routes</span><span>Users</span><span>Log</span></div></div>
+  <div class="pad stack">
+    <div class="glass card" style="padding:16px 18px">
+      <div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#a9c2ff">JK</span><div><div class="h2">jan.k</div><div class="sub">Creator access · 2 days ago</div></div></div>
+      <div style="margin-top:12px;padding:12px 14px;border-radius:16px;background:var(--fill)">“I run our club's rally sprint stages at Most.”</div>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn quiet" style="height:44px">Decline</button><button class="btn" style="height:44px">Approve</button></div>
+    </div>
+    <div class="glass card" style="padding:16px 18px">
+      <div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:#f2c4e6">LB</span><div><div class="h2">lucie.b</div><div class="sub">Creator access · today</div></div></div>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn quiet" style="height:44px">Decline</button><button class="btn" style="height:44px">Approve</button></div>
+    </div>
+  </div>
+</div>
+<figcaption>Admin</figcaption>
+</figure>
+
+<!-- LIMIT -->
+<figure>
+<div class="ph soft">
+  <div class="sb">9:41</div>
+  <div style="position:absolute;left:28px;right:28px;top:230px;text-align:center">
+    <div class="k">Maps back on</div>
+    <div class="t acc" style="font-size:120px;margin-top:12px;font-stretch:70%">1 Dec</div>
+    <div class="h1" style="margin-top:28px;font-size:26px">Monthly map limit reached</div>
+    <div class="sub" style="font-size:15px;margin-top:10px">Your laps and routes are safe.</div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="btn quiet">Back to Home</button></div>
+</div>
+<figcaption>Monthly limit</figcaption>
+</figure>
+
+</div>
+</body>
+</html>

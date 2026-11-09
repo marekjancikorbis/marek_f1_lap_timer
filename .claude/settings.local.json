@@ -1,0 +1,6 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash -c 'tee \"$HOME/.claude/statusline-last.json\" >/dev/null; echo laptimer'"
+  }
+}
