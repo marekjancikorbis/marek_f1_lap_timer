@@ -192,7 +192,6 @@ function Plot({
           </div>
         )}
       </div>
-      {hoverX == null && <p className="chart-readout mute">{hint}</p>}
     </>
   );
 }
@@ -248,14 +247,6 @@ export function DeltaGraph({
 
   return (
     <figure className="chart">
-      <figcaption className="chart-legend">
-        <span>
-          <i style={{ background: 'var(--green)' }} /> {aLabel} ahead
-        </span>
-        <span>
-          <i style={{ background: 'var(--yellow)' }} /> {aLabel} behind
-        </span>
-      </figcaption>
       <Plot
         id={id}
         label={`Gap between ${aLabel} and ${bLabel} along the route`}
@@ -347,16 +338,16 @@ export function SpeedGraph({
   const hover = scrub.i != null ? data[scrub.i] : null;
   return (
     <figure className="chart">
-      <figcaption className="chart-legend">
-        <span>
-          <i style={{ background: SERIES.a }} /> {aLabel}
-        </span>
-        {bLabel && (
+      {bLabel && (
+        <figcaption className="lbl chart-key">
           <span>
-            <i style={{ background: SERIES.b }} /> {bLabel}
+            <i className="dot" style={{ background: SERIES.a }} /> {aLabel}
           </span>
-        )}
-      </figcaption>
+          <span>
+            <i className="dot" style={{ background: SERIES.b }} /> {bLabel}
+          </span>
+        </figcaption>
+      )}
       <Plot
         id={id}
         label={`Speed of ${aLabel}${bLabel ? ` and ${bLabel}` : ''} along the route`}

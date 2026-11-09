@@ -160,7 +160,7 @@ export default function RunSummary() {
         <div className="edge" />
         <div className="sb" />
         <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
-          <Link to={`/r/${run.routeId}`} className="glass ib" aria-label="Close">
+          <Link to={`/r/${run.routeId}`} replace className="glass ib" aria-label="Close">
             <I n="x" />
           </Link>
           {route && !run.partial && (

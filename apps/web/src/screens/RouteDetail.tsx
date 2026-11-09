@@ -1,6 +1,7 @@
 import type mapboxgl from 'mapbox-gl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { goBack } from '../lib/navStack';
 import { RouteMap } from '../components/RouteMap';
 import { Empty, errorMessage, I, Loading, ScreenHead, Switch, UserName, useToast } from '../components/ui';
 import { usePullSheet } from '../lib/pullSheet';
@@ -24,7 +25,7 @@ export default function RouteDetail() {
   const [tab, setTab] = useState<'board' | 'mine' | 'locals'>('board');
   const [open, setOpen] = useState(false);
   const sheetRef = useRef<HTMLElement>(null);
-  const pull = usePullSheet(sheetRef, open, setOpen, () => (sheetRef.current?.parentElement?.clientHeight ?? 800) - 126);
+  const pull = usePullSheet(sheetRef, open, setOpen);
   const [following, setFollowing] = useState<Set<string>>(new Set());
   useEffect(() => {
     followingIds(profile.id).then((ids) => setFollowing(new Set(ids)), () => undefined);
@@ -164,15 +165,15 @@ export default function RouteDetail() {
       <div className="edge" />
       <div className="sb" />
       <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
-        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/explore'))}>
+        <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, '/explore')}>
           <I n="back" />
         </button>
         <button className="glass ib" aria-label="Share" onClick={share}>
           <I n="share" />
         </button>
       </div>
-      <section ref={sheetRef} className={`glass sheet sheet-b rs ${open ? 'open' : ''}`} aria-label={route.name}>
-        <button className="xs-pull" aria-expanded={open} aria-label={open ? 'Show less' : 'Show the whole leaderboard'} {...pull} onPointerCancel={pull.onPointerUp}>
+      <section ref={pull.ref} className={`glass sheet sheet-b rs ${open ? 'open' : ''}`} aria-label={route.name}>
+        <button className="xs-pull" aria-expanded={open} aria-label={open ? 'Show less' : 'Show the whole leaderboard'} onClick={pull.onClick}>
           <span className="grab" />
         </button>
         <div className="xs-body">

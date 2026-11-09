@@ -11,6 +11,7 @@
   --light: 300deg;
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
+  --sbh: calc(var(--safe-t) + 8px);
   color-scheme: dark;
 }
 
@@ -43,7 +44,8 @@ body { margin: 0; -webkit-font-smoothing: antialiased }
 .map { position: absolute; inset: 0; isolation: isolate; z-index: -3 }
 .map > * { position: absolute !important; inset: 0; height: 100% !important }
 /* the status bar: the device's own, so only its height */
-.sb { height: max(50px, var(--safe-t)) }
+/* the status bar: the device draws it, so only its own height (plus a breath) is kept clear */
+.sb { height: var(--sbh) }
 
 /* ---------- liquid glass ---------- */
 @property --lit { syntax: '<number>'; inherits: true; initial-value: 0 }
@@ -215,6 +217,19 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter
 /* ---------- motion (apple-design): a screen materializes as it arrives, never blocking input ---------- */
 .ph > :not(.dock):not(.map) { animation: ph-in .34s cubic-bezier(.22, 1, .36, 1) both }
 @keyframes ph-in { from { opacity: 0; transform: translateY(8px) } }
+/* spatial: a screen you drill into comes from the right, the one you go back to from the left; tabs just rise */
+html[data-nav="forward"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animation-name: ph-fwd }
+html[data-nav="back"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animation-name: ph-back }
+@keyframes ph-fwd { from { opacity: 0; transform: translateX(28px) } }
+@keyframes ph-back { from { opacity: 0; transform: translateX(-28px) } }
+@media (prefers-reduced-motion: reduce) { html[data-nav] .ph > :not(.dock):not(.map) { animation-name: ph-fade } }
+/* press feedback on touch-down for everything tappable that isn't a button already */
+.glass.lift:is(a, button), .ph.sl .glass.tl:is(a, button) { transition: transform .3s var(--spring) }
+.glass.lift:is(a, button):active, .ph.sl .glass.tl:is(a, button):active { transform: scale(.98); transition-duration: .1s; transition-timing-function: ease-out }
+.rows > :is(a, button) { transition: background-color .2s; border-radius: 14px }
+.rows > :is(a, button):active { background: color-mix(in srgb, var(--ink) 7%, transparent); transition-duration: 0s }
+.ib:active, .glass.ib:active { transform: scale(.92) }
+.ib { transition: transform .3s var(--spring) }
 @media (prefers-reduced-motion: reduce) { .ph > :not(.dock):not(.map) { animation: ph-fade .16s ease-out both } }
 @keyframes ph-fade { from { opacity: 0 } }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .42s; animation-timing-function: cubic-bezier(.22, 1, .36, 1) }
@@ -260,10 +275,10 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter
 
 /* Explore: the results sheet floats over the map; pulled up it runs from under the search to above the tab bar */
 .ph.explore[hidden] { display: none }
-.ph.explore .map .mapboxgl-ctrl-bottom-left, .ph.explore .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 64px) }
+.ph.explore .map .mapboxgl-ctrl-bottom-left, .ph.explore .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 64px) }
 .glass.xs { position: absolute; left: 8px; right: 8px; bottom: calc(100px + var(--safe-b)); border-radius: 40px; padding: 0 18px 12px;
   display: flex; flex-direction: column; height: auto; max-height: 40%; interpolate-size: allow-keywords; transition: height .5s cubic-bezier(.32, .72, 0, 1) }
-.glass.xs.open { max-height: none; height: calc(100% - max(50px, var(--safe-t)) - 178px - var(--safe-b)) }
+.glass.xs.open { max-height: none; height: calc(100% - var(--sbh) - 178px - var(--safe-b)) }
 .xs-pull { display: block; width: 100%; padding: 10px 0 0 !important; touch-action: none; cursor: grab }
 .xs-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain }
 .xs:not(.open) .xs-body { overflow: hidden }
@@ -273,10 +288,10 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 /* Route: the map is the whole screen; the sheet pulls up to just under the back button */
 .glass.rs { bottom: calc(8px + var(--safe-b)); padding: 0 20px 20px; display: flex; flex-direction: column; height: auto; max-height: 62%;
   interpolate-size: allow-keywords; transition: height .5s cubic-bezier(.32, .72, 0, 1) }
-.glass.rs.open { max-height: none; height: calc(100% - max(50px, var(--safe-t)) - 76px - var(--safe-b)) }
+.glass.rs.open { max-height: none; height: calc(100% - var(--sbh) - 76px - var(--safe-b)) }
 .glass.rs:not(.open) .xs-body { overflow: hidden }
 @media (prefers-reduced-motion: reduce) { .glass.rs { transition: none } }
-.route-page .map .mapboxgl-ctrl-bottom-left, .route-page .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 60px) }
+.route-page .map .mapboxgl-ctrl-bottom-left, .route-page .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 60px) }
 /* a segmented control inside a sheet sits on a plain tint, not a second layer of glass */
 .glass.sheet .glass.seg { background: color-mix(in srgb, var(--ink) 8%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none }
 .glass.sheet .glass.seg::before, .glass.sheet .glass.seg::after { content: none }
@@ -284,7 +299,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 
 /* ---------- Drive: the night screen; sideways it becomes Delta only in the last sector's colour ---------- */
 .dv { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--night); color: var(--ink); font: 15px/1.4 var(--font);
-  font-variant-numeric: tabular-nums; padding: max(56px, calc(var(--safe-t) + 6px)) 20px calc(var(--safe-b) + 32px); overflow: hidden;
+  font-variant-numeric: tabular-nums; padding: calc(var(--safe-t) + 14px) 20px calc(var(--safe-b) + 32px); overflow: hidden;
   -webkit-user-select: none; user-select: none; transition: background-color .28s cubic-bezier(.22, 1, .36, 1), color .28s }
 .dv * { box-sizing: border-box }
 .dv :where(h1, h2, p) { margin: 0; font: inherit }
@@ -309,7 +324,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .dv.turn-cw, .dv.turn-ccw { inset: auto; top: 0; left: 0; width: 100vh; height: 100vw; transform-origin: top left; padding-top: 22px }
 .dv.turn-cw { transform: translateX(100vw) rotate(90deg) }
 .dv.turn-ccw { transform: translateY(100vh) rotate(-90deg) }
-.dv-banner { position: absolute; left: 12px; right: 12px; top: max(104px, calc(var(--safe-t) + 54px)); border-radius: 28px; padding: 16px 18px; display: flex; gap: 12px; align-items: center;
+.dv-banner { position: absolute; left: 12px; right: 12px; top: calc(var(--safe-t) + 66px); border-radius: 28px; padding: 16px 18px; display: flex; gap: 12px; align-items: center;
   color: var(--ink); background: color-mix(in srgb, #ff5a5f 70%, transparent) !important; animation: toast-in .4s cubic-bezier(.22, 1, .36, 1) both; z-index: 5 }
 .dv-lights { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 320px }
 .dv-lights span { width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 12%, transparent); transition: background-color .08s, box-shadow .08s }
@@ -320,22 +335,25 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .dv-hold.holding .dv-fill { transform: scaleX(1); transition: transform .8s linear }
 .dv-hold:active { transform: scale(.98) }
 @media (prefers-reduced-motion: reduce) { .dv { transition: none } }
-.result-sheet { max-height: calc(100% - max(50px, var(--safe-t)) - 76px); overflow-y: auto; overscroll-behavior: contain }
+.result-sheet { max-height: calc(100% - var(--sbh) - 76px); overflow-y: auto; overscroll-behavior: contain }
 .result .map .mapboxgl-ctrl-bottom-left, .result .map .mapboxgl-ctrl-bottom-right, .ready .map .mapboxgl-ctrl-bottom-left, .ready .map .mapboxgl-ctrl-bottom-right,
-.builder .map .mapboxgl-ctrl-bottom-left, .builder .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 60px) }
+.builder .map .mapboxgl-ctrl-bottom-left, .builder .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 60px) }
 
 /* Lap detail: the main action stays in reach at the bottom while the page scrolls */
 .lap-cta { margin-top: auto; position: sticky; bottom: calc(24px + var(--safe-b)); padding: 24px 20px 0; z-index: 4 }
 .lap-map { position: fixed; inset: 0; z-index: 40; background: var(--night); isolation: isolate; animation: ph-fade .2s ease-out both }
 .lap-map[hidden] { display: none }
-.lap-map .map .mapboxgl-ctrl-bottom-left, .lap-map .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(max(50px, var(--safe-t)) + 150px) }
+.lap-map .map .mapboxgl-ctrl-bottom-left, .lap-map .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 150px) }
 .bar i.p { background: var(--s-p) } .bar i.g { background: var(--s-g) } .bar i.y { background: var(--s-y) }
 
 /* Profile: the home course on the map at the top, the profile a glass sheet that scrolls up over it */
 .profile-map { position: absolute; left: 0; right: 0; top: 0; height: 320px; z-index: -1; overflow: hidden;
   -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent) }
-.profile-map > * { width: 100%; height: 100%; border-radius: 0 !important; margin: 0 !important }
-.profile-map svg path { stroke: #fff }
+.profile-map { display: flex; align-items: center }
+.profile-map > * { position: relative; width: 100%; flex: none; border-radius: 0 !important; margin: 0 !important }
+.map-pic-tint { position: absolute; inset: 0; isolation: isolate; overflow: hidden }
+.map-pic-tint img { width: 100%; height: 100%; display: block; filter: var(--map-filter) }
+.map-pic-tint::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: color }
 .glass.profile-sheet { margin: 140px 8px 0; border-radius: 40px; padding: 20px; min-height: 50dvh }
 
 /* Admin: the mockup's cards and rows */
@@ -362,3 +380,16 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
   background: var(--main); box-shadow: 0 0 0 4px var(--ink), 0 6px 14px rgba(0,0,0,.5) }
 .dv-map .mapboxgl-ctrl-bottom-left, .dv-map .mapboxgl-ctrl-bottom-right { bottom: calc(150px + var(--safe-b)) }
 @media (prefers-reduced-motion: reduce) { .dv-map { transition: none } }
+
+/* graphs in the mockup's language: no caption over the plot, the reading rides along as a glass pill */
+.chart { margin: 0 }
+.chart-key { display: flex; gap: 14px; margin-top: 8px } .chart-key span { display: inline-flex; gap: 6px; align-items: center }
+.chart-plot { position: relative; padding-top: 34px }
+.chart-pill { position: absolute; top: 0; transform: translateX(-50%); display: flex; align-items: baseline; gap: 8px; padding: 4px 12px; border-radius: 16px;
+  white-space: nowrap; pointer-events: none; color: var(--ink); background: color-mix(in srgb, var(--deep) 85%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent), 0 6px 18px rgba(0,0,0,.35) }
+.chart-pill strong { font-size: 15px; font-weight: 700; letter-spacing: -.02em } .chart-pill strong b { font-weight: inherit }
+.chart-pill span { font-size: 12px; font-weight: 600; color: var(--ink-2) }
+.chart-tick { font: 600 11px var(--font); fill: var(--ink-2) }
+/* a map still loading, or one that can't: a glass note in the middle, no Livery card */
+.map-overlay { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--ink-2); font-size: 14px; font-weight: 600; background: var(--night) }

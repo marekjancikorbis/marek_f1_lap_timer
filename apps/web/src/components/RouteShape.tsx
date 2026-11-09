@@ -7,7 +7,7 @@ const COLOUR: Record<SectorColourName | 'none', string> = {
   purple: 'var(--purple)',
   green: 'var(--green)',
   yellow: 'var(--yellow)',
-  none: 'var(--card)',
+  none: '#ffffff',
 };
 
 interface Props {
@@ -133,7 +133,7 @@ export function RouteShape({ route, colours, height = 150, ticks = true, classNa
     >
       {/* Casing first so sector joins stay clean. */}
       {geom.paths.map((d, i) => (
-        <path key={`c${i}`} d={d} fill="none" stroke="#ffffff" strokeWidth={26} strokeLinecap="round" strokeLinejoin="round" />
+        <path key={`c${i}`} d={d} fill="none" stroke="#0b0b0c" strokeOpacity={0.6} strokeWidth={26} strokeLinecap="round" strokeLinejoin="round" />
       ))}
       {geom.paths.map((d, i) => (
         <path
@@ -158,7 +158,12 @@ export function RouteShape({ route, colours, height = 150, ticks = true, classNa
   if (!map) return svg;
   return (
     <div ref={box} className={`route-map-pic ${className ?? ''}`} style={{ aspectRatio: `${IMG_W} / ${imgH}` }}>
-      {img && <img src={img} alt="" loading="lazy" decoding="async" onError={() => setImg(null)} />}
+      {/* Tinted in the theme like the live maps: grey, brightened, then the palette's colour (tiles.css). */}
+      {img && (
+        <span className="map-pic-tint">
+          <img src={img} alt="" loading="lazy" decoding="async" onError={() => setImg(null)} />
+        </span>
+      )}
       {svg}
     </div>
   );

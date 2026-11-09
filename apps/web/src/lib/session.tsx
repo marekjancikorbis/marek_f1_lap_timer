@@ -39,17 +39,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       return;
     }
     setProfile(undefined);
-    const unsubProfile = onSnapshot(
-      doc(db, 'users', user.uid),
-      (snap) => setProfile(snap.exists() ? ({ id: snap.id, ...snap.data() } as Profile) : null),
-      () => setProfile(null),
-    );
+    // Right after sign-up the listener can start before the new sign-in reaches Firestore and be refused once;
+    // a refused listener stops for good, so listen again (otherwise Pick a username never moves on).
+    let unsubProfile = () => {};
+    let retry = 0;
+    let tries = 0;
+    const listen = () => {
+      unsubProfile = onSnapshot(
+        doc(db, 'users', user.uid),
+        (snap) => setProfile(snap.exists() ? ({ id: snap.id, ...snap.data() } as Profile) : null),
+        () => {
+          setProfile(null);
+          if (tries++ < 5) retry = window.setTimeout(listen, 1000 * tries);
+        },
+      );
+    };
+    listen();
     const unsubRole = onSnapshot(
       doc(db, 'roles', user.uid),
       (snap) => setRole(snap.exists() ? (snap.data().role as Role) : 'driver'),
       () => setRole('driver'),
     );
     return () => {
+      window.clearTimeout(retry);
       unsubProfile();
       unsubRole();
     };

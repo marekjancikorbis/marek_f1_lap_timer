@@ -2,6 +2,7 @@ import { computeSectorBoundaries, polylineLengthM, PreparedRoute, type LatLon } 
 import mapboxgl from 'mapbox-gl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { goBack } from '../lib/navStack';
 import { MapView, setSource } from '../components/MapView';
 import { errorMessage, I, Loading, Segmented, Sheet, useToast } from '../components/ui';
 import { createRoute, getRoute, updateRoute } from '../lib/data';
@@ -226,7 +227,7 @@ export default function RouteBuilder() {
       <div className="edge" />
       <div className="sb" />
       <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/routes'))}>
+        <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, '/routes')}>
           <I n="back" />
         </button>
         <div style={{ display: 'flex', gap: 8 }}>

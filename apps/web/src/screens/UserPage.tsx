@@ -182,7 +182,7 @@ export default function UserPage() {
   return (
     <main className="ph soft docked profile">
       <div className="profile-map" aria-hidden={!home?.isPublic}>
-        {home?.isPublic && <RouteShape route={home} map height={300} ticks={false} label={`${name}'s home course, ${home.name}`} />}
+        {home?.isPublic && <RouteShape route={home} map height={340} ticks={false} label={`${name}'s home course, ${home.name}`} />}
       </div>
       <div className="sb" />
       <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>

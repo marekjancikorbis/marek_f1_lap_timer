@@ -315,23 +315,6 @@ export default function Settings() {
   );
 }
 
-function UsageBar({ label, value, cap }: { label: string; value: number; cap: number }) {
-  const pct = Math.min(100, (value / cap) * 100);
-  return (
-    <div>
-      <div className="row between" style={{ fontSize: 14, marginBottom: 6 }}>
-        <span>{label}</span>
-        <span className="num mute">
-          {value.toLocaleString()} / {cap.toLocaleString()}
-        </span>
-      </div>
-      <div className="meter" role="meter" aria-valuemin={0} aria-valuemax={cap} aria-valuenow={value} aria-label={label}>
-        <span style={{ width: `${pct}%`, background: pct > 90 ? 'var(--red)' : 'var(--navy)' }} />
-      </div>
-    </div>
-  );
-}
-
 /** A theme's colours as one round swatch, split like a pie. */
 function swatch(colours: readonly string[]) {
   const n = colours.length;

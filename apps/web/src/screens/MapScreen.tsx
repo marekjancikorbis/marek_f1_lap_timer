@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } 
 import { Link, useNavigate } from 'react-router-dom';
 import { MapView } from '../components/MapView';
 import { Avatar, errorMessage, I, Spinner, useToast, WhoText } from '../components/ui';
+import { usePullSheet } from '../lib/pullSheet';
 import { myRoutes, publicRoutes, routePosts, searchUsers, setPostCount } from '../lib/data';
 import { db } from '../lib/firebase';
 import { formatDistance, formatLap } from '../lib/format';
@@ -275,41 +276,8 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
     };
   }, [docked]);
 
-  // The pull tab: the sheet follows the finger, then snaps open or shut by the drag's direction.
-  const onPull = (e: PointerEvent<HTMLButtonElement>) => {
-    if (docked) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    drag.current = { y: e.clientY, h: sheetRef.current!.offsetHeight, dy: 0 };
-  };
-  // The sheet's height follows the finger. While dragging it holds the whole list, so pulling
-  // up shows more rows at once (collapsed, it only has two, and couldn't grow past them).
-  const onPullMove = (e: PointerEvent<HTMLButtonElement>) => {
-    const d = drag.current;
-    const sheet = sheetRef.current;
-    if (!d || !sheet) return;
-    d.dy = e.clientY - d.y;
-    if (Math.abs(d.dy) < 5) return;
-    setDragging(true);
-    sheet.style.transition = 'none';
-    sheet.style.maxHeight = 'none';
-    sheet.style.height = `${Math.min(sheet.parentElement!.clientHeight - 228, Math.max(70, d.h - d.dy))}px`;
-  };
-  const onPullEnd = () => {
-    const d = drag.current;
-    const sheet = sheetRef.current;
-    drag.current = null;
-    if (!d || !sheet || Math.abs(d.dy) < 5) return;
-    dragged.current = true;
-    // Hand over to the open or shut height from where the finger let go: the class flips in the
-    // same frame the inline height is dropped, so the sheet springs on from the finger's position.
-    const opening = d.dy < 0;
-    sheet.classList.toggle('open', opening);
-    sheet.style.transition = '';
-    sheet.style.maxHeight = '';
-    sheet.style.height = '';
-    setDragging(false);
-    setOpen(opening);
-  };
+  // The results sheet: follows the finger, settles open or shut (pullSheet). Searching keeps it open.
+  const pull = usePullSheet(sheetRef, open, setOpen, !docked);
 
   const onReady = useCallback(
     (map: mapboxgl.Map) => {
@@ -392,7 +360,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
       </div>
 
       <section
-        ref={sheetRef}
+        ref={pull.ref}
         className={`glass sheet xs ${expanded ? 'open' : ''}`}
         aria-label="Results"
         // Keeps the search focused (and the list in place) when a result is tapped.
@@ -402,14 +370,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           className="xs-pull"
           aria-expanded={expanded}
           aria-label={expanded ? 'Show less' : 'Show all routes'}
-          onClick={() => {
-            if (dragged.current) dragged.current = false;
-            else if (!docked) setOpen((o) => !o);
-          }}
-          onPointerDown={onPull}
-          onPointerMove={onPullMove}
-          onPointerUp={onPullEnd}
-          onPointerCancel={onPullEnd}
+          onClick={pull.onClick}
         >
           <span className="grab" />
         </button>
@@ -425,7 +386,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
             </p>
           ) : (
             <div className="rows">
-              {(expanded ? listed : listed.slice(0, 2)).map((r) => (
+              {listed.map((r) => (
                 <Link key={r.id} to={`/r/${r.id}`} style={{ gridTemplateColumns: '1fr auto' }}>
                   <div style={{ minWidth: 0 }}>
                     <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>

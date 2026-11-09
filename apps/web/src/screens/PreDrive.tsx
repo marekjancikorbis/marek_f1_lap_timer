@@ -1,6 +1,7 @@
 import { serverTimestamp } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { goBack } from '../lib/navStack';
 import { Avatar, Empty, errorMessage, I, Loading, ScreenHead, Sheet, Switch, useToast } from '../components/ui';
 import { RouteMap } from '../components/RouteMap';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
@@ -226,7 +227,7 @@ export default function PreDrive() {
       <div className="edge" />
       <div className="sb" />
       <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <button className="glass ib" aria-label="Close" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/drive'))}>
+        <button className="glass ib" aria-label="Close" onClick={() => goBack(nav, '/drive')}>
           <I n="x" />
         </button>
         <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, maxWidth: '70%' }}>

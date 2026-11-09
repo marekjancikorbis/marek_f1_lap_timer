@@ -1,6 +1,7 @@
 import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Loading, TabBar, ToastProvider } from './components/ui';
+import { NavTracker } from './lib/navStack';
 import { SessionProvider, useSession } from './lib/session';
 import { onUsage, readUsage, type UsageState } from './lib/usage';
 
@@ -30,6 +31,7 @@ export function App() {
   return (
     <Crashed>
       <BrowserRouter>
+        <NavTracker />
         <ToastProvider>
           <SessionProvider>
             <Suspense fallback={<Loading />}>

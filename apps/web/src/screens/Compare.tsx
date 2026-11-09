@@ -1,6 +1,7 @@
 import { compareLaps, type LapComparison } from '@laptimer/timing';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { goBack } from '../lib/navStack';
 import { DeltaGraph } from '../components/Charts';
 import { useSectorTable } from '../components/LapView';
 import { RouteMap } from '../components/RouteMap';
@@ -101,7 +102,7 @@ export default function Compare() {
       <div className="edge" />
       <div className="sb" />
       <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
-        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav(`/r/${route.id}`))}>
+        <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, `/r/${route.id}`)}>
           <I n="back" />
         </button>
         <button className="glass ib" aria-label="Swap the two laps" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
@@ -160,20 +161,6 @@ export default function Compare() {
         />
       </Sheet>
     </main>
-  );
-}
-
-function LapHead({ lap, label, tag, record }: { lap: ResolvedLap; label: string; tag: string; record?: boolean }) {
-  return (
-    <div className={`panel cmp-card ${record ? 'is-record' : ''}`}>
-      <span className="cap">
-        {tag} · {label}
-      </span>
-      <span className="num cmp-total">{formatLap(lap.totalMs)}</span>
-      <span className="mute small-text ellipsis">
-        {lap.partial ? 'partial lap' : lap.penaltyMs > 0 ? `incl. +${formatSeconds(lap.penaltyMs)} jump start` : lap.sub}
-      </span>
-    </div>
   );
 }
 

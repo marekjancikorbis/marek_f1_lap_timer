@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { goBack } from '../lib/navStack';
 import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, I, Loading, SectorStrip, useToast } from '../components/ui';
 import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
@@ -107,7 +108,7 @@ export default function RunHistory() {
     <main className="ph soft docked">
       <div className="sb" />
       <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/routes'))}>
+        <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, '/routes')}>
           <I n="back" />
         </button>
         {runs.length > 0 && (

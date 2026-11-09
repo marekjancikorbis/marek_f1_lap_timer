@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { goBack } from '../lib/navStack';
 import { getPhoto, getProfile } from '../lib/data';
 import { useMe } from '../lib/session';
 import { PageSkeleton } from './Skeleton';
@@ -100,7 +101,7 @@ export function ScreenHead({ title, back, right }: { title?: ReactNode; back?: b
             <button
               className="glass ib"
               aria-label="Back"
-              onClick={() => (typeof back === 'string' ? nav(back) : window.history.length > 1 ? nav(-1) : nav('/'))}
+              onClick={() => (typeof back === 'string' ? nav(back) : goBack(nav))}
             >
               <I n="back" />
             </button>

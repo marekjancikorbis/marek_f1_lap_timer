@@ -2,6 +2,7 @@ import { compareLaps, fitsBoundaries, sectorColour, sectorTimes, type LapProfile
 import type mapboxgl from 'mapbox-gl';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { goBack } from '../lib/navStack';
 import { leaderboardFrom } from '../lib/data';
 import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
 import { bigEnds, bigRecords, bigRoute, distanceAt, recordsExcluding, timeAt } from '../lib/laps';
@@ -424,7 +425,7 @@ export function LapTabs({
     />
   );
   const back = (
-    <button className="glass ib" aria-label="Back" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))}>
+    <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, '/')}>
       <I n="back" />
     </button>
   );
