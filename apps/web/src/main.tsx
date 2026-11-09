@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { lockPortrait } from './lib/orientation';
+import { startLiquidGlass } from './lib/liquidGlass';
 import './lib/install'; // catches the install prompt, which can fire before the app renders
 import './styles/global.css';
 import './styles/screens.css';
@@ -36,6 +37,9 @@ if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
 lockPortrait();
 // The saved theme before the first paint, so the app never flashes the default colours.
 applyTheme(storedTheme());
+
+// Real refraction on every glass surface (Chromium; elsewhere the glass stays a blur).
+startLiquidGlass();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

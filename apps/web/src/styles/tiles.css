@@ -53,7 +53,7 @@ body { margin: 0; -webkit-font-smoothing: antialiased }
   -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx);
   box-shadow: inset 0 0 18px rgba(255,255,255,.05), 0 10px 30px -10px rgba(0,0,0,.5);
   transition: transform .45s var(--spring), --lit .6s ease-out }
-html.lens .glass { -webkit-backdrop-filter: var(--lens) blur(.4px) var(--glass-fx); backdrop-filter: var(--lens) blur(.4px) var(--glass-fx) }
+html.lens .glass { -webkit-backdrop-filter: var(--lens, blur(0px)) blur(.4px) var(--glass-fx); backdrop-filter: var(--lens, blur(0px)) blur(.4px) var(--glass-fx) }
 .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
   background:
     radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgba(255,255,255, calc(.32 * var(--lit))), transparent 65%),
@@ -62,7 +62,7 @@ html.lens .glass { -webkit-backdrop-filter: var(--lens) blur(.4px) var(--glass-f
   background: conic-gradient(from var(--light), rgba(255,255,255,.95), rgba(255,255,255,.12) 16%, rgba(255,255,255,.06) 40%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.08) 62%, rgba(255,255,255,.12) 84%, rgba(255,255,255,.95));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude }
 .glass.sheet { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
-html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+html.lens .glass.sheet { -webkit-backdrop-filter: var(--lens, blur(0px)) blur(3px) saturate(1.5); backdrop-filter: var(--lens, blur(0px)) blur(3px) saturate(1.5) }
 .glass.tint-p { background: color-mix(in srgb, var(--s-p) 85%, transparent) }
 .glass.tint-g { background: color-mix(in srgb, var(--s-g) 82%, transparent) }
 .glass.tint-y { background: color-mix(in srgb, var(--s-y) 82%, transparent); color: #1b1300 }
@@ -109,7 +109,7 @@ svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-widt
 .dock { position: fixed; left: 16px; right: 16px; bottom: calc(22px + var(--safe-b)); max-width: 528px; margin: 0 auto; height: 62px; border-radius: 31px; padding: 4px;
   display: grid; grid-template-columns: repeat(5, 1fr); align-items: stretch; z-index: 30;
   background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
-html.lens .dock { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+html.lens .dock { -webkit-backdrop-filter: var(--lens, blur(0px)) blur(3px) saturate(1.5); backdrop-filter: var(--lens, blur(0px)) blur(3px) saturate(1.5) }
 .dock .tab { border-radius: 27px; display: grid; place-items: center; color: var(--ink-2); -webkit-user-select: none; user-select: none; touch-action: manipulation;
   transition: color .2s, background-color .2s }
 .dock .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
@@ -154,7 +154,7 @@ html.lens .dock { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); 
 .bar i { height: 12px; border-radius: 6px; justify-self: end }
 .bar b { font-size: 17px; text-align: right }
 .glass.lift { background: color-mix(in srgb, var(--sheet) 60%, transparent); -webkit-backdrop-filter: blur(3px) var(--glass-fx); backdrop-filter: blur(3px) var(--glass-fx) }
-html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--glass-fx); backdrop-filter: var(--lens) blur(3px) var(--glass-fx) }
+html.lens .glass.lift { -webkit-backdrop-filter: var(--lens, blur(0px)) blur(3px) var(--glass-fx); backdrop-filter: var(--lens, blur(0px)) blur(3px) var(--glass-fx) }
 .pill { height: 72px; border-radius: 36px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 16px }
 .pill .av { width: 40px; height: 40px }
 @media (prefers-reduced-transparency: reduce) { .glass.lift, html.lens .glass.lift { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) } }
@@ -205,7 +205,7 @@ html.lens .glass.lift { -webkit-backdrop-filter: var(--lens) blur(3px) var(--gla
 @media (prefers-reduced-motion: reduce) { .ph.sl::before, .ph.soft::before { animation: none } }
 .ph.sl .glass.tl, .ph.sl .glass.ib { background: color-mix(in srgb, var(--sheet) 60%, transparent);
   -webkit-backdrop-filter: blur(3px) saturate(1.5); backdrop-filter: blur(3px) saturate(1.5) }
-html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter: var(--lens) blur(3px) saturate(1.5); backdrop-filter: var(--lens) blur(3px) saturate(1.5) }
+html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter: var(--lens, blur(0px)) blur(3px) saturate(1.5); backdrop-filter: var(--lens, blur(0px)) blur(3px) saturate(1.5) }
 .ph.sl .glass.tl.deep { background: color-mix(in srgb, var(--deep) 55%, transparent) }
 .ph.sl .glass.tl.red { background: color-mix(in srgb, var(--go) 86%, transparent) }
 .ph.sl .glass.tl.snow { background: color-mix(in srgb, var(--snow) 86%, transparent) }
@@ -423,4 +423,36 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
   .dock-pill, .seg-thumb { transition: opacity .15s }
   .sheet-b.modal.out, .glass.toast.out { animation: fade-out .15s ease-out forwards }
   .scrim.out { animation-duration: .15s }
+}
+
+/* ---- liquid glass (Chromium: html.lens, see lib/liquidGlass.ts) ----
+   Real glass is clear: the background shows through, bent at the rim by the lens, with only a breath of frost
+   and tint. Thickness comes from light: a bright specular rim (::after), a lit top-left inner edge and a darker
+   bottom-right one. Text-heavy sheets keep more frost so they stay readable over a busy map. */
+html.lens .glass, html.lens .dock, html.lens .ph.sl .glass.ib, html.lens .glass.lift {
+  background: color-mix(in srgb, var(--sheet) 16%, transparent);
+  -webkit-backdrop-filter: var(--lens, blur(0px)) blur(.6px) saturate(1.7) brightness(1.06);
+  backdrop-filter: var(--lens, blur(0px)) blur(.6px) saturate(1.7) brightness(1.06);
+  box-shadow: inset 1.5px 1.5px 1px -.5px rgba(255,255,255,.45), inset -1.5px -1.5px 1px -.5px rgba(255,255,255,.18),
+    inset 0 0 22px rgba(255,255,255,.07), 0 12px 32px -12px rgba(0,0,0,.55) }
+html.lens .ph.sl .glass.tl { background: color-mix(in srgb, var(--sheet) 24%, transparent);
+  -webkit-backdrop-filter: var(--lens, blur(0px)) blur(1px) saturate(1.6); backdrop-filter: var(--lens, blur(0px)) blur(1px) saturate(1.6) }
+html.lens .glass.sheet, html.lens .glass.xs, html.lens .glass.rs {
+  background: color-mix(in srgb, var(--sheet) 42%, transparent);
+  -webkit-backdrop-filter: var(--lens, blur(0px)) blur(2.5px) saturate(1.7) brightness(.96);
+  backdrop-filter: var(--lens, blur(0px)) blur(2.5px) saturate(1.7) brightness(.96) }
+/* modal sheets carry a whole task: heavier material, as before */
+html.lens .glass.sheet.modal { background: color-mix(in srgb, var(--deep) 72%, transparent);
+  -webkit-backdrop-filter: var(--lens, blur(0px)) blur(18px) saturate(1.5); backdrop-filter: var(--lens, blur(0px)) blur(18px) saturate(1.5) }
+/* glass inside a sheet is a control on glass: no second lens, as before */
+html.lens .glass.sheet .glass.seg { background: color-mix(in srgb, var(--ink) 8%, transparent); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none }
+/* coloured glass keeps its colour */
+html.lens .glass.tint-p { background: color-mix(in srgb, var(--s-p) 78%, transparent) }
+html.lens .glass.tint-g { background: color-mix(in srgb, var(--s-g) 74%, transparent) }
+html.lens .glass.tint-y { background: color-mix(in srgb, var(--s-y) 74%, transparent) }
+html.lens .ph.sl .glass.tl.red { background: color-mix(in srgb, var(--go) 82%, transparent) }
+html.lens .ph.sl .glass.tl.snow { background: color-mix(in srgb, var(--snow) 82%, transparent) }
+html.lens .glass.toast.error { background: color-mix(in srgb, #ff5a5f 80%, transparent) }
+@media (prefers-reduced-transparency: reduce) {
+  html.lens .glass, html.lens .dock, html.lens .glass.sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
 }
