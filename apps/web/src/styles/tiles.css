@@ -7,7 +7,12 @@
 :root {
   --font: 'Archivo Variable', 'Archivo', 'Arial Narrow', system-ui, sans-serif;
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --spring: cubic-bezier(.3, 1.5, .5, 1);
+  /* Real springs (damped harmonic motion sampled into linear()), not overshooting béziers.
+     --spring: critically damped, no overshoot, natural settle .52s; the default for everything.
+     --spring-bounce: damping .78, a 2% overshoot, natural settle .51s; only where motion carries momentum
+     (a sheet thrown up, a highlight sliding to a new choice). Shorter durations make the same spring stiffer. */
+  --spring: linear(0, 0.024, 0.084, 0.162, 0.248, 0.335, 0.42, 0.498, 0.569, 0.633, 0.689, 0.738, 0.78, 0.816, 0.847, 0.873, 0.894, 0.913, 0.928, 0.941, 0.951, 0.96, 0.967, 0.973, 0.978, 0.982, 0.986, 0.988, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 1);
+  --spring-bounce: linear(0, 0.018, 0.065, 0.131, 0.21, 0.294, 0.38, 0.465, 0.545, 0.619, 0.686, 0.746, 0.799, 0.844, 0.883, 0.915, 0.942, 0.963, 0.98, 0.993, 1.003, 1.01, 1.015, 1.018, 1.019, 1.02, 1.02, 1.019, 1.017, 1.016, 1.014, 1.012, 1.011, 1.009, 1.008, 1.006, 1.005, 1.004, 1.003, 1.002, 1);
   --light: 300deg;
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -115,8 +120,8 @@ html.lens .dock { -webkit-backdrop-filter: var(--lens, blur(0px)) blur(3px) satu
 .dock .tab.on { color: var(--main-hi); background: color-mix(in srgb, var(--ink) 10%, transparent) }
 .dock .tab.go { width: 54px; height: 54px; align-self: center; justify-self: center; border-radius: 50%; background: var(--go); color: var(--on-go) }
 .dock .tab.go.on { box-shadow: 0 0 0 3px var(--snow) }
-.dock .tab svg { transition: transform .26s var(--spring) }
-.dock .tab:active svg { transform: scale(.86); transition-duration: .09s; transition-timing-function: ease-out }
+.dock .tab svg { transition: transform .45s var(--spring) }
+.dock .tab:active svg { transform: scale(.9); transition-duration: .09s; transition-timing-function: ease-out }
 @media (prefers-reduced-transparency: reduce) { .dock, html.lens .dock { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
 
 /* lap playback on the Map tab */
@@ -215,21 +220,21 @@ html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter
 @media (prefers-reduced-transparency: reduce) { .glass.tl, .ph.sl .glass.ib, .ph.sl .glass.btn.line, html.lens .ph.sl .glass.tl, html.lens .ph.sl .glass.ib { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--deep) } }
 
 /* ---------- motion (apple-design): a screen materializes as it arrives, never blocking input ---------- */
-.ph > :not(.dock):not(.map) { animation: ph-in .34s cubic-bezier(.22, 1, .36, 1) both }
-@keyframes ph-in { from { opacity: 0; transform: translateY(8px) } }
+.ph > :not(.dock):not(.map) { animation: ph-in .5s var(--spring) both }
+@keyframes ph-in { from { opacity: 0; transform: translateY(10px) } }
 /* spatial: a screen you drill into comes from the right, the one you go back to from the left; tabs just rise */
 html[data-nav="forward"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animation-name: ph-fwd }
 html[data-nav="back"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animation-name: ph-back }
-@keyframes ph-fwd { from { opacity: 0; transform: translateX(28px) } }
-@keyframes ph-back { from { opacity: 0; transform: translateX(-28px) } }
+@keyframes ph-fwd { from { opacity: 0; transform: translateX(24px) } }
+@keyframes ph-back { from { opacity: 0; transform: translateX(-24px) } }
 @media (prefers-reduced-motion: reduce) { html[data-nav] .ph > :not(.dock):not(.map) { animation-name: ph-fade } }
 /* press feedback on touch-down for everything tappable that isn't a button already */
-.glass.lift:is(a, button), .ph.sl .glass.tl:is(a, button) { transition: transform .3s var(--spring) }
+.glass.lift:is(a, button), .ph.sl .glass.tl:is(a, button) { transition: transform .45s var(--spring) }
 .glass.lift:is(a, button):active, .ph.sl .glass.tl:is(a, button):active { transform: scale(.98); transition-duration: .1s; transition-timing-function: ease-out }
 .rows > :is(a, button) { transition: background-color .2s; border-radius: 14px }
 .rows > :is(a, button):active { background: color-mix(in srgb, var(--ink) 7%, transparent); transition-duration: 0s }
-.ib:active, .glass.ib:active { transform: scale(.92) }
-.ib { transition: transform .3s var(--spring) }
+.ib:active, .glass.ib:active { transform: scale(.94) }
+.ib { transition: transform .45s var(--spring) }
 @media (prefers-reduced-motion: reduce) { .ph > :not(.dock):not(.map) { animation: ph-fade .16s ease-out both } }
 @keyframes ph-fade { from { opacity: 0 } }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .42s; animation-timing-function: cubic-bezier(.22, 1, .36, 1) }
@@ -252,12 +257,12 @@ html[data-nav="back"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animat
 .card.rows > * { padding: 12px 0 }
 .scrim { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.45); animation: ph-fade .2s ease-out both }
 .sheet-b.modal { position: fixed; max-width: 544px; margin: 0 auto; bottom: calc(8px + var(--safe-b)); padding: 10px 20px 22px; max-height: 88dvh; overflow: auto;
-  overscroll-behavior: contain; animation: sheet-up .42s cubic-bezier(.32, .72, 0, 1) both }
+  overscroll-behavior: contain; animation: sheet-up .55s var(--spring-bounce) both }
 @keyframes sheet-up { from { transform: translateY(105%) } }
 @media (prefers-reduced-motion: reduce) { .sheet-b.modal { animation: ph-fade .16s ease-out both } }
 .toast-host { position: fixed; left: 0; right: 0; bottom: calc(100px + var(--safe-b)); display: flex; justify-content: center; pointer-events: none; z-index: 70 }
 .glass.toast { pointer-events: auto; border-radius: 26px; padding: 14px 20px; font-weight: 600; font-size: 15px; max-width: calc(100vw - 32px); color: var(--ink);
-  animation: toast-in .4s cubic-bezier(.22, 1, .36, 1) both }
+  animation: toast-in .5s var(--spring) both }
 .glass.toast.error { background: color-mix(in srgb, #ff5a5f 80%, transparent); color: #fff }
 @keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(.96) } }
 .switch { position: relative; width: 52px; height: 32px; flex: none; border-radius: 16px; border: 0; cursor: pointer;
@@ -277,7 +282,7 @@ html[data-nav="back"] .ph:not(.sl):not(.docked) > :not(.dock):not(.map) { animat
 .ph.explore[hidden] { display: none }
 .ph.explore .map .mapboxgl-ctrl-bottom-left, .ph.explore .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 64px) }
 .glass.xs { position: absolute; left: 8px; right: 8px; bottom: calc(100px + var(--safe-b)); border-radius: 40px; padding: 0 18px 12px;
-  display: flex; flex-direction: column; height: auto; max-height: 40%; interpolate-size: allow-keywords; transition: height .5s cubic-bezier(.32, .72, 0, 1) }
+  display: flex; flex-direction: column; height: auto; max-height: 40%; interpolate-size: allow-keywords; transition: height .52s var(--spring) }
 .glass.xs.open { max-height: none; height: calc(100% - var(--sbh) - 178px - var(--safe-b)) }
 .xs-pull { display: block; width: 100%; padding: 10px 0 0 !important; touch-action: none; cursor: grab }
 .xs-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain }
@@ -287,7 +292,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 
 /* Route: the map is the whole screen; the sheet pulls up to just under the back button */
 .glass.rs { bottom: calc(8px + var(--safe-b)); padding: 0 20px 20px; display: flex; flex-direction: column; height: auto; max-height: 62%;
-  interpolate-size: allow-keywords; transition: height .5s cubic-bezier(.32, .72, 0, 1) }
+  interpolate-size: allow-keywords; transition: height .52s var(--spring) }
 .glass.rs.open { max-height: none; height: calc(100% - var(--sbh) - 76px - var(--safe-b)) }
 .glass.rs:not(.open) .xs-body { overflow: hidden }
 @media (prefers-reduced-motion: reduce) { .glass.rs { transition: none } }
@@ -325,7 +330,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .dv.turn-cw { transform: translateX(100vw) rotate(90deg) }
 .dv.turn-ccw { transform: translateY(100vh) rotate(-90deg) }
 .dv-banner { position: absolute; left: 12px; right: 12px; top: calc(var(--safe-t) + 66px); border-radius: 28px; padding: 16px 18px; display: flex; gap: 12px; align-items: center;
-  color: var(--ink); background: color-mix(in srgb, #ff5a5f 70%, transparent) !important; animation: toast-in .4s cubic-bezier(.22, 1, .36, 1) both; z-index: 5 }
+  color: var(--ink); background: color-mix(in srgb, #ff5a5f 70%, transparent) !important; animation: toast-in .5s var(--spring) both; z-index: 5 }
 .dv-lights { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; max-width: 320px }
 .dv-lights span { width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 12%, transparent); transition: background-color .08s, box-shadow .08s }
 .dv-lights span.on { background: #ff3b30; box-shadow: 0 0 18px #ff3b30 }
@@ -399,7 +404,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .dock { position: fixed }
 .dock-pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 5); border-radius: 27px; pointer-events: none;
   background: color-mix(in srgb, var(--ink) 10%, transparent); transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform .42s cubic-bezier(.34, 1.25, .5, 1), opacity .2s ease-out }
+  transition: transform .5s var(--spring-bounce), opacity .2s ease-out; will-change: transform }
 .dock-pill.off { opacity: 0 }
 .dock .tab.on:not(.go) { background: none }
 .dock .tab { position: relative; z-index: 1 }
@@ -407,7 +412,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .seg { position: relative }
 .seg-thumb { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--n, 2)); border-radius: 18px; pointer-events: none;
   background: color-mix(in srgb, var(--ink) 14%, transparent); transform: translateX(calc(var(--i, 0) * 100%));
-  transition: transform .38s cubic-bezier(.34, 1.2, .5, 1) }
+  transition: transform .46s var(--spring-bounce); will-change: transform }
 .seg > button { position: relative; z-index: 1 }
 .seg > .on { background: none }
 /* modal sheets leave the way they came, from wherever a drag left them; the scrim fades with them */
