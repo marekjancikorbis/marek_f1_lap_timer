@@ -23,8 +23,13 @@ if (import.meta.env.VITE_EMULATORS === '1') {
  * Whose data the app is showing: the signed-in user, or while Firebase is still confirming the session at
  * launch, the account saved on this phone (session.tsx, optimistic launch). Signing out removes that copy.
  */
+let authKnown = false;
+void auth.authStateReady().then(() => (authKnown = true));
+
 export function myUid(): string | null {
   if (auth.currentUser) return auth.currentUser.uid;
+  // Once Firebase has answered, no user means signed out: never fall back to the saved account.
+  if (authKnown) return null;
   try {
     return (JSON.parse(localStorage.getItem('ps-session') ?? 'null') as { uid?: string } | null)?.uid ?? null;
   } catch {

@@ -77,6 +77,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setProfile((p) => (p?.id === uid ? p : undefined));
     // Right after sign-up the listener can start before the new sign-in reaches Firestore and be refused once;
     // a refused listener stops for good, so listen again (otherwise Pick a username never moves on).
+    let live = true;
     let unsubProfile = () => {};
     let retry = 0;
     let tries = 0;
@@ -87,8 +88,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           // A copy from the phone's cache that has no profile yet isn't an answer: wait for the server.
           if (!d.exists() && d.metadata.fromCache) return;
           const p = d.exists() ? ({ id: d.id, ...d.data() } as Profile) : null;
+          if (!live) return;
           setProfile(p);
-          writeSnapshot(p ? { uid, profile: p } : null);
+          // Only for the account Firebase has confirmed: a late answer after sign-out never saves it back.
+          if (auth.currentUser?.uid === uid) writeSnapshot(p ? { uid, profile: p } : null);
         },
         () => {
           setProfile(null);
@@ -103,6 +106,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       () => setRole('driver'),
     );
     return () => {
+      live = false;
       window.clearTimeout(retry);
       unsubProfile();
       unsubRole();

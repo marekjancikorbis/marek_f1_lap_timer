@@ -59,6 +59,8 @@ const seen = new Set<string>();
  * kept: clearCache() (sign-out, another account) empties it.
  */
 const PHONE = 'ps-c:';
+/** Bumped by clearCache(): reads started for the previous account don't write to the phone. */
+let generation = 0;
 const reviveTimestamps = (_k: string, v: unknown) => {
   const t = v as { seconds?: unknown; nanoseconds?: unknown } | null;
   return t && typeof t === 'object' && typeof t.seconds === 'number' && typeof t.nanoseconds === 'number' ? new Timestamp(t.seconds, t.nanoseconds) : v;
@@ -99,7 +101,11 @@ function cached<T>(key: string, load: () => Promise<T>, disk?: () => Promise<T |
     const firestoreCopy = disk;
     const fetch = load;
     disk = async () => fromPhone<T>(key) ?? firestoreCopy();
-    load = () => fetch().then((v) => (toPhone(key, v), v));
+    load = () => {
+      const gen = generation;
+      // Kept only if nobody signed out or switched account while it loaded.
+      return fetch().then((v) => (gen === generation && myUid() && toPhone(key, v), v));
+    };
   }
   const hit = cache.get(key);
   const age = hit ? Date.now() - hit.at : Infinity;
@@ -143,6 +149,7 @@ export function forget(...prefixes: string[]) {
 export function clearCache() {
   cache.clear();
   seen.clear();
+  generation++;
   dropFromPhone(() => true);
 }
 
