@@ -461,3 +461,7 @@ html.lens .glass.toast.error { background: color-mix(in srgb, #ff5a5f 80%, trans
 @media (prefers-reduced-transparency: reduce) {
   html.lens .glass, html.lens .dock, html.lens .glass.sheet { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night) }
 }
+
+/* Pull sheets resize every frame of a drag: keep that work inside the sheet (its layout and paint never
+   spill onto the page) and tell the compositor it moves. */
+.glass.xs, .glass.rs { contain: layout paint style; will-change: height }

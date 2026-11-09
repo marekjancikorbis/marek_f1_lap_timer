@@ -157,6 +157,13 @@ function fit(el: HTMLElement) {
 }
 
 const SURFACES = '.glass, .dock';
+/**
+ * Sheets get no lens. Chrome on Android draws SVG filters in backdrop-filter on the CPU, and a sheet is
+ * big and changes size every frame of a drag: refracting it made sheets lag badly. Bars, buttons and tiles
+ * (small, and still while you look at them) keep it; sheets keep the clear glass without the bent rim.
+ */
+const NO_LENS = '.sheet, .xs, .rs, .modal';
+const wants = (el: Element) => !el.matches(NO_LENS);
 
 /** Watch the page: every glass surface, now and later, gets a lens that follows its size. */
 export function startLiquidGlass() {
@@ -176,6 +183,7 @@ export function startLiquidGlass() {
   const sizes = new ResizeObserver((entries) => entries.forEach((e) => later(e.target as HTMLElement)));
   const watch = (root: ParentNode) => {
     root.querySelectorAll<HTMLElement>(SURFACES).forEach((el) => {
+      if (!wants(el)) return;
       sizes.observe(el);
       later(el);
     });
@@ -184,7 +192,7 @@ export function startLiquidGlass() {
     for (const m of list)
       for (const n of m.addedNodes)
         if (n instanceof HTMLElement) {
-          if (n.matches(SURFACES)) {
+          if (n.matches(SURFACES) && wants(n)) {
             sizes.observe(n);
             later(n);
           }
