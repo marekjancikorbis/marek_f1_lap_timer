@@ -173,6 +173,12 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
 /* your own row, pinned under the top 5 when you are further down */
 .list > .r.pin { border-top: 1px dashed color-mix(in srgb, var(--ink) 22%, transparent) }
 .more { width: 100%; height: 34px; display: flex; align-items: center; justify-content: center; gap: 6px; border-top: 1px solid var(--hair); font-size: 14px; font-weight: 650; color: var(--ink-2) }
+/* slider: filled to --v (set inline to the value's position) */
+.range { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: none; margin: 0 }
+.range::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--main) var(--v), var(--fill-2) var(--v)) }
+.range::-moz-range-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--main) var(--v), var(--fill-2) var(--v)) }
+.range::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35) }
+.range::-moz-range-thumb { width: 26px; height: 26px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35) }
 .rank { width: 22px; font-weight: 700; font-stretch: 75%; font-size: 17px; color: var(--ink-2); text-align: right }
 .chev { color: var(--ink-2) }
 
@@ -470,7 +476,9 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
   <div class="sb">9:41</div>
   <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px">Tap the map to add a gate</span><button class="glass ib" aria-label="Undo"><svg class="i"><use href="#undo"/></svg></button></div>
   <div class="glass sheet-b" style="padding-top:20px;display:grid;gap:10px">
-    <div class="between"><span class="t t2">3.42<span class="sub" style="font-size:16px;font-weight:600"> km</span></span><span class="sub">3 sectors</span></div>
+    <div class="between"><span class="t t2">3.42<span class="sub" style="font-size:16px;font-weight:600"> km</span></span><span class="sub">14 sectors</span></div>
+    <div class="between" style="margin-top:4px"><label class="k" for="sector-len">Sector length</label><span class="t t4">250 m</span></div>
+    <input class="range" id="sector-len" type="range" min="50" max="1000" step="50" value="250" style="--v:21%" aria-valuetext="250 metres, 14 sectors">
     <label class="k" style="padding-left:18px;margin-top:6px">Name</label>
     <div class="field">Ecce Homo</div>
     <div class="seg flat"><span class="on">Standing</span><span>Rolling</span><span>Lap</span></div>
