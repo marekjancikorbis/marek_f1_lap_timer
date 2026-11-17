@@ -92,6 +92,8 @@ figcaption { margin-top: 14px; font-size: 13px; color: var(--ink-2); text-align:
 .glass.sheet-b, .glass.dock, .glass.deep { background: var(--g3); -webkit-backdrop-filter: blur(28px) saturate(1.8); backdrop-filter: blur(28px) saturate(1.8);
   box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 var(--edge-hi), 0 18px 48px -14px rgba(0,0,0,.55) }
 .glass.lo { background: var(--g1) }
+/* wide pills: an even top highlight, since the diagonal sheen reads as a lighter left end */
+.glass.even::before { background: linear-gradient(rgba(255,255,255,.12), rgba(255,255,255,0) 60%) }
 button.glass:active, .glass .tab:active { transform: scale(.96) }
 /* coloured glass: the tile that is the next thing to do, and sector tints while driving */
 .glass.hot { background: color-mix(in srgb, var(--red) 80%, transparent); color: var(--on-red) }
@@ -476,8 +478,8 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
   <div class="sb">9:41</div>
   <div class="hd"><button class="glass ib" aria-label="Back"><svg class="i"><use href="#back"/></svg></button><span class="glass chip" style="height:40px;border-radius:20px">Tap the map to add a gate</span><button class="glass ib" aria-label="Undo"><svg class="i"><use href="#undo"/></svg></button></div>
   <div class="glass sheet-b" style="padding-top:20px;display:grid;gap:10px">
-    <div class="between"><span class="t t2">3.42<span class="sub" style="font-size:16px;font-weight:600"> km</span></span><span class="sub">14 sectors</span></div>
-    <div class="between" style="margin-top:4px"><label class="k" for="sector-len">Sector length</label><span class="t t4">250 m</span></div>
+    <div class="between"><span class="t t2">3.42<span class="sub" style="font-size:16px;font-weight:600"> km</span></span><span class="sub" id="sector-count">14 sectors</span></div>
+    <div class="between" style="margin-top:4px"><label class="k" for="sector-len">Sector length</label><output class="t t4" for="sector-len" id="sector-m">250 m</output></div>
     <input class="range" id="sector-len" type="range" min="50" max="1000" step="50" value="250" style="--v:21%" aria-valuetext="250 metres, 14 sectors">
     <label class="k" style="padding-left:18px;margin-top:6px">Name</label>
     <div class="field">Ecce Homo</div>
@@ -630,7 +632,7 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
     <div class="glass" style="height:76px;border-radius:38px;display:grid;place-items:center;align-content:center;gap:4px;box-shadow:inset 0 0 0 2px var(--ink)"><span class="k" style="color:var(--ink)">S3</span><span class="t t4" style="color:var(--ink-2)">now</span></div>
   </div>
   <div style="position:absolute;left:0;right:0;bottom:104px;display:flex;justify-content:center"><span class="glass chip" style="height:36px"><svg class="i sm" style="width:16px;height:16px;transform:rotate(90deg)"><use href="#phone"/></svg>Turn sideways for delta only</span></div>
-  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="glass" style="width:100%;height:58px;border-radius:29px;font-weight:650;font-size:17px;background:linear-gradient(90deg,color-mix(in srgb,var(--ink) 22%,transparent) 0 30%,var(--glass-bg) 30%)">Hold to stop</button></div>
+  <div style="position:absolute;left:20px;right:20px;bottom:32px"><button class="glass deep even" style="width:100%;height:58px;border-radius:29px;font-weight:650;font-size:17px;background:color-mix(in srgb,var(--night) 82%,transparent)">Hold to stop</button></div>
 </div>
 <figcaption>Drive</figcaption>
 </figure>
@@ -960,5 +962,22 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
 </figure>
 
 </div>
+<script>
+// Sector length slider on Build a route: same rule as computeSectorBoundaries in packages/timing
+// (a sector every N m; a last sector shorter than half of N merges into the one before).
+(() => {
+  const r = document.getElementById('sector-len'), ROUTE_M = 3420;
+  const sectors = (n) => { let b = 0; for (let d = n; d < ROUTE_M; d += n) b++; if (b && ROUTE_M - b * n < n / 2) b--; return b + 1; };
+  const show = () => {
+    const n = +r.value, k = sectors(n);
+    r.style.setProperty('--v', `${(n - r.min) / (r.max - r.min) * 100}%`);
+    document.getElementById('sector-m').textContent = `${n} m`;
+    document.getElementById('sector-count').textContent = `${k} sector${k > 1 ? 's' : ''}`;
+    r.setAttribute('aria-valuetext', `${n} metres, ${k} sector${k > 1 ? 's' : ''}`);
+  };
+  r.addEventListener('input', show); show();
+  console.assert(sectors(250) === 14 && sectors(1000) === 3 && sectors(50) === 68, 'sector rule');
+})();
+</script>
 </body>
 </html>
