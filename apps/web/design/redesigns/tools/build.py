@@ -102,6 +102,7 @@ PAGES = {
         'sheet': 'rgba(1, 38, 58, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'blob-a': '#0a6a9c', 'blob-b': '#e22c2c',
         'you': 'var(--main-hi)',  # the contrast colour is too dark for text on the glass; its light tint
+        'inv-ink': 'var(--red)',  # Home's Drive button is light here, so white text would vanish
         **VIVID}, ['#013f60', '#e22c2c', '#f3efe6']),
     'bento-pine': ('bento', 'Glass tiles · Teal & mint', {
         'page': '#071f27', 'ring': '#04141a', 'sea': '#0b303c', 'tile': '#134454', 'deep': '#082630',
@@ -131,6 +132,7 @@ PAGES = {
         'sheet': 'rgba(11, 16, 51, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'blob-a': '#5b4bff', 'blob-b': '#1d2a8f',
         'you': 'var(--main-hi)',  # the contrast colour is too dark for text on the glass; its light tint
+        'inv-ink': 'var(--red)',  # Home's Drive button is light here, so white text would vanish
         **VIVID}, ['#0b1033', '#5b4bff']),
     'bento-forest': ('bento', 'Glass tiles · Green', {
         'page': '#06271d', 'ring': '#04140f', 'sea': '#0e4d3a', 'tile': '#175f49', 'deep': '#093a2b',
