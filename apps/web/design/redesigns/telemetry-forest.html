@@ -167,8 +167,8 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
 .list > .r.two { grid-template-columns: 1fr auto }
 .list > .r.me { color: var(--main-hi) }
 .list > .r.me .sub { color: inherit }
-/* the lap record and its holder: purple sector colour, lightened for text on dark glass (same as .dl.best) */
-.list > .r.rec, .list > .r.rec .rank { color: var(--rec, #c9a8ff) }
+/* the lap record and its holder: the fastest-sector purple */
+.list > .r.rec, .list > .r.rec .rank { color: var(--s-p) }
 .list.tight > .r { min-height: 39px; padding: 2px 0 }
 /* your own row, pinned under the top 5 when you are further down */
 .list > .r.pin { border-top: 1px dashed color-mix(in srgb, var(--ink) 22%, transparent) }
@@ -421,7 +421,7 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
   </div>
   <div class="k" style="padding:20px 24px 0">Laps</div>
   <div class="list" style="padding:2px 24px 0">
-    <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4" style="color:var(--rec, #c9a8ff)">2:14.83</span><div class="sub">2 Nov</div></div><span class="chip main" style="height:24px;font-size:11px;padding:0 8px">PB</span><div class="sec"><i class="p"></i><i class="g"></i><i class="y"></i></div></div>
+    <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4" style="color:var(--s-p)">2:14.83</span><div class="sub">2 Nov</div></div><span class="chip main" style="height:24px;font-size:11px;padding:0 8px">PB</span><div class="sec"><i class="p"></i><i class="g"></i><i class="y"></i></div></div>
     <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4">2:15.40</span><div class="sub">2 Nov</div></div><span class="dl loss" style="height:24px;font-size:14px">+0.57</span><div class="sec"><i class="g"></i><i class="y"></i><i class="y"></i></div></div>
     <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4">2:21.06</span><div class="sub">26 Oct</div></div><span class="dl loss" style="height:24px;font-size:14px">+6.23</span><div class="sec"><i class="y"></i><i class="y"></i><i class="g"></i></div></div>
     <div class="r" style="grid-template-columns:1fr auto 70px"><div><span class="t t4">2:18.77</span><div class="sub">25 Oct · simulated</div></div><span class="chip" style="height:24px;font-size:11px;padding:0 8px">Sim</span><div class="sec"><i class="y"></i><i class="g"></i><i class="y"></i></div></div>
@@ -498,7 +498,7 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
     <div class="grab"></div>
     <div class="between"><span class="h1" style="font-size:26px">Ecce Homo</span><span class="sub">3.42 km · Standing</span></div>
     <div class="k" style="margin-top:14px">Record</div>
-    <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="t t2" style="color:var(--rec, #c9a8ff)">2:11.47</span><span class="sub"><span style="color:var(--rec, #c9a8ff)">petra_r</span> · 2 Nov</span></div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span class="t t2" style="color:var(--s-p)">2:11.47</span><span class="sub"><span style="color:var(--s-p)">petra_r</span> · 2 Nov</span></div>
     <div class="list" style="margin-top:8px">
       <div class="r"><span class="rank">2</span><span>Pavel N.</span><span class="t t4">2:12.90</span></div>
       <div class="r"><span class="rank">3</span><span>Ondra M.</span><span class="t t4">2:13.55</span></div>

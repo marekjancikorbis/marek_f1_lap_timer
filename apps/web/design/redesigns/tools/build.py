@@ -123,7 +123,6 @@ PAGES = {
         'map-card': 'url(maps/card-dark.png)', 'map-filter': 'grayscale(1) brightness(1.5)', 'map-tint': '#a3122a', 'map-blend': 'color',
         'sheet': 'rgba(110, 10, 27, .45)', 'clear': 'rgba(243, 239, 230, .06)', 'glass-fx': 'saturate(1.3) brightness(1.08)',
         'blob-a': '#d81e3a', 'blob-b': '#4a0612',
-        'rec': '#eedfff',  # the record purple, lighter to read on the bright red glass
         **VIVID}, ['#a3122a', '#7a0c1f', '#ffe03a']),
     'bento-midnight': ('bento', 'Glass tiles · Indigo', {
         'page': '#060920', 'ring': '#04061a', 'sea': '#0b1033', 'tile': '#161c4d', 'deep': '#080c28',
