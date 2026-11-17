@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AndroidAppButton, InstallButton } from '../components/InstallButton';
-import { Avatar, errorMessage, I, ScreenHead, useToast } from '../components/ui';
+import { Avatar, errorMessage, I, ScreenHead, Sheet, useToast } from '../components/ui';
 import { DEFAULT_COUNTDOWN_S } from '../lib/config';
 import { getMyRequest, getPhoto, NAME_MAX, requestCreatorAccess, setDisplayName, setPhoto, squarePhoto, updateMyProfile } from '../lib/data';
 import { nameOf } from '../lib/format';
@@ -27,6 +27,7 @@ export default function Settings() {
   const [name, setName] = useState(nameOf(profile));
   const [savingName, setSavingName] = useState(false);
   const [editName, setEditName] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [hasPhoto, setHasPhoto] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
@@ -106,6 +107,7 @@ export default function Settings() {
   const [theme, setTheme] = useTheme();
 
   const card = { borderRadius: 24, padding: '16px 18px' } as const;
+
   const usePct = usage ? Math.max(usage.mapLoads / USAGE_CAP.mapLoads, usage.directions / USAGE_CAP.directions, usage.staticMaps / USAGE_CAP.staticMaps) * 100 : 0;
   const requestBox = (label: string, placeholder: string, primary: boolean) => (
     <>
@@ -124,9 +126,19 @@ export default function Settings() {
       <div className="sb" />
       <ScreenHead back title="Settings" />
       <div style={{ padding: '16px 16px 0', display: 'grid', gap: 10 }}>
-        <div className="glass lift" style={{ ...card, display: 'grid', gap: 14 }}>
+        <button className="glass lift" style={{ ...card, display: 'flex', gap: 14, alignItems: 'center', textAlign: 'left', width: '100%' }} onClick={() => setProfileOpen(true)} aria-label={`${nameOf(profile)}, @${profile.username}. Edit name and photo`}>
+          <Avatar key={photoKey} name={nameOf(profile)} hue={profile.avatarHue} size={52} uid={profile.id} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="h2 ellipsis">{nameOf(profile)}</div>
+            <div className="sub ellipsis">@{profile.username}</div>
+          </div>
+          <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+        </button>
+        <Sheet open={profileOpen} onClose={() => { setProfileOpen(false); setEditName(false); }} label="Your profile">
+        <div style={{ display: 'grid', gap: 14 }}>
+          <h2 className="h1" style={{ fontSize: 24 }}>Your profile</h2>
           <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-            <Avatar key={photoKey} name={profile.username} hue={profile.avatarHue} size={52} uid={profile.id} />
+            <Avatar key={photoKey} name={nameOf(profile)} hue={profile.avatarHue} size={52} uid={profile.id} />
             {editName ? (
               <div style={{ flex: 1, display: 'flex', gap: 8, minWidth: 0 }}>
                 <label className="field" style={{ height: 44, flex: 1, minWidth: 0 }}>
@@ -192,6 +204,8 @@ export default function Settings() {
           )}
         </div>
 
+        </Sheet>
+
         <div className="glass lift" style={card}>
           <div className="between">
             <span className="k" style={{ color: 'var(--ink)' }}>Theme</span>
@@ -211,7 +225,6 @@ export default function Settings() {
           <div style={{ gridTemplateColumns: '1fr auto' }}>
             <span>
               Countdown
-              <span className="sub" style={{ display: 'block' }}>Lights go out this long after Start</span>
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 2 }} role="group" aria-label="Countdown seconds">
               <button className="ib" aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
@@ -226,7 +239,6 @@ export default function Settings() {
           <button style={{ gridTemplateColumns: '1fr auto', textAlign: 'left' }} onClick={() => setShowLogs((v) => !v)} aria-expanded={showLogs}>
             <span>
               GPS logs
-              <span className="sub" style={{ display: 'block' }}>Your last 5 real drives, kept on this phone</span>
             </span>
             <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <b className="t t4">{logs.length}</b>
@@ -271,11 +283,6 @@ export default function Settings() {
             <div style={{ height: 6, borderRadius: 3, marginTop: 12, background: 'var(--fill-2)' }} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(usePct)} aria-label="Map use this month">
               <i style={{ display: 'block', width: `${Math.min(100, usePct)}%`, height: '100%', borderRadius: 3, background: usePct > 90 ? '#ff5a5f' : 'var(--main-hi)' }} />
             </div>
-            <p className="sub" style={{ marginTop: 10 }}>
-              Map loads {usage.mapLoads.toLocaleString()} / {USAGE_CAP.mapLoads.toLocaleString()} · road snapping {usage.directions.toLocaleString()} /{' '}
-              {USAGE_CAP.directions.toLocaleString()} · route card maps {usage.staticMaps.toLocaleString()} / {USAGE_CAP.staticMaps.toLocaleString()}. Resets{' '}
-              {usage.resetsAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}; the app pauses at the limit to stay free.
-            </p>
           </div>
         )}
 

@@ -105,7 +105,7 @@ export default function Compare() {
         <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, `/r/${route.id}`)}>
           <I n="back" />
         </button>
-        <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, minWidth: 0, flex: 1, justifyContent: 'center' }}>Line colour: who was faster</span>
+        <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, minWidth: 0, marginLeft: 'auto' }}>Line colour: who was faster</span>
         <button className="glass ib" aria-label="Swap the two laps" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
           <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />

@@ -142,7 +142,6 @@ export default function UserPage() {
       .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
   }, [posts, ranks]);
 
-  const homeBest = home ? best.find((b) => b.pb.routeId === home.id)?.pb : undefined;
 
   const newest = useMemo(() => [...posts].sort((a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)), [posts]);
 
@@ -238,12 +237,7 @@ export default function UserPage() {
             <div className="k" style={{ marginTop: 6 }}>Following</div>
           </Link>
         </div>
-        {home?.isPublic ? (
-          <Link to={`/r/${home.id}`} className="sub" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
-            <span>Home course · {home.name}</span>
-            {homeBest && <span>{formatLap(homeBest.totalMs)}</span>}
-          </Link>
-        ) : (
+        {!home?.isPublic && (
           isMe && (
             <p className="sub" style={{ marginTop: 14 }}>
               No home course yet. Pick one on a route&rsquo;s page in <Link to="/explore" style={{ textDecoration: 'underline' }}>Explore</Link>.

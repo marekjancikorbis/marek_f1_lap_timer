@@ -131,9 +131,6 @@ export function LapView({
         {status && <div className="k">{status}</div>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 6 }}>
           <span className={`t t1${rank === 1 ? ' acc' : ''}`} style={{ fontSize: 72 }}>{formatLap(lap.totalMs)}</span>
-          {ref && !lap.partial && !ref.partial && (
-            <span className={`dl ${lap.totalMs <= ref.totalMs ? 'gain' : 'loss'}`}>{formatDelta(lap.totalMs - ref.totalMs, 2)}</span>
-          )}
         </div>
         {table && table.length > 0 && (
           <div style={{ marginTop: 14 }}>
@@ -142,13 +139,8 @@ export function LapView({
         )}
         {lap.penaltyMs > 0 && <div className="sub" style={{ color: '#ff9a9d', marginTop: 8 }}>incl. +{formatSeconds(lap.penaltyMs, 3)}</div>}
       </div>
-      {(badges || ref) && (
+      {badges && (
         <div className="sub" style={{ padding: '8px 20px 0', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          {ref && (
-            <span>
-              vs {ref.label} {formatLap(ref.totalMs)}
-            </span>
-          )}
           {badges}
         </div>
       )}
@@ -182,6 +174,7 @@ export function LapView({
         onOpen={onOpen}
         hero={hero}
         compact={compact}
+        bigColours={table?.map((t) => t.row.colour)}
         who={who}
         rankOne={rank === 1}
         onMore={menu ? () => setMore(true) : undefined}
@@ -326,6 +319,7 @@ export function LapTabs({
   onOpen,
   hero,
   compact,
+  bigColours,
   who,
   rankOne,
   onMore,
@@ -337,6 +331,8 @@ export function LapTabs({
   hero?: ReactNode;
   /** The hero on the Graphs tab: one row. */
   compact?: ReactNode;
+  /** How each big sector went, for the speed line's colours. */
+  bigColours?: (SectorColourName | null)[];
   who?: ReactNode;
   rankOne?: boolean;
   onMore?: () => void;
@@ -498,6 +494,7 @@ export function LapTabs({
                     bLabel={cmp?.speed ? ref!.label : null}
                     onScrub={scrubTo}
                     at={carAtM}
+                    colours={bigColours}
                   />
                 </div>
               </div>
@@ -618,6 +615,7 @@ export function LapTabs({
                 <div className="k" style={{ marginTop: 16 }}>Camera follows</div>
                 <div style={{ marginTop: 8 }}>
                   <Segmented
+                    flat
                     label="Follow"
                     value={follow}
                     onChange={(v) => {
@@ -656,7 +654,7 @@ function SecCells({ row, scale }: { row: Row; scale: number }) {
       <span className="k" style={{ color: 'var(--ink)' }}>{row.name}</span>
       <i className={cls} style={{ width: `${w}%`, background: row.colour ? undefined : 'var(--fill-2)' }} aria-hidden="true" />
       {row.deltaMs != null ? (
-        <span className={`dl ${row.colour === 'purple' ? 'best' : row.deltaMs <= 0 ? 'gain' : 'loss'}`} style={{ justifySelf: 'end' }}>
+        <span className={`dl ${row.deltaMs <= 0 ? 'gain' : 'loss'}`} style={{ justifySelf: 'end' }}>
           {formatDelta(row.deltaMs, 2)}
           {row.colour && <span className="visually-hidden"> {STRIP_LABEL[row.colour]}</span>}
         </span>

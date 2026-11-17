@@ -165,7 +165,8 @@ svg.i.sm { width: 18px; height: 18px }
 .ph .more { width: 100%; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-top: 1px solid var(--hair); font-size: 14px; font-weight: 650; color: var(--ink-2) }
 /* while driving the map moves under the HUD every frame: solid fills instead of frosted glass */
 .dv .glass { -webkit-backdrop-filter: none; backdrop-filter: none }
-.dv .glass:not(.tint-p, .tint-g, .tint-y, .clear) { background: color-mix(in srgb, var(--night) 82%, transparent) }
+.dv .glass:not(.tint-p, .tint-g, .tint-y, .clear) { background: color-mix(in srgb, var(--ink) 13%, var(--night)) }
+.dv .glass.dv-hold.deep { background: color-mix(in srgb, var(--night) 82%, transparent) }
 .av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 750; color: #10131c; flex: none; overflow: hidden }
 .av img { width: 100%; height: 100%; object-fit: cover }
 
@@ -268,7 +269,8 @@ svg.i.sm { width: 18px; height: 18px }
 html:has(.dv) :is(.ph.sl, .ph.soft)::before, .ph:has(> .map)::before { animation-play-state: paused }
 
 /* ---------- motion (apple-design): a screen materializes as it arrives, never blocking input ---------- */
-.ph > :not(.dock):not(.map) { animation: ph-in var(--d-screen) var(--spring) both }
+/* backwards, not both: a finished animation left filling makes its element a backdrop root, which strips the frost off every glass panel inside it */
+.ph > :not(.dock):not(.map) { animation: ph-in var(--d-screen) var(--spring) backwards }
 @keyframes ph-in { from { opacity: 0; transform: translateY(10px) } }
 /* spatial: a screen you drill into comes from the right, the one you go back to from the left; tabs just rise
    (lib/navStack.ts sets data-nav="tab" for a tab-bar tap, which matches neither rule below) */
@@ -289,7 +291,7 @@ button.glass:where(:active) { transform: scale(.96) }
 .ib:active, .glass.ib:active { transform: scale(.94) }
 .ib { transition: transform var(--d-screen) var(--spring) }
 @media (prefers-reduced-motion: reduce) {
-  .ph > :not(.dock):not(.map) { animation: ph-fade var(--d-fast) var(--ease-out) both }
+  .ph > :not(.dock):not(.map) { animation: ph-fade var(--d-fast) var(--ease-out) backwards }
   /* presses keep their tint, not their scale */
   :is(.solid, .ib, button.glass, .glass.lift, .glass.tl, .dock .tab, .dock .tab svg, .theme i):active, .theme:active i { transform: none !important }
 }
@@ -314,7 +316,7 @@ button.glass:where(:active) { transform: scale(.96) }
 
 /* ---------- shared screen parts ---------- */
 .head { padding: 4px 16px 0; display: grid; gap: 14px }
-.head-bar { min-height: 52px; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 -4px }
+.head-bar { min-height: 52px; display: flex; justify-content: space-between; align-items: center; gap: 10px }
 .head .title { padding: 0 4px }
 .head .head-t { padding: 8px 4px 0 } .head .head-t .title { padding: 0 }
 .pad { padding: 0 16px }
@@ -349,8 +351,14 @@ button.glass:where(:active) { transform: scale(.96) }
 .ph.explore .map .mapboxgl-ctrl-bottom-left, .ph.explore .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 64px) }
 /* Pull sheets slide (lib/pullSheet.ts): always full height, lowered by --shut when shut so only the top shows.
    Moving a laid-out layer is cheap; changing its height re-laid-out the sheet every frame. */
-.glass.xs { position: absolute; left: 8px; right: 8px; bottom: calc(98px + var(--safe-b)); border-radius: 36px; padding: 0 18px 12px;
-  display: flex; flex-direction: column; height: calc(100% - var(--sbh) - 178px - var(--safe-b)); --peek-max: .4;
+/* The frame a pull sheet slides in: the mockup's sheet box. Shut, the sheet is lowered inside it, so it never
+   reaches below the frame (Explore: 12 px above the tab bar) and keeps its rounded bottom corners. */
+.sheet-clip { position: absolute; left: 8px; right: 8px; overflow: hidden; pointer-events: none; z-index: 1 }
+.sheet-clip > * { pointer-events: auto }
+.xs-clip { top: calc(var(--sbh) + 80px); bottom: calc(98px + var(--safe-b)); border-radius: 36px }
+.rs-clip { top: calc(var(--sbh) + 68px); bottom: calc(8px + var(--safe-b)); border-radius: 40px }
+.glass.xs { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 36px; padding: 0 18px 12px;
+  display: flex; flex-direction: column; height: 100%; --peek-max: .51;
   transform: translateY(var(--shut, 60%)); transition: transform .52s var(--spring) }
 .glass.xs.open { transform: none }
 .xs-pull { display: block; width: 100%; padding: 10px 0 0 !important; touch-action: none; cursor: grab }
@@ -360,8 +368,8 @@ button.glass:where(:active) { transform: scale(.96) }
 input[type="search"]::-webkit-search-cancel-button { display: none }
 
 /* Route: the map is the whole screen; the sheet pulls up to just under the back button */
-.glass.rs { bottom: calc(8px + var(--safe-b)); padding: 0 20px 102px; display: flex; flex-direction: column;
-  height: calc(100% - var(--sbh) - 76px - var(--safe-b)); --peek-max: .62;
+.glass.rs { left: 0; right: 0; bottom: 0; padding: 0 20px 92px; display: flex; flex-direction: column;
+  height: 100%; --peek-max: .69;
   transform: translateY(var(--shut, 50%)); transition: transform .52s var(--spring) }
 .glass.rs.open { transform: none }
 .glass.rs:not(.open) .xs-body { overflow: hidden }
@@ -369,6 +377,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .route-page .map .mapboxgl-ctrl-bottom-left, .route-page .map .mapboxgl-ctrl-bottom-right { bottom: auto; top: calc(var(--sbh) + 60px) }
 /* a segmented control inside a sheet sits on a plain tint, not a second layer of glass */
 .glass.sheet.seg { background: var(--g2); box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 var(--edge-hi), 0 10px 30px -10px rgba(0,0,0,.45) }
+.seg.flat .seg-thumb { background: var(--fill-2) } .seg.flat > .on { color: var(--ink) }
 .glass.sheet .glass.seg { background: var(--fill); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none }
 .glass.sheet .glass.seg::before, .glass.sheet .glass.seg::after { content: none }
 /* slider: filled to --v (set inline to the value's position) */
@@ -385,7 +394,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
   animation: ph-fade 200ms var(--ease-out) both }  /* a mode change, not a drill-in: the HUD fades in, no slide */
 .dv * { box-sizing: border-box }
 .dv :where(h1, h2, p) { margin: 0; font: inherit }
-.dv :where(button) { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; touch-action: manipulation }
+:where(.dv button) { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; touch-action: manipulation }
 .dv-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 40px }
 .dv .chip { height: 36px; padding: 0 14px; border-radius: 18px; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap }
 .dv .chip.clear { height: 38px; font-size: 15px }
@@ -439,7 +448,9 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .map-pic-tint { position: absolute; inset: 0; isolation: isolate; overflow: hidden }
 .map-pic-tint img { width: 100%; height: 100%; display: block; filter: var(--map-filter) }
 .map-pic-tint::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: color }
-.glass.profile-sheet { margin: 166px 8px 0; border-radius: 36px; padding: 20px; min-height: 50dvh }
+/* as in the mockup, the sheet stops 12 px above the tab bar and scrolls inside */
+.ph.profile { padding-bottom: 0; height: 100dvh; overflow: hidden }
+.glass.profile-sheet { margin: 166px 8px 0; border-radius: 36px; padding: 20px; height: calc(100dvh - var(--sbh) - 52px - 166px - 98px - var(--safe-b)); overflow-y: auto; overscroll-behavior: contain }
 
 /* Admin: the mockup's cards and rows */
 .glass.admin-card { border-radius: 24px; padding: 16px 18px; margin: 10px 16px 0 }
@@ -518,7 +529,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .glass.xs, .glass.rs { contain: layout paint style; will-change: transform }
 /* The route's Drive button stays at the foot of the screen while the sheet (padded for it) slides under it.
    Its strip is frosted and fades in from the top: what passes under it fades out (a scroll edge, no divider). */
-.rs-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 30px 28px calc(28px + var(--safe-b));
+.rs-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 30px 20px 20px;
   background: color-mix(in srgb, var(--sheet) 55%, transparent); -webkit-backdrop-filter: blur(10px) saturate(1.5); backdrop-filter: blur(10px) saturate(1.5);
   -webkit-mask-image: linear-gradient(transparent, #000 30px); mask-image: linear-gradient(transparent, #000 30px) }
 @media (prefers-reduced-transparency: reduce) { .rs-foot { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--night); -webkit-mask-image: none; mask-image: none } }

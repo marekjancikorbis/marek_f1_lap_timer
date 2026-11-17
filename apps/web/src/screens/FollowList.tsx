@@ -60,7 +60,7 @@ export default function FollowList() {
         />
       </div>
       {error && <p className="err" style={{ padding: '12px 24px 0' }}>{error}</p>}
-      <div style={{ padding: '8px 24px 0' }}>
+      <div style={{ padding: '8px 0 0' }}>
         {people === null ? (
           <SkeletonRows />
         ) : people.length === 0 ? (

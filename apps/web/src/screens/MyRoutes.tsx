@@ -151,11 +151,7 @@ export default function MyRoutes() {
           </div>
         )
       ) : (
-        <div style={{ padding: '14px 16px 0', display: 'grid', gap: 10 }}>
-          <div className="k" style={{ padding: '0 8px' }}>
-            Your routes
-            {limit > 1 && own.length > 0 && (limit === Infinity ? ` · ${publicCount} public` : ` · ${publicCount} of ${limit} public`)}
-          </div>
+        <div style={{ padding: '16px 16px 0', display: 'grid', gap: 10 }}>
           {own.length === 0 ? (
             <div className="glass lift card" style={{ padding: '18px 20px', display: 'grid', gap: 12 }}>
               <div>

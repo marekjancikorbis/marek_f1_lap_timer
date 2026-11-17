@@ -100,8 +100,7 @@ export default function RunHistory() {
   if (route === undefined || runs === null) return <Loading />;
 
   const best = pbId ? runs.find((r) => r.id === pbId) : undefined;
-  const day = (t: number) =>
-    `${new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+  const day = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   return (
     <main className="ph soft docked">
@@ -184,6 +183,7 @@ export default function RunHistory() {
                     </span>
                     <div className="sub">
                       {day(run.startedAt)}
+                      {run.replay && ' · simulated'}
                       {run.partial && ` · GPS lost in S${run.splitTimesMs.length + 1}`}
                     </div>
                   </Link>

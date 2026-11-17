@@ -360,6 +360,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
         </label>
       </div>
 
+      <div className="sheet-clip xs-clip">
       <section
         ref={pull.ref}
         className={`glass sheet xs ${expanded ? 'open' : ''}`}
@@ -421,6 +422,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           )}
         </div>
       </section>
+      </div>
     </main>
   );
 }

@@ -274,6 +274,7 @@ export default function RouteBuilder() {
           <input id="route-name" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="Route name" enterKeyHint="done" />
         </label>
         <Segmented
+          flat
           label="Start"
           value={kind}
           onChange={setKind}

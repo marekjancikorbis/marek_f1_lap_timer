@@ -144,7 +144,7 @@ export default function RunSummary() {
   const INK: Record<string, string> = { purple: 'var(--s-p)', green: 'var(--s-g)', yellow: 'var(--s-y)' };
   const RESULT_WORD: Record<string, string> = { purple: 'fastest ever', green: 'faster', yellow: 'slower' };
   const status = newPb
-    ? 'New best'
+    ? 'New personal best'
     : run.replay
       ? 'Simulated'
       : notCounted(run)
@@ -176,6 +176,7 @@ export default function RunSummary() {
               {status}
             </span>
             {run.posted && <span className="chip">Posted</span>}
+            <span className="sub ellipsis" style={{ marginLeft: 'auto', minWidth: 0 }}>{run.routeName}</span>
             {run.penaltyMs > 0 && <span className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }}>+{formatSeconds(run.penaltyMs, 0)}</span>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 12 }}>
@@ -334,22 +335,22 @@ function StageCompare({ run, prev, userId, posts }: { run: Run; prev: Run | null
         <div style={{ gridTemplateColumns: '1fr auto' }}>
           <div>
             <b>Your best before</b>
-            <div className="lbl">
+            <div className="sub">
               {formatLap(prev.totalMs)} · {formatDate(prev.startedAt)}
             </div>
           </div>
-          <span className="t t4" style={{ color: run.totalMs <= prev.totalMs ? 'var(--s-g)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - prev.totalMs, 2)}</span>
+          <span className={`dl ${run.totalMs <= prev.totalMs ? 'gain' : 'loss'}`}>{formatDelta(run.totalMs - prev.totalMs, 2)}</span>
         </div>
       )}
       {record && (
         <div style={{ gridTemplateColumns: '1fr auto' }}>
           <div>
             <b>Route record</b>
-            <div className="lbl">
+            <div className="sub">
               {record.username} · {formatLap(record.totalMs)}
             </div>
           </div>
-          <span className="t t4" style={{ color: run.totalMs <= record.totalMs ? 'var(--s-p)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - record.totalMs, 2)}</span>
+          <span className={`dl ${run.totalMs <= record.totalMs ? 'best' : 'loss'}`}>{formatDelta(run.totalMs - record.totalMs, 2)}</span>
         </div>
       )}
       {record && !run.replay && (

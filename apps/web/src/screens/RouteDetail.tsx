@@ -199,6 +199,8 @@ export default function RouteDetail() {
           <I n="share" />
         </button>
       </div>
+      {/* The sheet slides inside its frame, so it never shows below it (as in the mockup). */}
+      <div className="sheet-clip rs-clip">
       <section ref={pull.ref} className={`glass sheet sheet-b rs ${open ? 'open' : ''}`} aria-label={route.name}>
         <button className="xs-pull" aria-expanded={open} aria-label={open ? 'Show less' : 'Show the whole leaderboard'} onClick={pull.onClick}>
           <span className="grab" />
@@ -341,6 +343,7 @@ export default function RouteDetail() {
           <I n="flag" sm />
           Drive this route
         </Link>
+      </div>
       </div>
     </main>
   );

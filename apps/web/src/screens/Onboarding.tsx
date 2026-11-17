@@ -37,7 +37,7 @@ export function Onboarding() {
         <div className="k">Step 2 of 2</div>
         <h1 className="h1" style={{ marginTop: 6 }}>Pick a username</h1>
         <p className="sub" style={{ marginTop: 8 }}>
-          Shown on every lap you post. It can't be changed later; your display name can.
+          Shown on every lap you post.
         </p>
       </div>
       <div style={{ display: 'grid', justifyItems: 'center', marginTop: 52 }}>
@@ -61,7 +61,7 @@ export function Onboarding() {
               aria-invalid={username.length > 0 && !valid}
               onChange={(e) => setUsername(e.target.value.replace(/\s/g, ''))}
               placeholder="your_name"
-              style={{ marginLeft: -8 }}
+              style={{ marginLeft: -10 }}
             />
             {valid && <I n="check" sm style={{ color: 'var(--s-g)' }} />}
           </label>

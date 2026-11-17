@@ -1,5 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { formatDelta, formatDistance } from '../lib/format';
+import type { SectorColourName } from '../lib/types';
+
+const SECTOR_VAR: Record<SectorColourName, string> = { purple: 'var(--s-p)', green: 'var(--s-g)', yellow: 'var(--s-y)' };
 
 // Look and feel after bklit.com's line and area charts: monotone curves, gradient
 // fills fading to the baseline, dashed horizontal grid only, an edge-faded
@@ -309,6 +312,7 @@ export function SpeedGraph({
   bLabel,
   onScrub,
   at,
+  colours,
 }: {
   data: SpeedPoint[];
   boundaries: number[];
@@ -316,6 +320,8 @@ export function SpeedGraph({
   bLabel: string | null;
   onScrub?: (d: number) => void;
   at?: number | null;
+  /** How each sector went: the line takes that sector's colour, as in the mockup. */
+  colours?: (SectorColourName | null)[];
 }) {
   const id = useId().replace(/:/g, '');
   const axis = { maxD: boundaries[boundaries.length - 1], boundaries };
@@ -374,6 +380,16 @@ export function SpeedGraph({
         }
         defs={
           <>
+            {/* Hard stops at the sector ends: the line is one colour per sector. */}
+            <linearGradient id={`${id}-sec`} x1={x(0)} y1="0" x2={x(axis.maxD)} y2="0" gradientUnits="userSpaceOnUse">
+              {boundaries.flatMap((b, i) => {
+                const c = colours?.[i] ? SECTOR_VAR[colours[i]!] : SERIES.a;
+                return [
+                  <stop key={`a${i}`} offset={(i ? boundaries[i - 1] : 0) / axis.maxD} stopColor={c} />,
+                  <stop key={`b${i}`} offset={b / axis.maxD} stopColor={c} />,
+                ];
+              })}
+            </linearGradient>
             <linearGradient id={`${id}-fill`} x1="0" y1={PAD.t} x2="0" y2={baseY} gradientUnits="userSpaceOnUse">
               <stop offset="0" stopColor={SERIES.a} stopOpacity={0.35} />
               <stop offset="1" stopColor={SERIES.a} stopOpacity={0} />
@@ -396,7 +412,7 @@ export function SpeedGraph({
           <g mask={`url(#${id}-fade)`}>
             <path d={areaA} fill={`url(#${id}-fill)`} />
             {bLabel && <path d={paths.b} fill="none" stroke={SERIES.b} strokeWidth={2} strokeDasharray="5 4" strokeLinejoin="round" strokeLinecap="round" />}
-            <path d={paths.a} fill="none" stroke={SERIES.a} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+            <path d={paths.a} fill="none" stroke={colours?.some(Boolean) ? `url(#${id}-sec)` : SERIES.a} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
           </g>
         </g>
       </Plot>

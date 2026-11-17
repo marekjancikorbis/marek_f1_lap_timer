@@ -85,7 +85,9 @@ export default function Drive() {
       <header className="dv-top">
         {delta ? (
           <>
-            <span className="glass chip clear ellipsis" style={{ maxWidth: '50%' }}>{cfg.route.name}</span>
+            <span className="glass chip clear ellipsis" style={{ maxWidth: '50%' }}>
+              {cfg.route.name} · S{Math.max(1, ctl.bigEnds.findIndex((e) => e >= s.nextSector) + 1)}
+            </span>
             {gps}
           </>
         ) : (
@@ -226,7 +228,7 @@ export default function Drive() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, opacity: 0.8 }}>
               <I n="phone" size={18} />
-              Turn upright for full HUD
+              Turn upright for the full HUD
             </span>
             <HoldToStop onStop={stop} label="Hold to exit" compact />
           </div>
@@ -402,7 +404,7 @@ function DeltaOnly({ s, reference }: { s: DriveState; reference: string | null }
   return (
     <section style={{ textAlign: 'center', marginTop: 6, flex: 1, display: 'grid', alignContent: 'center' }} aria-live="polite">
       <div className="t dv-delta-big">{last?.deltaMs != null ? formatDelta(last.deltaMs) : last ? formatLap(last.sectorMs) : 'GO'}</div>
-      <div style={{ fontSize: 17, fontWeight: 600, marginTop: 6, opacity: 0.8 }}>
+      <div className="k" style={{ fontSize: 13, marginTop: 6, color: 'inherit', opacity: 0.75 }}>
         {last ? (reference ? `vs ${reference}` : 'Clock only') : 'The gap shows at the first minisector'}
       </div>
     </section>
