@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { createProfile, USERNAME_RE, usernameTaken } from '../lib/data';
 import { useSession } from '../lib/session';
-import { errorMessage } from '../components/ui';
+import { errorMessage, I } from '../components/ui';
 
 const initials = (u: string) => (u.split(/[_.]/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2) || '?').toUpperCase();
 
@@ -33,23 +33,25 @@ export function Onboarding() {
   return (
     <main className="ph soft col">
       <div className="sb" />
-      <div style={{ padding: '40px 24px 0' }}>
-        <h1 className="title">Pick a username</h1>
-        <p className="lbl" style={{ fontSize: 15, marginTop: 8 }}>
+      <div style={{ padding: '36px 20px 0' }}>
+        <div className="k">Step 2 of 2</div>
+        <h1 className="h1" style={{ marginTop: 6 }}>Pick a username</h1>
+        <p className="sub" style={{ marginTop: 8 }}>
           Shown on every lap you post. It can't be changed later; your display name can.
         </p>
       </div>
-      <div style={{ display: 'grid', justifyItems: 'center', marginTop: 56 }}>
-        <span className="av" style={{ width: 96, height: 96, fontSize: 32, background: 'var(--main)', color: 'var(--on-main)' }}>
+      <div style={{ display: 'grid', justifyItems: 'center', marginTop: 52 }}>
+        <span className="av" style={{ width: 104, height: 104, fontSize: 34, background: 'var(--main)', color: 'var(--on-main)' }}>
           {initials(username)}
         </span>
       </div>
       <form style={{ display: 'contents' }} onSubmit={submit} noValidate>
         <div style={{ padding: '40px 20px 0', display: 'grid', gap: 8 }}>
-          <label className="field" style={{ justifyContent: 'space-between' }}>
+          <label className="k" htmlFor="onb-username" style={{ paddingLeft: 18 }}>Username</label>
+          <label className="field" style={{ justifyContent: 'space-between', ...(valid ? { boxShadow: 'inset 0 0 0 2px var(--s-g)' } : null) }}>
             <span className="mute" aria-hidden="true">@</span>
-            <span className="visually-hidden">Username</span>
             <input
+              id="onb-username"
               value={username}
               autoCapitalize="none"
               autoCorrect="off"
@@ -61,9 +63,9 @@ export function Onboarding() {
               placeholder="your_name"
               style={{ marginLeft: -8 }}
             />
-            {valid && <span style={{ color: 'var(--s-g)' }}>✓</span>}
+            {valid && <I n="check" sm style={{ color: 'var(--s-g)' }} />}
           </label>
-          <p className="lbl" style={{ paddingLeft: 18 }}>
+          <p className="sub" style={{ paddingLeft: 18 }}>
             3–20 letters, numbers, _ and .
           </p>
           {error && (
@@ -76,7 +78,7 @@ export function Onboarding() {
           <button className="solid" disabled={!valid || busy}>
             {busy ? 'Saving…' : 'Continue'}
           </button>
-          <button type="button" className="lbl" style={{ justifySelf: 'center', padding: 8 }} onClick={signOut}>
+          <button type="button" className="sub" style={{ justifySelf: 'center', padding: 8, minHeight: 44 }} onClick={signOut}>
             Use a different account
           </button>
         </div>

@@ -11,7 +11,7 @@ import type { SectorColourName } from '../lib/types';
 // ---------------------------------------------------------------- avatar
 
 /** Initials on the driver's pastel colour (the mockup's .av), or their photo once it loads (pass uid). */
-export function Avatar({ name, hue = 210, size = 36, uid }: { name: string; hue?: number; size?: number; uid?: string }) {
+export function Avatar({ name, hue = 210, size = 40, uid }: { name: string; hue?: number; size?: number; uid?: string }) {
   const photo = useLoaded(uid, getPhoto);
   // petra_r -> PR, Tomáš Kolář -> TK, perf -> PE
   const parts = name.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
@@ -51,8 +51,8 @@ export function UserName({ uid, fallback }: { uid: string; fallback: string }) {
 export function WhoText({ p }: { p: { username: string; displayName?: string } }) {
   return (
     <span style={{ minWidth: 0 }}>
-      <b className="ellipsis" style={{ display: 'block' }}>{nameOf(p)}</b>
-      <span className="lbl ellipsis" style={{ display: 'block' }}>@{p.username}</span>
+      <span className="h2 ellipsis" style={{ display: 'block' }}>{nameOf(p)}</span>
+      <span className="sub ellipsis" style={{ display: 'block' }}>@{p.username}</span>
     </span>
   );
 }
@@ -142,10 +142,11 @@ export function TabBar() {
           key={to}
           to={to}
           end={end}
-          aria-label={label}
+          aria-label={to === '/drive' ? label : undefined}
           className={({ isActive }) => `tab${to === '/drive' ? ' go' : ''}${isActive || (inTimes && to === '/routes') ? ' on' : ''}`}
         >
           <I n={icon} />
+          {to !== '/drive' && label}
         </NavLink>
       ))}
     </nav>
@@ -209,6 +210,7 @@ const ICONS = {
     </>
   ),
   check: <path d="m5 12 5 5L20 7" />,
+  trophy: <path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5" />,
   trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
   edit: <path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />,
   camera: (
@@ -227,9 +229,9 @@ const ICONS = {
 export type IconName = keyof typeof ICONS;
 
 /** One of the mockup's line icons (svg.i: 22 px, round caps, stroke 1.9). */
-export function I({ n, size, style }: { n: IconName; size?: number; style?: CSSProperties }) {
+export function I({ n, size, style, sm }: { n: IconName; size?: number; style?: CSSProperties; sm?: boolean }) {
   return (
-    <svg className="i" viewBox="0 0 24 24" aria-hidden="true" style={size ? { width: size, height: size, ...style } : style}>
+    <svg className={sm ? 'i sm' : 'i'} viewBox="0 0 24 24" aria-hidden="true" style={size ? { width: size, height: size, ...style } : style}>
       {ICONS[n]}
     </svg>
   );
@@ -322,8 +324,18 @@ export function Sheet({ open, onClose, children, label }: { open: boolean; onClo
     if (open) {
       setShown(true);
       setLeaving(false);
+      // reopened mid-exit after a drag: drop the drag's inline position so the entrance runs again
+      ref.current?.style.removeProperty('animation');
+      ref.current?.style.removeProperty('transform');
+      ref.current?.style.removeProperty('--y');
     } else setLeaving(true);
   }, [open]);
+  // The exit unmounts on animationend; this fallback (--d-exit + 50ms) makes sure it can't stick if that never fires.
+  useEffect(() => {
+    if (!leaving) return;
+    const t = window.setTimeout(() => setShown(false), 310);
+    return () => window.clearTimeout(t);
+  }, [leaving]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();

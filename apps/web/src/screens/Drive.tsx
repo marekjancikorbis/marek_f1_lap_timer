@@ -95,9 +95,9 @@ export default function Drive() {
               {cfg.replay && <span className="glass chip" style={{ height: 40, borderRadius: 20, color: 'var(--s-y)' }}>Simulated</span>}
             </span>
             {running ? (
-              <span className="t" style={{ fontSize: 24 }}>
-                {s.speed != null ? Math.round(s.speed * 3.6) : '–'}
-                <span className="lbl"> km/h</span>
+              <span>
+                <span className="t t3">{s.speed != null ? Math.round(s.speed * 3.6) : '–'}</span>
+                <span className="k"> km/h</span>
               </span>
             ) : (
               <span className="lbl">
@@ -352,14 +352,19 @@ function SectorPills({ s, ctl }: { s: DriveState; ctl: DriveController }) {
       {ends.map((_, b) => {
         const big = s.bigThisLap.find((x) => x.k === b);
         return (
-          <div key={b} className={`glass ${big ? `tint-${big.colour[0]}` : ''}`} style={{ height: 84, borderRadius: 42, display: 'grid', placeItems: 'center' }}>
+          <div
+            key={b}
+            className={`glass ${big ? `tint-${big.colour[0]}` : ''}`}
+            style={{ height: 76, borderRadius: 38, display: 'grid', placeItems: 'center', alignContent: 'center', gap: 4, ...(!big && b === current ? { boxShadow: 'inset 0 0 0 2px var(--ink)' } : null) }}
+          >
+            <span className="k" style={big ? { color: 'inherit', opacity: 0.8 } : b === current ? { color: 'var(--ink)' } : undefined}>S{b + 1}</span>
             {big ? (
-              <span className="t" style={{ fontSize: ends.length > 4 ? 18 : 24 }}>
+              <span className="t" style={{ fontSize: ends.length > 4 ? 16 : 21 }}>
                 {big.deltaMs != null ? formatDelta(big.deltaMs) : formatLap(big.sectorMs)}
                 <span className="visually-hidden"> sector {b + 1}, {STRIP_LABEL[big.colour]}</span>
               </span>
             ) : (
-              <span className="lbl" style={{ fontSize: 16, color: b === current ? 'var(--ink)' : undefined }}>S{b + 1}</span>
+              b === current && <span className="t t4" style={{ color: 'var(--ink-2)' }}>now</span>
             )}
           </div>
         );
@@ -375,16 +380,17 @@ function Hud({ s, ctl, reference }: { s: DriveState; ctl: DriveController; refer
   const last = s.lastSector;
   return (
     <section style={{ display: 'grid' }} aria-live="polite">
-      <div style={{ textAlign: 'center', paddingTop: 22 }}>
-        <div className="t" style={{ fontSize: 40, color: 'var(--ink-2)' }}>
-          <span ref={elapsed}>0.0</span>
-        </div>
-        <div className="t dv-delta" style={{ fontSize: "min(144px, 36vw)", marginTop: 6, color: last ? FLAG_INK[last.colour] : 'var(--ink)' }}>
+      <div style={{ textAlign: 'center', paddingTop: 18 }}>
+        <div className="k">{reference ? `vs ${reference}` : 'Clock only'}</div>
+        <div className="t dv-delta" style={{ fontSize: 'min(148px, 36vw)', marginTop: 8, letterSpacing: '-.03em', color: last ? FLAG_INK[last.colour] : 'var(--ink)' }}>
           {last?.deltaMs != null ? formatDelta(last.deltaMs) : reference ? '±0.00' : '—'}
         </div>
-        <div className="lbl">{reference ? `vs ${reference}` : 'Clock only'}</div>
+        <div style={{ marginTop: 12 }}>
+          <span className="k">Lap </span>
+          <span className="t t3" ref={elapsed}>0.0</span>
+        </div>
       </div>
-      <div style={{ padding: '22px 4px 0' }}>
+      <div style={{ padding: '20px 0 0' }}>
         <SectorPills s={s} ctl={ctl} />
       </div>
     </section>
@@ -481,7 +487,7 @@ function HoldToStop({ onStop, label, compact }: { onStop: () => void; label: str
     timer.current = window.setTimeout(() => {
       navigator.vibrate?.(30);
       onStop();
-    }, 800);
+    }, 800); // = --d-hold in tiles.css, so the fill is full exactly when the drive stops
   };
   const end = () => {
     setHolding(false);
@@ -489,7 +495,7 @@ function HoldToStop({ onStop, label, compact }: { onStop: () => void; label: str
   };
   return (
     <button
-      className={`dv-hold ${compact ? 'glass clear compact' : 'glass sheet'} ${holding ? 'holding' : ''}`}
+      className={`dv-hold ${compact ? 'glass clear compact' : 'glass deep even'} ${holding ? 'holding' : ''}`}
       onPointerDown={begin}
       onPointerUp={end}
       onPointerLeave={end}

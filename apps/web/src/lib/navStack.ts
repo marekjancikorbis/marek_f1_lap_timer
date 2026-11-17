@@ -9,6 +9,8 @@ import { useLocation, useNavigate, useNavigationType, type NavigateFunction } fr
  */
 const entries: { key: string; path: string }[] = [];
 let index = -1;
+/** The path a tab-bar tap is heading to: tabs are peers, so that screen rises instead of sliding sideways. */
+let tabTo: string | null = null;
 
 export function NavTracker() {
   const loc = useLocation();
@@ -17,7 +19,9 @@ export function NavTracker() {
   useLayoutEffect(() => {
     const at = entries.findIndex((e) => e.key === loc.key);
     // Which way the new screen arrives from (tiles.css): forward slides in from the right, back from the left.
-    document.documentElement.dataset.nav = type === 'POP' && at >= 0 && at < index ? 'back' : type === 'REPLACE' ? 'swap' : 'forward';
+    document.documentElement.dataset.nav =
+      tabTo === loc.pathname ? 'tab' : type === 'POP' && at >= 0 && at < index ? 'back' : type === 'REPLACE' ? 'swap' : 'forward';
+    tabTo = null;
     if (type === 'POP' && at >= 0) index = at;
     else if (type === 'REPLACE' && index >= 0) entries[index] = { key: loc.key, path: loc.pathname };
     else {
@@ -32,6 +36,7 @@ export function NavTracker() {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
       if (!a || a.target || a.origin !== location.origin) return;
+      tabTo = a.closest('.dock') ? a.pathname : null;
       const steps = stepsBackTo(a.pathname);
       if (steps > 0 && !a.search) {
         e.preventDefault();

@@ -3,6 +3,7 @@ import type mapboxgl from 'mapbox-gl';
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapView } from '../components/MapView';
+import { RouteGlyph } from '../components/RouteShape';
 import { Avatar, errorMessage, I, Spinner, useToast, WhoText } from '../components/ui';
 import { usePullSheet } from '../lib/pullSheet';
 import { myRoutes, publicRoutes, routePosts, searchUsers, setPostCount } from '../lib/data';
@@ -375,7 +376,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           <span className="grab" />
         </button>
         <div className="xs-body">
-          <div className="lbl">{routes === null ? 'Loading routes…' : term ? 'Matching routes' : 'Routes'}</div>
+          <div className="k">{routes === null ? 'Loading routes…' : term ? 'Matching routes' : 'Routes'}</div>
           {routes === null ? (
             <div style={{ display: 'grid', placeItems: 'center', padding: 20 }}>
               <Spinner />
@@ -387,11 +388,12 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           ) : (
             <div className="rows">
               {listed.map((r) => (
-                <Link key={r.id} to={`/r/${r.id}`} style={{ gridTemplateColumns: '1fr auto' }}>
+                <Link key={r.id} to={`/r/${r.id}`} style={{ gridTemplateColumns: '60px 1fr auto' }}>
+                  <RouteGlyph route={r} strokeWidth={56} style={{ width: 60, height: 42 }} />
                   <div style={{ minWidth: 0 }}>
-                    <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
-                    <div className="lbl">
-                      {formatDistance(r.lengthM)} · {r.official ? 'Official' : !r.isPublic ? 'Private' : r.isLoop ? 'lap' : r.startType}
+                    <div className="h2 ellipsis">{r.name}</div>
+                    <div className="sub">
+                      {formatDistance(r.lengthM)} · {r.official ? 'Official' : !r.isPublic ? 'Private' : r.isLoop ? 'Lap' : r.startType[0].toUpperCase() + r.startType.slice(1)}
                     </div>
                   </div>
                   {r.isPublic && <RecordCell routeId={r.id} acc={!!r.official} />}
@@ -401,7 +403,7 @@ export default function MapScreen({ visible = true }: { visible?: boolean }) {
           )}
           {expanded && term && (
             <>
-              <div className="lbl" style={{ marginTop: 12 }}>Drivers</div>
+              <div className="k" style={{ marginTop: 14 }}>Drivers</div>
               {drivers && drivers.length === 0 && !searching ? (
                 <p className="lbl" style={{ padding: '10px 0' }}>No driver&rsquo;s name or @username starts with “{q.trim().replace(/^@/, '')}”.</p>
               ) : (
@@ -436,7 +438,7 @@ function RecordCell({ routeId, acc }: { routeId: string; acc: boolean }) {
     };
   }, [routeId]);
   if (top == null) return null;
-  return <span className={`t${acc ? ' acc' : ''}`} style={{ fontSize: 20 }}>{formatLap(top)}</span>;
+  return <span className={`t t4${acc ? ' acc' : ''}`}>{formatLap(top)}</span>;
 }
 
 function fit(map: mapboxgl.Map, routes: Route[]) {

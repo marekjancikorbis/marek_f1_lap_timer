@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { goBack } from '../lib/navStack';
 import { RouteMap } from '../components/RouteMap';
-import { Empty, errorMessage, I, Loading, ScreenHead, Switch, UserName, useToast } from '../components/ui';
+import { Empty, errorMessage, I, Loading, ScreenHead, Segmented, Switch, UserName, useToast } from '../components/ui';
 import { usePullSheet } from '../lib/pullSheet';
 import { adminDeleteRoute, deleteRoute, followingIds, getRole, getRoute, leaderboardFrom, localsOf, renameRoute, routePosts, runsForRoute, setHomeRoute } from '../lib/data';
 import { formatDate, formatDistance, formatLap } from '../lib/format';
@@ -22,7 +22,9 @@ export default function RouteDetail() {
   const [locals, setLocals] = useState<Profile[]>([]);
   const [homeBusy, setHomeBusy] = useState(false);
   const [ownerRole, setOwnerRole] = useState<Role | null>(null);
-  const [tab, setTab] = useState<'board' | 'mine' | 'locals'>('board');
+  const [who, setWho] = useState<'all' | 'following'>('all');
+  const [shown, setShown] = useState(5);
+  const [localShown, setLocalShown] = useState(5);
   const [open, setOpen] = useState(false);
   const sheetRef = useRef<HTMLElement>(null);
   const pull = usePullSheet(sheetRef, open, setOpen);
@@ -137,14 +139,41 @@ export default function RouteDetail() {
 
   const top = board[0];
   const mine = board.find((b) => b.post.userId === profile.id);
-  const followed = board.filter((b) => following.has(b.post.userId));
-  const row = ({ rank, post }: (typeof board)[number], peek = false) => {
+  // Locals: drivers who call this route home, ranked among themselves.
+  const localIds = new Set(locals.map((l) => l.id));
+  const localBoard = board.filter((b) => localIds.has(b.post.userId)).map((b, i) => ({ ...b, rank: i + 1 }));
+  /** Top `shown`, your row pinned under them when you are further down, then Show more. */
+  const Board = ({ list, shown: n, more }: { list: typeof board; shown: number; more: () => void }) => {
+    const me = list.find((b) => b.post.userId === profile.id);
+    return (
+      <>
+        <div className="rows tight" style={{ marginTop: 4 }}>
+          {list.slice(0, n).map((b) => row(b))}
+          {me && list.indexOf(me) >= n && row(me, false, true)}
+        </div>
+        {list.length > n && (
+          <button className="more" onClick={more}>
+            Show more
+            <I n="fwd" sm style={{ transform: 'rotate(90deg)' }} />
+          </button>
+        )}
+        {!list.length && <p className="sub" style={{ padding: '10px 0' }}>Nobody you follow has a lap here yet.</p>}
+      </>
+    );
+  };
+  const row = ({ rank, post }: (typeof board)[number], peek = false, pin = false) => {
     const me = post.userId === profile.id;
     return (
-      <Link key={post.id} to={`/lap/${post.id}`} data-peek={peek || undefined} style={{ gridTemplateColumns: '20px 1fr auto', ...(me ? { color: 'var(--main-hi)' } : null) }}>
-        <span className="lbl" style={me ? { color: 'inherit' } : undefined}>{rank}</span>
+      <Link
+        key={post.id}
+        to={`/lap/${post.id}`}
+        data-peek={peek || undefined}
+        className={[me ? 'me' : rank === 1 ? 'rec' : '', pin ? 'pin' : ''].join(' ').trim() || undefined}
+        style={{ gridTemplateColumns: '22px 1fr auto' }}
+      >
+        <span className="rank">{rank}</span>
         {me ? <b>You</b> : <span className="ellipsis"><UserName uid={post.userId} fallback={post.username} /></span>}
-        <span className="t" style={{ fontSize: 19 }}>{formatLap(post.totalMs)}</span>
+        <span className="t t4">{formatLap(post.totalMs)}</span>
       </Link>
     );
   };
@@ -153,7 +182,7 @@ export default function RouteDetail() {
     if (navigator.share) navigator.share({ title: route.name, url }).catch(() => undefined);
     else navigator.clipboard?.writeText(url).then(() => toast('Link copied'), () => undefined);
   };
-  const kind = route.isLoop ? 'lap' : route.startType;
+  const kind = route.isLoop ? 'Lap' : route.startType[0].toUpperCase() + route.startType.slice(1);
 
   return (
     <main className="ph fixed route-page">
@@ -162,7 +191,7 @@ export default function RouteDetail() {
       </div>
       <div className="edge" />
       <div className="sb" />
-      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, '/explore')}>
           <I n="back" />
         </button>
@@ -176,44 +205,80 @@ export default function RouteDetail() {
         </button>
         <div className="xs-body">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-            <h1 className="ellipsis" style={{ fontSize: 22, letterSpacing: '-.02em', fontWeight: 700 }}>{route.name}</h1>
-            <span className="lbl" style={{ flex: 'none' }}>
+            <h1 className="h1 ellipsis" style={{ fontSize: 26 }}>{route.name}</h1>
+            <span className="sub" style={{ flex: 'none' }}>
               {formatDistance(route.lengthM)} · {kind}
             </span>
           </div>
           {route.isPublic ? (
             top ? (
               <>
-                {/* One layout open or shut (the sheet slides): shut, it shows down to P3. */}
-                <Link to={`/lap/${top.post.id}`} data-peek={board.length < 2 || undefined} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
-                  <span className="t acc" style={{ fontSize: 52 }}>{formatLap(top.post.totalMs)}</span>
-                  <span className="lbl">{top.post.userId === profile.id ? 'You' : top.post.username}</span>
-                </Link>
-                {board.length > 1 && <div className="rows" style={{ marginTop: 10 }}>{board.slice(1).map((b, i) => row(b, i === Math.min(1, board.length - 2)))}</div>}
-                {followed.length > 0 && (
+                {!open ? (
                   <>
-                    <div className="lbl" style={{ marginTop: 14 }}>Following</div>
-                    <div className="rows">{followed.map((b) => row(b))}</div>
+                    {/* Shut: the record, P2 and P3, and your place when you are further down. */}
+                    <div className="k" style={{ marginTop: 14 }}>Record</div>
+                    <Link to={`/lap/${top.post.id}`} data-peek={board.length < 2 || undefined} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
+                      <span className="t t2" style={{ color: 'var(--s-p)' }}>{formatLap(top.post.totalMs)}</span>
+                      <span className="sub">
+                        <span style={{ color: 'var(--s-p)' }}>{top.post.userId === profile.id ? 'You' : top.post.username}</span>
+                        {top.post.createdAt && ` · ${formatDate(top.post.createdAt.toDate())}`}
+                      </span>
+                    </Link>
+                    {board.length > 1 && (
+                      <div className="rows" style={{ marginTop: 8 }}>
+                        {board.slice(1, 3).map((b, i, xs) => row(b, i === xs.length - 1 && !(mine && mine.rank > 3)))}
+                        {mine && mine.rank > 3 && row(mine, true)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ marginTop: 8 }}>
+                      <Segmented
+                        label="Leaderboard"
+                        value={who}
+                        onChange={(v) => {
+                          setWho(v);
+                          setShown(5);
+                        }}
+                        options={[
+                          { value: 'all', label: 'Everyone' },
+                          { value: 'following', label: 'Following' },
+                        ]}
+                      />
+                    </div>
+                    <Board list={who === 'all' ? board : board.filter((b) => following.has(b.post.userId) || b.post.userId === profile.id)} shown={shown} more={() => setShown((n) => n + 10)} />
+                    {localBoard.length > 0 && (
+                      <>
+                        <div className="between" style={{ marginTop: 22 }}>
+                          <span className="k">Locals</span>
+                          <span className="sub">
+                            {locals.length} {locals.length === 1 ? 'driver calls' : 'drivers call'} it home
+                          </span>
+                        </div>
+                        <Board list={localBoard} shown={localShown} more={() => setLocalShown((n) => n + 10)} />
+                      </>
+                    )}
                   </>
                 )}
               </>
             ) : (
-              <p className="lbl" data-peek style={{ marginTop: 12 }}>No posted laps yet. Drive it and post yours to take P1.</p>
+              <p className="sub" data-peek style={{ marginTop: 12 }}>No posted laps yet. Drive it and post yours to take P1.</p>
             )
           ) : (
             <div data-peek style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14 }}>
-              <span className="t acc" style={{ fontSize: 52 }}>{myBest ? formatLap(myBest.totalMs) : '–'}</span>
-              <span className="lbl">{myBest ? 'Your best · private route' : 'Private route · not driven yet'}</span>
+              <span className="t t2" style={myBest ? { color: 'var(--s-p)' } : undefined}>{myBest ? formatLap(myBest.totalMs) : '–'}</span>
+              <span className="sub">{myBest ? 'Your best · private route' : 'Private route · not driven yet'}</span>
             </div>
           )}
           {(
             <>
-              <div className="lbl" style={{ marginTop: 14 }}>This route</div>
+              <div className="k" style={{ marginTop: 22 }}>This route</div>
               <div className="rows">
                 <Link to={`/r/${route.id}/history`} style={{ gridTemplateColumns: '1fr auto' }}>
                   <div>
-                    <b>My laps</b>
-                    <div className="lbl">
+                    <div className="h2">My laps</div>
+                    <div className="sub">
                       {runs.length ? `${runs.length} ${runs.length === 1 ? 'lap' : 'laps'}${myBest ? ` · best ${formatLap(myBest.totalMs)}` : ''}` : 'Not driven yet'}
                     </div>
                   </div>
@@ -222,8 +287,8 @@ export default function RouteDetail() {
                 {route.isPublic && (
                   <div style={{ gridTemplateColumns: '1fr auto' }}>
                     <div>
-                      <b>Home course</b>
-                      <div className="lbl">{locals.length ? `${locals.length} ${locals.length === 1 ? 'driver calls' : 'drivers call'} it home` : 'Shown on your Home'}</div>
+                      <div className="h2">Home course</div>
+                      <div className="sub">{locals.length ? `${locals.length} ${locals.length === 1 ? 'driver calls' : 'drivers call'} it home` : 'Shown on your Home'}</div>
                     </div>
                     <Switch checked={isHome} disabled={homeBusy} onChange={() => void toggleHome()} label="Home course" />
                   </div>
@@ -231,8 +296,8 @@ export default function RouteDetail() {
                 {!route.official && (
                   <Link to={`/u/${route.ownerName}`} style={{ gridTemplateColumns: '1fr auto' }}>
                     <div>
-                      <b>Built by {route.ownerName}</b>
-                      <div className="lbl">{route.startType === 'standing' ? 'Standing start' : 'Rolling start'}</div>
+                      <div className="h2">Built by {route.ownerName}</div>
+                      <div className="sub">{route.startType === 'standing' ? 'Standing start' : 'Rolling start'}</div>
                     </div>
                     <I n="fwd" style={{ color: 'var(--ink-2)' }} />
                   </Link>
@@ -242,23 +307,23 @@ export default function RouteDetail() {
                 <>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
                     {canRename && (
-                      <button className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} onClick={rename}>
+                      <button className="chip" style={{ minHeight: 44 }} onClick={rename}>
                         Rename
                       </button>
                     )}
                     {(canOwnChange || canModChange) && (
-                      <Link className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} to={`/r/${route.id}/edit`}>
+                      <Link className="chip" style={{ minHeight: 44 }} to={`/r/${route.id}/edit`}>
                         Edit route
                       </Link>
                     )}
                     {(canOwnChange || canModChange) && (
-                      <button className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }} onClick={remove}>
+                      <button className="chip" style={{ minHeight: 44, background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }} onClick={remove}>
                         Delete route
                       </button>
                     )}
                   </div>
                   {isOwner && !canOwnChange && !canModChange && (
-                    <p className="lbl" style={{ marginTop: 8 }}>
+                    <p className="sub" style={{ marginTop: 8 }}>
                       {canRename
                         ? 'The shape and sectors are locked because this route has been published, so other drivers may have laps on it.'
                         : 'This route has been published and you no longer have creator access, so it is locked.'}
@@ -273,7 +338,8 @@ export default function RouteDetail() {
       {/* Pinned over the sheet's foot, so it stays put while the sheet slides under it. */}
       <div className="rs-foot">
         <Link className="solid" to={`/drive/${route.id}`}>
-          Drive
+          <I n="flag" sm />
+          Drive this route
         </Link>
       </div>
     </main>

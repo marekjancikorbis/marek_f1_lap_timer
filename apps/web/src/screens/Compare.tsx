@@ -101,10 +101,11 @@ export default function Compare() {
       </div>
       <div className="edge" />
       <div className="sb" />
-      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, `/r/${route.id}`)}>
           <I n="back" />
         </button>
+        <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, minWidth: 0, flex: 1, justifyContent: 'center' }}>Line colour: who was faster</span>
         <button className="glass ib" aria-label="Swap the two laps" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
           <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />
@@ -114,36 +115,38 @@ export default function Compare() {
       <div className="glass sheet sheet-b" style={{ paddingTop: 20, bottom: 'calc(8px + var(--safe-b))' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'end', gap: 8 }}>
           <div style={{ minWidth: 0 }}>
-            <div className="lbl" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div className="k" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <i className="dot" style={{ background: 'var(--s-g)' }} />
               <span className="ellipsis">{a.username || (a.label === 'Your lap' ? 'You' : a.label)}</span>
             </div>
-            <div className="t" style={{ fontSize: 26, marginTop: 6 }}>{formatLap(a.totalMs)}</div>
+            <div className="t t3" style={{ marginTop: 8 }}>{formatLap(a.totalMs)}</div>
           </div>
-          <span className={`t${gap > 0 ? ' acc' : ''}`} style={{ fontSize: 18, paddingBottom: 4, color: gap <= 0 ? 'var(--s-g)' : undefined }}>
+          <span className={`dl ${gap <= 0 ? 'gain' : 'loss'}`} style={{ marginBottom: 2 }}>
             {formatDelta(gap, 2)}
           </span>
           <button style={{ textAlign: 'right', minWidth: 0 }} onClick={() => setPicker(true)} aria-label={`Compared with ${bLabel}. Change`}>
-            <div className="lbl" style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
+            <div className="k" style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'flex-end' }}>
               <span className="ellipsis">{b.username || b.label}</span>
               <i className="dot" style={{ background: 'var(--s-y)' }} />
             </div>
-            <div className="t" style={{ fontSize: 26, marginTop: 6 }}>{formatLap(b.totalMs)}</div>
+            <div className="t t3" style={{ marginTop: 8 }}>{formatLap(b.totalMs)}</div>
           </button>
         </div>
         <div style={{ marginTop: 16 }}>
           <DeltaGraph data={cmp.delta} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} />
         </div>
         {sectorTable && (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sectorTable.length}, 1fr)`, marginTop: 6 }} className="lbl">
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sectorTable.length}, 1fr)`, marginTop: 8, gap: 6 }}>
             {sectorTable.map((t, i) => (
-              <span key={t.row.name} style={{ textAlign: i === 0 ? 'left' : i === sectorTable.length - 1 ? 'right' : 'center' }}>
-                {t.row.name} {t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : '–'}
-              </span>
+              <div key={t.row.name} style={{ textAlign: i === 0 ? 'left' : i === sectorTable.length - 1 ? 'right' : 'center' }}>
+                <div className="k">{t.row.name}</div>
+                <div className="t t4" style={{ marginTop: 4 }}>{t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : '–'}</div>
+              </div>
             ))}
           </div>
         )}
         <Link className="solid" style={{ marginTop: 16 }} to={`/drive/${route.id}?ref=${bRef}`}>
+          <I n="flag" sm />
           Race {b.username || (bRef === 'record' ? 'the record' : bRef === 'best' ? 'your ideal lap' : 'this lap')}
         </Link>
       </div>
@@ -173,12 +176,12 @@ function LapPicker({ route, runs, posts, exclude, onPick }: { route: Route; runs
           <b className="ellipsis" style={{ display: 'block' }}>{title}</b>
           <div className="lbl ellipsis">{sub}</div>
         </div>
-        {ms != null && <span className="t" style={{ fontSize: 19 }}>{formatLap(ms)}</span>}
+        {ms != null && <span className="t t4">{formatLap(ms)}</span>}
       </button>
     );
   return (
     <div>
-      <h2 className="title" style={{ fontSize: 24 }}>Compare with</h2>
+      <h2 className="h1" style={{ fontSize: 24 }}>Compare with</h2>
       <div className="rows">
       {runs.some((r) => r.valid) && item('best', 'Your ideal lap', 'Best time in each sector', null)}
       {posts.length > 0 && item('record', 'Route record', 'All purple sectors', null)}

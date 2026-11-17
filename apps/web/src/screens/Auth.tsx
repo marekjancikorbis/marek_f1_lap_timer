@@ -91,23 +91,30 @@ export function AuthScreen() {
     <main className="ph soft col">
       <div className="sb" />
       <div style={{ padding: '0 28px', margin: 'auto 0 28px' }}>
-        <h1 className="t" style={{ fontSize: 54, lineHeight: 0.92 }}>
+        <div className="wm" style={{ color: 'var(--ink-2)' }}>Lap timer</div>
+        <h1 className="t" style={{ fontSize: 96, marginTop: 12, lineHeight: 0.82, fontStretch: '70%', textTransform: 'uppercase' }}>
           Purple
           <br />
           Sector
         </h1>
-        <p className="lbl" style={{ fontSize: 16, marginTop: 14 }}>
+        <div className="st thick" style={{ width: 200, marginTop: 20 }} aria-hidden="true">
+          <i className="p" style={{ flex: 30 }} />
+          <i className="g" style={{ flex: 37 }} />
+          <i className="y" style={{ flex: 33 }} />
+        </div>
+        <p className="sub" style={{ fontSize: 16, marginTop: 16 }}>
           Time your drives. Race the lap to beat.
         </p>
       </div>
       <form className="glass sheet sheet-b static" style={{ padding: '24px 20px 20px', display: 'grid', gap: 10 }} onSubmit={submit} noValidate>
+        <label className="k" htmlFor="auth-email" style={{ paddingLeft: 18 }}>Email</label>
         <label className="field">
-          <span className="visually-hidden">Email</span>
-          <input type="email" autoComplete="email" inputMode="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input id="auth-email" type="email" autoComplete="email" inputMode="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
+        <label className="k" htmlFor="auth-password" style={{ paddingLeft: 18, marginTop: 4 }}>Password</label>
         <label className="field">
-          <span className="visually-hidden">Password</span>
           <input
+            id="auth-password"
             type={showPassword ? 'text' : 'password'}
             autoComplete={mode === 'in' ? 'current-password' : 'new-password'}
             placeholder={mode === 'up' ? 'Password, 6 characters or more' : 'Password'}
@@ -125,14 +132,14 @@ export function AuthScreen() {
             {error}
           </p>
         )}
-        {info && <p className="lbl" style={{ padding: '0 6px' }}>{info}</p>}
-        <button className="solid" style={{ marginTop: 6 }} disabled={busy || !email || password.length < 6}>
+        {info && <p className="sub" style={{ padding: '0 6px' }}>{info}</p>}
+        <button className="solid" style={{ marginTop: 8 }} disabled={busy || !email || password.length < 6}>
           {busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : 'Create account'}
         </button>
         <button type="button" className="solid quiet" onClick={() => setMode(mode === 'in' ? 'up' : 'in')}>
           {mode === 'in' ? 'Create account' : 'I have an account'}
         </button>
-        <div className="lbl" style={{ display: 'flex', justifyContent: 'center', gap: 18, flexWrap: 'wrap', marginTop: 4 }}>
+        <div className="sub" style={{ display: 'flex', justifyContent: 'center', gap: 18, flexWrap: 'wrap', marginTop: 4 }}>
           <button type="button" onClick={google} disabled={busy}>
             Continue with Google
           </button>

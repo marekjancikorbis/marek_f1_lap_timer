@@ -112,7 +112,7 @@
 }
 
 .hero-purple {
-  animation: hero-draw 1.6s var(--ease-out) both;
+  animation: hero-draw 900ms var(--ease-out) both;
 }
 
 @keyframes hero-draw {
@@ -1658,7 +1658,7 @@
 /* The lines draw in from the left on first show. */
 .chart-reveal {
   transform-origin: 0 0;
-  animation: chart-reveal 1100ms cubic-bezier(0.85, 0, 0.15, 1);
+  animation: chart-reveal 700ms var(--ease-out);
 }
 
 @keyframes chart-reveal {

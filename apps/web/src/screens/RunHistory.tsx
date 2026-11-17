@@ -4,7 +4,7 @@ import { goBack } from '../lib/navStack';
 import { PostSheet } from '../components/PostSheet';
 import { Empty, errorMessage, I, Loading, SectorStrip, useToast } from '../components/ui';
 import { deleteRun, getRoute, runsForRoute, unpostLap } from '../lib/data';
-import { formatDate, formatDistance, formatLap } from '../lib/format';
+import { formatDate, formatDelta, formatDistance, formatLap } from '../lib/format';
 import { historyColours, notCounted } from '../lib/laps';
 import { theoreticalBest } from '@laptimer/timing';
 import { useMe } from '../lib/session';
@@ -103,31 +103,30 @@ export default function RunHistory() {
   const day = (t: number) =>
     `${new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 
-  const quiet = { background: 'color-mix(in srgb, var(--ink) 10%, transparent)' };
   return (
     <main className="ph soft docked">
       <div className="sb" />
-      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, '/routes')}>
           <I n="back" />
         </button>
         {runs.length > 0 && (
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="glass chip" style={{ height: 48, borderRadius: 24, padding: '0 16px' }} onClick={() => changeSort(sort === 'time' ? 'date' : 'time')} aria-label={`Sorted by ${sort === 'time' ? 'fastest' : 'newest'}. Change`}>
+            <button className="glass chip" style={{ height: 44, borderRadius: 22, padding: '0 16px' }} onClick={() => changeSort(sort === 'time' ? 'date' : 'time')} aria-label={`Sorted by ${sort === 'time' ? 'fastest' : 'newest'}. Change`}>
               {sort === 'time' ? 'Fastest' : 'Newest'}
             </button>
-            <button className="glass chip" style={{ height: 48, borderRadius: 24, padding: '0 16px' }} aria-pressed={editing} onClick={() => setEditing((e) => !e)}>
+            <button className="glass chip" style={{ height: 44, borderRadius: 22, padding: '0 16px' }} aria-pressed={editing} onClick={() => setEditing((e) => !e)}>
               {editing ? 'Done' : 'Select'}
             </button>
           </div>
         )}
       </div>
       <div style={{ padding: '12px 20px 0' }}>
-        <h1 className="title">{route?.name ?? 'Route'}</h1>
-        <div className="lbl">
+        <div className="k">
           {route ? `${formatDistance(route.lengthM)} · ` : ''}
           {runs.length} {runs.length === 1 ? 'lap' : 'laps'}
         </div>
+        <h1 className="h1" style={{ marginTop: 6 }}>{route?.name ?? 'Route'}</h1>
       </div>
       {runs.length === 0 ? (
         <Empty title="No laps yet" action={<Link className="solid" to={`/drive/${routeId}`}>Drive it</Link>} />
@@ -135,33 +134,39 @@ export default function RunHistory() {
         <>
           {theoretical && counted.length > 1 && (
             <div style={{ padding: '16px 16px 0' }}>
-              <div className="glass lift" style={{ borderRadius: 28, padding: '18px 20px' }}>
-                <div className="lbl">Ideal</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 8 }}>
-                  <span className="t acc" style={{ fontSize: 46 }}>{formatLap(theoretical[theoretical.length - 1])}</span>
-                  {best && best.totalMs > theoretical[theoretical.length - 1] && <span className="lbl">−{((best.totalMs - theoretical[theoretical.length - 1]) / 1000).toFixed(2)}</span>}
+              <div className="glass lift card" style={{ padding: '18px 20px' }}>
+                <div className="between">
+                  <span className="k">Ideal lap</span>
+                  <span className="k">Best sectors combined</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                  <span className="t t2 acc">{formatLap(theoretical[theoretical.length - 1])}</span>
+                  {best && best.totalMs > theoretical[theoretical.length - 1] && <span className="dl gain">{formatDelta(theoretical[theoretical.length - 1] - best.totalMs)}</span>}
                 </div>
               </div>
             </div>
           )}
-          {editing && <p className="lbl" style={{ padding: '12px 24px 0' }}>Select two laps to compare them.</p>}
-          <div className="rows" style={{ padding: '10px 24px 0' }}>
+          <div className="k" style={{ padding: '20px 24px 0' }}>Laps</div>
+          {editing && <p className="sub" style={{ padding: '8px 24px 0' }}>Select two laps to compare them.</p>}
+          <div className="rows" style={{ padding: '2px 24px 0' }}>
             {(sorted ?? []).map((run) => {
               const chip =
                 run.id === pbId ? (
-                  <span className="chip" style={{ background: 'var(--main)', color: 'var(--on-main)' }}>PB</span>
+                  <span className="chip main tag">PB</span>
                 ) : run.penaltyMs > 0 ? (
-                  <span className="chip" style={quiet}>+5 s</span>
+                  <span className="chip tag">+5 s</span>
                 ) : run.replay ? (
-                  <span className="chip" style={quiet}>Sim</span>
+                  <span className="chip tag">Sim</span>
                 ) : notCounted(run) ? (
-                  <span className="chip" style={quiet}>{notCounted(run)}</span>
+                  <span className="chip tag">{notCounted(run)}</span>
+                ) : best && !run.partial ? (
+                  <span className="dl loss" style={{ height: 24, fontSize: 14 }}>{formatDelta(run.totalMs - best.totalMs)}</span>
                 ) : run.posted ? (
-                  <span className="chip" style={quiet}>Posted</span>
+                  <span className="chip tag">Posted</span>
                 ) : null;
               const picked = selected.includes(run.id);
               return (
-                <div key={run.id} style={{ gridTemplateColumns: editing ? '28px 1fr auto auto' : '1fr auto auto', display: 'grid' }}>
+                <div key={run.id} style={{ gridTemplateColumns: editing ? '28px 1fr auto 70px' : '1fr auto 70px', display: 'grid' }}>
                   {editing && (
                     <button
                       onClick={() => toggle(run.id)}
@@ -174,25 +179,25 @@ export default function RunHistory() {
                   )}
                   <Link to={`/run/${run.id}`} style={{ minWidth: 0 }}>
                     {/* A partial lap has no finish time: show how far it got. */}
-                    <span className="t" style={{ fontSize: 22, opacity: run.partial ? 0.6 : 1 }}>
+                    <span className="t t4" style={{ opacity: run.partial ? 0.6 : 1, color: run.id === pbId ? 'var(--s-p)' : undefined }}>
                       {run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}
                     </span>
-                    <div className="lbl">
+                    <div className="sub">
                       {day(run.startedAt)}
                       {run.partial && ` · GPS lost in S${run.splitTimesMs.length + 1}`}
                     </div>
                   </Link>
                   {chip ?? <span />}
-                  <SectorStrip colours={colours(run)} />
+                  <SectorStrip colours={colours(run)} wide />
                   {editing && (
                     <div style={{ gridColumn: '2 / -1', display: 'flex', gap: 8 }}>
                       {route?.isPublic && run.valid && !run.replay &&
                         (run.posted ? (
-                          <button className="chip" style={quiet} onClick={() => unpost(run)}>
+                          <button className="chip" style={{ minHeight: 44 }} onClick={() => unpost(run)}>
                             Unpost
                           </button>
                         ) : (
-                          <button className="chip" style={{ background: 'var(--main)', color: 'var(--on-main)' }} onClick={() => setPosting(run)}>
+                          <button className="chip main" style={{ minHeight: 44 }} onClick={() => setPosting(run)}>
                             Post
                           </button>
                         ))}

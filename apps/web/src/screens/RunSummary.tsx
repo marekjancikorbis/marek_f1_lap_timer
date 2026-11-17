@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { PostSheet } from '../components/PostSheet';
 import { LapView, useSectorTable } from '../components/LapView';
-import { Empty, errorMessage, I, Loading, ScreenHead, useToast } from '../components/ui';
+import { Empty, errorMessage, I, Loading, ScreenHead, SectorStrip, useToast } from '../components/ui';
 import { RouteMap } from '../components/RouteMap';
 import { deleteRun, getRoute, getRun, routePosts, runsForRoute, unpostLap } from '../lib/data';
 import { formatDate, formatDelta, formatDistance, formatLap, formatSeconds } from '../lib/format';
@@ -142,7 +142,7 @@ export default function RunSummary() {
   const gap = against && !run.partial && !against.partial ? run.totalMs - against.totalMs : null;
   const newPb = run.valid && !run.replay && (pbBefore == null || run.totalMs < pbBefore);
   const INK: Record<string, string> = { purple: 'var(--s-p)', green: 'var(--s-g)', yellow: 'var(--s-y)' };
-  const quiet = { background: 'color-mix(in srgb, var(--ink) 10%, transparent)' };
+  const RESULT_WORD: Record<string, string> = { purple: 'fastest ever', green: 'faster', yellow: 'slower' };
   const status = newPb
     ? 'New best'
     : run.replay
@@ -159,7 +159,7 @@ export default function RunSummary() {
         <div className="map">{route && <RouteMap route={route} height="100%" padding={{ top: 130, bottom: 420, left: 40, right: 40 }} extra={traceLayer} />}</div>
         <div className="edge" />
         <div className="sb" />
-        <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link to={`/r/${run.routeId}`} replace className="glass ib" aria-label="Close">
             <I n="x" />
           </Link>
@@ -170,44 +170,56 @@ export default function RunSummary() {
           )}
         </div>
         <div className="glass sheet sheet-b result-sheet" style={{ paddingTop: 22, bottom: 'calc(8px + var(--safe-b))' }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <span className={`chip${newPb ? ' acc' : ''}`} style={{ background: newPb ? 'color-mix(in srgb, var(--accent) 16%, transparent)' : quiet.background }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span className={`chip${newPb ? ' pb-in' : ''}`} style={newPb ? { background: 'color-mix(in srgb, var(--s-g) 18%, transparent)', color: 'var(--s-g)' } : undefined}>
+              {newPb && <I n="trophy" size={14} />}
               {status}
             </span>
-            {run.posted && <span className="chip" style={quiet}>Posted</span>}
+            {run.posted && <span className="chip">Posted</span>}
             {run.penaltyMs > 0 && <span className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }}>+{formatSeconds(run.penaltyMs, 0)}</span>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 12, gap: 12 }}>
-            <span className="t" style={{ fontSize: 64 }}>{run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 12 }}>
+            <span className="t t1" style={{ fontSize: 72 }}>{run.partial ? formatDistance(route?.boundaries[run.splitTimesMs.length - 1] ?? 0) : formatLap(run.totalMs)}</span>
             {gap != null && (
-              <span className="t" style={{ fontSize: 24, color: gap <= 0 ? 'var(--s-g)' : 'var(--s-y)' }} aria-label={`${formatDelta(gap, 2)} versus ${against!.label}`}>
+              <span className={`dl ${gap <= 0 ? 'gain' : 'loss'}`} style={{ height: 32, fontSize: 20, padding: '0 12px' }} aria-label={`${formatDelta(gap, 2)} versus ${against!.label}`}>
                 {formatDelta(gap, 2)}
               </span>
             )}
           </div>
           {table && (
-            <div className="rows" style={{ marginTop: 10 }}>
-              {table.map((t) => (
-                <div key={t.row.name} style={{ gridTemplateColumns: '12px 1fr auto 60px' }}>
-                  <span className="dot" style={{ background: t.row.colour ? INK[t.row.colour] : 'color-mix(in srgb, var(--ink) 20%, transparent)' }} />
-                  <span className="lbl">{t.row.name}</span>
-                  <span className="t" style={{ fontSize: 19 }}>{t.row.ms != null ? formatLap(t.row.ms) : '–'}</span>
-                  <span className="t" style={{ fontSize: 15, textAlign: 'right', color: t.row.colour ? INK[t.row.colour] : 'var(--ink-2)' }}>
-                    {t.row.deltaMs != null ? formatDelta(t.row.deltaMs, 2) : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="draw-in" style={{ marginTop: 16 }}>
+                <SectorStrip colours={table.map((t) => t.row.colour)} height={8} wide />
+              </div>
+              <div className="rows" style={{ marginTop: 6 }}>
+                {table.map((t) => (
+                  <div key={t.row.name} style={{ gridTemplateColumns: '10px 1fr auto 70px' }}>
+                    <span className="dot" style={{ background: t.row.colour ? INK[t.row.colour] : 'var(--fill-2)' }} />
+                    <span>
+                      <b>{t.row.name}</b> {t.row.colour && <span className="sub">{RESULT_WORD[t.row.colour]}</span>}
+                    </span>
+                    <span className="t t4">{t.row.ms != null ? formatLap(t.row.ms) : '–'}</span>
+                    {t.row.deltaMs != null ? (
+                      <span className={`dl ${t.row.colour === 'purple' ? 'best' : t.row.deltaMs <= 0 ? 'gain' : 'loss'}`} style={{ justifySelf: 'end' }}>
+                        {formatDelta(t.row.deltaMs, 2)}
+                      </span>
+                    ) : (
+                      <span />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
           {!run.valid && (
-            <p className="lbl" style={{ marginTop: 10 }}>
+            <p className="sub" style={{ marginTop: 10 }}>
               {run.partial ? 'The GPS signal dropped out before the finish.' : `No GPS signal for ${formatSeconds(run.gpsGapMs ?? 0, 0)}.`} It can be compared but can&rsquo;t be posted or set a best.
             </p>
           )}
           {session.length > 1 && (
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginTop: 12, paddingBottom: 2 }} aria-label="This session">
               {session.map((r) => (
-                <Link key={r.id} to={`/run/${r.id}`} replace className="chip" aria-current={r.id === run.id} style={r.id === run.id ? { background: 'var(--main)', color: 'var(--on-main)' } : quiet}>
+                <Link key={r.id} to={`/run/${r.id}`} replace aria-current={r.id === run.id} className={`chip${r.id === run.id ? ' main' : ''}`}>
                   {r.lap + 1} · {r.partial ? '–' : formatLap(r.totalMs)}
                 </Link>
               ))}
@@ -216,11 +228,11 @@ export default function RunSummary() {
           {stage && run.valid && <StageCompare run={run} prev={prev} userId={profile.id} posts={route?.isPublic ? posts : []} />}
           <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
             <Link className="solid quiet" to={`/drive/${run.routeId}${run.referenceRef ? `?ref=${run.referenceRef}` : ''}`}>
-              Again
+              Drive again
             </Link>
             {canPost && !run.posted ? (
               <button className="solid" onClick={() => setPosting(true)}>
-                Post
+                Post lap
               </button>
             ) : (
               <button className="solid" onClick={() => setParams({ view: 'details' })}>
@@ -326,7 +338,7 @@ function StageCompare({ run, prev, userId, posts }: { run: Run; prev: Run | null
               {formatLap(prev.totalMs)} · {formatDate(prev.startedAt)}
             </div>
           </div>
-          <span className="t" style={{ fontSize: 19, color: run.totalMs <= prev.totalMs ? 'var(--s-g)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - prev.totalMs, 2)}</span>
+          <span className="t t4" style={{ color: run.totalMs <= prev.totalMs ? 'var(--s-g)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - prev.totalMs, 2)}</span>
         </div>
       )}
       {record && (
@@ -337,13 +349,13 @@ function StageCompare({ run, prev, userId, posts }: { run: Run; prev: Run | null
               {record.username} · {formatLap(record.totalMs)}
             </div>
           </div>
-          <span className="t" style={{ fontSize: 19, color: run.totalMs <= record.totalMs ? 'var(--s-p)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - record.totalMs, 2)}</span>
+          <span className="t t4" style={{ color: run.totalMs <= record.totalMs ? 'var(--s-p)' : 'var(--s-y)' }}>{formatDelta(run.totalMs - record.totalMs, 2)}</span>
         </div>
       )}
       {record && !run.replay && (
         <div style={{ gridTemplateColumns: '1fr auto' }}>
           <b>{run.posted ? 'Leaderboard' : 'Leaderboard if posted'}</b>
-          <span className="t" style={{ fontSize: 19 }}>
+          <span className="t t4">
             P{place} of {bestBy.size + 1}
           </span>
         </div>

@@ -5,7 +5,7 @@ import { RouteGlyph } from '../components/RouteShape';
 import { Avatar, errorMessage, I, Spinner, useToast } from '../components/ui';
 import { dayKey, feedPage, followingIds, forget, getActivity, getRoute, getRoutes, routePosts, routeStats, unreadNotices, type FeedPage } from '../lib/data';
 import { db } from '../lib/firebase';
-import { formatLap } from '../lib/format';
+import { formatDelta, formatLap } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { Post, Route } from '../lib/types';
 
@@ -24,7 +24,7 @@ export function Feed() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [routes, setRoutes] = useState<Map<string, Route>>(new Map());
-  const [driven, setDriven] = useState<Set<string>>(new Set());
+  const [pbs, setPbs] = useState<Record<string, number | null>>({});
   const [home, setHome] = useState<{ route: Route; pb: number | null; record: number | null; holder: string | null } | null>(null);
   const [days, setDays] = useState<Record<string, number>>({});
   const [newCount, setNewCount] = useState(0);
@@ -67,7 +67,7 @@ export function Feed() {
     const homeId = profile.homeRouteId;
     Promise.all([routeStats(profile.id), homeId ? getRoute(homeId) : null, homeId ? routePosts(homeId, 1).catch(() => []) : []])
       .then(([stats, route, top]) => {
-        setDriven(new Set(Object.keys(stats)));
+        setPbs(Object.fromEntries(Object.entries(stats).map(([id, st]) => [id, st.pb])));
         setHome(
           route && route.isPublic && !route.hidden
             ? { route, pb: homeId ? (stats[homeId]?.pb ?? null) : null, record: top[0]?.totalMs ?? null, holder: top[0]?.username ?? null }
@@ -144,63 +144,80 @@ export function Feed() {
     unreadNotices(profile.id).then(setUnread, () => undefined);
   }, [profile.id]);
 
-  const first = posts[0];
-  const rest = posts.slice(1);
+  const today = weekday(new Date());
   return (
     <main className="ph sl docked">
       <div className="sb" />
       <div className="top-r">
-        <h1 className="wm">Purple Sector</h1>
+        <div>
+          <div className="k">{today}</div>
+          <h1 className="wm" style={{ marginTop: 3 }}>Purple Sector</h1>
+        </div>
         <Link to="/notifications" className={`glass ib${unread ? ' ndot' : ''}`} aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
           <I n="bell" />
         </Link>
       </div>
       <div className="bento">
         {home ? (
-          <div className="glass tl red w2" style={{ padding: 18 }}>
-            <div className="k">{home.route.name}</div>
-            <div className="t" style={{ fontSize: home.pb != null ? 86 : 52, marginTop: 10 }}>
+          <div className="glass hot tl w2" style={{ padding: '18px 18px 16px' }}>
+            <div className="between">
+              <span className="k ellipsis">Home course · {home.route.name}</span>
+              <span className="k" style={{ flex: 'none' }}>Your best</span>
+            </div>
+            <div className={`t ${home.pb != null ? 't1' : 't2'}`} style={{ marginTop: 12, position: 'relative', zIndex: 1, ...(home.pb != null ? { fontSize: 'min(84px, 18vw)' } : null) }}>
               {home.pb != null ? formatLap(home.pb) : 'Not driven'}
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'end', marginTop: 14 }}>
-              <Link className="btn snow" style={{ flex: 1 }} to={`/drive/${home.route.id}`}>
-                Drive
-              </Link>
-              <Link to={`/r/${home.route.id}`} aria-label={`${home.route.name}, route`} style={{ color: 'var(--on-go)', opacity: 0.9 }}>
-                <RouteGlyph route={home.route} strokeWidth={48} style={{ width: 84, display: 'block', maxHeight: 70 }} />
-              </Link>
-            </div>
+            {home.pb != null && home.record != null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+                <span className="dl">{formatDelta(home.pb - home.record)}</span>
+                <span className="sub" style={{ color: 'inherit', opacity: 0.8 }}>to the record</span>
+              </div>
+            )}
+            <Link
+              to={`/r/${home.route.id}`}
+              aria-label={`${home.route.name}, route`}
+              style={{ position: 'absolute', right: 24, top: 50, width: 78, height: 122, display: 'grid', placeItems: 'center', color: 'var(--on-go)', opacity: 0.9 }}
+            >
+              <RouteGlyph route={home.route} strokeWidth={56} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+            </Link>
+            <Link className="solid inv" style={{ marginTop: 16 }} to={`/drive/${home.route.id}`}>
+              <I n="flag" sm />
+              Drive
+            </Link>
           </div>
         ) : (
-          <div className="glass tl red w2" style={{ padding: 18 }}>
+          <div className="glass hot tl w2" style={{ padding: '18px 18px 16px' }}>
             <div className="k">Your home course</div>
-            <div className="t" style={{ fontSize: 40, marginTop: 10 }}>
-              Pick the route you drive most
-            </div>
-            <div style={{ display: 'flex', marginTop: 14 }}>
-              <Link className="btn snow" style={{ flex: 1 }} to="/explore">
-                Find a route
-              </Link>
-            </div>
+            <div className="h1" style={{ marginTop: 12 }}>Pick the route you drive most</div>
+            <Link className="solid inv" style={{ marginTop: 16 }} to="/explore">
+              Find a route
+            </Link>
           </div>
         )}
         <Link className="glass tl" to={home ? `/r/${home.route.id}` : '/explore'}>
           <div className="k">Record</div>
-          <div className="t" style={{ fontSize: 38, marginTop: 12 }}>{home?.record != null ? formatLap(home.record) : '–'}</div>
-          <div className="k ellipsis" style={{ marginTop: 8, letterSpacing: '.04em' }}>{home?.holder ?? (home ? 'No laps yet' : 'No route')}</div>
+          <div className="t t3" style={{ marginTop: 12 }}>{home?.record != null ? formatLap(home.record) : '–'}</div>
+          <div className="sub ellipsis" style={{ marginTop: 8, display: 'flex', gap: 6, alignItems: 'center' }}>
+            {home?.holder && <I n="trophy" size={15} />}
+            {home?.holder ?? (home ? 'No laps yet' : 'No route')}
+          </div>
         </Link>
-        <Link className="glass tl deep" to="/routes">
-          <div className="k">This week</div>
-          <div style={{ display: 'flex', gap: 5, alignItems: 'end', height: 46, marginTop: 12 }} aria-hidden="true">
+        <Link className="glass tl" to="/routes">
+          <div className="between" style={{ whiteSpace: 'nowrap' }}>
+            <span className="k">Week</span>
+            <span className="k" style={{ color: 'var(--ink)' }}>
+              {week.total} {week.total === 1 ? 'lap' : 'laps'}
+            </span>
+          </div>
+          <div className="week" aria-label="Laps per day this week">
             {week.days.map((n, d) => (
-              <i
-                key={d}
-                style={{ flex: 1, height: `${(n / week.max) * 100}%`, borderRadius: 3, background: d === week.today ? 'var(--go)' : 'var(--tile)' }}
-              />
+              <i key={d} className={d === week.today ? 'now' : undefined} style={{ height: `${(n / week.max) * 100}%` }} />
             ))}
           </div>
-          <div className="t" style={{ fontSize: 20, marginTop: 8 }}>
-            {week.total} {week.total === 1 ? 'lap' : 'laps'}
+          <div className="days" aria-hidden="true">
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, d) => (
+              <span key={d} style={d === week.today ? { color: 'var(--ink)' } : undefined}>{l}</span>
+            ))}
           </div>
         </Link>
         {newCount > 0 && (
@@ -217,54 +234,82 @@ export function Feed() {
         )}
         {loading ? (
           <>
-            <div className="glass tl w2 skeleton" style={{ height: 76 }} />
-            <div className="glass tl skeleton" style={{ height: 112 }} />
-            <div className="glass tl skeleton" style={{ height: 112 }} />
+            <div className="glass tl w2 skeleton" style={{ height: 150 }} />
+            <div className="glass tl w2 skeleton" style={{ height: 150 }} />
           </>
         ) : follows && follows.length === 0 ? (
           <div className="glass tl w2">
             <div className="k">Following</div>
-            <p style={{ marginTop: 8, color: 'var(--snow-2)' }}>Follow drivers and their posted laps show up here, ready to race against.</p>
-            <Link className="btn red" style={{ marginTop: 12 }} to="/explore">
+            <p className="sub" style={{ marginTop: 8, color: 'var(--ink)' }}>Follow drivers and their posted laps show up here, ready to race against.</p>
+            <Link className="solid" style={{ height: 46, marginTop: 12 }} to="/explore">
               Find drivers
             </Link>
           </div>
-        ) : !first ? (
+        ) : !posts.length ? (
           <div className="glass tl w2">
             <div className="k">Following</div>
-            <p style={{ marginTop: 8, color: 'var(--snow-2)' }}>The drivers you follow haven&rsquo;t posted a lap yet. New laps show up here, newest first.</p>
+            <p className="sub" style={{ marginTop: 8, color: 'var(--ink)' }}>The drivers you follow haven&rsquo;t posted a lap yet. New laps show up here, newest first.</p>
           </div>
         ) : (
           <>
-            <div className="glass tl w2" style={{ display: 'grid', gridTemplateColumns: '36px 1fr auto', gap: 12, alignItems: 'center' }}>
-              <Link to={`/u/${first.username}`} aria-label={first.username}>
-                <Avatar name={first.username} hue={first.avatarHue} uid={first.userId} />
-              </Link>
-              <Link to={`/lap/${first.id}`} style={{ minWidth: 0 }} aria-label={`${first.username}, ${first.routeName}, ${formatLap(first.totalMs)}`}>
-                <div className="k ellipsis" style={{ letterSpacing: '.04em' }}>
-                  {first.username} · {first.routeName}
+            {posts.map((p) => {
+              const route = routes.get(p.routeId);
+              const mine = pbs[p.routeId];
+              const gap = mine != null && p.userId !== profile.id ? mine - p.totalMs : null;
+              return (
+                <div key={p.id} className="glass tl w2" style={{ padding: '14px 16px' }}>
+                  <div style={{ position: 'relative', minWidth: 0, paddingRight: route ? 86 : 0 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr', gap: 12, alignItems: 'center' }}>
+                      <Link to={`/u/${p.username}`} aria-label={p.username}>
+                        <Avatar name={p.username} hue={p.avatarHue} uid={p.userId} size={40} />
+                      </Link>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="sub ellipsis">
+                          {p.username} · {p.routeName}
+                        </div>
+                        <div className="sub" style={{ fontSize: 13, marginTop: 2 }}>{weekday(p.createdAt?.toDate() ?? new Date(p.startedAt))}</div>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/lap/${p.id}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}
+                      aria-label={`${p.username}, ${p.routeName}, ${formatLap(p.totalMs)}`}
+                    >
+                      <span className="t t3">{formatLap(p.totalMs)}</span>
+                      {gap != null && <span className={`dl ${gap > 0 ? 'loss' : 'gain'}`}>{formatDelta(gap)}</span>}
+                    </Link>
+                    {p.caption && (
+                      <p className="sub" style={{ marginTop: 10, color: 'var(--ink)' }}>
+                        {p.caption}
+                      </p>
+                    )}
+                    {route && (
+                      <Link to={`/r/${p.routeId}`} className="thumb" aria-label={`${p.routeName}, route`}>
+                        <RouteGlyph route={route} strokeWidth={36} style={{ width: '100%', height: '74%' }} />
+                      </Link>
+                    )}
+                  </div>
+                  <Link className="solid" style={{ height: 46, marginTop: 12 }} to={`/drive/${p.routeId}?ref=post:${p.id}`}>
+                    <I n="flag" sm />
+                    Race
+                  </Link>
                 </div>
-                <div className="t" style={{ fontSize: 30, marginTop: 6 }}>{formatLap(first.totalMs)}</div>
-              </Link>
-              <Link className="btn red" style={{ padding: '0 16px', height: 42, fontSize: 13 }} to={`/drive/${first.routeId}?ref=post:${first.id}`}>
-                Race
-              </Link>
-            </div>
-            {rest.map((p) => (
-              <Link key={p.id} className="glass tl" to={`/lap/${p.id}`} aria-label={`${p.username}, ${p.routeName}, ${formatLap(p.totalMs)}`}>
-                <Avatar name={p.username} hue={p.avatarHue} uid={p.userId} />
-                <div className="t" style={{ fontSize: 28, marginTop: 12 }}>{formatLap(p.totalMs)}</div>
-                <div className="k ellipsis" style={{ marginTop: 8, letterSpacing: '.04em' }}>{p.routeName}</div>
-              </Link>
-            ))}
+              );
+            })}
             <div ref={sentinel} className="w2" style={{ minHeight: 48, display: 'grid', placeItems: 'center' }}>
               {loadingMore ? <Spinner /> : !cursor && <span className="k">You&rsquo;re all caught up</span>}
             </div>
           </>
         )}
       </div>
+      <div className="foot-fade" />
     </main>
   );
+}
+
+/** Sun 9 Nov */
+function weekday(d: Date) {
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
 }
 
 /** Minimal pull-to-refresh at the top of the page. */

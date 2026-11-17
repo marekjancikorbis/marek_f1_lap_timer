@@ -191,7 +191,7 @@ export default function PreDrive() {
           : picked
             ? `${picked.ref.startsWith('run:') ? picked.title.toLowerCase() : picked.title}, ${formatLap(picked.totalMs)}`
             : 'the chosen lap';
-  const tint = 'color-mix(in srgb, var(--ink) 8%, transparent)';
+  const tint = 'var(--fill)';
   const tile = (key: string, label: string, ms: number | null, opts: { acc?: boolean; enabled?: boolean } = {}) => {
     const on = ref === key;
     const enabled = opts.enabled ?? true;
@@ -206,13 +206,16 @@ export default function PreDrive() {
           padding: 14,
           borderRadius: 20,
           textAlign: 'left',
-          background: on ? 'color-mix(in srgb, var(--main) 35%, transparent)' : tint,
+          background: on ? 'color-mix(in srgb, var(--main) 28%, transparent)' : tint,
           boxShadow: on ? 'inset 0 0 0 2px var(--main-hi)' : 'none',
           opacity: enabled ? 1 : 0.5,
         }}
       >
-        <div className="lbl ellipsis" style={on ? { color: 'var(--ink)' } : undefined}>{label}</div>
-        <div className={`t${opts.acc ? ' acc' : ''}`} style={{ fontSize: 26, marginTop: 6, color: ms == null ? 'var(--ink-2)' : undefined }}>
+        <div className="k" style={{ display: 'flex', justifyContent: 'space-between', gap: 6, ...(on ? { color: 'var(--ink)' } : null) }}>
+          <span className="ellipsis">{label}</span>
+          {on && <I n="check" size={14} />}
+        </div>
+        <div className={`t t3${opts.acc ? ' acc' : ''}`} style={{ marginTop: 8, color: ms == null ? 'var(--ink-2)' : undefined }}>
           {ms == null ? '—' : formatLap(ms)}
         </div>
       </button>
@@ -226,49 +229,49 @@ export default function PreDrive() {
       </div>
       <div className="edge" />
       <div className="sb" />
-      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+      <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <button className="glass ib" aria-label="Close" onClick={() => goBack(nav, '/drive')}>
           <I n="x" />
         </button>
-        <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, maxWidth: '70%' }}>
-          {route.name}
-        </span>
       </div>
-      <div className="glass sheet sheet-b" style={{ paddingTop: 18, bottom: 'calc(8px + var(--safe-b))' }}>
-        <div className="lbl">Race against</div>
+      <div className="glass sheet sheet-b" style={{ paddingTop: 20, bottom: 'calc(8px + var(--safe-b))' }}>
+        <div className="between">
+          <span className="k">Race against</span>
+          <h1 className="sub ellipsis">{route.name}</h1>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
           {tile('record', 'Record', recordMs, { acc: true, enabled: posts.length > 0 })}
           {lapTile ? tile(lapTile.ref, lapTile.ref.startsWith('run:') ? lapTile.title : lapTile.title, lapTile.totalMs) : tile('none', 'Your best', null, { enabled: false })}
           {tile('best', 'Ideal', idealMs, { enabled: options.mine.length > 1 })}
           {tile('', 'Clock only', null)}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '4px 6px 4px 16px', borderRadius: 26, background: tint }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10, padding: '4px 4px 4px 16px', borderRadius: 26, background: tint }}>
           {route.startType === 'standing' ? (
             <>
-              <span className="lbl" style={{ flex: 1 }}>Lights</span>
+              <span className="k" style={{ flex: 1 }}>Lights</span>
               <button className="ib" aria-label="Shorter" disabled={countdown <= 3} onClick={() => setCountdown(countdown - 1)}>
-                <I n="minus" />
+                <I n="minus" sm />
               </button>
-              <b className="t" style={{ fontSize: 22, width: 36, textAlign: 'center' }} aria-live="polite">
-                {countdown}s
+              <b className="t t4" style={{ width: 34, textAlign: 'center' }} aria-live="polite">
+                {countdown} s
               </b>
               <button className="ib" aria-label="Longer" disabled={countdown >= 10} onClick={() => setCountdown(countdown + 1)}>
-                <I n="plus" />
+                <I n="plus" sm />
               </button>
-              <span style={{ width: 1, height: 26, background: 'color-mix(in srgb, var(--ink) 16%, transparent)' }} />
+              <span style={{ width: 1, height: 24, background: 'var(--hair)', margin: '0 4px' }} />
             </>
           ) : (
-            <span className="lbl" style={{ flex: 1 }}>Rolling start</span>
+            <span className="k" style={{ flex: 1 }}>Rolling start</span>
           )}
-          <button className="ib" aria-label={voice ? 'Voice callouts on' : 'Voice callouts off'} aria-pressed={voice} style={{ color: voice ? 'var(--main-hi)' : 'var(--ink-2)' }} onClick={() => setVoice(!voice)}>
-            <I n={voice ? 'vol' : 'mute'} />
+          <button className="ib" aria-label={voice ? 'Voice callouts on' : 'Voice callouts off'} aria-pressed={voice} style={{ color: voice ? 'var(--main-hi)' : 'var(--ink-2)', background: voice ? 'var(--fill)' : undefined }} onClick={() => setVoice(!voice)}>
+            <I n={voice ? 'vol' : 'mute'} sm />
           </button>
           <button className="ib" aria-label="More options" style={{ color: 'var(--ink-2)' }} onClick={() => setMoreLaps(true)}>
-            <I n="gear" />
+            <I n="gear" sm />
           </button>
         </div>
         <div style={{ display: 'grid', justifyItems: 'center', marginTop: 18 }}>
-          <button className="solid start-btn" style={{ width: 112, height: 112, borderRadius: '50%', fontSize: 21 }} disabled={starting} onClick={go} aria-label={`Start, racing ${chosen}`}>
+          <button className="solid start-btn" style={{ width: 112, height: 112, borderRadius: '50%', fontSize: 20, boxShadow: '0 0 0 8px color-mix(in srgb, var(--main) 20%, transparent)' }} disabled={starting} onClick={go} aria-label={`Start, racing ${chosen}`}>
             {starting ? 'GPS…' : 'Start'}
           </button>
         </div>
@@ -276,22 +279,22 @@ export default function PreDrive() {
 
       <Sheet open={moreLaps} onClose={() => setMoreLaps(false)} label="More options">
         <div style={{ display: 'grid', gap: 4 }}>
-          <h2 className="title" style={{ fontSize: 24 }}>Race against</h2>
+          <h2 className="h1" style={{ fontSize: 24 }}>Race against</h2>
           <div className="rows">
             {all.map((o) => (
-              <button key={o.ref} onClick={() => setRef(o.ref)} aria-pressed={ref === o.ref} style={{ gridTemplateColumns: '36px 1fr auto', textAlign: 'left' }}>
+              <button key={o.ref} onClick={() => setRef(o.ref)} aria-pressed={ref === o.ref} style={{ gridTemplateColumns: '40px 1fr auto', textAlign: 'left' }}>
                 {o.who ? <Avatar name={o.who.name} hue={o.who.hue} /> : <span className="av" style={{ background: 'var(--main)', color: 'var(--on-main)' }}>ME</span>}
                 <div style={{ minWidth: 0 }}>
                   <b className="ellipsis" style={{ display: 'block' }}>{o.title}</b>
                   <div className="lbl ellipsis">{o.sub}</div>
                 </div>
-                <span className={`t${ref === o.ref ? ' acc' : ''}`} style={{ fontSize: 19 }}>
+                <span className={`t t4${ref === o.ref ? ' acc' : ''}`}>
                   {formatLap(o.totalMs)} {ref === o.ref && '✓'}
                 </span>
               </button>
             ))}
           </div>
-          <div className="lbl" style={{ marginTop: 14 }}>Setup</div>
+          <div className="k" style={{ marginTop: 14 }}>Setup</div>
           <div className="rows">
             <div style={{ gridTemplateColumns: '1fr auto' }}>
               <div>
@@ -326,7 +329,7 @@ export default function PreDrive() {
 
       <Sheet open={terms} onClose={() => setTerms(false)} label="Before your first drive">
         <div style={{ display: 'grid', gap: 12 }}>
-          <h2 className="title" style={{ fontSize: 24 }}>Before your first drive</h2>
+          <h2 className="h1" style={{ fontSize: 24 }}>Before your first drive</h2>
           <p className="lbl" style={{ fontSize: 15 }}>Purple Sector is for track days and rally events.</p>
           <div className="rows">
             <div style={{ gridTemplateColumns: '24px 1fr' }}>

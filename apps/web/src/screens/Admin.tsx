@@ -29,8 +29,8 @@ export default function Admin() {
   return (
     <main className="ph soft">
       <div className="sb" />
-      <ScreenHead back title="Admin" right={<span className="glass chip" style={{ height: 48, borderRadius: 24 }}>{isOwner ? 'Owner' : 'Admin'}</span>} />
-      <div style={{ overflowX: 'auto' }}>
+      <ScreenHead back title="Admin" right={<span className="glass chip" style={{ height: 44, borderRadius: 22 }}>{isOwner ? 'Owner' : 'Admin'}</span>} />
+      <div style={{ overflowX: 'auto', padding: '14px 16px 0' }}>
         <Segmented
           label="Admin section"
           value={tab}
@@ -263,19 +263,19 @@ function Routes() {
           </span>
           <div className="row" style={{ marginTop: 4 }}>
             {r.isPublic && (
-              <button className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} onClick={() => act(r, { isPublic: false }, 'Route unpublished')}>
+              <button className="chip" style={{ minHeight: 44 }} onClick={() => act(r, { isPublic: false }, 'Route unpublished')}>
                 Unpublish
               </button>
             )}
             {r.isPublic && (
               <button
-                className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}
+                className="chip" style={{ minHeight: 44 }}
                 onClick={() => act(r, { official: !r.official }, r.official ? 'Official label removed' : 'Route is now Official')}
               >
                 {r.official ? 'Remove Official' : 'Make Official'}
               </button>
             )}
-            <button className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} onClick={() => act(r, { hidden: !r.hidden }, r.hidden ? 'Route visible again' : 'Route hidden')}>
+            <button className="chip" style={{ minHeight: 44 }} onClick={() => act(r, { hidden: !r.hidden }, r.hidden ? 'Route visible again' : 'Route hidden')}>
               {r.hidden ? 'Unhide' : 'Hide'}
             </button>
             <button className="chip" style={{ background: 'color-mix(in srgb, #ff5a5f 20%, transparent)', color: '#ff9a9d' }} onClick={() => remove(r)}>

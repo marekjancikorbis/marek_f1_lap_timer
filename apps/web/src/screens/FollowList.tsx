@@ -4,6 +4,7 @@ import { FollowButton } from '../components/FollowButton';
 import { SkeletonRows } from '../components/Skeleton';
 import { Avatar, Empty, errorMessage, ScreenHead, Segmented } from '../components/ui';
 import { followCounts, followerIds, followingIds, getProfileByUsername, getProfiles } from '../lib/data';
+import { nameOf } from '../lib/format';
 import { useMe } from '../lib/session';
 import type { Profile } from '../lib/types';
 
@@ -15,6 +16,7 @@ export default function FollowList() {
   const nav = useNavigate();
   const { profile: me } = useMe();
   const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null);
+  const [owner, setOwner] = useState<Profile | null>(null);
 
   useEffect(() => {
     setPeople(null);
@@ -22,6 +24,7 @@ export default function FollowList() {
       try {
         const p = await getProfileByUsername(username);
         if (!p) return setPeople([]);
+        setOwner(p);
         followCounts(p.id).then(setCounts, () => undefined);
         const ids = followers ? await followerIds(p.id) : await followingIds(p.id);
         const map = await getProfiles(ids);
@@ -36,7 +39,15 @@ export default function FollowList() {
   return (
     <main className="ph soft">
       <div className="sb" />
-      <ScreenHead back title={`@${username}`} />
+      <ScreenHead
+        back
+        title={
+          <div className="head-t">
+            {owner && <div className="k">{nameOf(owner)}</div>}
+            <h1 className="title" style={{ marginTop: 6 }}>@{username}</h1>
+          </div>
+        }
+      />
       <div style={{ padding: '14px 16px 0' }}>
         <Segmented
           label="Show"
@@ -49,7 +60,7 @@ export default function FollowList() {
         />
       </div>
       {error && <p className="err" style={{ padding: '12px 24px 0' }}>{error}</p>}
-      <div style={{ padding: '10px 24px 0' }}>
+      <div style={{ padding: '8px 24px 0' }}>
         {people === null ? (
           <SkeletonRows />
         ) : people.length === 0 ? (
@@ -62,8 +73,8 @@ export default function FollowList() {
                   <Avatar name={p.username} hue={p.avatarHue} uid={p.id} />
                 </Link>
                 <Link to={`/u/${p.username}`} style={{ minWidth: 0 }}>
-                  <b className="ellipsis" style={{ display: 'block' }}>{p.username}</b>
-                  {p.displayName && p.displayName !== p.username && <div className="lbl ellipsis">{p.displayName}</div>}
+                  <div className="h2 ellipsis">{p.username}</div>
+                  {p.displayName && p.displayName !== p.username && <div className="sub ellipsis">{p.displayName}</div>}
                 </Link>
                 <FollowButton userId={p.id} back={followers && username === me.username} />
               </div>

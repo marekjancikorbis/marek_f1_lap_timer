@@ -87,13 +87,13 @@ export default function MyRoutes() {
   if (own === null) return <Loading />;
 
   const routeCard = (r: Route, chip: ReactNode) => (
-    <div key={r.id} className="glass lift" style={{ borderRadius: 28, padding: 16, display: 'flex', gap: 14, alignItems: 'center' }}>
-      <Link to={`/r/${r.id}`} style={{ display: 'flex', gap: 14, alignItems: 'center', flex: 1, minWidth: 0 }}>
-        <RouteGlyph route={r} style={{ width: 64, height: 44, flex: 'none', color: '#fff' }} strokeWidth={56} />
+    <div key={r.id} style={{ gridTemplateColumns: '1fr auto' }}>
+      <Link to={`/r/${r.id}`} style={{ display: 'grid', gridTemplateColumns: '60px 1fr', gap: 14, alignItems: 'center', minWidth: 0, minHeight: 44 }}>
+        <RouteGlyph route={r} style={{ width: 60, height: 42 }} strokeWidth={56} />
         <div style={{ minWidth: 0 }}>
-          <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
-          <div className="lbl">
-            {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : r.startType}
+          <div className="h2 ellipsis">{r.name}</div>
+          <div className="sub">
+            {formatDistance(r.lengthM)} · {r.isLoop ? 'Lap' : r.startType[0].toUpperCase() + r.startType.slice(1)}
             {r.hidden && ' · hidden by an admin'}
           </div>
         </div>
@@ -101,14 +101,15 @@ export default function MyRoutes() {
       {chip}
     </div>
   );
-  const quiet = { background: 'color-mix(in srgb, var(--ink) 10%, transparent)' };
-  const solidChip = { background: 'var(--main)', color: 'var(--on-main)' };
 
   return (
     <main className="ph soft docked">
       <div className="sb" />
-      <div style={{ padding: '8px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
-        <h1 className="title">Times</h1>
+      <div style={{ padding: '8px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'end', minHeight: 56 }}>
+        <div>
+          <div className="k">{tab === 'laps' ? 'Your best on each route' : 'Routes you built'}</div>
+          <h1 className="h1" style={{ marginTop: 6 }}>Times</h1>
+        </div>
         {tab === 'built' && (
           <Link to="/routes/new" className="glass ib" aria-label="Build a route">
             <I n="plus" />
@@ -134,65 +135,57 @@ export default function MyRoutes() {
           </Empty>
         ) : (
           <div style={{ padding: '14px 16px 0', display: 'grid', gap: 10 }}>
-            {logbook.map(({ route: r, laps, last }) => (
-              <Link
-                key={r.id}
-                to={`/r/${r.id}/history`}
-                className="glass lift"
-                style={{ borderRadius: 28, padding: '16px 16px 16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
-                    <span className="t acc" style={{ fontSize: 28 }}>{pbs.has(r.id) ? formatLap(pbs.get(r.id)) : '–'}</span>
-                    <span className="lbl">{pbs.has(r.id) ? 'PB' : 'No valid lap'}</span>
-                  </div>
-                  <div className="lbl" style={{ marginTop: 4 }}>
-                    {laps} {laps === 1 ? 'lap' : 'laps'} · {formatDate(last)}
-                  </div>
+            {logbook.map(({ route: r, laps }) => (
+              <Link key={r.id} to={`/r/${r.id}/history`} className="glass lift card" style={{ padding: '18px 20px', display: 'block' }}>
+                <div className="h2 ellipsis" style={{ paddingRight: 120 }}>{r.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
+                  <span className="t t3">{pbs.has(r.id) ? formatLap(pbs.get(r.id)) : '–'}</span>
+                  {pbs.has(r.id) ? <span className="chip main tag">PB</span> : <span className="sub">No valid lap</span>}
                 </div>
-                <RouteGlyph route={r} style={{ width: 64, height: 44, flex: 'none', color: '#fff' }} strokeWidth={56} />
-                <I n="fwd" style={{ color: 'var(--ink-2)' }} />
+                <RouteGlyph route={r} strokeWidth={40} style={{ position: 'absolute', right: 20, top: 12, width: 110, height: 75 }} />
+                <div className="sub" style={{ marginTop: 10 }}>
+                  {laps} {laps === 1 ? 'lap' : 'laps'}
+                </div>
               </Link>
             ))}
           </div>
         )
       ) : (
         <div style={{ padding: '14px 16px 0', display: 'grid', gap: 10 }}>
-          <div className="lbl" style={{ padding: '0 4px' }}>
+          <div className="k" style={{ padding: '0 8px' }}>
             Your routes
             {limit > 1 && own.length > 0 && (limit === Infinity ? ` · ${publicCount} public` : ` · ${publicCount} of ${limit} public`)}
           </div>
           {own.length === 0 ? (
-            <div className="glass lift" style={{ borderRadius: 28, padding: '18px 20px', display: 'grid', gap: 12 }}>
+            <div className="glass lift card" style={{ padding: '18px 20px', display: 'grid', gap: 12 }}>
               <div>
-                <b>No routes yet</b>
-                <div className="lbl" style={{ marginTop: 4 }}>Draw a route on the map, split it into sectors, then drive it.</div>
+                <div className="h2">No routes yet</div>
+                <div className="sub" style={{ marginTop: 4 }}>Draw a route on the map, split it into sectors, then drive it.</div>
               </div>
               <Link to="/routes/new" className="solid">
                 Build a route
               </Link>
             </div>
           ) : (
-            own.map((r) =>
+            <div className="glass lift card rows">
+            {own.map((r) =>
               routeCard(
                 r,
                 isCreator && !r.hidden ? (
-                  <button className="chip" style={r.isPublic ? solidChip : quiet} disabled={busy} onClick={() => setConfirm(r)}>
-                    {r.isPublic ? 'Public' : 'Private'}
+                  <button style={{ minHeight: 44, display: 'grid', placeItems: 'center' }} aria-label={`${r.name}: ${r.isPublic ? 'public' : 'private'}, change`} disabled={busy} onClick={() => setConfirm(r)}>
+                    <span className={`chip${r.isPublic ? ' main' : ''}`}>{r.isPublic ? 'Public' : 'Private'}</span>
                   </button>
                 ) : (
-                  <span className="chip" style={r.isPublic ? solidChip : quiet}>
-                    {r.isPublic ? 'Public' : 'Private'}
-                  </span>
+                  <span className={`chip${r.isPublic ? ' main' : ''}`}>{r.isPublic ? 'Public' : 'Private'}</span>
                 ),
               ),
-            )
+            )}
+            </div>
           )}
           {official.length > 0 && (
             <>
-              <div className="lbl" style={{ padding: '8px 4px 0' }}>Official</div>
-              {official.map((r) => routeCard(r, <span className="chip" style={quiet}>Official</span>))}
+              <div className="k" style={{ padding: '10px 8px 0' }}>Official</div>
+              <div className="glass lift card rows">{official.map((r) => routeCard(r, <I n="fwd" style={{ color: 'var(--ink-2)' }} />))}</div>
             </>
           )}
           {!isCreator && <DriverPanel request={request} onRequested={setRequest} />}
@@ -260,7 +253,7 @@ function DriverPanel({ request, onRequested }: { request: CreatorRequest | null 
   }
 
   return (
-    <div className="glass lift" style={{ borderRadius: 28, padding: '18px 20px', display: 'grid', gap: 12, marginTop: 8 }}>
+    <div className="glass lift card" style={{ padding: '18px 20px', display: 'grid', gap: 12, marginTop: 8 }}>
       <div>
         <b>Want to publish a route?</b>
         <div className="lbl" style={{ marginTop: 4 }}>

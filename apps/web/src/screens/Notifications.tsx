@@ -3,7 +3,7 @@ import { FollowButton } from '../components/FollowButton';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { SkeletonRows } from '../components/Skeleton';
-import { Avatar, Empty, errorMessage, ScreenHead, UserName } from '../components/ui';
+import { Avatar, Empty, errorMessage, I, ScreenHead, UserName } from '../components/ui';
 import { listNotices, markNoticesSeen } from '../lib/data';
 import { formatDelta, formatLap, timeAgo } from '../lib/format';
 import { useMe } from '../lib/session';
@@ -73,10 +73,12 @@ export default function Notifications() {
   const beaten = data?.notices.filter((n) => n.type === 'beaten' && isNew(n)) ?? [];
   const rest = data?.notices.filter((n) => !beaten.includes(n)) ?? [];
   return (
-    <main className="ph soft docked">
+    <main className="ph soft">
       <div className="sb" />
-      <div style={{ padding: '8px 20px 0' }}>
-        <h1 className="title">Notifications</h1>
+      <ScreenHead back />
+      <div style={{ padding: '12px 20px 0' }}>
+        {data && data.notices.some(isNew) && <div className="k">{data.notices.filter(isNew).length} new</div>}
+        <h1 className="h1" style={{ marginTop: 6 }}>Notifications</h1>
       </div>
       {error && <p className="err" style={{ padding: '12px 24px 0' }}>{error}</p>}
       {data === null ? (
@@ -93,18 +95,18 @@ export default function Notifications() {
                 if (n.type !== 'beaten') return null;
                 const { text, to } = describe(n);
                 return (
-                  <div key={n.id} className="glass lift" style={{ borderRadius: 28, padding: '16px 18px', display: 'grid', gridTemplateColumns: '40px 1fr auto', gap: 12, alignItems: 'center' }}>
+                  <div key={n.id} className="glass lift card" style={{ padding: 16, display: 'grid', gridTemplateColumns: '40px 1fr auto', gap: 12, alignItems: 'center' }}>
                     <Link to={`/u/${n.fromName}`} aria-label={n.fromName}>
                       <Avatar name={n.fromName} size={40} uid={n.fromId} />
                     </Link>
                     <Link to={to ?? `/u/${n.fromName}`} style={{ minWidth: 0 }}>
-                      <div className="lbl">{text}</div>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginTop: 3 }}>
-                        <span className="t" style={{ fontSize: 22 }}>{formatLap(n.totalMs)}</span>
-                        <span className="t acc" style={{ fontSize: 15 }}>{formatDelta(n.totalMs - n.theirMs, 2)}</span>
+                      <div className="sub" style={{ color: 'var(--ink)' }}>{text}</div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+                        <span className="t t4">{formatLap(n.totalMs)}</span>
+                        <span className="dl loss" style={{ height: 22, fontSize: 14 }}>{formatDelta(n.theirMs - n.totalMs, 2)}</span>
                       </div>
                     </Link>
-                    <Link className="chip" style={{ background: 'var(--main)', color: 'var(--on-main)' }} to={`/drive/${n.routeId}?ref=post:${n.postId}`}>
+                    <Link className="solid sm" to={`/drive/${n.routeId}?ref=post:${n.postId}`}>
                       Race
                     </Link>
                   </div>
@@ -112,7 +114,8 @@ export default function Notifications() {
               })}
             </div>
           )}
-          <div className="rows" style={{ padding: '8px 24px 0' }}>
+          {beaten.length > 0 && rest.length > 0 && <div className="k" style={{ padding: '20px 24px 0' }}>Earlier</div>}
+          <div className="rows" style={{ padding: '2px 24px 0' }}>
             {rest.map((n) => {
               const { text, to } = describe(n);
               const pic =
@@ -122,13 +125,14 @@ export default function Notifications() {
                   </Link>
                 ) : (
                   <span className="av" style={{ background: 'var(--main)', color: 'var(--on-main)' }} aria-hidden>
-                    ✓
+                    <I n="check" sm />
                   </span>
                 );
               const body = (
                 <div style={{ minWidth: 0 }}>
-                  <b style={{ display: 'block' }}>{text}</b>
-                  <div className="lbl">
+                  <div className="h2 ellipsis">{n.type === 'follow' ? <UserName uid={n.fromId} fallback={n.fromName} /> : text}</div>
+                  <div className="sub">
+                    {n.type === 'follow' && 'Followed you · '}
                     {n.type === 'beaten' && `${formatLap(n.totalMs)} · `}
                     {isNew(n) ? 'New · ' : ''}
                     {ago(n)}
@@ -136,7 +140,7 @@ export default function Notifications() {
                 </div>
               );
               return (
-                <div key={n.id} style={n.type === 'follow' || n.type === 'beaten' ? undefined : { gridTemplateColumns: '36px 1fr' }}>
+                <div key={n.id} style={n.type === 'follow' || n.type === 'beaten' ? undefined : { gridTemplateColumns: '40px 1fr' }}>
                   {pic}
                   {to ? (
                     <Link to={to} style={{ minWidth: 0 }}>
@@ -147,7 +151,7 @@ export default function Notifications() {
                   )}
                   {n.type === 'follow' && <FollowButton userId={n.fromId} back />}
                   {n.type === 'beaten' && (
-                    <Link className="chip" style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }} to={`/drive/${n.routeId}?ref=post:${n.postId}`}>
+                    <Link className="solid sm quiet" to={`/drive/${n.routeId}?ref=post:${n.postId}`}>
                       Race
                     </Link>
                   )}

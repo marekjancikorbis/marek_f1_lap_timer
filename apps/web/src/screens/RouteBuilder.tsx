@@ -226,10 +226,13 @@ export default function RouteBuilder() {
       </div>
       <div className="edge" />
       <div className="sb" />
-      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
         <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, '/routes')}>
           <I n="back" />
         </button>
+        <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, minWidth: 0 }} aria-live="polite">
+          {waypoints.length === 0 ? 'Tap the map to add a gate' : waypoints.length === 1 ? 'Tap the next point' : snapping ? 'Snapping to roads…' : 'Tap to extend, undo to go back'}
+        </span>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="glass ib" onClick={locate} aria-label="Go to my location">
             <I n="loc" />
@@ -241,24 +244,34 @@ export default function RouteBuilder() {
       </div>
       <div className="glass sheet sheet-b" style={{ paddingTop: 20, display: 'grid', gap: 10, bottom: 'calc(8px + var(--safe-b))' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }} aria-live="polite">
-          <span className="t" style={{ fontSize: 40 }}>
+          <span className="t t2">
             {km.toFixed(2)}
-            <span className="lbl"> km</span>
+            <span className="sub" style={{ fontSize: 16, fontWeight: 600 }}> km</span>
           </span>
-          <button className="lbl" onClick={() => setTuning(true)} aria-label={`${boundaries.length} sectors of ${sectorM} m. Change`}>
-            {waypoints.length === 0
-              ? 'Tap the map to start'
-              : waypoints.length === 1
-                ? 'Tap the next point'
-                : snapping
-                  ? 'Snapping to roads…'
-                  : `${boundaries.length} sectors`}
+          <button className="sub" style={{ minHeight: 44 }} onClick={() => setTuning(true)} aria-label={`${boundaries.length} sectors of ${sectorM} m. Change`}>
+            {boundaries.length} {boundaries.length === 1 ? 'sector' : 'sectors'}
           </button>
         </div>
         {snapError && <p className="err">{snapError}</p>}
+        <div className="between" style={{ marginTop: 4 }}>
+          <label className="k" htmlFor="sector-len">Sector length</label>
+          <output className="t t4" htmlFor="sector-len">{sectorM} m</output>
+        </div>
+        <input
+          id="sector-len"
+          className="range"
+          type="range"
+          min={50}
+          max={1000}
+          step={50}
+          value={sectorM}
+          style={{ ['--v' as string]: `${((sectorM - 50) / 950) * 100}%` }}
+          onChange={(e) => setSectorM(Number(e.target.value))}
+          aria-valuetext={`${sectorM} metres, ${boundaries.length} sectors`}
+        />
+        <label className="k" htmlFor="route-name" style={{ paddingLeft: 18, marginTop: 6 }}>Name</label>
         <label className="field">
-          <span className="visually-hidden">Name</span>
-          <input maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="Route name" enterKeyHint="done" />
+          <input id="route-name" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="Route name" enterKeyHint="done" />
         </label>
         <Segmented
           label="Start"
@@ -271,21 +284,20 @@ export default function RouteBuilder() {
           ]}
         />
         <button className="solid" style={{ marginTop: 4 }} disabled={saving || snapping || snapped.length < 2 || !name.trim()} onClick={save}>
-          {saving ? 'Saving…' : orig ? 'Save changes' : 'Save'}
+          {saving ? 'Saving…' : orig ? 'Save changes' : 'Save route'}
         </button>
       </div>
       <Sheet open={tuning} onClose={() => setTuning(false)} label="Sectors">
         <div style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <h2 className="title" style={{ fontSize: 24 }}>Sectors</h2>
-            <span className="t" style={{ fontSize: 28 }}>{sectorM} m</span>
+            <h2 className="h1" style={{ fontSize: 24 }}>Sectors</h2>
+            <span className="t t3">{sectorM} m</span>
           </div>
-          <input className="range" type="range" min={50} max={1000} step={50} value={sectorM} onChange={(e) => setSectorM(Number(e.target.value))} aria-label="Sector length" />
-          <p className="lbl" style={{ fontSize: 14 }}>
+          <p className="sub">
             The ticks on the map show where each sector ends. A short last sector merges into the one before.{' '}
             {startType === 'rolling' ? 'The timer starts when you cross the start line.' : 'Standing: stop at the start, then a 3–10 s countdown; moving more than 10 m early costs +5 s.'}
           </p>
-          <p className="lbl" style={{ fontSize: 14 }}>
+          <p className="sub">
             {orig
               ? 'Changing the shape, sectors or start resets the laps timed on this route.'
               : 'New routes are private. Once a route has been published, its shape and sectors are locked.'}

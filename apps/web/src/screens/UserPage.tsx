@@ -168,13 +168,15 @@ export default function UserPage() {
     return (
       <Link key={pb.id} to={`/lap/${pb.id}`} style={{ gridTemplateColumns: '1fr auto' }}>
         <div style={{ minWidth: 0 }}>
-          <div className="lbl ellipsis">
+          <div className="sub ellipsis">
             {pb.routeName}
             {rank ? ` · P${rank}` : ''}
           </div>
-          <div className={`t${rank === 1 ? ' acc' : ''}`} style={{ fontSize: 24, marginTop: 3 }}>{formatLap(pb.totalMs)}</div>
+          <div className="t t4" style={{ marginTop: 4, color: rank === 1 ? 'var(--s-p)' : undefined }}>{formatLap(pb.totalMs)}</div>
         </div>
-        <SectorStrip colours={postBigColours(pb, route)} />
+        <div style={{ width: 76 }}>
+          <SectorStrip colours={postBigColours(pb, route)} wide />
+        </div>
       </Link>
     );
   };
@@ -185,7 +187,7 @@ export default function UserPage() {
         {home?.isPublic && <RouteShape route={home} map height={340} ticks={false} label={`${name}'s home course, ${home.name}`} />}
       </div>
       <div className="sb" />
-      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 56 }}>
+      <div style={{ padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 52 }}>
         {!isMe ? <ScreenHead back /> : <span />}
         {isMe && (
           <div style={{ display: 'flex', gap: 8 }}>
@@ -208,53 +210,70 @@ export default function UserPage() {
             <Avatar name={name} hue={user.avatarHue} size={64} uid={user.id} />
           </span>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <h1 className="ellipsis" style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-.02em' }}>{name}</h1>
-            <div className="lbl" style={{ marginTop: 2 }}>
-              {name !== user.username && <>@{user.username} · </>}
-              {stats.join(' · ')}
-            </div>
-            <div className="lbl" style={{ marginTop: 2, display: 'flex', gap: 10 }}>
-              <Link to={`/u/${user.username}/followers`}>
-                {counts?.followers ?? '–'} {counts?.followers === 1 ? 'follower' : 'followers'}
-              </Link>
-              <Link to={`/u/${user.username}/following`}>{counts?.following ?? '–'} following</Link>
+            <h1 className="h1 ellipsis" style={{ fontSize: 24 }}>{name}</h1>
+            <div className="sub ellipsis" style={{ marginTop: 2 }}>
+              @{user.username}
+              {stats.length > 1 && ` · ${stats.slice(1).join(' · ')}`}
             </div>
           </div>
-          {!isMe && <FollowButton userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />}
+          {isMe ? (
+            <Link to="/settings" className="solid sm quiet">
+              Edit
+            </Link>
+          ) : (
+            <FollowButton userId={user.id} onChange={(f) => setCounts((c) => (c ? { ...c, followers: c.followers + (f ? 1 : -1) } : c))} />
+          )}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', marginTop: 18, padding: '14px 0', borderBlock: '1px solid var(--hair)', textAlign: 'center' }}>
+          <div>
+            <div className="t t3">{posts.length}</div>
+            <div className="k" style={{ marginTop: 6 }}>{posts.length === 1 ? 'Lap' : 'Laps'}</div>
+          </div>
+          <Link to={`/u/${user.username}/followers`}>
+            <div className="t t3">{counts?.followers ?? '–'}</div>
+            <div className="k" style={{ marginTop: 6 }}>{counts?.followers === 1 ? 'Follower' : 'Followers'}</div>
+          </Link>
+          <Link to={`/u/${user.username}/following`}>
+            <div className="t t3">{counts?.following ?? '–'}</div>
+            <div className="k" style={{ marginTop: 6 }}>Following</div>
+          </Link>
         </div>
         {home?.isPublic ? (
-          <Link to={`/r/${home.id}`} className="lbl" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
+          <Link to={`/r/${home.id}`} className="sub" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
             <span>Home course · {home.name}</span>
             {homeBest && <span>{formatLap(homeBest.totalMs)}</span>}
           </Link>
         ) : (
           isMe && (
-            <p className="lbl" style={{ marginTop: 14 }}>
+            <p className="sub" style={{ marginTop: 14 }}>
               No home course yet. Pick one on a route&rsquo;s page in <Link to="/explore" style={{ textDecoration: 'underline' }}>Explore</Link>.
             </p>
           )
         )}
         {best.length > 0 ? (
-          <div className="rows" style={{ marginTop: 10 }}>{best.map(({ pb, rank }) => row(pb, rank))}</div>
+          <>
+            <div className="k" style={{ marginTop: 16 }}>Best times</div>
+            <div className="rows">{best.map(({ pb, rank }) => row(pb, rank))}</div>
+          </>
         ) : (
-          <p className="lbl" style={{ marginTop: 18 }}>{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn\u2019t posted a lap yet.`}</p>
+          <p className="sub" style={{ marginTop: 18 }}>{isMe ? 'Laps you post on public routes appear here.' : `${name} hasn\u2019t posted a lap yet.`}</p>
         )}
         {newest.length > best.length && (
           <>
-            <div className="lbl" style={{ marginTop: 18 }}>Latest laps</div>
+            <div className="k" style={{ marginTop: 18 }}>Latest laps</div>
             <div className="rows">{newest.slice(0, 10).map((p) => row(p))}</div>
           </>
         )}
         {publicRoutes.length > 0 && (
           <>
-            <div className="lbl" style={{ marginTop: 18 }}>Built by {name}</div>
+            <div className="k" style={{ marginTop: 18 }}>Built by {name}</div>
             <div className="rows">
               {publicRoutes.map((r) => (
-                <Link key={r.id} to={`/r/${r.id}`} style={{ gridTemplateColumns: '64px 1fr auto' }}>
-                  <RouteGlyph route={r} style={{ width: 64, height: 44, color: '#fff' }} strokeWidth={56} />
+                <Link key={r.id} to={`/r/${r.id}`} style={{ gridTemplateColumns: '60px 1fr auto' }}>
+                  <RouteGlyph route={r} style={{ width: 60, height: 42 }} strokeWidth={56} />
                   <div style={{ minWidth: 0 }}>
-                    <b className="ellipsis" style={{ display: 'block' }}>{r.name}</b>
-                    <div className="lbl">
+                    <div className="h2 ellipsis">{r.name}</div>
+                    <div className="sub">
                       {formatDistance(r.lengthM)} · {r.isLoop ? 'lap' : r.startType}
                     </div>
                   </div>

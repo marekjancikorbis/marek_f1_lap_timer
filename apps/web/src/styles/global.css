@@ -791,6 +791,19 @@ input[type='range'] {
     animation-duration: 1.2s !important;
     animation-iteration-count: infinite !important;
   }
+  /* Out-rank the clamp where timing carries meaning: the hold-to-stop fill must take as long as the stop does,
+     and the fade fallbacks of screens, sheets and toasts are short cross-fades, not cuts. */
+  .dv-hold.holding .dv-fill {
+    transition-duration: var(--d-hold) !important;
+  }
+  .ph > :not(.dock):not(.map):not(.spinner),
+  .sheet-b.modal,
+  .scrim,
+  .glass.toast,
+  .dv,
+  .dv-banner {
+    animation-duration: var(--d-fast) !important;
+  }
 }
 
 /* Notifications: the bell's count, and a stripe on what's new since the last visit. */

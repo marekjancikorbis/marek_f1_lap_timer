@@ -88,11 +88,11 @@ export function PostSheet({ open, onClose, run, route, myRuns, onPosted }: { ope
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'end', gap: 8, padding: 14, borderRadius: 20, background: 'color-mix(in srgb, var(--ink) 8%, transparent)' }}>
           <div style={{ minWidth: 0 }}>
             <div className="lbl ellipsis">{route.name}</div>
-            <div className="t" style={{ fontSize: 34, marginTop: 6 }}>{formatLap(run.totalMs)}</div>
+            <div className="t t3" style={{ marginTop: 6 }}>{formatLap(run.totalMs)}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div className="lbl">Leaderboard</div>
-            <b className="t" style={{ fontSize: 22 }}>{preview ? `P${preview.place} of ${preview.of}` : '…'}</b>
+            <b className="t t4">{preview ? `P${preview.place} of ${preview.of}` : '…'}</b>
           </div>
           {preview && preview.colours.length > 0 && (
             <div style={{ gridColumn: '1 / -1' }}>

@@ -120,26 +120,33 @@ export function LapView({
       <Link to={`/u/${lap.username}`} style={{ padding: '16px 20px 0', display: 'flex', gap: 12, alignItems: 'center' }}>
         <Avatar name={lap.username} hue={lap.avatarHue} size={48} uid={lap.userId} />
         <div style={{ minWidth: 0 }}>
-          <b style={{ fontSize: 18 }}>{who}</b>
-          <div className="lbl ellipsis">
+          <div className="h2">{who}</div>
+          <div className="sub ellipsis">
             {lap.routeName} · {day}
             {meta && ` · ${meta}`}
           </div>
         </div>
       </Link>
-      <div style={{ padding: '14px 20px 0', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-        <span className={`t${rank === 1 ? ' acc' : ''}`} style={{ fontSize: 64 }}>{formatLap(lap.totalMs)}</span>
-        {status && <span className="lbl">{status}</span>}
-        {lap.penaltyMs > 0 && <span className="lbl" style={{ color: '#ff9a9d' }}>incl. +{formatSeconds(lap.penaltyMs, 3)}</span>}
+      <div style={{ padding: '16px 20px 0' }}>
+        {status && <div className="k">{status}</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 6 }}>
+          <span className={`t t1${rank === 1 ? ' acc' : ''}`} style={{ fontSize: 72 }}>{formatLap(lap.totalMs)}</span>
+          {ref && !lap.partial && !ref.partial && (
+            <span className={`dl ${lap.totalMs <= ref.totalMs ? 'gain' : 'loss'}`}>{formatDelta(lap.totalMs - ref.totalMs, 2)}</span>
+          )}
+        </div>
+        {table && table.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <SectorStrip colours={table.map((t) => t.row.colour)} height={8} wide />
+          </div>
+        )}
+        {lap.penaltyMs > 0 && <div className="sub" style={{ color: '#ff9a9d', marginTop: 8 }}>incl. +{formatSeconds(lap.penaltyMs, 3)}</div>}
       </div>
       {(badges || ref) && (
-        <div className="lbl" style={{ padding: '4px 20px 0', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="sub" style={{ padding: '8px 20px 0', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           {ref && (
             <span>
               vs {ref.label} {formatLap(ref.totalMs)}
-              {!lap.partial && !ref.partial && (
-                <span style={{ color: lap.totalMs <= ref.totalMs ? 'var(--s-g)' : 'var(--s-y)' }}> · {formatDelta(lap.totalMs - ref.totalMs, 2)}</span>
-              )}
             </span>
           )}
           {badges}
@@ -147,6 +154,20 @@ export function LapView({
       )}
       {caption && <div style={{ padding: '8px 20px 0' }}>{caption}</div>}
     </>
+  );
+  // Graphs: who and the time in one row, so the graphs get the room.
+  const compact = (
+    <Link to={`/u/${lap.username}`} style={{ padding: '12px 20px 0', display: 'flex', gap: 12, alignItems: 'center' }}>
+      <Avatar name={lap.username} hue={lap.avatarHue} size={48} uid={lap.userId} />
+      <div style={{ minWidth: 0 }}>
+        <div className="h2">{who}</div>
+        <div className="sub ellipsis">
+          {lap.routeName} · {day}
+        </div>
+      </div>
+      <span style={{ flex: 1 }} />
+      <span className={`t t3${rank === 1 ? ' acc' : ''}`}>{formatLap(lap.totalMs)}</span>
+    </Link>
   );
 
   return (
@@ -160,6 +181,7 @@ export function LapView({
         mapExtra={mapExtra}
         onOpen={onOpen}
         hero={hero}
+        compact={compact}
         who={who}
         rankOne={rank === 1}
         onMore={menu ? () => setMore(true) : undefined}
@@ -236,18 +258,21 @@ export function useSectorTable(
 export function SectorList({ table, refLabel, totalMs, who }: { table: SectorTableRows | null; refLabel: string | null; totalMs?: number | null; who?: string }) {
   const [open, setOpen] = useState<Set<number>>(new Set());
   const bigScale = Math.max(1, ...(table ?? []).map((t) => Math.abs(t.row.deltaMs ?? 0)));
+  const deltas = (table ?? []).map((t) => t.row.deltaMs);
+  const sum = deltas.length && deltas.every((d) => d != null) ? (deltas as number[]).reduce((a, b) => a + b, 0) : null;
+  const gain = (table ?? []).reduce<Row | null>((m, t) => (t.row.deltaMs != null && t.row.deltaMs < 0 && (!m || t.row.deltaMs < (m.deltaMs ?? 0)) ? t.row : m), null);
 
   return (
-    <div className="glass lift" style={{ margin: '14px 16px 0', borderRadius: 28, padding: '18px 20px', display: 'grid', gap: 16 }}>
+    <div className="glass lift card" style={{ margin: '14px 16px 0', padding: '18px 20px', display: 'grid', gap: 14 }}>
       {!table ? (
         <p className="lbl">This lap was timed on an older version of the route, so its sectors can&rsquo;t be shown.</p>
       ) : !table.length ? (
         <p className="lbl">The lap stopped before the first sector ended. The graphs and map show what was recorded.</p>
       ) : (
         <>
-          <div className="lbl" style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>{refLabel ? (who ? `← ${who} faster` : '← Faster') : 'Sector times'}</span>
-            <span>{refLabel ? `vs ${refLabel}` : 'Nothing to compare with yet'}</span>
+          <div className="between">
+            <span className="k">{refLabel ? `vs ${refLabel}` : 'Sector times'}</span>
+            <span className="k">{refLabel ? (who ? `← ${who} faster` : sum != null ? `Total ${formatDelta(sum, 2)}` : '') : 'Nothing to compare with yet'}</span>
           </div>
           {table.map(({ row, kids }, b) => (
             <button
@@ -269,11 +294,12 @@ export function SectorList({ table, refLabel, totalMs, who }: { table: SectorTab
               )}
             </button>
           ))}
+          {!who && gain && <p className="sub">Biggest gain in {gain.name}.</p>}
           {totalMs != null && (
             <div className="bar">
-              <span className="lbl">Total</span>
+              <span className="k" style={{ color: 'var(--ink)' }}>Total</span>
               <span />
-              <b className="t" style={{ color: totalMs < 0 ? 'var(--s-g)' : totalMs > 0 ? 'var(--s-y)' : undefined }}>{formatDelta(totalMs, 2)}</b>
+              <span className={`dl ${totalMs <= 0 ? 'gain' : 'loss'}`} style={{ justifySelf: 'end' }}>{formatDelta(totalMs, 2)}</span>
             </div>
           )}
         </>
@@ -299,6 +325,7 @@ export function LapTabs({
   mapExtra,
   onOpen,
   hero,
+  compact,
   who,
   rankOne,
   onMore,
@@ -308,6 +335,8 @@ export function LapTabs({
   lap: Pick<LapViewLap, 'username' | 'totalMs' | 'splitTimesMs' | 'penaltyMs' | 'profile' | 'partial'> & { userId?: string; avatarHue?: number };
   /** Who and the time, above the tabs on Sectors and Graphs. */
   hero?: ReactNode;
+  /** The hero on the Graphs tab: one row. */
+  compact?: ReactNode;
   who?: ReactNode;
   rankOne?: boolean;
   onMore?: () => void;
@@ -444,8 +473,8 @@ export function LapTabs({
           </button>
         )}
       </div>
-      {hero}
-      <div style={{ padding: '16px 16px 0' }}>{seg}</div>
+      {tab === 'graphs' && compact ? compact : hero}
+      <div style={{ padding: '18px 16px 0' }}>{seg}</div>
 
       {tab === 'sectors' && sectors}
 
@@ -456,10 +485,10 @@ export function LapTabs({
           <>
             {readout}
             {(cmp?.speed || hasSpeed) && (
-              <div className="glass lift" style={{ margin: '14px 16px 0', borderRadius: 28, padding: '16px 18px' }}>
-                <div className="lbl" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Speed, km/h</span>
-                  <span>Top {Math.round(Math.max(...(cmp?.speed ? cmp.speed.map((x) => x.a) : lap.profile!.speedDms.map((v) => v * 0.36))))}</span>
+              <div className="glass lift card" style={{ margin: '14px 16px 0', padding: '16px 18px' }}>
+                <div className="between">
+                  <span className="k">Speed · km/h</span>
+                  <span className="k">Top <b style={{ color: 'var(--ink)' }}>{Math.round(Math.max(...(cmp?.speed ? cmp.speed.map((x) => x.a) : lap.profile!.speedDms.map((v) => v * 0.36))))}</b></span>
                 </div>
                 <div style={{ marginTop: 10 }}>
                   <SpeedGraph
@@ -474,15 +503,15 @@ export function LapTabs({
               </div>
             )}
             {cmp ? (
-              <div className="glass lift" style={{ margin: '10px 16px 0', borderRadius: 28, padding: '16px 18px' }}>
-                <div className="lbl" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{top != null && top <= 0 ? `Ahead of ${ref!.label}` : `Behind ${ref!.label}`}</span>
-                  {top != null && <span className={`t${top <= 0 ? ' acc' : ''}`} style={{ fontSize: 15 }}>{formatDelta(top, 2)}</span>}
+              <div className="glass lift card" style={{ margin: '10px 16px 0', padding: '16px 18px' }}>
+                <div className="between" style={{ alignItems: 'center' }}>
+                  <span className="k">Gap to {ref!.label}</span>
+                  {top != null && <span className={`dl ${top <= 0 ? 'best' : 'loss'}`}>{formatDelta(top, 2)}</span>}
                 </div>
                 <div style={{ marginTop: 10 }}>
                   <DeltaGraph data={cmp.delta} boundaries={bigBoundaries} aLabel={lap.username} bLabel={ref!.label} onScrub={scrubTo} at={carAtM} />
                 </div>
-                {!cmp.smooth && <p className="lbl" style={{ marginTop: 8 }}>Drawn from sector splits only: one of these laps has no 10 m profile.</p>}
+                {!cmp.smooth && <p className="sub" style={{ marginTop: 8 }}>Drawn from sector splits only: one of these laps has no 10 m profile.</p>}
               </div>
             ) : (
               <p className="lbl" style={{ padding: '16px 22px' }}>The gap graph needs a lap to compare with.</p>
@@ -514,25 +543,25 @@ export function LapTabs({
           <div className="sb" />
           <div style={{ padding: '4px 16px', display: 'flex', gap: 10, alignItems: 'center' }}>
             {back}
-            <div className="glass lift" style={{ flex: 1, minWidth: 0, height: 48, borderRadius: 24, padding: '0 8px 0 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Avatar name={lap.username} hue={lap.avatarHue} uid={lap.userId} />
+            <div className="glass lift" style={{ flex: 1, minWidth: 0, height: 48, borderRadius: 24, padding: '0 14px 0 5px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Avatar name={lap.username} hue={lap.avatarHue} uid={lap.userId} size={38} />
               <b className="ellipsis" style={{ flex: 1 }}>{who ?? lap.username}</b>
-              <span className={`t${rankOne ? ' acc' : ''}`} style={{ fontSize: 20, paddingRight: 8 }}>{formatLap(lap.totalMs)}</span>
+              <span className={`t t4${rankOne ? ' acc' : ''}`}>{formatLap(lap.totalMs)}</span>
             </div>
           </div>
           <div style={{ padding: '10px 16px 0' }}>{seg}</div>
           <div style={{ padding: '10px 16px 0', display: 'flex', gap: 6 }}>
             {colours.includes('purple') && (
-              <span className="glass chip lift" style={{ height: 30, fontSize: 12 }}>
+              <span className="glass chip" style={{ fontSize: 12 }}>
                 <i className="dot" style={{ background: 'var(--s-p)' }} />
                 Fastest ever
               </span>
             )}
-            <span className="glass chip lift" style={{ height: 30, fontSize: 12 }}>
+            <span className="glass chip" style={{ fontSize: 12 }}>
               <i className="dot" style={{ background: 'var(--s-g)' }} />
               Faster
             </span>
-            <span className="glass chip lift" style={{ height: 30, fontSize: 12 }}>
+            <span className="glass chip" style={{ fontSize: 12 }}>
               <i className="dot" style={{ background: 'var(--s-y)' }} />
               Slower
             </span>
@@ -546,11 +575,9 @@ export function LapTabs({
                     {playing ? <I n="pause" style={{ strokeWidth: 3 }} /> : <I n="play" style={{ fill: 'currentColor', stroke: 'none', marginLeft: 3 }} />}
                   </button>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <span className="t" style={{ fontSize: 22 }}>{formatLap(t ?? 0)}</span>
-                      {gapAt != null && (
-                        <span className="t" style={{ fontSize: 17, color: gapAt <= 0 ? 'var(--accent)' : 'var(--s-y)' }}>{formatDelta(gapAt)}</span>
-                      )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="t t3">{formatLap(t ?? 0)}</span>
+                      {gapAt != null && <span className={`dl ${gapAt <= 0 ? 'best' : 'loss'}`}>{formatDelta(gapAt)}</span>}
                     </div>
                     <div className="scrub" style={{ ['--p' as string]: `${((t ?? 0) / Math.max(1, endT)) * 100}%` }}>
                       <input
@@ -569,14 +596,14 @@ export function LapTabs({
                   </div>
                   <button
                     className="chip"
-                    style={{ background: 'color-mix(in srgb, var(--ink) 10%, transparent)' }}
+                    style={{ height: 44, borderRadius: 22, padding: '0 14px' }}
                     aria-label={`Playback speed ${speed}×. Change`}
                     onClick={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}
                   >
                     {speed}×
                   </button>
                 </div>
-                <div className="lbl" style={{ display: 'flex', gap: 14, marginTop: 14 }}>
+                <div className="sub" style={{ display: 'flex', gap: 16, marginTop: 14 }}>
                   <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <i className="dot" style={{ background: 'var(--ink)' }} />
                     {lap.username}
@@ -588,7 +615,7 @@ export function LapTabs({
                     </span>
                   )}
                 </div>
-                <div className="lbl" style={{ marginTop: 14 }}>Follow</div>
+                <div className="k" style={{ marginTop: 16 }}>Camera follows</div>
                 <div style={{ marginTop: 8 }}>
                   <Segmented
                     label="Follow"
@@ -626,12 +653,16 @@ function SecCells({ row, scale }: { row: Row; scale: number }) {
   const cls = row.colour ? row.colour[0] : '';
   return (
     <span className="bar">
-      <span className="lbl">{row.name}</span>
-      <i className={cls} style={{ width: `${w}%`, background: row.colour ? undefined : 'color-mix(in srgb, var(--ink) 20%, transparent)' }} aria-hidden="true" />
-      <b className="t" style={{ color: row.colour === 'purple' ? 'var(--s-p)' : undefined }}>
-        {row.deltaMs != null ? formatDelta(row.deltaMs, 2) : formatLap(row.ms)}
-        {row.colour && <span className="visually-hidden"> {STRIP_LABEL[row.colour]}</span>}
-      </b>
+      <span className="k" style={{ color: 'var(--ink)' }}>{row.name}</span>
+      <i className={cls} style={{ width: `${w}%`, background: row.colour ? undefined : 'var(--fill-2)' }} aria-hidden="true" />
+      {row.deltaMs != null ? (
+        <span className={`dl ${row.colour === 'purple' ? 'best' : row.deltaMs <= 0 ? 'gain' : 'loss'}`} style={{ justifySelf: 'end' }}>
+          {formatDelta(row.deltaMs, 2)}
+          {row.colour && <span className="visually-hidden"> {STRIP_LABEL[row.colour]}</span>}
+        </span>
+      ) : (
+        <b className="t t4" style={{ textAlign: 'right' }}>{formatLap(row.ms)}</b>
+      )}
     </span>
   );
 }

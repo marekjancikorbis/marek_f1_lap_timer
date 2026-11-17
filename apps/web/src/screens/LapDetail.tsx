@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { LapView } from '../components/LapView';
-import { Empty, errorMessage, Loading, ScreenHead, useToast } from '../components/ui';
+import { Empty, errorMessage, I, Loading, ScreenHead, useToast } from '../components/ui';
 import { getPost, getRoute, getRun, routePosts, runsForRoute, unpostLap, updatePostText } from '../lib/data';
 import { resolveLap, runToLap, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
@@ -99,6 +99,7 @@ export default function LapDetail() {
         caption={post.caption && <p style={{ fontSize: 15 }}>{post.caption}</p>}
         actions={
           <Link className="solid" to={`/drive/${post.routeId}?ref=post:${post.id}`}>
+            <I n="flag" sm />
             Race this lap
           </Link>
         }

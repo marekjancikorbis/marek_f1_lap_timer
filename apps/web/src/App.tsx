@@ -140,7 +140,7 @@ function Shell() {
     window.scrollTo(0, 0);
   }, [pathname]);
   // Detail screens take the whole height, as in the mockups; the five tab screens keep the bar.
-  const deep = /^\/(r\/[^/]+(\/edit)?$|routes\/new|drive\/|run\/|lap\/|compare\/|settings|admin|u\/[^/]+\/)/.test(pathname);
+  const deep = /^\/(r\/[^/]+(\/edit)?$|routes\/new|drive\/|run\/|lap\/|compare\/|settings|admin|notifications|u\/[^/]+\/)/.test(pathname);
   return (
     <div className={`app ${deep ? 'no-tabs' : ''}`}>
       <Suspense fallback={<Loading />}>
