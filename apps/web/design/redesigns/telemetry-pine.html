@@ -169,8 +169,10 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
 .list > .r.me .sub { color: inherit }
 /* the lap record and its holder: purple sector colour, lightened for text on dark glass (same as .dl.best) */
 .list > .r.rec, .list > .r.rec .rank { color: var(--rec, #c9a8ff) }
-.list.tight > .r { min-height: 42px; padding: 2px 0 }
-.more { width: 100%; height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; border-top: 1px solid var(--hair); font-size: 14px; font-weight: 650; color: var(--ink-2) }
+.list.tight > .r { min-height: 39px; padding: 2px 0 }
+/* your own row, pinned under the top 5 when you are further down */
+.list > .r.pin { border-top: 1px dashed color-mix(in srgb, var(--ink) 22%, transparent) }
+.more { width: 100%; height: 34px; display: flex; align-items: center; justify-content: center; gap: 6px; border-top: 1px solid var(--hair); font-size: 14px; font-weight: 650; color: var(--ink-2) }
 .rank { width: 22px; font-weight: 700; font-stretch: 75%; font-size: 17px; color: var(--ink-2); text-align: right }
 .chev { color: var(--ink-2) }
 
@@ -522,17 +524,18 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
   <div class="glass sheet-b" style="top:112px">
     <div class="grab"></div>
     <div class="between"><span class="h1" style="font-size:26px">Ecce Homo</span><span class="sub">3.42 km · Standing</span></div>
-    <div style="margin-top:12px"><div class="glass seg" style="box-shadow:none;background:var(--fill)"><span class="on">Everyone</span><span>Following</span></div></div>
-    <div class="list tight" style="margin-top:6px">
+    <div style="margin-top:8px"><div class="glass seg" style="box-shadow:none;background:var(--fill)"><span class="on">Everyone</span><span>Following</span></div></div>
+    <div class="list tight" style="margin-top:4px">
       <div class="r rec"><span class="rank">1</span><span>petra_r</span><span class="t t4">2:11.47</span></div>
       <div class="r"><span class="rank">2</span><span>Pavel N.</span><span class="t t4">2:12.90</span></div>
       <div class="r"><span class="rank">3</span><span>Ondra M.</span><span class="t t4">2:13.55</span></div>
       <div class="r"><span class="rank">4</span><span>jan.k</span><span class="t t4">2:13.98</span></div>
       <div class="r"><span class="rank">5</span><span>Lukáš V.</span><span class="t t4">2:14.10</span></div>
+      <div class="r me pin" style="color:var(--you, var(--red))"><span class="rank" style="color:inherit">7</span><b>You</b><span class="t t4">2:14.83</span></div>
     </div>
     <button class="more">Show more<svg class="i sm" style="transform:rotate(90deg)"><use href="#chev"/></svg></button>
-    <div class="between" style="margin-top:10px"><span class="k">Locals</span><span class="sub">Šternberk area</span></div>
-    <div class="list tight" style="margin-top:2px">
+    <div class="between" style="margin-top:22px"><span class="k">Locals</span><span class="sub">Šternberk area</span></div>
+    <div class="list tight">
       <div class="r"><span class="rank">1</span><span>Ondra M.</span><span class="t t4">2:13.55</span></div>
       <div class="r me" style="color:var(--you, var(--red))"><span class="rank" style="color:inherit">2</span><b>You</b><span class="t t4">2:14.83</span></div>
       <div class="r"><span class="rank">3</span><span>Eva S.</span><span class="t t4">2:16.40</span></div>
@@ -540,7 +543,7 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
       <div class="r"><span class="rank">5</span><span>Jirka P.</span><span class="t t4">2:18.31</span></div>
     </div>
     <button class="more">Show more<svg class="i sm" style="transform:rotate(90deg)"><use href="#chev"/></svg></button>
-    <button class="btn" style="position:absolute;left:20px;right:20px;bottom:16px;width:auto"><svg class="i sm"><use href="#flag"/></svg>Drive this route</button>
+    <button class="btn" style="position:absolute;left:20px;right:20px;bottom:12px;width:auto"><svg class="i sm"><use href="#flag"/></svg>Drive this route</button>
   </div>
 </div>
 <figcaption>Route, sheet pulled up</figcaption>
