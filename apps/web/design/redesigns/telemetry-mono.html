@@ -187,8 +187,8 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
 /* ---------- tab bar: labelled tabs in one capsule, Drive raised in the middle ---------- */
 .dock { position: absolute; left: 12px; right: 12px; bottom: 20px; height: 66px; border-radius: 33px; padding: 5px; display: grid; grid-template-columns: repeat(5, 1fr); z-index: 5 }
 /* a scrolling feed fades out behind the tab bar */
-/* a post's route thumbnail: an inset panel down the card's right side */
-.thumb { position: absolute; top: 12px; bottom: 12px; right: 12px; width: 76px; border-radius: 18px; background: var(--fill); box-shadow: inset 0 0 0 1px var(--hair); display: grid; place-items: center }
+/* a post's route thumbnail, down the card's right side */
+.thumb { position: absolute; top: 12px; bottom: 12px; right: 12px; width: 76px; display: grid; place-items: center }
 .thumb svg.shape { width: auto; height: 74%; stroke-width: 7 }
 .foot-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; z-index: 4; pointer-events: none; background: linear-gradient(transparent, var(--sea, var(--night)) 72%) }
 .dock .tab { border-radius: 28px; display: grid; place-items: center; align-content: center; gap: 3px; color: var(--ink-2); font-size: 11px; font-weight: 650 }
