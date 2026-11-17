@@ -186,6 +186,8 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
 
 /* ---------- tab bar: labelled tabs in one capsule, Drive raised in the middle ---------- */
 .dock { position: absolute; left: 12px; right: 12px; bottom: 20px; height: 66px; border-radius: 33px; padding: 5px; display: grid; grid-template-columns: repeat(5, 1fr); z-index: 5 }
+/* a scrolling feed fades out behind the tab bar */
+.foot-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 150px; z-index: 4; pointer-events: none; background: linear-gradient(transparent, var(--sea, var(--night)) 72%) }
 .dock .tab { border-radius: 28px; display: grid; place-items: center; align-content: center; gap: 3px; color: var(--ink-2); font-size: 11px; font-weight: 650 }
 .dock .tab.on { color: var(--ink); background: var(--fill-2) }
 .dock .tab.go { width: 56px; height: 56px; justify-self: center; align-self: center; border-radius: 50%; background: var(--red); color: var(--on-red); box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--red) 80%, transparent) }
@@ -313,21 +315,20 @@ svg.shape { width: 60px; height: 42px; flex: none; fill: none; stroke: var(--ink
     <div class="glass tile"><div class="between" style="white-space:nowrap"><span class="k">Week</span><span class="k" style="color:var(--ink)">14 laps</span></div>
       <div class="week" aria-label="Laps per day this week"><i style="height:30%"></i><i style="height:0"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:0"></i><i class="now" style="height:100%"></i><i style="height:20%"></i></div>
       <div class="days"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span style="color:var(--ink)">S</span><span>S</span></div></div>
-    <div class="glass tile w2" style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:14px 14px 14px 16px">
-      <span class="av" style="background:#ffc2a8">PR</span>
-      <div style="min-width:0"><div class="sub">petra_r · Ecce Homo</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="t t4">2:11.47</span><span class="dl loss">+3.36</span></div></div>
-      <button class="btn sm">Race</button>
+    <div class="glass tile w2" style="padding:14px 14px 14px 16px">
+      <div style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center"><span class="av" style="background:#ffc2a8">PR</span><div style="min-width:0"><div class="sub">petra_r · Ecce Homo</div><div class="sub" style="font-size:13px;margin-top:2px">Sun 2 Nov</div></div><svg class="shape" style="width:84px;height:58px" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span class="t t3">2:11.47</span><span class="dl loss">+3.36</span></div>
     </div>
     <div class="glass tile w2" style="padding:14px 14px 14px 16px">
       <div style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center"><span class="av" style="background:#a9c2ff">JK</span><div style="min-width:0"><div class="sub">jan.k · Autodrom Most</div><div class="sub" style="font-size:13px;margin-top:2px">Sat 8 Nov</div></div><svg class="shape" style="width:84px;height:58px" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg></div>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span class="t t3">1:40.902</span><span class="dl loss">+0.43</span><span style="flex:1"></span><button class="btn sm">Race</button></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span class="t t3">1:40.902</span><span class="dl loss">+0.43</span></div>
     </div>
-    <div class="glass tile w2" style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:14px 14px 14px 16px">
-      <span class="av" style="background:#c9f0d8">OM</span>
-      <div style="min-width:0"><div class="sub">Ondra M. · Vysoké Mýto</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="t t4">0:49.55</span><span class="dl gain">−0.53</span></div></div>
-      <button class="btn sm">Race</button>
+    <div class="glass tile w2" style="padding:14px 14px 14px 16px">
+      <div style="display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center"><span class="av" style="background:#c9f0d8">OM</span><div style="min-width:0"><div class="sub">Ondra M. · Vysoké Mýto</div><div class="sub" style="font-size:13px;margin-top:2px">Fri 7 Nov</div></div><svg class="shape" style="width:84px;height:58px" viewBox="0 0 366 250" aria-hidden="true"><use href="#route"/></svg></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span class="t t3">0:49.55</span><span class="dl gain">−0.53</span></div>
     </div>
   </div>
+  <div class="foot-fade"></div>
   <nav class="glass dock" aria-label="Tabs"><span class="tab on" aria-current="page"><svg class="i"><use href="#home"/></svg>Home</span><span class="tab"><svg class="i"><use href="#map"/></svg>Explore</span><span class="tab go" aria-label="Drive"><svg class="i"><use href="#flag"/></svg></span><span class="tab"><svg class="i"><use href="#watch"/></svg>Times</span><span class="tab"><svg class="i"><use href="#user"/></svg>Profile</span></nav>
 </div>
 <figcaption>Home</figcaption>
