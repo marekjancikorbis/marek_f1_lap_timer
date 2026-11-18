@@ -215,7 +215,7 @@ export default function RouteDetail() {
           {route.isPublic ? (
             top ? (
               <>
-                {/* The record stays put whether the sheet is shut or pulled up; the leaderboard below starts at P2. */}
+                {/* The record stays put whether the sheet is shut or pulled up; pulled up, the full leaderboard sits below it. */}
                 <div className="k" style={{ marginTop: 14 }}>Record</div>
                 <Link to={`/lap/${top.post.id}`} data-peek={board.length < 2 || undefined} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
                   <span className="t t2" style={{ color: 'var(--s-p)' }}>{formatLap(top.post.totalMs)}</span>
@@ -250,7 +250,7 @@ export default function RouteDetail() {
                         ]}
                       />
                     </div>
-                    <Board list={board.slice(1).filter((b) => who === 'all' || following.has(b.post.userId) || b.post.userId === profile.id)} shown={shown} more={() => setShown((n) => n + 10)} />
+                    <Board list={board.filter((b) => who === 'all' || following.has(b.post.userId) || b.post.userId === profile.id)} shown={shown} more={() => setShown((n) => n + 10)} />
                     {localBoard.length > 0 && (
                       <>
                         <div className="between" style={{ marginTop: 22 }}>
