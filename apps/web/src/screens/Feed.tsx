@@ -144,14 +144,12 @@ export function Feed() {
     unreadNotices(profile.id).then(setUnread, () => undefined);
   }, [profile.id]);
 
-  const today = weekday(new Date());
   return (
     <main className="ph sl docked">
       <div className="sb" />
       <div className="top-r">
         <div>
-          <div className="k">{today}</div>
-          <h1 className="wm" style={{ marginTop: 3 }}>Purple Sector</h1>
+          <h1 className="wm">Purple Sector</h1>
         </div>
         <Link to="/notifications" className={`glass ib${unread ? ' ndot' : ''}`} aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
           <I n="bell" />
@@ -265,9 +263,9 @@ export function Feed() {
                       </Link>
                       <div style={{ minWidth: 0 }}>
                         <div className="sub ellipsis">
-                          {p.username} · {p.routeName}
+                          {p.username} · {dayMonth(p.createdAt?.toDate() ?? new Date(p.startedAt))}
                         </div>
-                        <div className="sub" style={{ fontSize: 13, marginTop: 2 }}>{weekday(p.createdAt?.toDate() ?? new Date(p.startedAt))}</div>
+                        <div className="sub ellipsis" style={{ fontSize: 13, marginTop: 2 }}>{p.routeName}</div>
                       </div>
                     </div>
                     <Link
@@ -307,9 +305,9 @@ export function Feed() {
   );
 }
 
-/** Sun 9 Nov */
-function weekday(d: Date) {
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
+/** 9 Nov */
+function dayMonth(d: Date) {
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 /** Minimal pull-to-refresh at the top of the page. */

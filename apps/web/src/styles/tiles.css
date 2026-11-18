@@ -441,16 +441,17 @@ input[type="search"]::-webkit-search-cancel-button { display: none }
 .bar i.p { background: var(--s-p) } .bar i.g { background: var(--s-g) } .bar i.y { background: var(--s-y) }
 
 /* Profile: the home course on the map at the top, the profile a glass sheet that scrolls up over it */
-.profile-map { position: absolute; left: 0; right: 0; top: 0; height: 320px; z-index: -1; overflow: hidden;
+/* sticky + negative margin: the map stays put while the page scrolls, so the sheet slides up over it */
+.profile-map { position: sticky; top: 0; height: 320px; margin-bottom: -320px; z-index: -1; overflow: hidden;
   -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent) }
 .profile-map { display: flex; align-items: center }
 .profile-map > * { position: relative; width: 100%; flex: none; border-radius: 0 !important; margin: 0 !important }
 .map-pic-tint { position: absolute; inset: 0; isolation: isolate; overflow: hidden }
 .map-pic-tint img { width: 100%; height: 100%; display: block; filter: var(--map-filter) }
 .map-pic-tint::after { content: ""; position: absolute; inset: 0; background: var(--map-tint); mix-blend-mode: color }
-/* as in the mockup, the sheet stops 12 px above the tab bar and scrolls inside */
-.ph.profile { padding-bottom: 0; height: 100dvh; overflow: hidden }
-.glass.profile-sheet { margin: 166px 8px 0; border-radius: 36px; padding: 20px; height: calc(100dvh - var(--sbh) - 52px - 166px - 98px - var(--safe-b)); overflow-y: auto; overscroll-behavior: contain }
+/* the page scrolls; shut, the sheet reaches down to 12 px above the tab bar, and its end stops there too */
+.glass.profile-sheet { margin: 166px 8px 0; border-radius: 36px; padding: 20px; min-height: calc(100dvh - var(--sbh) - 52px - 166px - 98px - var(--safe-b)) }
+.ph.profile.docked { padding-bottom: calc(var(--safe-b) + 98px) }
 
 /* Admin: the mockup's cards and rows */
 .glass.admin-card { border-radius: 24px; padding: 16px 18px; margin: 10px 16px 0 }

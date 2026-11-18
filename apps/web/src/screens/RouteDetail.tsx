@@ -215,17 +215,18 @@ export default function RouteDetail() {
           {route.isPublic ? (
             top ? (
               <>
+                {/* The record stays put whether the sheet is shut or pulled up; the leaderboard below starts at P2. */}
+                <div className="k" style={{ marginTop: 14 }}>Record</div>
+                <Link to={`/lap/${top.post.id}`} data-peek={board.length < 2 || undefined} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
+                  <span className="t t2" style={{ color: 'var(--s-p)' }}>{formatLap(top.post.totalMs)}</span>
+                  <span className="sub">
+                    <span style={{ color: 'var(--s-p)' }}>{top.post.userId === profile.id ? 'You' : top.post.username}</span>
+                    {top.post.createdAt && ` · ${formatDate(top.post.createdAt.toDate())}`}
+                  </span>
+                </Link>
                 {!open ? (
                   <>
-                    {/* Shut: the record, P2 and P3, and your place when you are further down. */}
-                    <div className="k" style={{ marginTop: 14 }}>Record</div>
-                    <Link to={`/lap/${top.post.id}`} data-peek={board.length < 2 || undefined} style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6 }}>
-                      <span className="t t2" style={{ color: 'var(--s-p)' }}>{formatLap(top.post.totalMs)}</span>
-                      <span className="sub">
-                        <span style={{ color: 'var(--s-p)' }}>{top.post.userId === profile.id ? 'You' : top.post.username}</span>
-                        {top.post.createdAt && ` · ${formatDate(top.post.createdAt.toDate())}`}
-                      </span>
-                    </Link>
+                    {/* Shut: P2 and P3, and your place when you are further down. */}
                     {board.length > 1 && (
                       <div className="rows" style={{ marginTop: 8 }}>
                         {board.slice(1, 3).map((b, i, xs) => row(b, i === xs.length - 1 && !(mine && mine.rank > 3)))}
@@ -235,7 +236,7 @@ export default function RouteDetail() {
                   </>
                 ) : (
                   <>
-                    <div style={{ marginTop: 8 }}>
+                    <div style={{ marginTop: 14 }}>
                       <Segmented
                         label="Leaderboard"
                         value={who}
@@ -249,7 +250,7 @@ export default function RouteDetail() {
                         ]}
                       />
                     </div>
-                    <Board list={who === 'all' ? board : board.filter((b) => following.has(b.post.userId) || b.post.userId === profile.id)} shown={shown} more={() => setShown((n) => n + 10)} />
+                    <Board list={board.slice(1).filter((b) => who === 'all' || following.has(b.post.userId) || b.post.userId === profile.id)} shown={shown} more={() => setShown((n) => n + 10)} />
                     {localBoard.length > 0 && (
                       <>
                         <div className="between" style={{ marginTop: 22 }}>

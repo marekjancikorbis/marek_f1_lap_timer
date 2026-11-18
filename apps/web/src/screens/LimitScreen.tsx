@@ -5,7 +5,7 @@ import type { UsageState } from '../lib/usage';
  * unusable until the period resets, so nobody ever goes past the free tier.
  */
 export function LimitScreen({ usage }: { usage: UsageState }) {
-  const when = usage.resetsAt.toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  const when = usage.resetsAt.toLocaleString('en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   return (
     <main className="ph soft col">
       <div className="sb" />
