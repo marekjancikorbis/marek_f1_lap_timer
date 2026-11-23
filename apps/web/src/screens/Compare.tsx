@@ -4,15 +4,23 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { goBack } from '../lib/navStack';
 import { DeltaGraph } from '../components/Charts';
 import { useSectorTable } from '../components/LapView';
-import { RouteMap } from '../components/RouteMap';
+import { HEX, RouteMap } from '../components/RouteMap';
 import { Empty, errorMessage, I, Loading, ScreenHead, Sheet } from '../components/ui';
 import { getRoute, leaderboardFrom, routePosts, runsForRoute, sectorRecordsFrom } from '../lib/data';
-import { formatDate, formatDelta, formatLap, formatSeconds } from '../lib/format';
-import { bigRoute, notCounted, resolveLap, type ResolvedLap } from '../lib/laps';
+import { formatDate, formatDelta, formatDistance, formatLap } from '../lib/format';
+import { bigRoute, distanceAt, notCounted, resolveLap, timeAt, type ResolvedLap } from '../lib/laps';
 import { useMe } from '../lib/session';
 import type { Post, Route, Run } from '../lib/types';
 
 const NO_COLOURS: never[] = [];
+const DOTS = { car: HEX.green, ghost: HEX.yellow };
+
+/** Speed (km/h) at distance d from the lap's 10 m profile; null without one. */
+function speedAt(lap: ResolvedLap, d: number): number | null {
+  const p = lap.profile;
+  if (!p || p.speedDms.length < 2) return null;
+  return p.speedDms[Math.min(p.speedDms.length - 1, Math.max(0, Math.round(d / p.stepM)))] * 0.36;
+}
 
 export default function Compare() {
   const { routeId = '' } = useParams();
@@ -25,6 +33,8 @@ export default function Compare() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
   const [picker, setPicker] = useState(false);
+  /** Distance (m) picked on the graph: where lap A is; null until the graph is touched. */
+  const [atM, setAtM] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const aRef = params.get('a') ?? 'best';
   const bRef = params.get('b') ?? 'record';
@@ -40,6 +50,7 @@ export default function Compare() {
     })().catch((e) => setError(errorMessage(e)));
   }, [routeId, profile.id]);
 
+  useEffect(() => setAtM(null), [aRef, bRef]);
   useEffect(() => {
     setA(undefined);
     resolveLap(aRef, profile.id, routeId).then(setA).catch(() => setA(null));
@@ -93,26 +104,32 @@ export default function Compare() {
   // The map: each minisector in the colour of whoever was faster through it.
   const who = sectorTable?.flatMap((t) => t.kids.map((k) => (k.deltaMs == null ? null : k.deltaMs <= 0 ? ('green' as const) : ('yellow' as const)))) ?? [];
   const gap = cmp.gapMs;
+  // The picked point is a moment of lap A: A at atM, and B wherever it was at that same time.
+  const tAt = atM != null ? timeAt(atM, a, route.boundaries, a.profile) : null;
+  const bAtM = tAt != null ? distanceAt(tAt, b, route.boundaries, b.profile) : null;
+  const kmh = (v: number | null) => (v == null ? '–' : `${Math.round(v)}`);
 
   return (
     <main className="ph fixed compare">
       <div className="map">
-        <RouteMap route={route} colours={who} height="100%" padding={{ top: 120, bottom: 380, left: 40, right: 40 }} />
+        <RouteMap route={route} colours={who} height="100%" padding={{ top: 120, bottom: 460, left: 40, right: 40 }} carAtM={atM} ghostAtM={bAtM} dotColours={DOTS} />
       </div>
       <div className="edge" />
       <div className="sb" />
-      <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+      <div style={{ minHeight: 52, padding: '4px 16px 0', display: 'flex', alignItems: 'center' }}>
         <button className="glass ib" aria-label="Back" onClick={() => goBack(nav, `/r/${route.id}`)}>
           <I n="back" />
         </button>
-        <span className="glass chip ellipsis" style={{ height: 40, borderRadius: 20, minWidth: 0, marginLeft: 'auto' }}>Line colour: who was faster</span>
-        <button className="glass ib" aria-label="Swap the two laps" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
-          <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />
-          </svg>
-        </button>
       </div>
-      <div className="glass sheet sheet-b" style={{ paddingTop: 20, bottom: 'calc(8px + var(--safe-b))' }}>
+      <div className="glass sheet sheet-b" style={{ paddingTop: 14, bottom: 'calc(8px + var(--safe-b))' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <span className="lbl ellipsis" style={{ flex: 1, minWidth: 0 }}>Line colour: who was faster</span>
+          <button className="ib" style={{ width: 36, height: 36 }} aria-label="Swap the two laps" onClick={() => setParams({ a: bRef, b: aRef }, { replace: true })}>
+            <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" />
+            </svg>
+          </button>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'end', gap: 8 }}>
           <div style={{ minWidth: 0 }}>
             <div className="k" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -133,7 +150,21 @@ export default function Compare() {
           </button>
         </div>
         <div style={{ marginTop: 16 }}>
-          <DeltaGraph data={cmp.delta} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} />
+          <DeltaGraph data={cmp.delta} boundaries={bigRoute(route).boundaries} aLabel={aLabel} bLabel={bLabel} onScrub={setAtM} at={atM} />
+        </div>
+        {/* What the point picked on the graph says: the same moment for both cars. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr', columnGap: 12, rowGap: 4, alignItems: 'baseline', marginTop: 8 }} aria-live="polite">
+          <span />
+          <span className="k">Speed</span>
+          <span className="k">Distance</span>
+          <span className="k">Time</span>
+          <i className="dot" style={{ background: 'var(--s-g)' }} aria-label={aLabel} />
+          <span className="t t4">{atM == null ? '–' : `${kmh(speedAt(a, atM))} km/h`}</span>
+          <span className="t t4">{atM == null ? '–' : formatDistance(atM)}</span>
+          <span className="t t4" style={{ gridRow: 'span 2', alignSelf: 'center' }}>{tAt == null ? '–' : formatLap(tAt)}</span>
+          <i className="dot" style={{ background: 'var(--s-y)' }} aria-label={bLabel} />
+          <span className="t t4">{bAtM == null ? '–' : `${kmh(speedAt(b, bAtM))} km/h`}</span>
+          <span className="t t4">{bAtM == null ? '–' : formatDistance(bAtM)}</span>
         </div>
         {sectorTable && (
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${sectorTable.length}, 1fr)`, marginTop: 8, gap: 6 }}>

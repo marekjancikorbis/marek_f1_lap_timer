@@ -4,7 +4,7 @@ import { preparedFor, sectorLines } from '../lib/geo';
 import type { Route, SectorColourName } from '../lib/types';
 import { MapView } from './MapView';
 
-const HEX: Record<SectorColourName | 'none', string> = { purple: '#9d5cff', green: '#1fd27a', yellow: '#ffbe1a', none: '#ffffff' };
+export const HEX: Record<SectorColourName | 'none', string> = { purple: '#9d5cff', green: '#1fd27a', yellow: '#ffbe1a', none: '#ffffff' };
 
 /** Route on a Mapbox map, sectors stroked in flag colours, start flagged; optionally a car at a distance. */
 export function RouteMap({
@@ -17,7 +17,10 @@ export function RouteMap({
   follow,
   onPick,
   padding = 40,
+  dotColours,
 }: {
+  /** Fill the car and ghost dots in these colours (e.g. to match a legend) instead of black and white. */
+  dotColours?: { car: string; ghost: string };
   /** Room around the route when the whole of it is shown (a sheet over the map takes the bottom). */
   padding?: number | { top: number; bottom: number; left: number; right: number };
   route: Route;
@@ -110,14 +113,16 @@ export function RouteMap({
         id: 'ghost',
         type: 'circle',
         source: 'ghost',
-        paint: { 'circle-radius': 8, 'circle-color': '#ffffff', 'circle-opacity': 0.85, 'circle-stroke-color': '#0b0b0c', 'circle-stroke-width': 3 },
+        paint: { 'circle-radius': 8, 'circle-color': dotColours?.ghost ?? '#ffffff', 'circle-opacity': dotColours ? 1 : 0.85, 'circle-stroke-color': '#0b0b0c', 'circle-stroke-width': 3 },
       });
       map.addSource('car', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({
         id: 'car',
         type: 'circle',
         source: 'car',
-        paint: { 'circle-radius': 9, 'circle-color': '#0b0b0c', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 },
+        paint: dotColours
+          ? { 'circle-radius': 9, 'circle-color': dotColours.car, 'circle-stroke-color': '#0b0b0c', 'circle-stroke-width': 3 }
+          : { 'circle-radius': 9, 'circle-color': '#0b0b0c', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 },
       });
       placeCar(map, carRef.current);
       placeCar(map, ghostRef.current, 'ghost');
