@@ -59,6 +59,8 @@ Most lap timers know a fixed list of circuits. Purple Sector times **any road yo
 | 📴 **Works with poor signal** | Everything a drive needs is cached before it starts. Results sync when the signal comes back. GPS dropouts never end a run. |
 | 📱 **PWA and Android** | One codebase. The Android app keeps timing with the screen off (background GPS with a notification). |
 
+<p align="center"><img src="docs/readme/in-car.webp" alt="Illustration: the phone in a vent mount next to the steering wheel, showing −0.41 on a green screen" width="100%"></p>
+
 ---
 
 ## Tour
@@ -66,6 +68,8 @@ Most lap timers know a fixed list of circuits. Purple Sector times **any road yo
 <p align="center"><img src="docs/readme/build.webp" alt="Explore map, route leaderboard, route builder with sector length slider, and the Times screen" width="100%"></p>
 
 <p align="center"><img src="docs/readme/drive.webp" alt="Ready screen to pick a reference lap, the drive HUD with a −0.41 delta, and the result screen with a new personal best" width="100%"></p>
+
+<p align="center"><img src="docs/readme/anatomy.webp" alt="Annotated drive screen: GPS quality, speed, live delta, lap clock, sector strip, current sector, position, delta-only hint and hold to stop" width="100%"></p>
 
 <p align="center"><img src="docs/readme/delta-only.webp" alt="Landscape delta-only mode: −0.41 on a full green screen" width="72%"></p>
 
@@ -89,6 +93,8 @@ Every time in the app wears its three-sector strip. Colour is never the only sig
 | 🟥 **Red banner** | Jump start, +5.0 s | Jump start, +5.0 s |
 
 The delta always compares with the lap you race. Records and PBs are downloaded before the drive, so the colours work offline, and saved laps keep the colours they had when driven.
+
+<p align="center"><img src="docs/readme/sectors.webp" alt="The Ecce Homo route drawn in its three sector colours with 12 minisector gates, and a 2:13.62 lap: S1 purple fastest ever, S2 green beat your best, S3 yellow slower" width="100%"></p>
 
 ---
 
@@ -120,7 +126,11 @@ delta_k  = split_k − ref.split_k         negative = ahead
 
 ### How accurate is it?
 
-`simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error, and `test/accuracy.test.ts` keeps the numbers honest:
+`simulateTrackDrive` models corner-limited speed, braking and a 2.5 m drifting GPS error. Run the real `LapTimer` on it and compare with simply taking the first fix past the line:
+
+<p align="center"><img src="docs/readme/accuracy.webp" alt="Histogram of gate timing errors over 540 gates: interpolation 73 ms RMS with 95% within 143 ms; naive first-fix timing 602 ms RMS spread evenly up to 1000 ms" width="100%"></p>
+
+`test/accuracy.test.ts` keeps the numbers honest:
 
 | Simulated drive | Gates | RMS error | p95 | Max |
 |---|---:|---:|---:|---:|
@@ -131,6 +141,10 @@ delta_k  = split_k − ref.split_k         negative = ahead
 
 The surprise: **5 Hz is no better than 1 Hz**. The error comes from GPS position, not from interpolation (with perfect GPS it stays under 60 ms), so fancier curve fitting isn't worth building. Only better fixes help, such as an external 10–25 Hz GNSS receiver.
 
+### Standing starts
+
+<p align="center"><img src="docs/readme/start-sequence.webp" alt="F1-style start lights from T−5 to GO, the lap clock starting when the car moves, then the S1, S2, S3 strip and rules for countdown, cancel and jump start" width="100%"></p>
+
 ### Jump starts without false penalties
 
 A phone sitting still sees its GPS position wander 3–10 m, so comparing raw positions with a 10 m limit would hand out penalties to drivers who never moved. Instead, the engine:
@@ -139,6 +153,8 @@ A phone sitting still sees its GPS position wander 3–10 m, so comparing raw po
 2. Counts **motion** only when two independent signals agree: sustained forward acceleration above ~0.1 g for over 300 ms (door slams and revs are filtered out) **and** GPS Doppler speed above ~1.5 m/s (Doppler doesn't drift with the position).
 3. Measures the distance moved before GO by **integrating Doppler speed**, forward along the route only, so rolling back on a hill is never penalised.
 4. Gives **+5 s only above 10 m**, and the benefit of the doubt whenever the signals disagree.
+
+<p align="center"><img src="docs/readme/jump-start.webp" alt="Illustration: during the countdown raw GPS position drifts past 10 m and a door slam spikes the accelerometer, but Doppler speed stays near zero, so there is no penalty; after GO both signals rise together" width="100%"></p>
 
 A jump-started lap is timed from GO, the penalty goes into sector 1 so no split or colour can profit from it, and the run stays valid.
 
