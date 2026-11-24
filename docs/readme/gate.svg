@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 330" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Gate crossing interpolated between two 1 Hz GPS fixes</title>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#f2f1ec" stroke-opacity=".05"/>
+    </pattern>
+    <linearGradient id="road" x1="0" x2="1">
+      <stop offset="0" stop-color="#f2f1ec" stop-opacity=".25"/>
+      <stop offset=".5" stop-color="#f2f1ec" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#f2f1ec" stop-opacity=".25"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="330" rx="24" fill="#0c0e12"/>
+  <rect width="960" height="330" rx="24" fill="url(#grid)"/>
+
+  <text x="40" y="52" fill="#f2f1ec" fill-opacity=".55" font-size="13" font-weight="700" letter-spacing="2">HOW A GATE IS TIMED</text>
+  <text x="40" y="82" fill="#f2f1ec" font-size="22" font-weight="700">GPS ticks once a second. The gate time doesn't.</text>
+
+  <!-- road -->
+  <path d="M40 210 H920" stroke="url(#road)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- gate -->
+  <line x1="560" y1="140" x2="560" y2="280" stroke="#9d5cff" stroke-width="4" stroke-dasharray="2 8" stroke-linecap="round"/>
+  <rect x="496" y="112" width="128" height="26" rx="13" fill="#9d5cff"/>
+  <text x="560" y="130" fill="#0c0e12" font-size="13" font-weight="800" text-anchor="middle" letter-spacing="1">SECTOR GATE</text>
+
+  <!-- fixes -->
+  <circle cx="300" cy="210" r="11" fill="#0c0e12" stroke="#f2f1ec" stroke-width="3"/>
+  <text x="300" y="250" fill="#f2f1ec" font-size="15" font-weight="700" text-anchor="middle">fix n−1</text>
+  <text x="300" y="272" fill="#f2f1ec" fill-opacity=".6" font-size="14" text-anchor="middle">t = 41.000 s · s = 1 184 m</text>
+
+  <circle cx="760" cy="210" r="11" fill="#0c0e12" stroke="#f2f1ec" stroke-width="3"/>
+  <text x="760" y="250" fill="#f2f1ec" font-size="15" font-weight="700" text-anchor="middle">fix n</text>
+  <text x="760" y="272" fill="#f2f1ec" fill-opacity=".6" font-size="14" text-anchor="middle">t = 42.000 s · s = 1 212 m</text>
+
+  <!-- interpolated crossing -->
+  <circle cx="560" cy="210" r="9" fill="#1fd27a"/>
+  <circle cx="560" cy="210" r="18" fill="none" stroke="#1fd27a" stroke-opacity=".4" stroke-width="2"/>
+  <text x="560" y="306" fill="#1fd27a" font-size="15" font-weight="800" text-anchor="middle">t_cross = 41.571 s</text>
+
+  <!-- naive -->
+  <path d="M760 190 V172" fill="none" stroke="#ffbe1a" stroke-width="2" stroke-dasharray="4 4"/>
+  <text x="760" y="160" fill="#ffbe1a" font-size="13" font-weight="700" text-anchor="middle">naive: 42.000 s (+0.429 s)</text>
+
+  <text x="40" y="306" fill="#f2f1ec" fill-opacity=".55" font-size="13">100 km/h ≈ 28 m between fixes</text>
+  <text x="920" y="306" fill="#f2f1ec" fill-opacity=".55" font-size="13" text-anchor="end">gate at s = 1 200 m</text>
+</svg>
